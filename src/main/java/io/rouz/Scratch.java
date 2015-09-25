@@ -29,99 +29,57 @@ import static java.util.Collections.emptyList;
  *
  *  - can the setup, with dynamic dependencies be done with type-safe code?
  *  --- maybe with a value+trait based approach rather than classes+inheritance
+ *
+ *  - facts matching as basis for dependency satisfaction
  */
 public class Scratch {
 
   public static void main(String[] args) {
-    Task<String> task1 = MyTask.create("foo");
-    Task<Integer> task2 = OtherTask.create(5, 7);
-    MyTaskClass task3 = new MyTaskClass(42, "bar");
+    Task<String> task1 = MyTask.create("foobarbaz");
+    Task<Integer> task2 = Adder.create(5, 7);
 
     System.out.println("task1.output() = " + task1.output(null));
     System.out.println("task2.output() = " + task2.output(null));
-    System.out.println("task3.output() = " + task3.output(null));
-  }
-
-  static class MyTaskClass extends TaskBase<String> {
-
-    private final int integer;
-    private final String string;
-
-    MyTaskClass(int integer, String string) {
-      super(inputs(integer, string));
-      this.integer = integer;
-      this.string = string;
-    }
-
-    private static Input2<String, Integer> inputs(int integer, String string) {
-      return Inputs
-          .from(MyTask.create("foo " + string))
-          .with(OtherTask.create(integer, 3));
-    }
-
-    @Override
-    String output(TaskContext taskContext) {
-      // can has dependent task outputs plz
-      return integer + string;
-    }
-  }
-
-  static abstract class TaskBase<T> {
-
-    private final Inputs inputs;
-
-    protected TaskBase(Inputs inputs, Object... params) {
-      this.inputs = inputs;
-    }
-
-    Inputs inputs() {
-      return inputs;
-    }
-
-    abstract T output(TaskContext taskContext);
-  }
-
-  interface Inputs {
-    static <A> Input1<A> from(Task<A> taska) {
-      return new Input1<A>() {
-        @Override
-        public <B> Input2<A, B> with(Task<B> taskb) {
-          return new Input2<A, B>() {
-            @Override
-            public <C> Input3<A, B, C> with(Task<C> taskc) {
-              return new Input3<A, B, C>() {
-              };
-            }
-          };
-        }
-      };
-    }
-  }
-
-  interface Input1<A> extends Inputs {
-    <B> Input2<A, B> with(Task<B> task);
-  }
-
-  interface Input2<A, B> extends Inputs {
-    <C> Input3<A, B, C> with(Task<C> task);
-  }
-
-  interface Input3<A, B, C> extends Inputs {
   }
 
   static class MyTask {
+    static final int PLUS = 10;
+
     static Task<String> create(String parameter) {
-      return Tasks.create(context -> something(parameter));
+      return Tasks
+          .in(Adder.create(parameter.length(), PLUS))
+          .in(Fib.create(parameter.length()))
+          .process(context -> sum -> fib -> something(parameter, sum, fib));
     }
 
-    static String something(String parameter) {
-      return "hello world " + parameter;
+    static String something(String parameter, int sum, int fib) {
+      return "len('" + parameter + "') + " + PLUS + " = " + sum + ", btw fib(len) = " + fib;
     }
   }
 
-  static class OtherTask {
+  static class Adder {
     static Task<Integer> create(int a, int b) {
       return Tasks.create(context -> a + b);
+    }
+  }
+
+  static class Fib {
+    static Task<Integer> create(int n) {
+      System.out.print("Fib.create(" + n + ")");
+      if (n < 2) {
+        System.out.println(".");
+        return Tasks
+            .create(context -> 1);
+      } else {
+        System.out.println("");
+        return Tasks
+            .in(Fib.create(n - 1))
+            .in(Fib.create(n - 2))
+            .process(context -> a -> b -> {
+                       System.out.println("Fib.process(" + a + ", " + b + ")");
+                       return a + b;
+                     });
+      }
     }
   }
 
@@ -129,6 +87,47 @@ public class Scratch {
   static abstract class Tasks<T> implements Task<T> {
 
     protected abstract Function<TaskContext, T> code();
+
+    static <A> TaskBuilder1<A> in(Task<A> aTask) {
+      return new TaskBuilder1<A>() {
+        @Override
+        public <R> Task<R> process(Function<TaskContext, F1<A, R>> code) {
+          return create(
+              c -> code
+                  .apply(c)
+                  .apply(aTask.output(c)));
+        }
+
+        @Override
+        public <B> TaskBuilder2<A, B> in(Task<B> bTask) {
+          return new TaskBuilder2<A, B>() {
+            @Override
+            public <R> Task<R> process(Function<TaskContext, F2<A, B, R>> code) {
+              return create(
+                  c -> code
+                      .apply(c)
+                      .apply(aTask.output(c))
+                      .apply(bTask.output(c)));
+            }
+
+            @Override
+            public <C> TaskBuilder3<A, B, C> in(Task<C> cTask) {
+              return new TaskBuilder3<A, B, C>() {
+                @Override
+                public <R> Task<R> process(Function<TaskContext, F3<A, B, C, R>> code) {
+                  return create(
+                      c -> code
+                          .apply(c)
+                          .apply(aTask.output(c))
+                          .apply(bTask.output(c))
+                          .apply(cTask.output(c)));
+                }
+              };
+            }
+          };
+        }
+      };
+    }
 
     static <T> Task<T> create(Function<TaskContext, T> code) {
       return new AutoValue_Scratch_Tasks<>(emptyList(), emptyList(), code);
@@ -139,6 +138,24 @@ public class Scratch {
       return code().apply(taskContext);
     }
   }
+
+  interface TaskBuilder1<A> {
+    <R> Task<R> process(Function<TaskContext, F1<A, R>> code);
+    <B> TaskBuilder2<A, B> in(Task<B> task);
+  }
+
+  interface TaskBuilder2<A, B> {
+    <R> Task<R> process(Function<TaskContext, F2<A, B, R>> code);
+    <C> TaskBuilder3<A, B, C> in(Task<C> task);
+  }
+
+  interface TaskBuilder3<A, B, C> {
+    <R> Task<R> process(Function<TaskContext, F3<A, B, C, R>> code);
+  }
+
+  interface F1<A, R> extends Function<A, R> {}
+  interface F2<A, B, R> extends Function<A, Function<B, R>> {}
+  interface F3<A, B, C, R> extends Function<A, Function<B, Function<C, R>>> {}
 
   interface Task<T> {
     List<Parameter> parameters();
@@ -152,9 +169,5 @@ public class Scratch {
 
   interface TaskContext {
     // should contain {@link Output}s of each input task
-    <T extends Inputs> Values<T> values(T t);
-  }
-
-  interface Values<T extends Inputs> {
   }
 }
