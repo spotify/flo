@@ -4,6 +4,9 @@ import com.google.auto.value.AutoValue;
 
 import io.rouz.task.dsl.TaskBuilder;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -17,6 +20,8 @@ import java.util.function.Supplier;
  */
 @AutoValue
 public abstract class Task<T> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Task.class);
 
   public abstract TaskId id();
 
@@ -93,7 +98,7 @@ public abstract class Task<T> {
     return taskContext -> {
       if (taskContext.has(taskId)) {
         final T value = taskContext.value(taskId);
-        System.out.println("Found calculated value for " + taskId + " = " + value);
+        LOG.info("Found calculated value for {} = {}", taskId, value);
         return value;
       } else {
         final T value = fn.apply(taskContext);
