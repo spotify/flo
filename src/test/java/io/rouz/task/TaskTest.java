@@ -4,6 +4,8 @@ import io.rouz.task.dsl.TaskBuilder;
 
 import org.junit.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -19,6 +21,27 @@ public class TaskTest {
     assertThat(wasEven.output().result(), is(6));
     assertThat(madeEven.output(), instanceOf(MadeEven.class));
     assertThat(madeEven.output().result(), is(10));
+  }
+
+  @Test
+  public void shouldMemoizeTaskProcessing() throws Exception {
+    AtomicInteger counter = new AtomicInteger(0);
+    Task<Integer> count = Task.named("Count")
+        .process(counter::incrementAndGet);
+
+    Task<Integer> sum = Task.named("Sum")
+        .in(() -> count)
+        .in(() -> count)
+        .in(() -> count)
+        .process((a, b, c) -> a + b + c);
+
+    assertThat(sum.output(), is(3));
+    assertThat(counter.get(), is(1)); // only called once
+
+    // only memoized during each execution
+    assertThat(count.output(), is(2));
+    assertThat(count.output(), is(3));
+    assertThat(counter.get(), is(3)); // called twice more
   }
 
   private Task<EvenResult> isEven(int n) {

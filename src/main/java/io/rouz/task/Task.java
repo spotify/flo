@@ -40,7 +40,8 @@ public abstract class Task<T> {
           @Override
           public <R> Task<R> process(F1<A, R> code) {
             return create(
-                c -> code.apply(aTask.get().internalOutput(c)),
+                c -> code.apply(
+                    aTask.get().internalOutput(c)),
                 taskName, args);
           }
 
