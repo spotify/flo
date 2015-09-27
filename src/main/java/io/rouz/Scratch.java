@@ -40,8 +40,8 @@ public class Scratch {
     Task<String> task1 = MyTask.create(input);
     Task<Integer> task2 = Adder.create(5, 7);
 
-    System.out.println("task1.output() = " + task1.output());
-    System.out.println("task2.output() = " + task2.output());
+    System.out.println("task1.out() = " + task1.out());
+    System.out.println("task2.out() = " + task2.out());
   }
 
   static class MyTask {

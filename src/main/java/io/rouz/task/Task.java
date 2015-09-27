@@ -41,7 +41,7 @@ public abstract class Task<T> {
           public <R> Task<R> process(F1<A, R> code) {
             return create(
                 c -> code.apply(
-                    aTask.get().internalOutput(c)),
+                    aTask.get().internalOut(c)),
                 taskName, args);
           }
 
@@ -52,8 +52,8 @@ public abstract class Task<T> {
               public <R> Task<R> process(F2<A, B, R> code) {
                 return create(
                     c -> code.apply(
-                        aTask.get().internalOutput(c),
-                        bTask.get().internalOutput(c)),
+                        aTask.get().internalOut(c),
+                        bTask.get().internalOut(c)),
                     taskName, args);
               }
 
@@ -64,9 +64,9 @@ public abstract class Task<T> {
                   public <R> Task<R> process(F3<A, B, C, R> code) {
                     return create(
                         c -> code.apply(
-                            aTask.get().internalOutput(c),
-                            bTask.get().internalOutput(c),
-                            cTask.get().internalOutput(c)),
+                            aTask.get().internalOut(c),
+                            bTask.get().internalOut(c),
+                            cTask.get().internalOut(c)),
                         taskName, args);
                   }
                 };
@@ -87,11 +87,11 @@ public abstract class Task<T> {
     return new AutoValue_Task<>(taskId, memoize(taskId, code));
   }
 
-  public T output() {
+  public T out() {
     return code().apply(new TaskContextImpl());
   }
 
-  private T internalOutput(TaskContext taskContext) {
+  private T internalOut(TaskContext taskContext) {
     return code().apply(taskContext);
   }
 

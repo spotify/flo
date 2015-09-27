@@ -17,10 +17,10 @@ public class TaskTest {
     Task<EvenResult> wasEven = isEven(6);
     Task<EvenResult> madeEven = isEven(5);
 
-    assertThat(wasEven.output(), instanceOf(WasEven.class));
-    assertThat(wasEven.output().result(), is(6));
-    assertThat(madeEven.output(), instanceOf(MadeEven.class));
-    assertThat(madeEven.output().result(), is(10));
+    assertThat(wasEven.out(), instanceOf(WasEven.class));
+    assertThat(wasEven.out().result(), is(6));
+    assertThat(madeEven.out(), instanceOf(MadeEven.class));
+    assertThat(madeEven.out().result(), is(10));
   }
 
   @Test
@@ -35,12 +35,12 @@ public class TaskTest {
         .in(() -> count)
         .process((a, b, c) -> a + b + c);
 
-    assertThat(sum.output(), is(3));
+    assertThat(sum.out(), is(3));
     assertThat(counter.get(), is(1)); // only called once
 
     // only memoized during each execution
-    assertThat(count.output(), is(2));
-    assertThat(count.output(), is(3));
+    assertThat(count.out(), is(2));
+    assertThat(count.out(), is(3));
     assertThat(counter.get(), is(3)); // called twice more
   }
 
