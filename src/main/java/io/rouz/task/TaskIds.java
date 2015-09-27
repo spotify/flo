@@ -20,11 +20,11 @@ abstract class TaskIds implements TaskId {
 
   @Override
   public String toString() {
-    return name() + argsString() + String.format("#%08x", hash());
+    return String.format("%s(%s)#%08x", name(), argsString(), hash());
   }
 
   private String argsString() {
-    final StringBuilder sb = new StringBuilder("(");
+    final StringBuilder sb = new StringBuilder();
     boolean first = true;
     for (Object arg : args()) {
       if (!first) {
@@ -33,7 +33,6 @@ abstract class TaskIds implements TaskId {
       sb.append(arg);
       first = false;
     }
-    sb.append(')');
 
     return sb.toString();
   }
