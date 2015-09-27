@@ -2,11 +2,8 @@ package io.rouz.task;
 
 import com.google.auto.value.AutoValue;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import io.rouz.task.dsl.TaskBuilder;
+
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -79,8 +76,7 @@ public abstract class Task<T> {
   }
 
   public T output() {
-    final TaskContext taskContext = new TaskContextImpl();
-    return code().apply(taskContext);
+    return code().apply(new TaskContextImpl());
   }
 
   private T internalOutput(TaskContext taskContext) {
@@ -99,103 +95,5 @@ public abstract class Task<T> {
         return value;
       }
     };
-  }
-
-  public interface TaskId {
-    String name();
-    int hash();
-  }
-
-  @AutoValue
-  static abstract class TaskIds implements TaskId {
-
-    abstract List<Object> args();
-
-    static TaskId create(String name, Object... args) {
-      return new AutoValue_Task_TaskIds(name, Objects.hash(args), Arrays.asList(args));
-    }
-
-    @Override
-    public String toString() {
-      return name() + argsString() + String.format("#%08x", hash());
-    }
-
-    private String argsString() {
-      final StringBuilder sb = new StringBuilder("(");
-      boolean first = true;
-      for (Object arg : args()) {
-        if (!first) {
-          sb.append(',');
-        }
-        sb.append(arg);
-        first = false;
-      }
-      sb.append(')');
-
-      return sb.toString();
-    }
-  }
-
-  public interface TaskBuilder {
-    <A> TaskBuilder1<A> in(Supplier<Task<A>> task);
-  }
-
-  public interface TaskBuilder1<A> {
-    <R> Task<R> process(F1<A, R> code);
-    <B> TaskBuilder2<A, B> in(Supplier<Task<B>> task);
-  }
-
-  public interface TaskBuilder2<A, B> {
-    <R> Task<R> process(F2<A, B, R> code);
-    <C> TaskBuilder3<A, B, C> in(Supplier<Task<C>> task);
-  }
-
-  public interface TaskBuilder3<A, B, C> {
-    <R> Task<R> process(F3<A, B, C, R> code);
-  }
-
-  @FunctionalInterface
-  public interface F1<A, R> {
-    R apply(A a);
-  }
-
-  @FunctionalInterface
-  public interface F2<A, B, R> {
-    R apply(A a, B b);
-  }
-
-  @FunctionalInterface
-  public interface F3<A, B, C, R> {
-    R apply(A a, B b, C c);
-  }
-
-  interface TaskContext {
-    boolean has(TaskId taskId);
-    <V> V value(TaskId taskId);
-    <V> void put(TaskId taskId, V value);
-  }
-
-  /**
-   * Not thread safe, use with one thread only
-   */
-  private static class TaskContextImpl implements TaskContext {
-
-    private Map<TaskId, Object> cache =  new HashMap<>();
-
-    @Override
-    public boolean has(TaskId taskId) {
-      return cache.containsKey(taskId);
-    }
-
-    @Override
-    public <V> V value(TaskId taskId) {
-      //noinspection unchecked
-      return (V) cache.get(taskId);
-    }
-
-    @Override
-    public <V> void put(TaskId taskId, V value) {
-      cache.put(taskId, value);
-    }
   }
 }

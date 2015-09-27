@@ -1,6 +1,7 @@
 package io.rouz;
 
 import io.rouz.task.Task;
+import io.rouz.task.dsl.TaskBuilder;
 
 /**
  * Task definitions have (TD)
@@ -26,7 +27,7 @@ import io.rouz.task.Task;
  *  - can the setup, with dynamic dependencies be done with type-safe code?
  *  --- maybe with a value+trait based approach rather than classes+inheritance
  *
- *  FIXED: with {@link Task.TaskBuilder} fluent api
+ *  FIXED: with {@link TaskBuilder} fluent api
  *
  *  - facts matching as basis for dependency satisfaction
  */
