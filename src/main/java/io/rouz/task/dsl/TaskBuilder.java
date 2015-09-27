@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 public interface TaskBuilder {
 
   <A> TaskBuilder1<A> in(Supplier<Task<A>> task);
+  <R> Task<R> process(Supplier<R> code);
 
   interface TaskBuilder1<A> {
     <R> Task<R> process(F1<A, R> code);

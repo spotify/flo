@@ -13,6 +13,7 @@ import java.util.function.Supplier;
  * . output task graph
  * . external outputs - outputs that might already be available (ie a file on disk)
  *   - can be eimplemented with a regular task, but better support can be added
+ * . id task
  */
 @AutoValue
 public abstract class Task<T> {
@@ -23,6 +24,11 @@ public abstract class Task<T> {
 
   public static TaskBuilder named(String taskName, Object... args) {
     return new TaskBuilder() {
+      @Override
+      public <R> Task<R> process(Supplier<R> code) {
+        return create(code, taskName, args);
+      }
+
       @Override
       public <A> TaskBuilder1<A> in(Supplier<Task<A>> aTask) {
         return new TaskBuilder1<A>() {
@@ -63,7 +69,7 @@ public abstract class Task<T> {
           }
         };
       }
-  };
+    };
   }
 
   public static <T> Task<T> create(Supplier<T> code, String taskName, Object... args) {

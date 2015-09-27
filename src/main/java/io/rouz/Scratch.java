@@ -61,16 +61,18 @@ public class Scratch {
 
   static class Adder {
     static Task<Integer> create(int a, int b) {
-      return Task.create(() -> a + b, "Adder", a, b);
+      return Task.named("Adder", a, b).process(() -> a + b);
     }
   }
 
   static class Fib {
     static Task<Integer> create(int n) {
+      TaskBuilder fib = Task.named("Fib", n);
       if (n < 2) {
-        return Task.create(() -> 1, "Fib", n);
+        return fib
+            .process(() -> 1);
       } else {
-        return Task.named("Fib", n)
+        return fib
             .in(() -> Fib.create(n - 1))
             .in(() -> Fib.create(n - 2))
             .process(Fib::fib);
