@@ -2,9 +2,15 @@ package io.rouz.task;
 
 import io.rouz.task.dsl.TaskBuilder;
 
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -42,6 +48,21 @@ public class TaskTest {
     assertThat(count.out(), is(2));
     assertThat(count.out(), is(3));
     assertThat(counter.get(), is(3)); // called twice more
+  }
+
+  @Test
+  public void shouldLinearizeTasks() throws Exception {
+    Task<String> top = Task.named("Top")
+        .in(() -> isEven(0))
+        .in(() -> isEven(1))
+        .process((a, b) -> "done");
+
+    List<TaskId> taskIds = top.tasksInOrder()
+        .collect(Collectors.toList());
+
+    TaskId isEven1Id = isEven(1).id();
+    TaskId evenify1Id = evenify(1).id();
+    assertThat(taskIds, containsInOrder(evenify1Id, isEven1Id));
   }
 
   private Task<EvenResult> isEven(int n) {
@@ -86,5 +107,36 @@ public class TaskTest {
     protected MadeEven(int result) {
       super(result);
     }
+  }
+
+  static <T> Matcher<Iterable<? extends T>> containsInOrder(T a, T b) {
+    Objects.requireNonNull(a);
+    Objects.requireNonNull(b);
+    return new TypeSafeMatcher<Iterable<? extends T>>() {
+
+      @Override
+      protected boolean matchesSafely(Iterable<? extends T> ts) {
+        int ai = -1, bi = -1, i = 0;
+        for (T t : ts) {
+          if (a.equals(t)) {
+            ai = i;
+          }
+          if (b.equals(t)) {
+            bi = i;
+          }
+          i++;
+        }
+
+        return ai > -1 && bi > -1 && ai < bi;
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("Contains ");
+        description.appendValue(a);
+        description.appendText(" before ");
+        description.appendValue(b);
+      }
+    };
   }
 }

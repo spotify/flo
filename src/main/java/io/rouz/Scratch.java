@@ -40,6 +40,9 @@ public class Scratch {
     Task<String> task1 = MyTask.create(input);
     Task<Integer> task2 = Adder.create(5, 7);
 
+    task1.tasksInOrder()
+        .forEachOrdered(taskId -> System.out.println("taskId = " + taskId));
+
     System.out.println("task1.out() = " + task1.out());
     System.out.println("task2.out() = " + task2.out());
   }
