@@ -1,7 +1,3 @@
-# apollo-small
+# flo
 
-```
-mvn package
-java -jar target/small.jar -Dhttp.server.port=8080
-curl http://localhost:8080/
-```
+> __Dag__ means __Day__ in Swedish
