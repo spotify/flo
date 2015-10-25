@@ -2,19 +2,22 @@ package io.rouz.task.dsl;
 
 import io.rouz.task.Task;
 
+import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Types for the fluent task setup API
  *
  * The entry point for this api is {@link Task#named(String, Object...)}.
  *
- * Note, these types should never have to explicitly be mentioned or imported. The API is
+ * Note, the inner types should never have to explicitly be mentioned or imported. The API is
  * supposed to be used through fluent calls that eventually lead to a {@link Task} instance.
  */
 public interface TaskBuilder {
 
   <A> TaskBuilder1<A> in(Supplier<Task<A>> task);
+  <A> TaskBuilder1<List<A>> ins(Stream<Task<A>> task);
   <R> Task<R> process(Supplier<R> code);
 
   interface TaskBuilder1<A> {

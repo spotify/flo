@@ -10,8 +10,10 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -51,6 +53,28 @@ public class TaskTest {
   }
 
   @Test
+  public void shouldHanleStreamParameters() throws Exception {
+    AtomicInteger counter = new AtomicInteger(0);
+    Supplier<Task<Integer>> countCreator = () -> {
+      int n = counter.incrementAndGet();
+      return Task.named("Count", n)
+          .process(() -> n);
+    };
+
+    // 1,2,3,4,5
+    Stream<Task<Integer>> fiveInts = Stream
+        .generate(countCreator)
+        .limit(5);
+
+    // 1+2+3+4+5 = 15
+    Task<Integer> sum = Task.named("Sum")
+        .ins(fiveInts)
+        .process(intsList -> intsList.stream().reduce(0, (a, b) -> a + b));
+
+    assertThat(sum.out(), is(15));
+  }
+
+  @Test
   public void shouldLinearizeTasks() throws Exception {
     Task<String> top = Task.named("Top")
         .in(() -> isEven(0))
@@ -58,7 +82,7 @@ public class TaskTest {
         .process((a, b) -> "done");
 
     List<TaskId> taskIds = top.tasksInOrder()
-        .collect(Collectors.toList());
+        .collect(toList());
 
     TaskId isEven1Id = isEven(1).id();
     TaskId evenify1Id = evenify(1).id();
