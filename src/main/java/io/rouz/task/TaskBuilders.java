@@ -21,7 +21,12 @@ import static java.util.stream.Stream.concat;
  * These classes tackle the exponential growth of paths that can be taken through the
  * {@link TaskBuilder}X interfaces by linearizing the implementation through composing functions.
  *
- * todo: convert all the currier, currier2, currier3 functions to a reader monad
+ * The linearization is implemented by letting the next builder in the chain take a higher-order
+ * function {@link Lifter}. This function allows the builder to lift a function with the right
+ * number of arguments into a function from {@link TaskContext} to the result. This function can
+ * then either be used to terminate the builder into a {@link Task} (see process(...) methods) or
+ * to construct a new {@link Lifter} for the next builder in the chain, adding one more argument to
+ * the liftable function.
  */
 final class TaskBuilders {
 
@@ -32,20 +37,23 @@ final class TaskBuilders {
     return new TB(taskName, args);
   }
 
+  private interface Lifter<F> extends F1<F, F1<TaskContext, ?>> {
+    default <R> F1<TaskContext, R> castReturnType(F fn) {
+      // force the return type of the lifter function to R
+      // not type safe, but isolated to this file
+      return (F1<TaskContext, R>) this.apply(fn);
+    }
+  }
+
   private static class BaseTask {
-
     protected final String taskName;
-    protected final Object[] args;
 
+    protected final Object[] args;
     protected BaseTask(String taskName, Object[] args) {
       this.taskName = taskName;
       this.args = args;
     }
-  }
 
-  @FunctionalInterface
-  private interface Currier<F, G> {
-    G curried(F code);
   }
 
   // #############################################################################################
@@ -68,7 +76,8 @@ final class TaskBuilders {
       return new TB1<>(
           toStream(aTask),
           taskName, args,
-          f1 -> tc -> f1.apply(aTask.get().internalOut(tc)));
+          f1 -> tc -> f1.apply(
+              aTask.get().internalOut(tc)));
     }
 
     @Override
@@ -88,22 +97,21 @@ final class TaskBuilders {
       implements TaskBuilder1<A> {
 
     private final Stream<? extends Task<?>> tasks;
-    private final Currier<F1<A, ?>, F1<TaskContext, ?>> currier;
+    private final Lifter<F1<A, ?>> lifter;
 
     TB1(
         Stream<? extends Task<?>> tasks,
         String taskName, Object[] args,
-        Currier<F1<A, ?>, F1<TaskContext, ?>> currier) {
+        Lifter<F1<A, ?>> lifter) {
       super(taskName, args);
       this.tasks = tasks;
-      this.currier = currier;
+      this.lifter = lifter;
     }
 
 
     @Override
     public <R> Task<R> process(F1<A, R> code) {
-      F1<TaskContext, R> f = tc ->
-          (R) currier.curried(code).apply(tc);
+      F1<TaskContext, R> f = lifter.castReturnType(code);
 
       return Task.create(
           tasks,
@@ -116,9 +124,11 @@ final class TaskBuilders {
       return new TB2<>(
           concat(tasks, toStream(bTask)),
           taskName, args,
-          currier,
-          f2 -> (tc, a) ->
-              f2.apply(a, bTask.get().internalOut(tc)));
+          f2 -> tc -> lifter.apply(
+              a -> f2.apply(
+                  a,
+                  bTask.get().internalOut(tc))
+          ).apply(tc));
     }
 
     @Override
@@ -126,9 +136,11 @@ final class TaskBuilders {
       return new TB2<>(
           concat(tasks, toFlatStream(bTasks)),
           taskName, args,
-          currier,
-          f2 -> (tc, a) ->
-              f2.apply(a, bTasks.get().map(t -> t.internalOut(tc)).collect(toList())));
+          f2 -> tc -> lifter.apply(
+              a -> f2.apply(
+                  a,
+                  bTasks.get().map(t -> t.internalOut(tc)).collect(toList()))
+          ).apply(tc));
     }
   }
 
@@ -139,26 +151,20 @@ final class TaskBuilders {
       implements TaskBuilder2<A, B> {
 
     private final Stream<? extends Task<?>> tasks;
-    private final Currier<F1<A, ?>, F1<TaskContext, ?>> currier;
-    private final Currier<F2<A, B, ?>, F2<TaskContext, A, ?>> currier2;
+    private final Lifter<F2<A, B, ?>> lifter;
 
     TB2(
         Stream<? extends Task<?>> tasks,
         String taskName, Object[] args,
-        Currier<F1<A, ?>, F1<TaskContext, ?>> currier,
-        Currier<F2<A, B, ?>, F2<TaskContext, A, ?>> currier2) {
+        Lifter<F2<A, B, ?>> lifter) {
       super(taskName, args);
       this.tasks = tasks;
-      this.currier = currier;
-      this.currier2 = currier2;
+      this.lifter = lifter;
     }
 
     @Override
     public <R> Task<R> process(F2<A, B, R> code) {
-      F1<TaskContext, R> f = tc -> {
-        F2<TaskContext, A, ?> f1 = currier2.curried(code);
-        return (R) currier.curried(a -> f1.apply(tc, a)).apply(tc);
-      };
+      F1<TaskContext, R> f = lifter.castReturnType(code);
 
       return Task.create(
           tasks,
@@ -171,9 +177,11 @@ final class TaskBuilders {
       return new TB3<>(
           concat(tasks, toStream(cTask)),
           taskName, args,
-          currier, currier2,
-          f3 -> (tc, a, b) ->
-              f3.apply(a, b, cTask.get().internalOut(tc)));
+          f3 -> tc -> lifter.apply(
+              (a, b) -> f3.apply(
+                  a, b,
+                  cTask.get().internalOut(tc))
+          ).apply(tc));
     }
 
     @Override
@@ -181,9 +189,11 @@ final class TaskBuilders {
       return new TB3<>(
           concat(tasks, toFlatStream(cTasks)),
           taskName, args,
-          currier, currier2,
-          f3 -> (tc, a, b) ->
-              f3.apply(a, b, cTasks.get().map(t -> t.internalOut(tc)).collect(toList())));
+          f3 -> tc -> lifter.apply(
+              (a, b) -> f3.apply(
+                  a, b,
+                  cTasks.get().map(t -> t.internalOut(tc)).collect(toList()))
+          ).apply(tc));
     }
   }
 
@@ -194,30 +204,20 @@ final class TaskBuilders {
       implements TaskBuilder3<A, B, C> {
 
     private final Stream<? extends Task<?>> tasks;
-    private final Currier<F1<A, ?>, F1<TaskContext, ?>> currier;
-    private final Currier<F2<A, B, ?>, F2<TaskContext, A, ?>> currier2;
-    private final Currier<F3<A, B, C, ?>, F3<TaskContext, A, B, ?>> currier3;
+    private final Lifter<F3<A, B, C, ?>> lifter;
 
     TB3(
         Stream<? extends Task<?>> tasks,
         String taskName, Object[] args,
-        Currier<F1<A, ?>, F1<TaskContext, ?>> currier,
-        Currier<F2<A, B, ?>, F2<TaskContext, A, ?>> currier2,
-        Currier<F3<A, B, C, ?>, F3<TaskContext, A, B, ?>> currier3) {
+        Lifter<F3<A, B, C, ?>> lifter) {
       super(taskName, args);
       this.tasks = tasks;
-      this.currier = currier;
-      this.currier2 = currier2;
-      this.currier3 = currier3;
+      this.lifter = lifter;
     }
 
     @Override
     public <R> Task<R> process(F3<A, B, C, R> code) {
-      F1<TaskContext, R> f = tc -> {
-        F3<TaskContext, A, B, ?> f2 = currier3.curried(code);
-        F2<TaskContext, A, ?> f1 = currier2.curried((a, b) -> f2.apply(tc, a, b));
-        return (R) currier.curried(a -> f1.apply(tc, a)).apply(tc);
-      };
+      F1<TaskContext, R> f = lifter.castReturnType(code);
 
       return Task.create(
           tasks,
