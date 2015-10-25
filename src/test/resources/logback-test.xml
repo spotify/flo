@@ -1,0 +1,9 @@
+<configuration debug="false">
+    <root level="INFO">
+        <appender class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%-5level %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+    </root>
+</configuration>
