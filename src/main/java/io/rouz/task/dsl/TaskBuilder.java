@@ -16,18 +16,20 @@ import java.util.stream.Stream;
  */
 public interface TaskBuilder {
 
-  <A> TaskBuilder1<A> in(Supplier<Task<A>> task);
-  <A> TaskBuilder1<List<A>> ins(Supplier<Stream<Task<A>>> task);
   <R> Task<R> process(Supplier<R> code);
+  <A> TaskBuilder1<A> in(Supplier<Task<A>> task);
+  <A> TaskBuilder1<List<A>> ins(Supplier<Stream<Task<A>>> tasks);
 
   interface TaskBuilder1<A> {
     <R> Task<R> process(F1<A, R> code);
     <B> TaskBuilder2<A, B> in(Supplier<Task<B>> task);
+    <B> TaskBuilder2<A, List<B>> ins(Supplier<Stream<Task<B>>> tasks);
   }
 
   interface TaskBuilder2<A, B> {
     <R> Task<R> process(F2<A, B, R> code);
     <C> TaskBuilder3<A, B, C> in(Supplier<Task<C>> task);
+    <C> TaskBuilder3<A, B, List<C>> ins(Supplier<Stream<Task<C>>> tasks);
   }
 
   interface TaskBuilder3<A, B, C> {

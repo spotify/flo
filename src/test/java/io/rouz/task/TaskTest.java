@@ -10,6 +10,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -70,6 +71,42 @@ public class TaskTest {
   }
 
   @Test
+  public void shouldHanleMixedStreamAndPlainParameters() throws Exception {
+    Supplier<Task<Integer>> countSupplier = countConstructor();
+
+    // 1,2,3,4,5
+    Stream<Task<Integer>> fiveInts = Stream
+        .generate(countSupplier)
+        .limit(5);
+
+    Task<Integer> sum = Task.named("Sum")
+        .in(() -> isEven(5))
+        .ins(() -> fiveInts)
+        .in(() -> isEven(2))
+        .process((a, ints, b) -> a.result() + sumInts(ints) + b.result());
+
+    // (5*2) + (1+2+3+4+5) + 2 = 27
+    assertThat(sum.out(), is(27));
+  }
+
+  @Test
+  public void shouldHanleMultipleStreamParameters() throws Exception {
+    Supplier<Task<Integer>> countSupplier = countConstructor();
+
+    Supplier<Stream<Task<Integer>>> fiveInts = () -> Stream
+        .generate(countSupplier)
+        .limit(5);
+
+    Task<Integer> sum = Task.named("Sum")
+        .ins(fiveInts)
+        .ins(fiveInts)
+        .process((first5, second5) -> sumInts(first5) + sumInts(second5));
+
+    // (1+2+3+4+5) + (6+7+8+9+10) = 55
+    assertThat(sum.out(), is(55));
+  }
+
+  @Test
   public void shoulAllowMultipleRunsWithStreamParameters() throws Exception {
     Supplier<Task<Integer>> countSupplier = countConstructor();
 
@@ -86,6 +123,26 @@ public class TaskTest {
 
     // 6+7+8+9+10 = 40
     assertThat(sum.out(), is(40));
+  }
+
+  @Test
+  public void shouldMultipleRunsWithMultipleStreamParameters() throws Exception {
+    Supplier<Task<Integer>> countSupplier = countConstructor();
+
+    Supplier<Stream<Task<Integer>>> fiveInts = () -> Stream
+        .generate(countSupplier)
+        .limit(5);
+
+    Task<Integer> sum = Task.named("Sum")
+        .ins(fiveInts)
+        .ins(fiveInts)
+        .process((first5, second5) -> sumInts(first5) + sumInts(second5));
+
+    // discard first 2 groups of five
+    sum.out();
+
+    // (11+12+13+14+15) + (16+17+18+19+20) = 155
+    assertThat(sum.out(), is(155));
   }
 
   @Test
@@ -118,6 +175,32 @@ public class TaskTest {
 
     assertThat(taskIds.size(), is(3));
     assertThat(taskIds, containsInOrder(evenify1Id, isEven1Id));
+  }
+
+  @Test
+  public void shouldLinearizeMixedStreamAndPlainParameters() throws Exception {
+    Function<Integer, Task<Integer>> evenResult = n ->
+        Task.named("EvenResult", n)
+            .in(() -> isEven(n))
+            .process(EvenResult::result);
+
+    Task<Integer> sum = Task.named("Sum")
+        .in(() -> isEven(5))
+        .ins(() -> Stream.of(evenResult.apply(0), evenResult.apply(1)))
+        .ins(() -> Stream.of(evenResult.apply(3)))
+        .process((a, ints, b) -> a.result() + sumInts(ints) + sumInts(b));
+
+    List<TaskId> taskIds = sum.tasksInOrder()
+        .collect(toList());
+
+    TaskId evenify5Id = evenify(5).id();
+    TaskId evenify1Id = evenify(1).id();
+    TaskId evenify3Id = evenify(3).id();
+
+    assertThat(taskIds.size(), is(10));
+    assertThat(taskIds, containsInOrder(evenify5Id, evenify1Id));
+    assertThat(taskIds, containsInOrder(evenify5Id, evenify3Id));
+    assertThat(taskIds, containsInOrder(evenify1Id, evenify3Id));
   }
 
   private Supplier<Task<Integer>> countConstructor() {
