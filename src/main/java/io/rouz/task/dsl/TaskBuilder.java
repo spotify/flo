@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 public interface TaskBuilder {
 
   <A> TaskBuilder1<A> in(Supplier<Task<A>> task);
-  <A> TaskBuilder1<List<A>> ins(Stream<Task<A>> task);
+  <A> TaskBuilder1<List<A>> ins(Supplier<Stream<Task<A>>> task);
   <R> Task<R> process(Supplier<R> code);
 
   interface TaskBuilder1<A> {

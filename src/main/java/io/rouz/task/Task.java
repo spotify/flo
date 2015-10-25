@@ -104,11 +104,11 @@ public abstract class Task<T> {
       }
 
       @Override
-      public <A> TaskBuilder1<List<A>> ins(Stream<Task<A>> aTasks) {
+      public <A> TaskBuilder1<List<A>> ins(Supplier<Stream<Task<A>>> aTasks) {
         return new TaskBuilder1<List<A>>() {
           @Override
           public <R> Task<R> process(F1<List<A>, R> code) {
-            return create(aTasks, code, taskName, args);
+            return creates(aTasks, code, taskName, args);
           }
 
           @Override
@@ -136,17 +136,15 @@ public abstract class Task<T> {
         taskName, args);
   }
 
-  // fixme: consuming the stream here causes makes it only possible to get the output once
-  // fixme: this is different from the supplier-based tasks
-  static <A,T> Task<T> create(
-      Stream<Task<A>> aTasks,
+  static <A,T> Task<T> creates(
+      Supplier<Stream<Task<A>>> aTasks,
       F1<List<A>,T> code,
       String taskName,
       Object... args) {
     return Task.<T>create(
-        aTasks,
+        toFlatStream(aTasks),
         taskContext -> code.apply(
-            aTasks.map(t -> t.internalOut(taskContext)).collect(toList())),
+            aTasks.get().map(t -> t.internalOut(taskContext)).collect(toList())),
         taskName, args);
   }
 
@@ -202,6 +200,11 @@ public abstract class Task<T> {
   @SafeVarargs
   private static Stream<Task<?>> toStream(Supplier<? extends Task<?>>... tasks) {
     return Stream.of(tasks).map(Supplier::get);
+  }
+
+  @SafeVarargs
+  private static Stream<Task<?>> toFlatStream(Supplier<? extends Stream<? extends Task<?>>>... tasks) {
+    return Stream.of(tasks).flatMap(Supplier::get);
   }
 
   private static <T> Function<TaskContext, T> memoize(TaskId taskId, Function<TaskContext, T> fn) {

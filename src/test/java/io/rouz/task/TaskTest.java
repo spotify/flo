@@ -54,24 +54,38 @@ public class TaskTest {
 
   @Test
   public void shouldHanleStreamParameters() throws Exception {
-    AtomicInteger counter = new AtomicInteger(0);
-    Supplier<Task<Integer>> countCreator = () -> {
-      int n = counter.incrementAndGet();
-      return Task.named("Count", n)
-          .process(() -> n);
-    };
+    Supplier<Task<Integer>> countSupplier = countConstructor();
 
     // 1,2,3,4,5
     Stream<Task<Integer>> fiveInts = Stream
-        .generate(countCreator)
+        .generate(countSupplier)
         .limit(5);
 
+    Task<Integer> sum = Task.named("Sum")
+        .ins(() -> fiveInts)
+        .process(this::sumInts);
+
     // 1+2+3+4+5 = 15
+    assertThat(sum.out(), is(15));
+  }
+
+  @Test
+  public void shoulAllowMultipleRunsWithStreamParameters() throws Exception {
+    Supplier<Task<Integer>> countSupplier = countConstructor();
+
+    Supplier<Stream<Task<Integer>>> fiveInts = () -> Stream
+        .generate(countSupplier)
+        .limit(5);
+
     Task<Integer> sum = Task.named("Sum")
         .ins(fiveInts)
-        .process(intsList -> intsList.stream().reduce(0, (a, b) -> a + b));
+        .process(this::sumInts);
 
-    assertThat(sum.out(), is(15));
+    // discard first five
+    sum.out();
+
+    // 6+7+8+9+10 = 40
+    assertThat(sum.out(), is(40));
   }
 
   @Test
@@ -86,7 +100,37 @@ public class TaskTest {
 
     TaskId isEven1Id = isEven(1).id();
     TaskId evenify1Id = evenify(1).id();
+
     assertThat(taskIds, containsInOrder(evenify1Id, isEven1Id));
+  }
+
+  @Test
+  public void shouldFlattenStreamParameters() throws Exception {
+    Task<String> top = Task.named("Top")
+        .ins(() -> Stream.of(isEven(0), isEven(1)))
+        .process(results -> "done " + results.size());
+
+    List<TaskId> taskIds = top.tasksInOrder()
+        .collect(toList());
+
+    TaskId isEven1Id = isEven(1).id();
+    TaskId evenify1Id = evenify(1).id();
+
+    assertThat(taskIds.size(), is(3));
+    assertThat(taskIds, containsInOrder(evenify1Id, isEven1Id));
+  }
+
+  private Supplier<Task<Integer>> countConstructor() {
+    AtomicInteger counter = new AtomicInteger(0);
+    return () -> {
+      int n = counter.incrementAndGet();
+      return Task.named("Count", n)
+          .process(() -> n);
+    };
+  }
+
+  private int sumInts(List<Integer> intsList) {
+    return intsList.stream().reduce(0, (a, b) -> a + b);
   }
 
   private Task<EvenResult> isEven(int n) {
