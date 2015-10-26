@@ -43,6 +43,24 @@ final class TaskBuilders {
       // not type safe, but isolated to this file
       return (F1<TaskContext, R>) this.apply(fn);
     }
+
+    /**
+     * Maps this {@link Lifter} into a {@link Lifter} of a different function based on a function
+     * with the signature of the current {@link F}. The mapping function will run with the
+     * {@link TaskContext} argument available to it.
+     *
+     * Note that since we're mapping functions to new functions, the types of {@code mapFn} are
+     * reversed. Essentially, what the mapping function should do is: "given a function {@link G},
+     * give me a function {@link F} that I will apply with this {@link Lifter}". That lets us
+     * construct a {@link Lifter} for {@link G}.
+     *
+     * @param mapFn  The mapping function from {@link G} to {@link F}
+     * @param <G>    The function type of the new lifter
+     * @return A new lifter that can lift functions of type {@link G}
+     */
+    default <G> Lifter<G> mapWith(F2<TaskContext, G, F> mapFn) {
+      return g -> tc -> this.apply(mapFn.apply(tc, g)).apply(tc);
+    }
   }
 
   private static class BaseTask {
@@ -124,11 +142,10 @@ final class TaskBuilders {
       return new TB2<>(
           concat(tasks, toStream(bTask)),
           taskName, args,
-          f2 -> tc -> lifter.apply(
-              a -> f2.apply(
+          lifter.mapWith(
+              (tc, f2) -> a -> f2.apply(
                   a,
-                  bTask.get().internalOut(tc))
-          ).apply(tc));
+                  bTask.get().internalOut(tc))));
     }
 
     @Override
@@ -136,11 +153,10 @@ final class TaskBuilders {
       return new TB2<>(
           concat(tasks, toFlatStream(bTasks)),
           taskName, args,
-          f2 -> tc -> lifter.apply(
-              a -> f2.apply(
+          lifter.mapWith(
+              (tc, f2) -> a -> f2.apply(
                   a,
-                  bTasks.get().map(t -> t.internalOut(tc)).collect(toList()))
-          ).apply(tc));
+                  bTasks.get().map(t -> t.internalOut(tc)).collect(toList()))));
     }
   }
 
@@ -177,11 +193,10 @@ final class TaskBuilders {
       return new TB3<>(
           concat(tasks, toStream(cTask)),
           taskName, args,
-          f3 -> tc -> lifter.apply(
-              (a, b) -> f3.apply(
+          lifter.mapWith(
+              (tc, f3) -> (a, b) -> f3.apply(
                   a, b,
-                  cTask.get().internalOut(tc))
-          ).apply(tc));
+                  cTask.get().internalOut(tc))));
     }
 
     @Override
@@ -189,11 +204,10 @@ final class TaskBuilders {
       return new TB3<>(
           concat(tasks, toFlatStream(cTasks)),
           taskName, args,
-          f3 -> tc -> lifter.apply(
-              (a, b) -> f3.apply(
+          lifter.mapWith(
+              (tc, f3) -> (a, b) -> f3.apply(
                   a, b,
-                  cTasks.get().map(t -> t.internalOut(tc)).collect(toList()))
-          ).apply(tc));
+                  cTasks.get().map(t -> t.internalOut(tc)).collect(toList()))));
     }
   }
 
