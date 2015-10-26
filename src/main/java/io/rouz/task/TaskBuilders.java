@@ -38,7 +38,7 @@ final class TaskBuilders {
   }
 
   private interface Lifter<F> extends F1<F, F1<TaskContext, ?>> {
-    default <R> F1<TaskContext, R> castReturnType(F fn) {
+    default <R> F1<TaskContext, R> liftWithCast(F fn) {
       // force the return type of the lifter function to R
       // not type safe, but isolated to this file
       return (F1<TaskContext, R>) this.apply(fn);
@@ -129,7 +129,7 @@ final class TaskBuilders {
 
     @Override
     public <R> Task<R> process(F1<A, R> code) {
-      F1<TaskContext, R> f = lifter.castReturnType(code);
+      F1<TaskContext, R> f = lifter.liftWithCast(code);
 
       return Task.create(
           tasks,
@@ -180,7 +180,7 @@ final class TaskBuilders {
 
     @Override
     public <R> Task<R> process(F2<A, B, R> code) {
-      F1<TaskContext, R> f = lifter.castReturnType(code);
+      F1<TaskContext, R> f = lifter.liftWithCast(code);
 
       return Task.create(
           tasks,
@@ -231,7 +231,7 @@ final class TaskBuilders {
 
     @Override
     public <R> Task<R> process(F3<A, B, C, R> code) {
-      F1<TaskContext, R> f = lifter.castReturnType(code);
+      F1<TaskContext, R> f = lifter.liftWithCast(code);
 
       return Task.create(
           tasks,
