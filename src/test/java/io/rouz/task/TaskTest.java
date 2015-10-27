@@ -1,6 +1,8 @@
 package io.rouz.task;
 
 import io.rouz.task.dsl.TaskBuilder;
+import io.rouz.task.dsl.TaskBuilder.F0;
+import io.rouz.task.dsl.TaskBuilder.F1;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -10,8 +12,6 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -55,7 +55,7 @@ public class TaskTest {
 
   @Test
   public void shouldHanleStreamParameters() throws Exception {
-    Supplier<Task<Integer>> countSupplier = countConstructor();
+    F0<Task<Integer>> countSupplier = countConstructor();
 
     // 1,2,3,4,5
     Stream<Task<Integer>> fiveInts = Stream
@@ -72,7 +72,7 @@ public class TaskTest {
 
   @Test
   public void shouldHanleMixedStreamAndPlainParameters() throws Exception {
-    Supplier<Task<Integer>> countSupplier = countConstructor();
+    F0<Task<Integer>> countSupplier = countConstructor();
 
     // 1,2,3,4,5
     Stream<Task<Integer>> fiveInts = Stream
@@ -91,9 +91,9 @@ public class TaskTest {
 
   @Test
   public void shouldHanleMultipleStreamParameters() throws Exception {
-    Supplier<Task<Integer>> countSupplier = countConstructor();
+    F0<Task<Integer>> countSupplier = countConstructor();
 
-    Supplier<Stream<Task<Integer>>> fiveInts = () -> Stream
+    F0<Stream<Task<Integer>>> fiveInts = () -> Stream
         .generate(countSupplier)
         .limit(5);
 
@@ -108,9 +108,9 @@ public class TaskTest {
 
   @Test
   public void shoulAllowMultipleRunsWithStreamParameters() throws Exception {
-    Supplier<Task<Integer>> countSupplier = countConstructor();
+    F0<Task<Integer>> countSupplier = countConstructor();
 
-    Supplier<Stream<Task<Integer>>> fiveInts = () -> Stream
+    F0<Stream<Task<Integer>>> fiveInts = () -> Stream
         .generate(countSupplier)
         .limit(5);
 
@@ -127,9 +127,9 @@ public class TaskTest {
 
   @Test
   public void shouldMultipleRunsWithMultipleStreamParameters() throws Exception {
-    Supplier<Task<Integer>> countSupplier = countConstructor();
+    F0<Task<Integer>> countSupplier = countConstructor();
 
-    Supplier<Stream<Task<Integer>>> fiveInts = () -> Stream
+    F0<Stream<Task<Integer>>> fiveInts = () -> Stream
         .generate(countSupplier)
         .limit(5);
 
@@ -179,7 +179,7 @@ public class TaskTest {
 
   @Test
   public void shouldLinearizeMixedStreamAndPlainParameters() throws Exception {
-    Function<Integer, Task<Integer>> evenResult = n ->
+    F1<Integer, Task<Integer>> evenResult = n ->
         Task.named("EvenResult", n)
             .in(() -> isEven(n))
             .process(EvenResult::result);
@@ -203,7 +203,7 @@ public class TaskTest {
     assertThat(taskIds, containsInOrder(evenify1Id, evenify3Id));
   }
 
-  private Supplier<Task<Integer>> countConstructor() {
+  private F0<Task<Integer>> countConstructor() {
     AtomicInteger counter = new AtomicInteger(0);
     return () -> {
       int n = counter.incrementAndGet();

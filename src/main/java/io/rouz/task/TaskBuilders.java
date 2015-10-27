@@ -1,6 +1,7 @@
 package io.rouz.task;
 
 import io.rouz.task.dsl.TaskBuilder;
+import io.rouz.task.dsl.TaskBuilder.F0;
 import io.rouz.task.dsl.TaskBuilder.F1;
 import io.rouz.task.dsl.TaskBuilder.F2;
 import io.rouz.task.dsl.TaskBuilder.F3;
@@ -9,7 +10,6 @@ import io.rouz.task.dsl.TaskBuilder.TaskBuilder2;
 import io.rouz.task.dsl.TaskBuilder.TaskBuilder3;
 
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -85,12 +85,12 @@ final class TaskBuilders {
     }
 
     @Override
-    public <R> Task<R> process(Supplier<R> code) {
+    public <R> Task<R> process(F0<R> code) {
       return Task.create(toStream(), tc -> code.get(), taskName, args);
     }
 
     @Override
-    public <A> TaskBuilder1<A> in(Supplier<Task<A>> aTask) {
+    public <A> TaskBuilder1<A> in(F0<Task<A>> aTask) {
       return new TB1<>(
           toStream(aTask),
           taskName, args,
@@ -99,7 +99,7 @@ final class TaskBuilders {
     }
 
     @Override
-    public <A> TaskBuilder1<List<A>> ins(Supplier<Stream<Task<A>>> aTasks) {
+    public <A> TaskBuilder1<List<A>> ins(F0<Stream<Task<A>>> aTasks) {
       return new TB1<>(
           toFlatStream(aTasks),
           taskName, args,
@@ -138,7 +138,7 @@ final class TaskBuilders {
     }
 
     @Override
-    public <B> TaskBuilder2<A, B> in(Supplier<Task<B>> bTask) {
+    public <B> TaskBuilder2<A, B> in(F0<Task<B>> bTask) {
       return new TB2<>(
           concat(tasks, toStream(bTask)),
           taskName, args,
@@ -149,7 +149,7 @@ final class TaskBuilders {
     }
 
     @Override
-    public <B> TaskBuilder2<A, List<B>> ins(Supplier<Stream<Task<B>>> bTasks) {
+    public <B> TaskBuilder2<A, List<B>> ins(F0<Stream<Task<B>>> bTasks) {
       return new TB2<>(
           concat(tasks, toFlatStream(bTasks)),
           taskName, args,
@@ -189,7 +189,7 @@ final class TaskBuilders {
     }
 
     @Override
-    public <C> TaskBuilder3<A, B, C> in(Supplier<Task<C>> cTask) {
+    public <C> TaskBuilder3<A, B, C> in(F0<Task<C>> cTask) {
       return new TB3<>(
           concat(tasks, toStream(cTask)),
           taskName, args,
@@ -200,7 +200,7 @@ final class TaskBuilders {
     }
 
     @Override
-    public <C> TaskBuilder3<A, B, List<C>> ins(Supplier<Stream<Task<C>>> cTasks) {
+    public <C> TaskBuilder3<A, B, List<C>> ins(F0<Stream<Task<C>>> cTasks) {
       return new TB3<>(
           concat(tasks, toFlatStream(cTasks)),
           taskName, args,
@@ -243,22 +243,22 @@ final class TaskBuilders {
   // #############################################################################################
 
   /**
-   * Converts an array of {@link Supplier}s of {@link Task}s to a {@link Stream} of the same
+   * Converts an array of {@link F0}s of {@link Task}s to a {@link Stream} of the same
    * {@link Task}s.
    *
-   * It will only evaluate the {@link Task} instances (through calling {@link Supplier#get()})
+   * It will only evaluate the {@link Task} instances (through calling {@link F0#get()})
    * when the returned {@link Stream} is consumed. Thus it retains lazyness.
    *
    * @param tasks  An array of tasks
    * @return A stream of the same tasks
    */
   @SafeVarargs
-  private static Stream<Task<?>> toStream(Supplier<? extends Task<?>>... tasks) {
-    return Stream.of(tasks).map(Supplier::get);
+  private static Stream<Task<?>> toStream(F0<? extends Task<?>>... tasks) {
+    return Stream.of(tasks).map(F0::get);
   }
 
   @SafeVarargs
-  private static Stream<Task<?>> toFlatStream(Supplier<? extends Stream<? extends Task<?>>>... tasks) {
-    return Stream.of(tasks).flatMap(Supplier::get);
+  private static Stream<Task<?>> toFlatStream(F0<? extends Stream<? extends Task<?>>>... tasks) {
+    return Stream.of(tasks).flatMap(F0::get);
   }
 }

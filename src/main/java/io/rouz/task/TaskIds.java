@@ -2,6 +2,7 @@ package io.rouz.task;
 
 import com.google.auto.value.AutoValue;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -10,7 +11,7 @@ import java.util.Objects;
  * {@link AutoValue} implementation of {@link TaskId}
  */
 @AutoValue
-abstract class TaskIds implements TaskId {
+abstract class TaskIds implements TaskId, Serializable {
 
   abstract List<Object> args();
 

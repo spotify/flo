@@ -2,7 +2,10 @@ package io.rouz.task.dsl;
 
 import io.rouz.task.Task;
 
+import java.io.Serializable;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -16,20 +19,20 @@ import java.util.stream.Stream;
  */
 public interface TaskBuilder {
 
-  <R> Task<R> process(Supplier<R> code);
-  <A> TaskBuilder1<A> in(Supplier<Task<A>> task);
-  <A> TaskBuilder1<List<A>> ins(Supplier<Stream<Task<A>>> tasks);
+  <R> Task<R> process(F0<R> code);
+  <A> TaskBuilder1<A> in(F0<Task<A>> task);
+  <A> TaskBuilder1<List<A>> ins(F0<Stream<Task<A>>> tasks);
 
   interface TaskBuilder1<A> {
     <R> Task<R> process(F1<A, R> code);
-    <B> TaskBuilder2<A, B> in(Supplier<Task<B>> task);
-    <B> TaskBuilder2<A, List<B>> ins(Supplier<Stream<Task<B>>> tasks);
+    <B> TaskBuilder2<A, B> in(F0<Task<B>> task);
+    <B> TaskBuilder2<A, List<B>> ins(F0<Stream<Task<B>>> tasks);
   }
 
   interface TaskBuilder2<A, B> {
     <R> Task<R> process(F2<A, B, R> code);
-    <C> TaskBuilder3<A, B, C> in(Supplier<Task<C>> task);
-    <C> TaskBuilder3<A, B, List<C>> ins(Supplier<Stream<Task<C>>> tasks);
+    <C> TaskBuilder3<A, B, C> in(F0<Task<C>> task);
+    <C> TaskBuilder3<A, B, List<C>> ins(F0<Stream<Task<C>>> tasks);
   }
 
   interface TaskBuilder3<A, B, C> {
@@ -37,17 +40,22 @@ public interface TaskBuilder {
   }
 
   @FunctionalInterface
-  interface F1<A, R> {
+  interface F0<R> extends Supplier<R>, Serializable {
+    R get();
+  }
+
+  @FunctionalInterface
+  interface F1<A, R> extends Function<A, R>, Serializable {
     R apply(A a);
   }
 
   @FunctionalInterface
-  interface F2<A, B, R> {
+  interface F2<A, B, R> extends BiFunction<A, B, R>, Serializable {
     R apply(A a, B b);
   }
 
   @FunctionalInterface
-  interface F3<A, B, C, R> {
+  interface F3<A, B, C, R> extends Serializable {
     R apply(A a, B b, C c);
   }
 }

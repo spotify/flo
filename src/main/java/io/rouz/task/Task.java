@@ -3,14 +3,15 @@ package io.rouz.task;
 import com.google.auto.value.AutoValue;
 
 import io.rouz.task.dsl.TaskBuilder;
+import io.rouz.task.dsl.TaskBuilder.F0;
+import io.rouz.task.dsl.TaskBuilder.F1;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -26,14 +27,14 @@ import java.util.stream.Stream;
  * @param <T>  A type carrying the execution metadata of this task
  */
 @AutoValue
-public abstract class Task<T> {
+public abstract class Task<T> implements Serializable {
 
   private static final Logger LOG = LoggerFactory.getLogger(Task.class);
 
   public abstract TaskId id();
 
   abstract Stream<? extends Task<?>> inputs();
-  abstract Function<TaskContext, T> code();
+  abstract F1<TaskContext, T> code();
 
   public Stream<TaskId> tasksInOrder() {
     return tasksInOrder(new LinkedHashSet<>());
@@ -64,20 +65,20 @@ public abstract class Task<T> {
     return TaskBuilders.rootBuilder(taskName, args);
   }
 
-  public static <T> Task<T> create(Supplier<T> code, String taskName, Object... args) {
+  public static <T> Task<T> create(F0<T> code, String taskName, Object... args) {
     return create(Stream.empty(), tc -> code.get(), taskName, args);
   }
 
   static <T> Task<T> create(
       Stream<? extends Task<?>> inputs,
-      Function<TaskContext, T> code,
+      F1<TaskContext, T> code,
       String taskName,
       Object... args) {
     final TaskId taskId = TaskIds.create(taskName, args);
     return new AutoValue_Task<>(taskId, inputs, memoize(taskId, code));
   }
 
-  private static <T> Function<TaskContext, T> memoize(TaskId taskId, Function<TaskContext, T> fn) {
+  private static <T> F1<TaskContext, T> memoize(TaskId taskId, F1<TaskContext, T> fn) {
     return taskContext -> {
       if (taskContext.has(taskId)) {
         final T value = taskContext.value(taskId);
