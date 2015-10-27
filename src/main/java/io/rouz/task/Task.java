@@ -9,10 +9,13 @@ import io.rouz.task.dsl.TaskBuilder.F1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * TODO:
@@ -67,6 +70,18 @@ public abstract class Task<T> implements Serializable {
 
   public static <T> Task<T> create(F0<T> code, String taskName, Object... args) {
     return create(Stream.empty(), tc -> code.get(), taskName, args);
+  }
+
+  /**
+   * Used to resolve a serialization proxy.
+   *
+   * See {@link NonStreamTask}
+   *
+   * @return a serializable proxy for this task
+   * @throws ObjectStreamException
+   */
+  protected Object writeReplace() throws ObjectStreamException {
+    return NonStreamTask.create(id(), inputs().collect(toList()), code());
   }
 
   static <T> Task<T> create(
