@@ -75,8 +75,7 @@ public class SerializationTest {
   }
 
   private Task<String> closure(String arg) {
-    return Task.named("Closed")
-        .process(() -> arg + " is enclosed");
+    return Task.create(() -> arg + " is enclosed", "Closed");
   }
 
   @Test(expected = NotSerializableException.class)

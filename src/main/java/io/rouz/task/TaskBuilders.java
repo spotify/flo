@@ -30,9 +30,6 @@ import static java.util.stream.Stream.concat;
  */
 final class TaskBuilders {
 
-  private TaskBuilders() {
-  }
-
   static TaskBuilder rootBuilder(String taskName, Object[] args) {
     return new Builder0(taskName, args);
   }
