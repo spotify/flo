@@ -1,11 +1,14 @@
 package io.rouz.task;
 
+import io.rouz.task.dsl.TaskBuilder.F0;
+
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
@@ -17,10 +20,12 @@ import static org.junit.Assert.fail;
 
 public class SerializationTest {
 
+  transient File tempFile = tempFile();
+
+  final String instanceField = "from instance";
+
   @Test
   public void shouldJavaUtilSerialize() throws Exception {
-    File tempFile = tempFile();
-
     Task<Long> task1 = Task.named("Foo", "Bar", 39)
         .process(() -> 9999L);
     Task<String> task2 = Task.named("Baz", 40)
@@ -28,8 +33,8 @@ public class SerializationTest {
         .ins(() -> Stream.of(task1))
         .process((t1, t1l) -> t1l + " hello " + (t1 + 5));
 
-    serialize(task2, tempFile);
-    Task<?> des = deserialize(tempFile);
+    serialize(task2);
+    Task<?> des = deserialize();
 
     List<Task<?>> deps = des.inputs().collect(toList());
 
@@ -38,16 +43,35 @@ public class SerializationTest {
     assertEquals(deps.get(0).id(), task1.id());
   }
 
+  @Test(expected = NotSerializableException.class)
+  public void shouldNotSerializeWithInstanceFieldReference() throws Exception {
+    Task<String> task = Task.named("WithRef")
+        .process(() -> instanceField + " causes an outer reference");
+
+    serialize(task);
+  }
+
   @Test
-  public void shouldWorkWithEnclosedValues() throws Exception {
-    File tempFile = tempFile();
+  public void shouldSerializeWithLocalReference() throws Exception {
+    String local = instanceField;
 
-    Task<String> task = closure("woop");
+    Task<String> task = Task.named("WithLocalRef")
+        .process(() -> local + " won't cause an outer reference");
 
-    serialize(task, tempFile);
-    Task<?> des = deserialize(tempFile);
+    serialize(task);
+    Task<?> des = deserialize();
 
-    assertEquals(des.out(), "woop is enclosed");
+    assertEquals(des.out(), "from instance won't cause an outer reference");
+  }
+
+  @Test
+  public void shouldSerializeWithMethodArgument() throws Exception {
+    Task<String> task = closure(instanceField);
+
+    serialize(task);
+    Task<?> des = deserialize();
+
+    assertEquals(des.out(), "from instance is enclosed");
   }
 
   private Task<String> closure(String arg) {
@@ -55,35 +79,41 @@ public class SerializationTest {
         .process(() -> arg + " is enclosed");
   }
 
-  private void serialize(Task<?> task, File file) {
-    try {
-      FileOutputStream fos = new FileOutputStream(file);
-      ObjectOutputStream oos = new ObjectOutputStream(fos);
+  @Test(expected = NotSerializableException.class)
+  public void shouldNotSerializeAnonymousClass() throws Exception {
+    Task<String> task = Task.named("WithAnonClass")
+        .process(
+            new F0<String>() {
+              @Override
+              public String get() {
+                return "yes? no!";
+              }
+            });
+
+    serialize(task);
+  }
+
+  private void serialize(Task<?> task) throws Exception{
+    try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(tempFile))) {
       oos.writeObject(task);
-      oos.close();
-    } catch (Exception ex) {
-      fail("Exception thrown during serialization: " + ex.toString());
     }
   }
 
-  private Task<?> deserialize(File file) {
-    try {
-      FileInputStream fis = new FileInputStream(file);
-      ObjectInputStream ois = new ObjectInputStream(fis);
-      Task<?> task = (Task<?>) ois.readObject();
-      ois.close();
+  private Task<?> deserialize() throws Exception {
+    try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(tempFile))) {
+      return (Task<?>) ois.readObject();
+    }
+  }
 
-      return task;
-    } catch (Exception ex) {
-      fail("Exception thrown during deserialization: " + ex.toString());
+  private File tempFile() {
+    try {
+      File tempFile = File.createTempFile("tempdata", ".bin");
+      tempFile.deleteOnExit();
+      return tempFile;
+    } catch (IOException e) {
+      fail("Could not create temp file");
     }
 
     throw new IllegalStateException("should not reach");
-  }
-
-  private File tempFile() throws IOException {
-    File tempFile = File.createTempFile("tempdata", ".bin");
-    tempFile.deleteOnExit();
-    return tempFile;
   }
 }
