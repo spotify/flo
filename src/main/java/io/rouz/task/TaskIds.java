@@ -16,7 +16,10 @@ abstract class TaskIds implements TaskId, Serializable {
   abstract List<Object> args();
 
   static TaskId create(String name, Object... args) {
-    return new AutoValue_TaskIds(name, Objects.hash(args), Arrays.asList(args));
+    return new AutoValue_TaskIds(
+        name,
+        name.hashCode() * 1000003 ^ Objects.hash(args),
+        Arrays.asList(args));
   }
 
   @Override
