@@ -1,7 +1,14 @@
 package io.rouz;
 
 import io.rouz.task.Task;
+import io.rouz.task.cli.Cli;
 import io.rouz.task.dsl.TaskBuilder;
+import io.rouz.task.proc.Exec;
+
+import java.io.IOException;
+import java.util.Arrays;
+
+import static io.rouz.task.proc.Exec.exec;
 
 /**
  * Task definitions have (TD)
@@ -33,18 +40,20 @@ import io.rouz.task.dsl.TaskBuilder;
  */
 public class Scratch {
 
-  public static void main(String[] args) {
-    final String input = args.length > 0
-        ? args[0]
-        : "foobarbaz";
-    Task<String> task1 = MyTask.create(input);
+  public static void main(String[] args) throws IOException {
+    Task<String> task1 = MyTask.create("foobarbaz");
     Task<Integer> task2 = Adder.create(5, 7);
 
-    task1.tasksInOrder()
-        .forEachOrdered(taskId -> System.out.println("taskId = " + taskId));
+    Task<Exec.Result> exec = Task.named("exec", "/bin/sh")
+        .in(() -> task1)
+        .in(() -> task2)
+        .process(exec((str, i) -> args("/bin/sh", "-c", "\"echo " + i + "\"")));
 
-    System.out.println("task1.out() = " + task1.out());
-    System.out.println("task2.out() = " + task2.out());
+    Cli.run(Arrays.asList(task1, task2, exec), args);
+  }
+
+  private static String[] args(String... args) {
+    return args;
   }
 
   static class MyTask {
@@ -58,7 +67,8 @@ public class Scratch {
     }
 
     static String something(String parameter, int sum, int fib) {
-      return "len('" + parameter + "') + " + PLUS + " = " + sum + ", btw fib(len) = " + fib;
+      return "len('" + parameter + "') + " + PLUS + " = " + sum + ", " +
+             "btw fib(" + parameter.length() + ") = "+ fib;
     }
   }
 
