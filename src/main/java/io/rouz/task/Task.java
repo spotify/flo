@@ -97,7 +97,7 @@ public abstract class Task<T> implements Serializable {
     return taskContext -> {
       if (taskContext.has(taskId)) {
         final T value = taskContext.value(taskId);
-        LOG.info("Found calculated value for {} = {}", taskId, value);
+        LOG.debug("Found calculated value for {} = {}", taskId, value);
         return value;
       } else {
         final T value = fn.apply(taskContext);
