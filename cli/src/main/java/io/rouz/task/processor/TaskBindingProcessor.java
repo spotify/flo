@@ -18,6 +18,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -27,7 +28,6 @@ import javax.lang.model.util.Types;
 
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
-import static javax.tools.Diagnostic.Kind.WARNING;
 
 /**
  * TODO: document.
@@ -35,6 +35,8 @@ import static javax.tools.Diagnostic.Kind.WARNING;
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @AutoService(Processor.class)
 public class TaskBindingProcessor extends AbstractProcessor {
+
+  private final String ROOT = RootTask.class.getSimpleName();
 
   private Types typeUtils;
   private Elements elementUtils;
@@ -99,11 +101,21 @@ public class TaskBindingProcessor extends AbstractProcessor {
   }
 
   private boolean validate(ExecutableElement method) {
+    final Set<Modifier> modifiers = method.getModifiers();
+    if (!modifiers.contains(Modifier.STATIC)) {
+      messager.printMessage(
+          ERROR,
+          ROOT + " annotated method must be static",
+          method);
+
+      return false;
+    }
+
     final TypeMirror returnType = method.getReturnType();
     if (!typeUtils.isAssignable(returnType, taskWildcard)) {
       messager.printMessage(
           ERROR,
-          "method does not return a " + taskWildcard,
+          ROOT + " annotated method must return a " + taskWildcard,
           method);
 
       return false;

@@ -1,6 +1,8 @@
+package failing;
+
 import io.rouz.task.processor.RootTask;
 
-class Test {
+class MethodNotReturningTask {
 
   @RootTask
   static String notTask() {
