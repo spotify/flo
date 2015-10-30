@@ -4,7 +4,12 @@ import com.google.auto.service.AutoService;
 
 import io.rouz.task.Task;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -19,6 +24,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -26,6 +32,8 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
+import static java.util.Optional.empty;
+import static java.util.Optional.of;
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 
@@ -45,6 +53,8 @@ public class TaskBindingProcessor extends AbstractProcessor {
 
   DeclaredType taskWildcard;
 
+  List<Binding> bindings = new ArrayList<>();
+
   @Override
   public synchronized void init(ProcessingEnvironment processingEnv) {
     super.init(processingEnv);
@@ -55,7 +65,6 @@ public class TaskBindingProcessor extends AbstractProcessor {
 
     taskWildcard = getWildcardTaskType();
 
-    messager.printMessage(NOTE, taskWildcard.toString());
     messager.printMessage(NOTE, TaskBindingProcessor.class.getSimpleName() + " loaded");
   }
 
@@ -68,25 +77,33 @@ public class TaskBindingProcessor extends AbstractProcessor {
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    boolean newBindings = false;
+
     for (TypeElement annotation : annotations) {
-      messager.printMessage(NOTE, "Processing " + annotation.getSimpleName());
+      messager.printMessage(NOTE, "Processing @" + annotation.getSimpleName() + " annotation");
       for (Element element : roundEnv.getElementsAnnotatedWith(annotation)) {
         if (element.getKind() != ElementKind.METHOD) {
           messager.printMessage(ERROR, "only methods can be annotated", element);
           return true;
         }
-        messager.printMessage(NOTE, "found annotated method", element);
 
-        createRoot((ExecutableElement) element);
+        Optional<Binding> binding = createBinding((ExecutableElement) element);
+        binding.ifPresent(bindings::add);
+        newBindings |= binding.isPresent();
       }
     }
 
-    return true;
+    for (Binding binding : bindings) {
+      messager.printMessage(NOTE, "Binding " + binding);
+    }
+    bindings.clear();
+
+    return newBindings;
   }
 
-  private void createRoot(ExecutableElement method) {
+  private Optional<Binding> createBinding(ExecutableElement method) {
     if (!validate(method)) {
-      return;
+      return empty();
     }
 
     messager.printMessage(NOTE, "name " + method.getSimpleName());
@@ -94,14 +111,18 @@ public class TaskBindingProcessor extends AbstractProcessor {
     messager.printMessage(NOTE, "receiver type " + method.getReceiverType());
     messager.printMessage(NOTE, "of Task<?> " + typeUtils.isAssignable(method.getReturnType(), taskWildcard));
     messager.printMessage(NOTE, "enclosing type " + method.getEnclosingElement());
+
+    Map<Name, TypeMirror> args = new LinkedHashMap<>();
+
     messager.printMessage(NOTE, "parameters:");
     for (VariableElement variableElement : method.getParameters()) {
+      args.put(variableElement.getSimpleName(), variableElement.asType());
       messager.printMessage(NOTE, "  name: " + variableElement.getSimpleName());
       messager.printMessage(NOTE, "  type: " + variableElement.asType().toString());
       messager.printMessage(NOTE, "  ---");
     }
 
-
+    return of(new AutoValue_Binding(method.getSimpleName(), args));
   }
 
   private boolean validate(ExecutableElement method) {
