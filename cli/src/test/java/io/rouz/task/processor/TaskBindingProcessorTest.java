@@ -21,6 +21,26 @@ public class TaskBindingProcessorTest {
   }
 
   @Test
+  public void failOnPrivateMethod() {
+    JavaFileObject source = forResource("failing/PrivateMethod.java");
+    assert_().about(javaSource())
+        .that(source)
+        .processedWith(new TaskBindingProcessor())
+        .failsToCompile()
+        .withErrorContaining("annotated method must not be private");
+  }
+
+  @Test
+  public void failOnProtectedMethod() {
+    JavaFileObject source = forResource("failing/ProtectedMethod.java");
+    assert_().about(javaSource())
+        .that(source)
+        .processedWith(new TaskBindingProcessor())
+        .failsToCompile()
+        .withErrorContaining("annotated method must not be protected");
+  }
+
+  @Test
   public void failOnMethodNotReturningTask() {
     JavaFileObject source = forResource("failing/MethodNotReturningTask.java");
     assert_().about(javaSource())

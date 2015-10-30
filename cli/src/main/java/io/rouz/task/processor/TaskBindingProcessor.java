@@ -36,7 +36,7 @@ import static javax.tools.Diagnostic.Kind.NOTE;
 @AutoService(Processor.class)
 public class TaskBindingProcessor extends AbstractProcessor {
 
-  private final String ROOT = RootTask.class.getSimpleName();
+  private final String ROOT = "@" + RootTask.class.getSimpleName();
 
   private Types typeUtils;
   private Elements elementUtils;
@@ -91,33 +91,39 @@ public class TaskBindingProcessor extends AbstractProcessor {
 
     messager.printMessage(NOTE, "name " + method.getSimpleName());
     messager.printMessage(NOTE, "return type " + method.getReturnType());
+    messager.printMessage(NOTE, "receiver type " + method.getReceiverType());
     messager.printMessage(NOTE, "of Task<?> " + typeUtils.isAssignable(method.getReturnType(), taskWildcard));
+    messager.printMessage(NOTE, "enclosing type " + method.getEnclosingElement());
     messager.printMessage(NOTE, "parameters:");
     for (VariableElement variableElement : method.getParameters()) {
       messager.printMessage(NOTE, "  name: " + variableElement.getSimpleName());
       messager.printMessage(NOTE, "  type: " + variableElement.asType().toString());
       messager.printMessage(NOTE, "  ---");
     }
+
+
   }
 
   private boolean validate(ExecutableElement method) {
     final Set<Modifier> modifiers = method.getModifiers();
     if (!modifiers.contains(Modifier.STATIC)) {
-      messager.printMessage(
-          ERROR,
-          ROOT + " annotated method must be static",
-          method);
+      messager.printMessage(ERROR, ROOT + " annotated method must be static", method);
+      return false;
+    }
 
+    if (modifiers.contains(Modifier.PRIVATE)) {
+      messager.printMessage(ERROR, ROOT + " annotated method must not be private", method);
+      return false;
+    }
+
+    if (modifiers.contains(Modifier.PROTECTED)) {
+      messager.printMessage(ERROR, ROOT + " annotated method must not be protected", method);
       return false;
     }
 
     final TypeMirror returnType = method.getReturnType();
     if (!typeUtils.isAssignable(returnType, taskWildcard)) {
-      messager.printMessage(
-          ERROR,
-          ROOT + " annotated method must return a " + taskWildcard,
-          method);
-
+      messager.printMessage(ERROR, ROOT + " annotated method must return a " + taskWildcard, method);
       return false;
     }
 

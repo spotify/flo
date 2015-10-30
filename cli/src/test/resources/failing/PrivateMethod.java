@@ -3,10 +3,10 @@ package failing;
 import io.rouz.task.Task;
 import io.rouz.task.processor.RootTask;
 
-class NonStaticMethod {
+class PrivateMethod {
 
   @RootTask
-  Task<?> instanceMethod() {
+  private static Task<?> privateMethod() {
     return null;
   }
 }
