@@ -47,7 +47,7 @@ public class Scratch {
     Task<Exec.Result> exec = Task.named("exec", "/bin/sh")
         .in(() -> task1)
         .in(() -> task2)
-        .process(exec((str, i) -> args("/bin/sh", "-c", "\"echo " + i + "\"")));
+        .process(Exec.exec((str, i) -> args("/bin/sh", "-c", "\"echo " + i + "\"")));
 
     Cli.run(Arrays.asList(task1, task2, exec), args);
   }
