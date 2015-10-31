@@ -27,6 +27,17 @@ public class TaskBindingProcessorTest {
   }
 
   @Test
+  public void shouldCompileArgsTaskBinding() {
+    JavaFileObject source = forResource("compiling/ArgsTaskConstructor.java");
+    assert_().about(javaSource())
+        .that(source)
+        .processedWith(processor)
+        .compilesWithoutError()
+        .and()
+        .generatesSources(forResource("out/ArgsTaskConstructorFactory.java"));
+  }
+
+  @Test
   public void shouldPutFactoryInCommonPackage() throws Exception {
     JavaFileObject source1 = forResource("compiling/Sibling1.java");
     JavaFileObject source2 = forResource("compiling/Sibling2.java");

@@ -43,7 +43,7 @@ import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
-import static javax.lang.model.type.TypeKind.INT;
+import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 
@@ -128,11 +128,15 @@ public class TaskBindingProcessor extends AbstractProcessor {
 
     messager.printMessage(NOTE, "parameters:");
     for (VariableElement variableElement : method.getParameters()) {
-      args.add(Binding.argument(variableElement.getSimpleName(), variableElement.asType()));
-      messager.printMessage(NOTE, "  name: " + variableElement.getSimpleName());
-      messager.printMessage(NOTE, "  type: " + variableElement.asType().toString());
+      final Name name = variableElement.getSimpleName();
+      final TypeMirror type = variableElement.asType();
+
+      args.add(Binding.argument(name, type));
+      messager.printMessage(NOTE, "  name: " + name);
+      messager.printMessage(NOTE, "  type: " + type.toString());
       messager.printMessage(NOTE, "  ---");
     }
+
     messager.printMessage(NOTE, "---");
 
     final TypeElement enclosingClass = enclosingClass(method);
@@ -179,25 +183,42 @@ public class TaskBindingProcessor extends AbstractProcessor {
         .returns(TypeName.get(binding.returnType()))
         .addParameter(TypeName.get(mapStringString()), ARGS);
 
+    final StringBuilder sb = new StringBuilder();
     for (Binding.Argument argument : binding.arguments()) {
-      // FIXME: this doesn't work
-      if (typeUtils.isAssignable(typeMirror(String.class), argument.type())) {
+      final TypeMirror type = argument.type().getKind() == DECLARED
+          ? refresh(argument.type())
+          : argument.type();
+
+      if (typeUtils.isAssignable(typeMirror(String.class), type)) {
         methodBuilder.addStatement(
             "$T $N = $N.get($S)",
             String.class, argument.name(),
             ARGS, argument.name());
-      }
-      if (typeUtils.isAssignable(typeUtils.getPrimitiveType(INT), argument.type())) {
+      } else
+      if (typeUtils.isAssignable(typeMirror(Double.class), type)) {
+        methodBuilder.addStatement(
+            "$T $N = $T.parseDouble($N.get($S))",
+            double.class, argument.name(),
+            Double.class,
+            ARGS, argument.name());
+      } else
+      if (typeUtils.isAssignable(typeMirror(Integer.class), type)) {
         methodBuilder.addStatement(
             "$T $N = $T.parseInt($N.get($S))",
             int.class, argument.name(),
             Integer.class,
             ARGS, argument.name());
       }
+
+      sb.append(argument.name()).append(", ");
     }
 
+    final String callArgs = sb.substring(0, Math.max(sb.length() - 2, 0));
     return methodBuilder
-        .addStatement("return $T.$N()", binding.enclosingClass(), binding.name())
+        .addStatement(
+            "return $T.$N(" + callArgs + ")",
+            binding.enclosingClass(),
+            binding.name())
         .build();
   }
 
@@ -267,10 +288,6 @@ public class TaskBindingProcessor extends AbstractProcessor {
     return elementUtils.getPackageElement(common);
   }
 
-  private <T> TypeMirror typeMirror(Class<? extends T> clazz) {
-    return typeElement(clazz).asType();
-  }
-
   private DeclaredType taskWildcard() {
     final TypeElement task = typeElement(Task.class);
     return typeUtils.getDeclaredType(task, typeUtils.getWildcardType(null, null));
@@ -282,7 +299,15 @@ public class TaskBindingProcessor extends AbstractProcessor {
     return typeUtils.getDeclaredType(map, string.asType(), string.asType());
   }
 
-  private <T> TypeElement typeElement(Class<? extends T> clazz) {
+  private TypeMirror refresh(TypeMirror typeMirror) {
+    return elementUtils.getTypeElement(typeMirror.toString()).asType();
+  }
+
+  private TypeMirror typeMirror(Class<?> clazz) {
+    return typeElement(clazz).asType();
+  }
+
+  private TypeElement typeElement(Class<?> clazz) {
     return elementUtils.getTypeElement(clazz.getCanonicalName());
   }
 
