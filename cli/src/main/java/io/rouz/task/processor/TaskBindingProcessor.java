@@ -180,6 +180,7 @@ public class TaskBindingProcessor extends AbstractProcessor {
      */
 
     return JavaFile.builder(commonPackage.toString(), factoryClassBuilder.build())
+        .skipJavaLangImports(true)
         .build();
   }
 
