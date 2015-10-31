@@ -4,7 +4,9 @@ import com.google.auto.value.AutoValue;
 
 import java.util.List;
 
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -12,6 +14,12 @@ import javax.lang.model.type.TypeMirror;
  */
 @AutoValue
 abstract class Binding {
+
+  abstract ExecutableElement method();
+
+  abstract TypeElement enclosingClass();
+
+  abstract TypeMirror returnType();
 
   abstract Name name();
 
@@ -25,8 +33,13 @@ abstract class Binding {
     abstract TypeMirror type();
   }
 
-  static Binding create(Name name, List<Argument> arguments) {
-    return new AutoValue_Binding(name, arguments);
+  static Binding create(
+      ExecutableElement method,
+      TypeElement enclosingClass,
+      TypeMirror returnType,
+      Name name,
+      List<Argument> arguments) {
+    return new AutoValue_Binding(method, enclosingClass, returnType, name, arguments);
   }
 
   static Argument argument(Name name, TypeMirror type) {
