@@ -9,6 +9,7 @@ import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -65,7 +66,7 @@ public class TaskBindingProcessor extends AbstractProcessor {
   private Filer filer;
   private Messager messager;
 
-  private List<Binding> bindings = new ArrayList<>();
+  final Map<String, List<Binding>> bindingsByPackage = new HashMap<>();
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -87,38 +88,41 @@ public class TaskBindingProcessor extends AbstractProcessor {
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-    boolean newBindings = false;
-
     for (TypeElement annotation : annotations) {
       messager.printMessage(NOTE, "Processing @" + annotation.getSimpleName() + " annotation");
       for (Element element : roundEnv.getElementsAnnotatedWith(annotation)) {
         if (element.getKind() != ElementKind.METHOD) {
-          messager.printMessage(ERROR, "only methods can be annotated", element);
+          messager.printMessage(ERROR, "only methods can be annotated with " + ROOT, element);
           return true;
         }
 
         Optional<Binding> binding = createBinding((ExecutableElement) element);
-        binding.ifPresent(bindings::add);
-        newBindings |= binding.isPresent();
+        binding.ifPresent(this::collectBinding);
       }
     }
 
-    if (!newBindings && !bindings.isEmpty()) {
-      for (Binding binding : bindings) {
+    if (!bindingsByPackage.isEmpty()) {
+      for (List<Binding> binding : bindingsByPackage.values()) {
         messager.printMessage(NOTE, "Binding " + binding);
+        try {
+          bindingFactory(binding).writeTo(filer);
+        } catch (IOException e) {
+          messager.printMessage(ERROR, "Failed to write source for " + ROOT + " bindings: " + e);
+        } catch (RuntimeException e) {
+          messager.printMessage(ERROR, "Error during " + ROOT + " binding generation");
+        }
       }
-
-      try {
-        bindingFactory(bindings).writeTo(filer);
-      } catch (IOException e) {
-        messager.printMessage(ERROR, "Failed to write source for " + ROOT + " bindings: " + e);
-      } catch (RuntimeException e) {
-        messager.printMessage(ERROR, "Error during " + ROOT + " binding generation");
-      }
-      bindings.clear();
+      bindingsByPackage.clear();
     }
 
-    return newBindings;
+    return true;
+  }
+
+  private void collectBinding(Binding binding) {
+    final PackageElement bindingPackage = elementUtils.getPackageOf(binding.method());
+    bindingsByPackage
+        .computeIfAbsent(bindingPackage.toString(), p -> new ArrayList<>())
+        .add(binding);
   }
 
   private Optional<Binding> createBinding(ExecutableElement method) {

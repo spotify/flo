@@ -46,7 +46,9 @@ public class TaskBindingProcessorTest {
         .processedWith(processor)
         .compilesWithoutError()
         .and()
-        .generatesSources(forResource("out/SiblingCommonPackage.java"));
+        .generatesSources(
+            forResource("out/Sibling1Factory.java"),
+            forResource("out/Sibling2Factory.java"));
   }
 
   @Test
