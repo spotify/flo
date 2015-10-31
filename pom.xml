@@ -12,6 +12,7 @@
     <modules>
         <module>workflow</module>
         <module>cli</module>
+        <module>test</module>
     </modules>
 
     <scm>
@@ -71,6 +72,13 @@
                 <groupId>com.google.truth</groupId>
                 <artifactId>truth</artifactId>
                 <version>0.24</version>
+            </dependency>
+
+            <!-- version resolution -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>18.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

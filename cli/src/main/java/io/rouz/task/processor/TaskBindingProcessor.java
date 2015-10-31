@@ -1,7 +1,5 @@
 package io.rouz.task.processor;
 
-import com.google.auto.service.AutoService;
-
 import io.rouz.task.Task;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.JavaFile;
@@ -24,7 +22,6 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
@@ -54,7 +51,6 @@ import static javax.tools.Diagnostic.Kind.NOTE;
  * TODO: document.
  */
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-@AutoService(Processor.class)
 public class TaskBindingProcessor extends AbstractProcessor {
 
   private static final AnnotationSpec GENERATED_ANNOTATION = AnnotationSpec.builder(Generated.class)
