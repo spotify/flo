@@ -112,6 +112,8 @@ public class TaskBindingProcessor extends AbstractProcessor {
         bindingFactory(bindings).writeTo(filer);
       } catch (IOException e) {
         messager.printMessage(ERROR, "Failed to write source for " + ROOT + " bindings: " + e);
+      } catch (RuntimeException e) {
+        messager.printMessage(ERROR, "Error during " + ROOT + " binding generation");
       }
       bindings.clear();
     }
@@ -208,6 +210,12 @@ public class TaskBindingProcessor extends AbstractProcessor {
             int.class, argument.name(),
             Integer.class,
             ARGS, argument.name());
+      } else {
+        messager.printMessage(
+            ERROR,
+            "Unsupported argument type for " + ROOT + " annotation: " + type,
+            binding.method());
+        throw new RuntimeException("abort");
       }
 
       sb.append(argument.name()).append(", ");

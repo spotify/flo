@@ -50,6 +50,16 @@ public class TaskBindingProcessorTest {
   }
 
   @Test
+  public void failOnUnsupportedArgType() {
+    JavaFileObject source = forResource("failing/UnsupportedArgTask.java");
+    assert_().about(javaSource())
+        .that(source)
+        .processedWith(processor)
+        .failsToCompile()
+        .withErrorContaining("Unsupported argument type for @RootTask annotation: java.util.List");
+  }
+
+  @Test
   public void failOnMethodNotReturningTask() {
     JavaFileObject source = forResource("failing/MethodNotReturningTask.java");
     assert_().about(javaSource())
