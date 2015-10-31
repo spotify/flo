@@ -3,6 +3,7 @@ package io.rouz.task.processor;
 import com.google.auto.service.AutoService;
 
 import io.rouz.task.Task;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
@@ -18,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Generated;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -54,6 +56,10 @@ import static javax.tools.Diagnostic.Kind.NOTE;
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @AutoService(Processor.class)
 public class TaskBindingProcessor extends AbstractProcessor {
+
+  private static final AnnotationSpec GENERATED_ANNOTATION = AnnotationSpec.builder(Generated.class)
+      .addMember("value", "$S", TaskBindingProcessor.class.getCanonicalName())
+      .build();
 
   private static final String ROOT = "@" + RootTask.class.getSimpleName();
   private static final String ARGS = "$args";
@@ -144,6 +150,7 @@ public class TaskBindingProcessor extends AbstractProcessor {
     final Name commonPackage = commonPackage(bindings).getQualifiedName();
 
     final TypeSpec.Builder factoryClassBuilder = classBuilder("NameMeFactory")
+        .addAnnotation(GENERATED_ANNOTATION)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
     factoryClassBuilder.addMethod(
