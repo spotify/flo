@@ -5,10 +5,8 @@ import com.google.auto.service.AutoService;
 import io.rouz.task.Task;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -24,7 +22,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -93,10 +90,12 @@ public class TaskBindingProcessor extends AbstractProcessor {
       }
     }
 
-    for (Binding binding : bindings) {
-      messager.printMessage(NOTE, "Binding " + binding);
+    if (!newBindings) {
+      for (Binding binding : bindings) {
+        messager.printMessage(NOTE, "Binding " + binding);
+      }
+      bindings.clear();
     }
-    bindings.clear();
 
     return newBindings;
   }
@@ -112,17 +111,17 @@ public class TaskBindingProcessor extends AbstractProcessor {
     messager.printMessage(NOTE, "of Task<?> " + typeUtils.isAssignable(method.getReturnType(), taskWildcard));
     messager.printMessage(NOTE, "enclosing type " + method.getEnclosingElement());
 
-    Map<Name, TypeMirror> args = new LinkedHashMap<>();
+    List<Binding.Argument> args = new ArrayList<>();
 
     messager.printMessage(NOTE, "parameters:");
     for (VariableElement variableElement : method.getParameters()) {
-      args.put(variableElement.getSimpleName(), variableElement.asType());
+      args.add(Binding.argument(variableElement.getSimpleName(), variableElement.asType()));
       messager.printMessage(NOTE, "  name: " + variableElement.getSimpleName());
       messager.printMessage(NOTE, "  type: " + variableElement.asType().toString());
       messager.printMessage(NOTE, "  ---");
     }
 
-    return of(new AutoValue_Binding(method.getSimpleName(), args));
+    return of(Binding.create(method.getSimpleName(), args));
   }
 
   private boolean validate(ExecutableElement method) {

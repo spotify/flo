@@ -10,12 +10,14 @@ import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 
 public class TaskBindingProcessorTest {
 
+  TaskBindingProcessor processor = new TaskBindingProcessor();
+
   @Test
   public void failOnNonStaticMethod() {
     JavaFileObject source = forResource("failing/NonStaticMethod.java");
     assert_().about(javaSource())
         .that(source)
-        .processedWith(new TaskBindingProcessor())
+        .processedWith(processor)
         .failsToCompile()
         .withErrorContaining("annotated method must be static");
   }
@@ -25,7 +27,7 @@ public class TaskBindingProcessorTest {
     JavaFileObject source = forResource("failing/PrivateMethod.java");
     assert_().about(javaSource())
         .that(source)
-        .processedWith(new TaskBindingProcessor())
+        .processedWith(processor)
         .failsToCompile()
         .withErrorContaining("annotated method must not be private");
   }
@@ -35,7 +37,7 @@ public class TaskBindingProcessorTest {
     JavaFileObject source = forResource("failing/ProtectedMethod.java");
     assert_().about(javaSource())
         .that(source)
-        .processedWith(new TaskBindingProcessor())
+        .processedWith(processor)
         .failsToCompile()
         .withErrorContaining("annotated method must not be protected");
   }
@@ -45,7 +47,7 @@ public class TaskBindingProcessorTest {
     JavaFileObject source = forResource("failing/MethodNotReturningTask.java");
     assert_().about(javaSource())
         .that(source)
-        .processedWith(new TaskBindingProcessor())
+        .processedWith(processor)
         .failsToCompile()
         .withErrorContaining("annotated method must return a io.rouz.task.Task<?>");
   }
