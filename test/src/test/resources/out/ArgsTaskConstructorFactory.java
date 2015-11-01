@@ -7,9 +7,9 @@ import java.util.Map;
 import javax.annotation.Generated;
 
 @Generated("io.rouz.task.processor.TaskBindingProcessor")
-public final class NameMeFactory {
+public final class FloRootTaskFactory {
 
-  private NameMeFactory() {
+  private FloRootTaskFactory() {
     // no instantiation
   }
 

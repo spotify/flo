@@ -39,7 +39,7 @@ final class CodeGen {
   JavaFile bindingFactory(List<Binding> bindings) {
     final Name commonPackage = util.commonPackage(bindings).getQualifiedName();
 
-    final TypeSpec.Builder factoryClassBuilder = classBuilder("NameMeFactory")
+    final TypeSpec.Builder factoryClassBuilder = classBuilder("FloRootTaskFactory")
         .addAnnotation(GENERATED_ANNOTATION)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
