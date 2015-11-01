@@ -243,7 +243,6 @@ public class TaskBindingProcessor extends AbstractProcessor {
   private boolean validate(ExecutableElement method) {
     final TypeMirror returnType = method.getReturnType();
     final Set<Modifier> methodModifiers = method.getModifiers();
-    final Set<Modifier> classModifiers = enclosingClass(method).getModifiers();
 
     if (!typeUtils.isAssignable(returnType, taskWildcard())) {
       messager.printMessage(ERROR, ROOT + " annotated method must return a " + taskWildcard(), method);
@@ -255,7 +254,6 @@ public class TaskBindingProcessor extends AbstractProcessor {
       return false;
     }
 
-    // TODO: only if factory is in same package as all bindings
     if (methodModifiers.contains(Modifier.PRIVATE)) {
       messager.printMessage(ERROR, ROOT + " annotated method must not be private", method);
       return false;
@@ -265,17 +263,6 @@ public class TaskBindingProcessor extends AbstractProcessor {
       messager.printMessage(ERROR, ROOT + " annotated method must not be protected", method);
       return false;
     }
-
-    // TODO: only if factory is placed in different package
-//    if (!methodModifiers.contains(Modifier.PUBLIC)) {
-//      messager.printMessage(ERROR, ROOT + " annotated method must be public", method);
-//      return false;
-//    }
-//
-//    if (!classModifiers.contains(Modifier.PUBLIC)) {
-//      messager.printMessage(ERROR, ROOT + " annotated method must be in public class", method);
-//      return false;
-//    }
 
     return true;
   }
