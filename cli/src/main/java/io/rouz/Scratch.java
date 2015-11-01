@@ -1,14 +1,10 @@
 package io.rouz;
 
 import io.rouz.task.Task;
-import io.rouz.task.cli.Cli;
 import io.rouz.task.dsl.TaskBuilder;
 import io.rouz.task.proc.Exec;
 
 import java.io.IOException;
-import java.util.Arrays;
-
-import static io.rouz.task.proc.Exec.exec;
 
 /**
  * Task definitions have (TD)
@@ -48,8 +44,6 @@ public class Scratch {
         .in(() -> task1)
         .in(() -> task2)
         .process(Exec.exec((str, i) -> args("/bin/sh", "-c", "\"echo " + i + "\"")));
-
-    Cli.run(Arrays.asList(task1, task2, exec), args);
   }
 
   private static String[] args(String... args) {
