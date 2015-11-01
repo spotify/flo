@@ -159,6 +159,11 @@ public class TaskBindingProcessor extends AbstractProcessor {
         .addAnnotation(GENERATED_ANNOTATION)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
+    bindings.stream()
+        .map(Binding::method)
+        .map(TaskBindingProcessor::enclosingClass)
+        .forEachOrdered(factoryClassBuilder::addOriginatingElement);
+
     factoryClassBuilder.addMethod(
         constructorBuilder()
             .addModifiers(Modifier.PRIVATE)
