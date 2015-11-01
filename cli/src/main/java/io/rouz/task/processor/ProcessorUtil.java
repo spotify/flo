@@ -1,0 +1,96 @@
+package io.rouz.task.processor;
+
+import io.rouz.task.Task;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.processing.Messager;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
+
+import static javax.tools.Diagnostic.Kind.NOTE;
+
+/**
+ * Some handy methods for dealing with elements and types
+ */
+final class ProcessorUtil {
+
+  final Types types;
+  final Elements element;
+  final Messager messager;
+
+  ProcessorUtil(Types types, Elements element, Messager messager) {
+    this.types = types;
+    this.element = element;
+    this.messager = messager;
+  }
+
+  PackageElement commonPackage(List<Binding> bindings) {
+    class RecursiveMap extends LinkedHashMap<String, RecursiveMap> {}
+    final RecursiveMap packages = new RecursiveMap();
+
+    for (Binding binding : bindings) {
+      final PackageElement packageElement = packageOf(binding.method());
+      final String[] parts = packageElement.getQualifiedName().toString().split("\\.");
+
+      RecursiveMap node = packages;
+      for (String part : parts) {
+        node = node.computeIfAbsent(part, p -> new RecursiveMap());
+      }
+    }
+
+    messager.printMessage(NOTE, "package tree: " + packages);
+
+    String common = "";
+    RecursiveMap node = packages;
+    while (node.size() == 1) {
+      final Map.Entry<String, RecursiveMap> next = node.entrySet().iterator().next();
+      common += (common.isEmpty() ? "" : ".") + next.getKey();
+      node = next.getValue();
+    }
+    return element.getPackageElement(common);
+  }
+
+  DeclaredType taskWildcard() {
+    final TypeElement task = typeElement(Task.class);
+    return types.getDeclaredType(task, types.getWildcardType(null, null));
+  }
+
+  DeclaredType mapStringString() {
+    final TypeElement map = typeElement(Map.class);
+    final TypeElement string = typeElement(String.class);
+    return types.getDeclaredType(map, string.asType(), string.asType());
+  }
+
+  TypeMirror refresh(TypeMirror typeMirror) {
+    return element.getTypeElement(typeMirror.toString()).asType();
+  }
+
+  TypeMirror typeMirror(Class<?> clazz) {
+    return typeElement(clazz).asType();
+  }
+
+  TypeElement typeElement(Class<?> clazz) {
+    return element.getTypeElement(clazz.getCanonicalName());
+  }
+
+  PackageElement packageOf(Element element) {
+    return this.element.getPackageOf(element);
+  }
+
+  TypeElement enclosingClass(Element element) {
+    if (element.getKind() != ElementKind.CLASS) {
+      return enclosingClass(element.getEnclosingElement());
+    }
+
+    return (TypeElement) element;
+  }
+}
