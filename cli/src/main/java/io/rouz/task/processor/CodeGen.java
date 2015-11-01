@@ -77,20 +77,20 @@ final class CodeGen {
 
       if (util.types.isAssignable(util.typeMirror(String.class), type)) {
         methodBuilder.addStatement(
-            "$T $N = $N.get($S)",
+            "final $T $N = $N.get($S)",
             String.class, argument.name(),
             ARGS, argument.name());
       } else
       if (util.types.isAssignable(util.typeMirror(Double.class), type)) {
         methodBuilder.addStatement(
-            "$T $N = $T.parseDouble($N.get($S))",
+            "final $T $N = $T.parseDouble($N.get($S))",
             double.class, argument.name(),
             Double.class,
             ARGS, argument.name());
       } else
       if (util.types.isAssignable(util.typeMirror(Integer.class), type)) {
         methodBuilder.addStatement(
-            "$T $N = $T.parseInt($N.get($S))",
+            "final $T $N = $T.parseInt($N.get($S))",
             int.class, argument.name(),
             Integer.class,
             ARGS, argument.name());

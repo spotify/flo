@@ -14,11 +14,11 @@ public final class FloRootTaskFactory {
   }
 
   public static Task<String> simple(Map<String, String> $args) {
-    int a = Integer.parseInt($args.get("a"));
-    double b = Double.parseDouble($args.get("b"));
-    int c = Integer.parseInt($args.get("c"));
-    double d = Double.parseDouble($args.get("d"));
-    String e = $args.get("e");
+    final int a = Integer.parseInt($args.get("a"));
+    final double b = Double.parseDouble($args.get("b"));
+    final int c = Integer.parseInt($args.get("c"));
+    final double d = Double.parseDouble($args.get("d"));
+    final String e = $args.get("e");
     return ArgsTaskConstructor.simple(a, b, c, d, e);
   }
 }
