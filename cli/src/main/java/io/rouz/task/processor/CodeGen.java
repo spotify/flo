@@ -7,6 +7,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.annotation.Generated;
 import javax.lang.model.element.Modifier;
@@ -69,7 +70,6 @@ final class CodeGen {
         .returns(TypeName.get(binding.returnType()))
         .addParameter(TypeName.get(util.mapStringString()), ARGS);
 
-    final StringBuilder sb = new StringBuilder();
     for (Binding.Argument argument : binding.arguments()) {
       final TypeMirror type = argument.type().getKind() == DECLARED
                               ? util.refresh(argument.type())
@@ -101,11 +101,12 @@ final class CodeGen {
             binding.method());
         throw new RuntimeException("abort");
       }
-
-      sb.append(argument.name()).append(", ");
     }
 
-    final String callArgs = sb.substring(0, Math.max(sb.length() - 2, 0));
+    final String callArgs = binding.arguments().stream()
+        .map(Binding.Argument::name)
+        .collect(Collectors.joining(", "));
+
     return methodBuilder
         .addStatement(
             "return $T.$N(" + callArgs + ")",
