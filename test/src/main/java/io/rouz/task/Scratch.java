@@ -1,8 +1,9 @@
-package io.rouz;
+package io.rouz.task;
 
-import io.rouz.task.Task;
+import io.rouz.task.cli.Cli;
 import io.rouz.task.dsl.TaskBuilder;
 import io.rouz.task.proc.Exec;
+import io.rouz.task.processor.RootTask;
 
 import java.io.IOException;
 
@@ -37,10 +38,15 @@ import java.io.IOException;
 public class Scratch {
 
   public static void main(String[] args) throws IOException {
-    Task<String> task1 = MyTask.create("foobarbaz");
-    Task<Integer> task2 = Adder.create(5, 7);
+    Cli.forFactories(FloRootTaskFactory::exec).run(args);
+  }
 
-    Task<Exec.Result> exec = Task.named("exec", "/bin/sh")
+  @RootTask
+  static Task<Exec.Result> exec(String parameter, int number) {
+    Task<String> task1 = MyTask.create(parameter);
+    Task<Integer> task2 = Adder.create(number, number + 2);
+
+    return Task.named("exec", "/bin/sh")
         .in(() -> task1)
         .in(() -> task2)
         .process(Exec.exec((str, i) -> args("/bin/sh", "-c", "\"echo " + i + "\"")));

@@ -89,7 +89,6 @@ public class TaskBindingProcessor extends AbstractProcessor {
 
     if (!bindingsByPackage.isEmpty()) {
       for (List<Binding> binding : bindingsByPackage.values()) {
-        messager.printMessage(NOTE, "Binding " + binding);
         try {
           codeGen.bindingFactory(binding).writeTo(filer);
         } catch (IOException e) {

@@ -20,6 +20,7 @@ import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.tools.Diagnostic.Kind.ERROR;
+import static javax.tools.Diagnostic.Kind.NOTE;
 
 /**
  * Class for generating {@link JavaFile} sources from {@link Binding} instances
@@ -65,6 +66,8 @@ final class CodeGen {
   }
 
   private MethodSpec binderMethod(Binding binding) {
+    util.messager.printMessage(NOTE, "Binding " + binding);
+
     final MethodSpec.Builder methodBuilder = methodBuilder(binding.name().toString())
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
         .returns(TypeName.get(binding.returnType()))

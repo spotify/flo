@@ -1,5 +1,7 @@
 package io.rouz.task.proc;
 
+import com.google.auto.value.AutoValue;
+
 import io.rouz.task.dsl.TaskBuilder.F1;
 import io.rouz.task.dsl.TaskBuilder.F2;
 import io.rouz.task.dsl.TaskBuilder.F3;
@@ -20,7 +22,7 @@ public final class Exec {
       final String[] args = f.apply(a);
       System.out.println("running " + Arrays.toString(args));
       // exec(args);
-      return () -> args.length;
+      return new AutoValue_Exec_ResultValue(args.length);
     };
   }
 
@@ -29,7 +31,7 @@ public final class Exec {
       final String[] args = f.apply(a, b);
       System.out.println("running " + Arrays.toString(args));
       // exec(args);
-      return () -> args.length;
+      return new AutoValue_Exec_ResultValue(args.length);
     };
   }
 
@@ -38,11 +40,15 @@ public final class Exec {
       final String[] args = f.apply(a, b, c);
       System.out.println("running " + Arrays.toString(args));
       // exec(args);
-      return () -> args.length;
+      return new AutoValue_Exec_ResultValue(args.length);
     };
   }
 
   public interface Result {
     int exitCode();
+  }
+
+  @AutoValue
+  static abstract class ResultValue implements Result {
   }
 }
