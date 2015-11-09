@@ -16,6 +16,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
+import static java.util.Arrays.asList;
 import static javax.tools.Diagnostic.Kind.NOTE;
 
 /**
@@ -68,6 +69,19 @@ final class ProcessorUtil {
     final TypeElement map = typeElement(Map.class);
     final TypeElement string = typeElement(String.class);
     return types.getDeclaredType(map, string.asType(), string.asType());
+  }
+
+  DeclaredType typeWithArgs(Class<?> clazz, Class<?>... args) {
+    final TypeMirror[] typeArgs = asList(args).stream()
+        .map(this::typeElement)
+        .map(TypeElement::asType)
+        .toArray(TypeMirror[]::new);
+    return typeWithArgs(clazz, typeArgs);
+  }
+
+  DeclaredType typeWithArgs(Class<?> clazz, TypeMirror... args) {
+    final TypeElement type = typeElement(clazz);
+    return types.getDeclaredType(type, args);
   }
 
   TypeMirror refresh(TypeMirror typeMirror) {

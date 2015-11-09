@@ -26,40 +26,40 @@ public class TaskBindingProcessorTest {
         .generatesSources(forResource("out/PlainTaskConstructorFactory.java"));
   }
 
-  @Test
-  public void shouldCompileArgsTaskBinding() {
-    JavaFileObject source = forResource("compiling/ArgsTaskConstructor.java");
-    assert_().about(javaSource())
-        .that(source)
-        .processedWith(processor)
-        .compilesWithoutError()
-        .and()
-        .generatesSources(forResource("out/ArgsTaskConstructorFactory.java"));
-  }
+//  @Test
+//  public void shouldCompileArgsTaskBinding() {
+//    JavaFileObject source = forResource("compiling/ArgsTaskConstructor.java");
+//    assert_().about(javaSource())
+//        .that(source)
+//        .processedWith(processor)
+//        .compilesWithoutError()
+//        .and()
+//        .generatesSources(forResource("out/ArgsTaskConstructorFactory.java"));
+//  }
+//
+//  @Test
+//  public void shouldPutFactoryInCommonPackage() throws Exception {
+//    JavaFileObject source1 = forResource("compiling/Sibling1.java");
+//    JavaFileObject source2 = forResource("compiling/Sibling2.java");
+//    assert_().about(javaSources())
+//        .that(Arrays.asList(source1, source2))
+//        .processedWith(processor)
+//        .compilesWithoutError()
+//        .and()
+//        .generatesSources(
+//            forResource("out/Sibling1Factory.java"),
+//            forResource("out/Sibling2Factory.java"));
+//  }
 
-  @Test
-  public void shouldPutFactoryInCommonPackage() throws Exception {
-    JavaFileObject source1 = forResource("compiling/Sibling1.java");
-    JavaFileObject source2 = forResource("compiling/Sibling2.java");
-    assert_().about(javaSources())
-        .that(Arrays.asList(source1, source2))
-        .processedWith(processor)
-        .compilesWithoutError()
-        .and()
-        .generatesSources(
-            forResource("out/Sibling1Factory.java"),
-            forResource("out/Sibling2Factory.java"));
-  }
-
-  @Test
-  public void failOnUnsupportedArgType() {
-    JavaFileObject source = forResource("failing/UnsupportedArgTask.java");
-    assert_().about(javaSource())
-        .that(source)
-        .processedWith(processor)
-        .failsToCompile()
-        .withErrorContaining("Unsupported argument type for @RootTask annotation: java.util.List");
-  }
+//  @Test
+//  public void failOnUnsupportedArgType() {
+//    JavaFileObject source = forResource("failing/UnsupportedArgTask.java");
+//    assert_().about(javaSource())
+//        .that(source)
+//        .processedWith(processor)
+//        .failsToCompile()
+//        .withErrorContaining("Unsupported argument type for @RootTask annotation: java.util.List");
+//  }
 
   @Test
   public void failOnMethodNotReturningTask() {
