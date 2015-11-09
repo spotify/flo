@@ -1,9 +1,7 @@
 package io.rouz.task;
 
-import io.rouz.task.cli.TaskConstructor;
 import io.rouz.task.dsl.TaskBuilder;
 import io.rouz.task.proc.Exec;
-import io.rouz.task.processor.RootTask;
 
 import java.io.IOException;
 
@@ -126,23 +124,4 @@ public class Scratch {
     }
   }
 
-  static class Fib {
-    static Task<Integer> create(int n) {
-      TaskBuilder fib = Task.named("Fib", n);
-      if (n < 2) {
-        return fib
-            .process(() -> 1);
-      } else {
-        return fib
-            .in(() -> Fib.create(n - 1))
-            .in(() -> Fib.create(n - 2))
-            .process(Fib::fib);
-      }
-    }
-
-    static int fib(int a, int b) {
-      System.out.println("Fib.process(" + a + " + " + b + ")");
-      return a + b;
-    }
-  }
 }
