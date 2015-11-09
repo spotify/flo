@@ -3,6 +3,7 @@ package compiling;
 import io.rouz.task.Task;
 import io.rouz.task.cli.TaskConstructor;
 
+import java.util.Arrays
 import java.util.Map;
 
 import javax.annotation.Generated;
@@ -47,6 +48,9 @@ public final class FloRootTaskFactory {
     @Override
     public OptionParser parser() {
       final OptionParser parser = new OptionParser();
+
+      parser.acceptsAll(Arrays.asList("h", "help")).forHelp();
+
       return parser;
     }
   }

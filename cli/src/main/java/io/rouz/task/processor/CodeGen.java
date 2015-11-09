@@ -8,6 +8,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -118,7 +119,17 @@ final class CodeGen {
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(OptionParser.class)
-                .addStatement("final $T parser = new $T()", OptionParser.class, OptionParser.class)
+                .addStatement(
+                    "final $T parser = new $T()",
+                    OptionParser.class, OptionParser.class)
+
+                .addCode("\n")
+                // opt calls
+
+                .addStatement(
+                    "parser.acceptsAll($T.asList($S, $S)).forHelp()",
+                    Arrays.class, "h", "help")
+                .addCode("\n")
                 .addStatement("return parser")
                 .build())
 
