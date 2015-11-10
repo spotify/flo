@@ -1,6 +1,5 @@
 package io.rouz.task;
 
-import io.rouz.task.dsl.TaskBuilder;
 import io.rouz.task.proc.Exec;
 
 import java.io.IOException;
@@ -14,8 +13,10 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * Task definitions have (TD)
+ *  - todo: namespace
  *  - a unique name
- *  - a list of parameters of specific types
+ *  - a list of parameters
+ *  - type safe input task results
  *  - an output type
  *
  * Task instances have (TI)
@@ -24,20 +25,15 @@ import static java.util.Objects.requireNonNull;
  *  - a list of lazy input TI
  *  - code for producing the output
  *
- * TI are memoized on their TaskId which is determined only by the parameters.
- * Lazy input TI is essential
- *
  * Notes
- *  - the tricky part seems to lie in propagating depended task results to the dependent task
- *  --- main issue is in type safety, can easily be done with hashmaps
  *  - creating task instances should only yield a full dependency tree based on the task parameters
- *  - execution of tasks is subject to memoization
+ *  - inputs to tasks are instantiated lazily so a partial graph could be examined
+ *  - execution of tasks is subject to execution control and memoization
  *
- *  - can the setup, with dynamic dependencies be done with type-safe code?
- *  --- maybe with a value+trait based approach rather than classes+inheritance
  *
- *  FIXED: with {@link TaskBuilder} fluent api
- *
+ * other ideas (todo)
+ *  - reader-monad-like 'ask' dependencies
+ *    - input tasks that are pushed down to the bottom of the execution graph (before everything)
  *  - facts matching as basis for dependency satisfaction
  */
 public class Scratch {
