@@ -191,6 +191,30 @@ final class TaskBuilders {
    * Higher order function that lifts an arbitrary function {@link F} into a function from
    * {@link TaskContext} to an unknown type.
    *
+   * Because the mix of a fluent task input construction and multiple input type structures, the
+   * implementation graph of {@link TaskBuilder} would grow exponentially by the number of
+   * arguments. This interface allows us to use a progressive argument construction technique in
+   * the implementation, resulting in a linear amount of classes.
+   *
+   * It is a special case of a Reader Monad that outputs a function taking a {@link TaskContext}.
+   * The Reader 'environment' is the function that we want to lift. Because of the special casing,
+   * it can have a special 'withReader' function that allows us to change the environment while
+   * having access to the {@link TaskContext} argument that will be used by the output function.
+   *
+   * We implement this special 'withReader' function in {@link #mapWithContext(F2)}.
+   *
+   * {@code
+   *    Haskell: Reader r a
+   *
+   *    -- regular withReader function
+   *    withReader :: (r' -> r) -> Reader r a -> Reader r' a
+   *    withReader f m = Reader $ runReader m . f
+   *
+   *    -- our special case
+   *    withReaderValue :: (r' -> a -> r) -> Reader r (a -> b) -> Reader r' (a -> b)
+   *    withReaderValue f m = Reader $ \r' a -> (runReader m) (f r' a) a
+   * }
+   *
    * @param <F>  The type of the function that can be lifted
    */
   @FunctionalInterface
