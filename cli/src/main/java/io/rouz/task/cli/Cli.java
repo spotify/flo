@@ -3,6 +3,7 @@ package io.rouz.task.cli;
 import io.rouz.task.Task;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import joptsimple.NonOptionArgumentSpec;
@@ -24,7 +25,6 @@ public final class Cli {
     this.factories = factories;
   }
 
-  @SafeVarargs
   public static Cli forFactories(TaskConstructor<?>... factories) {
     return new Cli(asList(factories));
   }
@@ -37,7 +37,7 @@ public final class Cli {
     parser.allowsUnrecognizedOptions();
 
     final OptionSet parse = parser.parse(args);
-    if (parse.has(h)) {
+    if (parse.nonOptionArguments().size() < 1 && parse.has(h)) {
       out.println("Flo 0.0.1");
       usage(parser);
     }
@@ -53,7 +53,12 @@ public final class Cli {
         break;
 
       case "create":
-        create(parse.valuesOf(nonOptions));
+        final List<String> adjustedArgs = new ArrayList<>();
+        adjustedArgs.addAll(parse.valuesOf(nonOptions));
+        if (parse.has(h)) {
+          adjustedArgs.add("--help");
+        }
+        create(adjustedArgs);
         break;
 
       default:
@@ -69,15 +74,27 @@ public final class Cli {
     }
   }
 
-  private void create(List<String> nonOptions) {
-    final String[] args = nonOptions.toArray(new String[nonOptions.size()]);
+  private void create(List<String> nonOptions) throws IOException {
+    final String name = nonOptions.get(1);
+    final List<String> subList = nonOptions.subList(2, nonOptions.size());
+    final String[] args = subList.toArray(new String[subList.size()]);
 
-    out.println("nonOptions = " + nonOptions);
+    out.println("name = " + name);
+    out.println("args = " + subList);
     out.println("creating tasks:\n");
     for (TaskConstructor<?> factory : factories) {
-      final Task<?> createdTask = factory.create(args);
-      out.println("createdTask.id() = " + createdTask.id());
-      out.println("createdTask.out() = " + createdTask.out());
+      if (factory.name().equalsIgnoreCase(name)) {
+        final OptionParser parser = factory.parser();
+        if (parser.parse(args).has("h")) {
+          parser.printHelpOn(out);
+          return;
+        }
+
+        final Task<?> createdTask = factory.create(args);
+        out.println("task.id() = " + createdTask.id());
+        out.println("task.out() = " + createdTask.out());
+        return;
+      }
     }
   }
 

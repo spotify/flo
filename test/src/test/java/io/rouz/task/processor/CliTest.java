@@ -22,7 +22,7 @@ public class CliTest {
   @Test
   public void shouldParseStandardArgTypes() throws Exception {
     Cli.forFactories(FloRootTaskFactory.CliTest_StandardArgs())
-        .run("create", "--first", "22", "--second", "hello");
+        .run("create", "CliTest.standardArgs", "--first", "22", "--second", "hello");
 
     assertThat(firstInt, is(22));
     assertThat(secondString, is("hello"));
@@ -39,7 +39,7 @@ public class CliTest {
   @Test
   public void shouldParseFlags() throws Exception {
     Cli.forFactories(FloRootTaskFactory.CliTest_Flags())
-        .run("create", "--flag1");
+        .run("create", "CliTest.flags", "--flag1");
 
     assertTrue(firstFlag); // toggled
     assertFalse(secondFlag);  // toggled
@@ -56,7 +56,7 @@ public class CliTest {
   @Test
   public void shouldParseEnums() throws Exception {
     Cli.forFactories(FloRootTaskFactory.CliTest_Enums())
-        .run("create", "--enm", "BAR");
+        .run("create", "CliTest.enums", "--enm", "BAR");
 
     assertThat(parsedEnum, is(CustomEnum.BAR));
   }
@@ -71,7 +71,7 @@ public class CliTest {
   @Test
   public void shouldParseCustomTypes() throws Exception {
     Cli.forFactories(FloRootTaskFactory.CliTest_CustomType())
-        .run("create", "--myType", "blarg");
+        .run("create", "CliTest.customType", "--myType", "blarg");
 
     assertThat(parsedType.content, is("blarg parsed for you!"));
   }
