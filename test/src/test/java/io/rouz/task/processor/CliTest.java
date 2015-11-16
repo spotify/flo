@@ -6,39 +6,38 @@ import io.rouz.task.cli.Cli;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class CliTest {
 
   private static int firstInt;
-  private static String firstString;
   private static String secondString;
+  private static boolean firstFlag = false;
+  private static boolean secondFlag = true;
 
   private String[] args = {
-      "create", "--first", "22", "--flag1", "--second", "hello", "--flag2"};
+      "create", "--first", "22", "--flag1", "--second", "hello"};
 
-//  @Test
-//  public void testName() throws Exception {
-//    Cli.forFactories(FloRootTaskFactory::testTask1, FloRootTaskFactory::testTask2)
-//        .run(args);
-//
-//    assertThat(firstInt, is(22));
-//    assertThat(firstString, is("22"));
-//    assertThat(secondString, is("hello"));
-//  }
+  @Test
+  public void testName() throws Exception {
+    Cli.forFactories(FloRootTaskFactory.CliTest_TestTask())
+        .run(args);
 
-//  @RootTask
-  public static Task<String> testTask1(int first, String second) {
-    firstInt = first;
-    secondString = second;
-    return Task.named("Test1", first, second)
-        .process(() -> second + " " + first * 100);
+    assertThat(firstInt, is(22));
+    assertThat(secondString, is("hello"));
+    assertTrue(firstFlag); // toggled
+    assertFalse(secondFlag);  // toggled
   }
 
-//  @RootTask
-  public static Task<String> testTask2(String first) {
-    firstString = first;
-    return Task.named("Test2", first)
-        .process(() -> first + " as String");
+  @RootTask
+  public static Task<String> testTask(int first, boolean flag1, String second, boolean flag2) {
+    firstInt = first;
+    secondString = second;
+    firstFlag = flag1;
+    secondFlag = flag2;
+    return Task.named("Test1", first, second)
+        .process(() -> second + " " + first * 100);
   }
 }

@@ -3,17 +3,14 @@ package compiling;
 import io.rouz.task.Task;
 import io.rouz.task.cli.TaskConstructor;
 
-import java.util.Arrays
-import java.util.Map;
+import java.util.Arrays;
+import java.util.Objects;
 
 import javax.annotation.Generated;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
-
-import static java.util.Arrays.asList;
-import static java.util.Objects.requireNonNull;
 
 @Generated("io.rouz.task.processor.TaskBindingProcessor")
 public final class FloRootTaskFactory {
@@ -22,13 +19,8 @@ public final class FloRootTaskFactory {
     // no instantiation
   }
 
-  public static Task<String> simple(Map<String, String> $args) {
-    final int a = Integer.parseInt($args.get("a"));
-    final double b = Double.parseDouble($args.get("b"));
-    final int c = Integer.parseInt($args.get("c"));
-    final double d = Double.parseDouble($args.get("d"));
-    final String e = $args.get("e");
-    return ArgsTaskConstructor.simple(a, b, c, d, e);
+  public static TaskConstructor<String> ArgsTaskConstructor_Simple() {
+    return new ArgsTaskConstructor_Simple();
   }
 
   private static void opt(String name, Class type, OptionParser parser) {
@@ -54,25 +46,26 @@ public final class FloRootTaskFactory {
       final OptionParser parser = parser();
       final OptionSet parse = parser.parse(args);
 
-      if (parse.has("h")) {
-        parser.printHelpOn(System.err);
-        System.exit(1); // maybe not exit
-      }
+      final int a = (int) Objects.requireNonNull(parse.valueOf("a"));
+      final double b = (double) Objects.requireNonNull(parse.valueOf("b"));
+      final Integer c = (Integer) Objects.requireNonNull(parse.valueOf("c"));
+      final Double d = (Double) Objects.requireNonNull(parse.valueOf("d"));
+      final String e = (String) Objects.requireNonNull(parse.valueOf("e"));
+      final boolean flag = parse.has("flag");
 
-      final int a = (int) requireNonNull(parse.valueOf("a"));
-      final double b = (double) requireNonNull(parse.valueOf("b"));
-      final int c = (int) requireNonNull(parse.valueOf("c"));
-      final double d = (double) requireNonNull(parse.valueOf("d"));
-      final String e = (String) requireNonNull(parse.valueOf("e"));;
-
-      return ArgsTaskConstructor.simple(a, b, c, d, e);
+      return ArgsTaskConstructor.simple(a, b, c, d, e, flag);
     }
 
     @Override
     public OptionParser parser() {
       final OptionParser parser = new OptionParser();
 
-      // opt();
+      opt("a", int.class, parser);
+      opt("b", double.class, parser);
+      opt("c", Integer.class, parser);
+      opt("d", Double.class, parser);
+      opt("e", String.class, parser);
+      opt("flag", boolean.class, parser);
 
       parser.acceptsAll(Arrays.asList("h", "help")).forHelp();
 

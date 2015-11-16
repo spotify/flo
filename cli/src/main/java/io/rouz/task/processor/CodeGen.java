@@ -1,35 +1,36 @@
 package io.rouz.task.processor;
 
 import io.rouz.task.cli.TaskConstructor;
+import io.rouz.task.processor.Binding.Argument;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.annotation.Generated;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 import joptsimple.OptionParser;
+import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
 
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
-import static javax.lang.model.type.TypeKind.DECLARED;
-import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 
 /**
@@ -37,7 +38,6 @@ import static javax.tools.Diagnostic.Kind.NOTE;
  */
 final class CodeGen {
 
-  private static final String ARGS = "$args";
   private static final AnnotationSpec GENERATED_ANNOTATION = AnnotationSpec.builder(Generated.class)
       .addMember("value", "$S", TaskBindingProcessor.class.getCanonicalName())
       .build();
@@ -50,6 +50,9 @@ final class CodeGen {
 
   JavaFile bindingFactory(List<Binding> bindings) {
     final Name commonPackage = util.commonPackage(bindings).getQualifiedName();
+    final List<TypeSpec> taskConstructors = bindings.stream()
+        .map(this::taskConstructor)
+        .collect(toList());
 
     final TypeSpec.Builder factoryClassBuilder = classBuilder("FloRootTaskFactory")
         .addAnnotation(GENERATED_ANNOTATION)
@@ -66,18 +69,25 @@ final class CodeGen {
             .addStatement("// no instantiation")
             .build());
 
-    bindings.stream()
-        .map(this::binderMethod)
+    taskConstructors.stream()
+        .map(this::taskConstructorStaticConstructor)
         .forEachOrdered(factoryClassBuilder::addMethod);
-
-    bindings.stream()
-        .map(this::taskConstructor)
-        .forEachOrdered(factoryClassBuilder::addType);
 
     factoryClassBuilder.addMethod(optHelper());
 
+    taskConstructors.stream()
+        .forEachOrdered(factoryClassBuilder::addType);
+
     return JavaFile.builder(commonPackage.toString(), factoryClassBuilder.build())
         .skipJavaLangImports(true)
+        .build();
+  }
+
+  private MethodSpec taskConstructorStaticConstructor(TypeSpec taskConstructor) {
+    return methodBuilder(taskConstructor.name)
+        .addModifiers(PUBLIC, STATIC)
+        .returns(taskConstructor.superinterfaces.get(0))
+        .addStatement("return new $N()", taskConstructor)
         .build();
   }
 
@@ -88,102 +98,82 @@ final class CodeGen {
     final String taskName = capitalize(binding.name());
     final DeclaredType taskType = (DeclaredType) binding.returnType();
     final TypeMirror taskArg = taskType.getTypeArguments().get(0);
+    final List<Argument> arguments = binding.arguments();
+
+    // public String name() {
+    final MethodSpec name = methodBuilder("name")
+        .addAnnotation(Override.class)
+        .addModifiers(PUBLIC)
+        .returns(String.class)
+        .addStatement("return $S", enclosingName + "." + binding.name())
+        .build();
+
+    // public Task<T> create(String... args) {
+    final MethodSpec.Builder createBuilder = methodBuilder("create")
+        .addAnnotation(Override.class)
+        .addModifiers(PUBLIC)
+        .returns(TypeName.get(taskType))
+        .addParameter(String[].class, "args")
+        .varargs()
+        .addStatement("final $T parser = parser()", OptionParser.class)
+        .addStatement("final $T parse = parser.parse(args)", OptionSet.class)
+        .addCode("\n");
+
+    for (Argument argument : arguments) {
+      if (util.types.isSameType(util.types.getPrimitiveType(TypeKind.BOOLEAN), argument.type())) {
+        createBuilder.addStatement(
+            "final $T $N = parse.has($S)",
+            argument.type(), argument.name(), argument.name());
+      } else {
+        createBuilder.addStatement(
+            "final $T $N = ($T) $T.requireNonNull(parse.valueOf($S))",
+            argument.type(), argument.name(),
+            argument.type(), Objects.class, argument.name());
+      }
+    }
+
+    final String callArgs = arguments.stream()
+        .map(Argument::name)
+        .collect(Collectors.joining(", "));
+
+    final MethodSpec create = createBuilder
+        .addCode("\n")
+        .addStatement("return $N.$N($L)", enclosingName, binding.name(), callArgs)
+        .build();
+
+    // public OptionParser parser() {
+    final MethodSpec.Builder parserBuilder = methodBuilder("parser")
+        .addAnnotation(Override.class)
+        .addModifiers(PUBLIC)
+        .returns(OptionParser.class)
+        .addStatement(
+            "final $T parser = new $T()",
+            OptionParser.class, OptionParser.class)
+        .addCode("\n");
+
+    // opt calls;
+    for (Argument argument : arguments) {
+      parserBuilder.addStatement(
+          "opt($S, $T.class, parser)",
+          argument.name(), argument.type());
+    }
+
+    parserBuilder
+        .addCode("\n")
+        .addStatement(
+            "parser.acceptsAll($T.asList($S, $S)).forHelp()",
+            Arrays.class, "h", "help")
+        .addCode("\n")
+        .addStatement("return parser");
+
+    final MethodSpec parser = parserBuilder.build();
 
     return classBuilder(enclosingName + "_" + taskName)
         .addModifiers(PRIVATE, STATIC, FINAL)
         .addSuperinterface(TypeName.get(util.typeWithArgs(TaskConstructor.class, taskArg)))
-
-        // public String name() {
-        .addMethod(
-            methodBuilder("name")
-                .addAnnotation(Override.class)
-                .addModifiers(PUBLIC)
-                .returns(String.class)
-                .addStatement("return $S", enclosingName + "." + binding.name())
-                .build())
-
-        // public Task<T> create(String... args) {
-        .addMethod(
-            methodBuilder("create")
-                .addAnnotation(Override.class)
-                .addModifiers(PUBLIC)
-                .returns(TypeName.get(taskType))
-                .addParameter(String[].class, "args")
-                .varargs()
-                .addStatement("return $N.$N()", enclosingName, binding.name()) // TODO: args
-                .build())
-
-        // public OptionParser parser() {
-        .addMethod(
-            methodBuilder("parser")
-                .addAnnotation(Override.class)
-                .addModifiers(PUBLIC)
-                .returns(OptionParser.class)
-                .addStatement(
-                    "final $T parser = new $T()",
-                    OptionParser.class, OptionParser.class)
-
-                .addCode("\n")
-                // opt calls
-
-                .addStatement(
-                    "parser.acceptsAll($T.asList($S, $S)).forHelp()",
-                    Arrays.class, "h", "help")
-                .addCode("\n")
-                .addStatement("return parser")
-                .build())
-
-        .build();
-  }
-
-  private MethodSpec binderMethod(Binding binding) {
-    final MethodSpec.Builder methodBuilder = methodBuilder(binding.name().toString())
-        .addModifiers(PUBLIC, STATIC)
-        .returns(TypeName.get(binding.returnType()))
-        .addParameter(TypeName.get(util.mapStringString()), ARGS);
-
-    for (Binding.Argument argument : binding.arguments()) {
-      final TypeMirror type = argument.type().getKind() == DECLARED
-                              ? util.refresh(argument.type())
-                              : argument.type();
-
-      if (util.types.isAssignable(util.typeMirror(String.class), type)) {
-        methodBuilder.addStatement(
-            "final $T $N = $N.get($S)",
-            String.class, argument.name(),
-            ARGS, argument.name());
-      } else
-      if (util.types.isAssignable(util.typeMirror(Double.class), type)) {
-        methodBuilder.addStatement(
-            "final $T $N = $T.parseDouble($N.get($S))",
-            double.class, argument.name(),
-            Double.class,
-            ARGS, argument.name());
-      } else
-      if (util.types.isAssignable(util.typeMirror(Integer.class), type)) {
-        methodBuilder.addStatement(
-            "final $T $N = $T.parseInt($N.get($S))",
-            int.class, argument.name(),
-            Integer.class,
-            ARGS, argument.name());
-      } else {
-        util.messager.printMessage(
-            ERROR,
-            "Unsupported argument type for " + TaskBindingProcessor.ROOT + " annotation: " + type,
-            binding.method());
-        throw new RuntimeException("abort");
-      }
-    }
-
-    final String callArgs = binding.arguments().stream()
-        .map(Binding.Argument::name)
-        .collect(Collectors.joining(", "));
-
-    return methodBuilder
-        .addStatement(
-            "return $T.$N(" + callArgs + ")",
-            binding.enclosingClass(),
-            binding.name())
+        .addMethod(name)
+        .addMethod(create)
+        .addMethod(parser)
         .build();
   }
 

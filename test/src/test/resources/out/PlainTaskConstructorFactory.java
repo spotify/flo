@@ -4,11 +4,11 @@ import io.rouz.task.Task;
 import io.rouz.task.cli.TaskConstructor;
 
 import java.util.Arrays
-import java.util.Map;
 
 import javax.annotation.Generated;
 
 import joptsimple.OptionParser;
+import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
 
 @Generated("io.rouz.task.processor.TaskBindingProcessor")
@@ -18,8 +18,8 @@ public final class FloRootTaskFactory {
     // no instantiation
   }
 
-  public static Task<String> simple(Map<String, String> $args) {
-    return PlainTaskConstructor.simple();
+  public static TaskConstructor<String> PlainTaskConstructor_Simple() {
+    return new PlainTaskConstructor_Simple();
   }
 
   private static void opt(String name, Class type, OptionParser parser) {
@@ -42,6 +42,9 @@ public final class FloRootTaskFactory {
 
     @Override
     public Task<String> create(String... args) {
+      final OptionParser parser = parser();
+      final OptionSet parse = parser.parse(args);
+
       return PlainTaskConstructor.simple();
     }
 

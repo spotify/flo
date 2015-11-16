@@ -6,7 +6,7 @@ import io.rouz.task.processor.RootTask;
 class ArgsTaskConstructor {
 
   @RootTask
-  static Task<String> simple(int a, double b, Integer c, Double d, String e) {
+  static Task<String> simple(int a, double b, Integer c, Double d, String e, boolean flag) {
     return null;
   }
 }
