@@ -1,6 +1,6 @@
 # flo
 
-> __Dag__ means __Day__ in Swedish
+> It's in the flow
 
 ```java
 class Fib {
@@ -15,12 +15,8 @@ class Fib {
       return fib
           .in(() -> Fib.nth(n - 1))
           .in(() -> Fib.nth(n - 2))
-          .process(Fib::plus);
+          .process((a, b) -> a + b);
     }
-  }
-
-  static long plus(long a, long b) {
-    return a + b;
   }
 
   public static void main(String[] args) throws IOException {
