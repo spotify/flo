@@ -1,5 +1,8 @@
 package io.rouz.task;
 
+import java.util.List;
+import java.util.stream.Stream;
+
 import io.rouz.task.dsl.TaskBuilder;
 import io.rouz.task.dsl.TaskBuilder.F0;
 import io.rouz.task.dsl.TaskBuilder.F1;
@@ -8,9 +11,8 @@ import io.rouz.task.dsl.TaskBuilder.F3;
 import io.rouz.task.dsl.TaskBuilder.TaskBuilder1;
 import io.rouz.task.dsl.TaskBuilder.TaskBuilder2;
 import io.rouz.task.dsl.TaskBuilder.TaskBuilder3;
-
-import java.util.List;
-import java.util.stream.Stream;
+import io.rouz.task.dsl.TaskBuilder.TaskBuilderC;
+import io.rouz.task.dsl.TaskBuilder.TaskBuilderC0;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
@@ -45,7 +47,7 @@ final class TaskBuilders {
     }
 
     @Override
-    public <R> Task<R> process(F0<R> code) {
+    public <R> Task<R> constant(F0<R> code) {
       return Task.create(toStream(), tc -> code.get(), taskName, args);
     }
 
@@ -66,6 +68,74 @@ final class TaskBuilders {
           f1 -> tc -> f1.apply(
               aTasks.get().map(t -> t.internalOut(tc)).collect(toList())));
     }
+
+    @Override
+    public <R> TaskBuilderC0<R> curryTo(Class<R> returnClass) {
+      return new BuilderC0<>(taskName, args);
+    }
+  }
+
+  private static class BuilderC0<R>
+      extends BaseRefs<Void>
+      implements TaskBuilderC0<R> {
+
+    BuilderC0(String taskName, Object[] args) {
+      super(toStream(), a -> tc -> a, taskName, args);
+    }
+
+    @Override
+    public <A> TaskBuilderC<F1<A, R>, R> in(F0<Task<A>> aTask) {
+      return new BuilderC<>(
+          concat(tasks, toStream(aTask)),
+          taskName, args,
+          fn -> tc -> fn.apply(
+              aTask.get().internalOut(tc)));
+    }
+
+    @Override
+    public <A> TaskBuilderC<F1<List<A>, R>, R> ins(F0<Stream<Task<A>>> aTasks) {
+      return new BuilderC<>(
+          concat(tasks, toFlatStream(aTasks)),
+          taskName, args,
+          fn -> tc -> fn.apply(
+              aTasks.get().map(t -> t.internalOut(tc)).collect(toList())));
+    }
+  }
+
+  // #############################################################################################
+
+  private static class BuilderC<F, R>
+      extends BaseRefs<F>
+      implements TaskBuilderC<F, R> {
+
+    private BuilderC(Stream<Task<?>> tasks, String taskName, Object[] args, Lifter<F> lifter) {
+      super(tasks, lifter, taskName, args);
+    }
+
+    @Override
+    public Task<R> process(F fn) {
+      return Task.create(toStream(), lifter.liftWithCast(fn), "test");
+    }
+
+    @Override
+    public <A> TaskBuilderC<F1<A, F>, R> in(F0<Task<A>> aTask) {
+      return new BuilderC<>(
+          concat(tasks, toStream(aTask)),
+          taskName, args,
+          lifter.mapWithContext(
+              (tc, fn) -> fn.apply(
+                  aTask.get().internalOut(tc))));
+    }
+
+    @Override
+    public <A> TaskBuilderC<F1<List<A>, F>, R> ins(F0<Stream<Task<A>>> aTasks) {
+      return new BuilderC<>(
+          concat(tasks, toFlatStream(aTasks)),
+          taskName, args,
+          lifter.mapWithContext(
+              (tc, fn) -> fn.apply(
+                  aTasks.get().map(t -> t.internalOut(tc)).collect(toList()))));
+    }
   }
 
   // #############################################################################################
@@ -77,7 +147,6 @@ final class TaskBuilders {
     Builder1(Stream<Task<?>> tasks, String taskName, Object[] args, Lifter<F1<A, ?>> lifter) {
       super(tasks, lifter, taskName, args);
     }
-
 
     @Override
     public <R> Task<R> process(F1<A, R> code) {
@@ -163,6 +232,12 @@ final class TaskBuilders {
 
   // #############################################################################################
 
+  /**
+   * A convenience class for holding some reference. This is only so that we don't have to repeat
+   * these declaration in every class above.
+   *
+   * @param <F>  The function type that is relevant for the builder
+   */
   private static class BaseRefs<F> {
 
     protected final Stream<Task<?>> tasks;

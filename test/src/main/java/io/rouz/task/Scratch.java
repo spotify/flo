@@ -1,9 +1,8 @@
 package io.rouz.task;
 
-import io.rouz.task.proc.Exec;
-
 import java.io.IOException;
 
+import io.rouz.task.proc.Exec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
@@ -116,7 +115,7 @@ public class Scratch {
 
   static class Adder {
     static Task<Integer> create(int a, int b) {
-      return Task.named("Adder", a, b).process(() -> a + b);
+      return Task.named("Adder", a, b).constant(() -> a + b);
     }
   }
 

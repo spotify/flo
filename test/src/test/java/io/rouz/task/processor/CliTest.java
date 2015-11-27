@@ -33,7 +33,7 @@ public class CliTest {
     firstInt = first;
     secondString = second;
     return Task.named("StandardArgs", first, second)
-        .process(() -> second + " " + first * 100);
+        .constant(() -> second + " " + first * 100);
   }
 
   @Test
@@ -50,7 +50,7 @@ public class CliTest {
     firstFlag = flag1;
     secondFlag = flag2;
     return Task.named("Flags", flag1, flag2)
-        .process(() -> flag1 + " " + flag2);
+        .constant(() -> flag1 + " " + flag2);
   }
 
   @Test
@@ -65,7 +65,7 @@ public class CliTest {
   public static Task<String> enums(CustomEnum enm) {
     parsedEnum = enm;
     return Task.named("Enums", enm)
-        .process(enm::toString);
+        .constant(enm::toString);
   }
 
   @Test
@@ -80,7 +80,7 @@ public class CliTest {
   public static Task<String> customType(CustomType myType) {
     parsedType = myType;
     return Task.named("Types", myType.content)
-        .process(() -> myType.content);
+        .constant(() -> myType.content);
   }
 
   public enum CustomEnum {

@@ -19,9 +19,22 @@ import java.util.stream.Stream;
  */
 public interface TaskBuilder {
 
-  <R> Task<R> process(F0<R> code);
+  <R> Task<R> constant(F0<R> code);
   <A> TaskBuilder1<A> in(F0<Task<A>> task);
   <A> TaskBuilder1<List<A>> ins(F0<Stream<Task<A>>> tasks);
+
+  <R> TaskBuilderC0<R> curryTo(Class<R> returnClass);
+
+  interface TaskBuilderC0<R> {
+    <A> TaskBuilderC<F1<A, R>, R> in(F0<Task<A>> task);
+    <A> TaskBuilderC<F1<List<A>, R>, R> ins(F0<Stream<Task<A>>> tasks);
+  }
+
+  interface TaskBuilderC<F, R> {
+    Task<R> process(F code);
+    <A> TaskBuilderC<F1<A, F>, R> in(F0<Task<A>> task);
+    <A> TaskBuilderC<F1<List<A>, F>, R> ins(F0<Stream<Task<A>>> tasks);
+  }
 
   interface TaskBuilder1<A> {
     <R> Task<R> process(F1<A, R> code);

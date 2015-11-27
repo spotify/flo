@@ -36,7 +36,7 @@ public class TaskTest {
   public void shouldMemoizeTaskProcessing() throws Exception {
     AtomicInteger counter = new AtomicInteger(0);
     Task<Integer> count = Task.named("Count")
-        .process(counter::incrementAndGet);
+        .constant(counter::incrementAndGet);
 
     Task<Integer> sum = Task.named("Sum")
         .in(() -> count)
@@ -203,12 +203,54 @@ public class TaskTest {
     assertThat(taskIds, containsInOrder(evenify1Id, evenify3Id));
   }
 
+  @Test
+  public void shouldBuildArbitraryDeepCurriedLambda() throws Exception {
+    final Task<Integer> curried = Task.named("Curried")
+        .curryTo(Integer.class)
+        .in(() -> isEven(0)) // 0
+        .in(() -> isEven(1)) // 2
+        .in(() -> isEven(2)) // 2
+        .in(() -> isEven(3)) // 6
+        .in(() -> isEven(4)) // 4
+        .in(() -> isEven(5)) // 10
+        .process(
+            a -> b -> c -> d -> e -> f ->
+                a.result +
+                b.result +
+                c.result +
+                d.result +
+                e.result +
+                f.result
+        );
+
+    assertThat(curried.out(), is(24));
+  }
+
+  @Test
+  public void shouldBuildCurriedLambdaWithLists() throws Exception {
+    final Task<Integer> curried = Task.named("Curried")
+        .curryTo(Integer.class)
+        .ins(() -> Stream.of(isEven(11), isEven(20))) // [22, 20]
+        .in(() -> isEven(0)) // 0
+        .ins(() -> Stream.of(isEven(1), isEven(2))) // [2, 2]
+        .in(() -> isEven(5)) // 10
+        .process(
+            a -> b -> c -> d ->
+                a.result +
+                b.stream().mapToInt(EvenResult::result).sum() +
+                c.result +
+                d.stream().mapToInt(EvenResult::result).sum()
+        );
+
+    assertThat(curried.out(), is(56));
+  }
+
   private F0<Task<Integer>> countConstructor() {
     AtomicInteger counter = new AtomicInteger(0);
     return () -> {
       int n = counter.incrementAndGet();
       return Task.named("Count", n)
-          .process(() -> n);
+          .constant(() -> n);
     };
   }
 
@@ -220,7 +262,7 @@ public class TaskTest {
     TaskBuilder isEven = Task.named("IsEven", n);
 
     if (n % 2 == 0) {
-      return isEven.process(() -> new WasEven(n));
+      return isEven.constant(() -> new WasEven(n));
     }
 
     return isEven
@@ -229,7 +271,7 @@ public class TaskTest {
   }
 
   private Task<Integer> evenify(int n) {
-    return Task.named("Evenify", n).process(() -> n * 2);
+    return Task.named("Evenify", n).constant(() -> n * 2);
   }
 
   // Result ADT

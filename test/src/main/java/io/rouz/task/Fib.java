@@ -16,7 +16,7 @@ final class Fib {
     TaskBuilder fib = Task.named("Fib", n);
     if (n < 2) {
       return fib
-          .process(() -> 1);
+          .constant(() -> 1);
     } else {
       return fib
           .in(() -> Fib.create(n - 1))
