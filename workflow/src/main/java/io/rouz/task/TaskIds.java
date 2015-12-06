@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * {@link AutoValue} implementation of {@link TaskId}
@@ -28,16 +29,8 @@ abstract class TaskIds implements TaskId, Serializable {
   }
 
   private String argsString() {
-    final StringBuilder sb = new StringBuilder();
-    boolean first = true;
-    for (Object arg : args()) {
-      if (!first) {
-        sb.append(',');
-      }
-      sb.append(arg);
-      first = false;
-    }
-
-    return sb.toString();
+    return args().stream()
+        .map(Object::toString)
+        .collect(Collectors.joining(","));
   }
 }
