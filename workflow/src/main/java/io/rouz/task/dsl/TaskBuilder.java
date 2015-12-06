@@ -1,13 +1,12 @@
 package io.rouz.task.dsl;
 
-import io.rouz.task.Task;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
+
+import io.rouz.task.Task;
 
 /**
  * Types for the fluent task setup API
@@ -21,31 +20,31 @@ public interface TaskBuilder {
 
   <R> Task<R> constant(F0<R> code);
   <A> TaskBuilder1<A> in(F0<Task<A>> task);
-  <A> TaskBuilder1<List<A>> ins(F0<Stream<Task<A>>> tasks);
+  <A> TaskBuilder1<List<A>> ins(F0<List<Task<A>>> tasks);
 
   <R> TaskBuilderC0<R> curryTo(Class<R> returnClass);
 
   interface TaskBuilderC0<R> {
     <A> TaskBuilderC<F1<A, R>, R> in(F0<Task<A>> task);
-    <A> TaskBuilderC<F1<List<A>, R>, R> ins(F0<Stream<Task<A>>> tasks);
+    <A> TaskBuilderC<F1<List<A>, R>, R> ins(F0<List<Task<A>>> tasks);
   }
 
   interface TaskBuilderC<F, R> {
     Task<R> process(F code);
     <A> TaskBuilderC<F1<A, F>, R> in(F0<Task<A>> task);
-    <A> TaskBuilderC<F1<List<A>, F>, R> ins(F0<Stream<Task<A>>> tasks);
+    <A> TaskBuilderC<F1<List<A>, F>, R> ins(F0<List<Task<A>>> tasks);
   }
 
   interface TaskBuilder1<A> {
     <R> Task<R> process(F1<A, R> code);
     <B> TaskBuilder2<A, B> in(F0<Task<B>> task);
-    <B> TaskBuilder2<A, List<B>> ins(F0<Stream<Task<B>>> tasks);
+    <B> TaskBuilder2<A, List<B>> ins(F0<List<Task<B>>> tasks);
   }
 
   interface TaskBuilder2<A, B> {
     <R> Task<R> process(F2<A, B, R> code);
     <C> TaskBuilder3<A, B, C> in(F0<Task<C>> task);
-    <C> TaskBuilder3<A, B, List<C>> ins(F0<Stream<Task<C>>> tasks);
+    <C> TaskBuilder3<A, B, List<C>> ins(F0<List<Task<C>>> tasks);
   }
 
   interface TaskBuilder3<A, B, C> {

@@ -1,7 +1,5 @@
 package io.rouz.task;
 
-import io.rouz.task.dsl.TaskBuilder.F0;
-
 import org.junit.Test;
 
 import java.io.File;
@@ -11,10 +9,10 @@ import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.List;
-import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
+import io.rouz.task.dsl.TaskBuilder.F0;
+
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -30,17 +28,14 @@ public class SerializationTest {
         .constant(() -> 9999L);
     Task<String> task2 = Task.named("Baz", 40)
         .in(() -> task1)
-        .ins(() -> Stream.of(task1))
+        .ins(() -> singletonList(task1))
         .process((t1, t1l) -> t1l + " hello " + (t1 + 5));
 
     serialize(task2);
     Task<?> des = deserialize();
 
-    List<Task<?>> deps = des.inputs().collect(toList());
-
     assertEquals(des.id().name(), "Baz");
     assertEquals(des.out(), "[9999] hello 10004");
-    assertEquals(deps.get(0).id(), task1.id());
   }
 
   @Test(expected = NotSerializableException.class)

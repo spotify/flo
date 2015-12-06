@@ -1,25 +1,30 @@
 package io.rouz.task;
 
-import io.rouz.task.dsl.TaskBuilder;
-import io.rouz.task.dsl.TaskBuilder.F0;
-import io.rouz.task.dsl.TaskBuilder.F1;
-
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
+import io.rouz.task.dsl.TaskBuilder;
+import io.rouz.task.dsl.TaskBuilder.F0;
+import io.rouz.task.dsl.TaskBuilder.F1;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 public class TaskTest {
+
+  private final List<String> tasks = new ArrayList<>();
 
   @Test
   public void shouldRunAsExpected() throws Exception {
@@ -58,9 +63,10 @@ public class TaskTest {
     F0<Task<Integer>> countSupplier = countConstructor();
 
     // 1,2,3,4,5
-    Stream<Task<Integer>> fiveInts = Stream
+    List<Task<Integer>> fiveInts = Stream
         .generate(countSupplier)
-        .limit(5);
+        .limit(5)
+        .collect(toList());
 
     Task<Integer> sum = Task.named("Sum")
         .ins(() -> fiveInts)
@@ -75,9 +81,10 @@ public class TaskTest {
     F0<Task<Integer>> countSupplier = countConstructor();
 
     // 1,2,3,4,5
-    Stream<Task<Integer>> fiveInts = Stream
+    List<Task<Integer>> fiveInts = Stream
         .generate(countSupplier)
-        .limit(5);
+        .limit(5)
+        .collect(toList());
 
     Task<Integer> sum = Task.named("Sum")
         .in(() -> isEven(5))
@@ -93,9 +100,10 @@ public class TaskTest {
   public void shouldHanleMultipleStreamParameters() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
-    F0<Stream<Task<Integer>>> fiveInts = () -> Stream
+    F0<List<Task<Integer>>> fiveInts = () -> Stream
         .generate(countSupplier)
-        .limit(5);
+        .limit(5)
+        .collect(toList());
 
     Task<Integer> sum = Task.named("Sum")
         .ins(fiveInts)
@@ -110,9 +118,10 @@ public class TaskTest {
   public void shoulAllowMultipleRunsWithStreamParameters() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
-    F0<Stream<Task<Integer>>> fiveInts = () -> Stream
+    F0<List<Task<Integer>>> fiveInts = () -> Stream
         .generate(countSupplier)
-        .limit(5);
+        .limit(5)
+        .collect(toList());
 
     Task<Integer> sum = Task.named("Sum")
         .ins(fiveInts)
@@ -129,9 +138,10 @@ public class TaskTest {
   public void shouldMultipleRunsWithMultipleStreamParameters() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
-    F0<Stream<Task<Integer>>> fiveInts = () -> Stream
+    F0<List<Task<Integer>>> fiveInts = () -> Stream
         .generate(countSupplier)
-        .limit(5);
+        .limit(5)
+        .collect(toList());
 
     Task<Integer> sum = Task.named("Sum")
         .ins(fiveInts)
@@ -152,29 +162,30 @@ public class TaskTest {
         .in(() -> isEven(1))
         .process((a, b) -> "done");
 
-    List<TaskId> taskIds = top.tasksInOrder()
-        .collect(toList());
+    top.out();
 
-    TaskId isEven1Id = isEven(1).id();
-    TaskId evenify1Id = evenify(1).id();
+    String madeEven2 = "MadeEven 2";
+    String evenify1 = "Evenify 1";
 
-    assertThat(taskIds, containsInOrder(evenify1Id, isEven1Id));
+    assertThat(tasks, containsInOrder(evenify1, madeEven2));
   }
 
   @Test
   public void shouldFlattenStreamParameters() throws Exception {
     Task<String> top = Task.named("Top")
-        .ins(() -> Stream.of(isEven(0), isEven(1)))
+        .ins(() -> asList(isEven(0), isEven(1)))
         .process(results -> "done " + results.size());
 
-    List<TaskId> taskIds = top.tasksInOrder()
-        .collect(toList());
+    top.out();
 
-    TaskId isEven1Id = isEven(1).id();
-    TaskId evenify1Id = evenify(1).id();
+    String evenify1 = "Evenify 1";
+    String madeEven2 = "MadeEven 2";
+    String wasEven0 = "WasEven 0";
 
-    assertThat(taskIds.size(), is(3));
-    assertThat(taskIds, containsInOrder(evenify1Id, isEven1Id));
+    assertThat(tasks.size(), is(3));
+    assertThat(tasks, containsInOrder(wasEven0, evenify1));
+    assertThat(tasks, containsInOrder(wasEven0, madeEven2));
+    assertThat(tasks, containsInOrder(evenify1, madeEven2));
   }
 
   @Test
@@ -186,21 +197,20 @@ public class TaskTest {
 
     Task<Integer> sum = Task.named("Sum")
         .in(() -> isEven(5))
-        .ins(() -> Stream.of(evenResult.apply(0), evenResult.apply(1)))
-        .ins(() -> Stream.of(evenResult.apply(3)))
+        .ins(() -> asList(evenResult.apply(0), evenResult.apply(1)))
+        .ins(() -> singletonList(evenResult.apply(3)))
         .process((a, ints, b) -> a.result() + sumInts(ints) + sumInts(b));
 
-    List<TaskId> taskIds = sum.tasksInOrder()
-        .collect(toList());
+    sum.out();
 
-    TaskId evenify5Id = evenify(5).id();
-    TaskId evenify1Id = evenify(1).id();
-    TaskId evenify3Id = evenify(3).id();
+    String evenify5 = "Evenify 5";
+    String evenify1 = "Evenify 1";
+    String evenify3 = "Evenify 3";
 
-    assertThat(taskIds.size(), is(10));
-    assertThat(taskIds, containsInOrder(evenify5Id, evenify1Id));
-    assertThat(taskIds, containsInOrder(evenify5Id, evenify3Id));
-    assertThat(taskIds, containsInOrder(evenify1Id, evenify3Id));
+    assertThat(tasks.size(), is(7));
+    assertThat(tasks, containsInOrder(evenify5, evenify1));
+    assertThat(tasks, containsInOrder(evenify5, evenify3));
+    assertThat(tasks, containsInOrder(evenify1, evenify3));
   }
 
   @Test
@@ -230,9 +240,9 @@ public class TaskTest {
   public void shouldBuildCurriedLambdaWithLists() throws Exception {
     final Task<Integer> curried = Task.named("Curried")
         .curryTo(Integer.class)
-        .ins(() -> Stream.of(isEven(11), isEven(20))) // [22, 20]
+        .ins(() -> asList(isEven(11), isEven(20))) // [22, 20]
         .in(() -> isEven(0)) // 0
-        .ins(() -> Stream.of(isEven(1), isEven(2))) // [2, 2]
+        .ins(() -> asList(isEven(1), isEven(2))) // [2, 2]
         .in(() -> isEven(5)) // 10
         .process(
             a -> b -> c -> d ->
@@ -271,15 +281,19 @@ public class TaskTest {
   }
 
   private Task<Integer> evenify(int n) {
-    return Task.named("Evenify", n).constant(() -> n * 2);
+    return Task.named("Evenify", n)
+        .constant(() -> {
+          tasks.add("Evenify " + n);
+          return n * 2;
+        });
   }
 
   // Result ADT
-  static abstract class EvenResult {
+  abstract class EvenResult {
 
     private final int result;
 
-    protected EvenResult(int result) {
+    EvenResult(int result) {
       this.result = result;
     }
 
@@ -288,21 +302,23 @@ public class TaskTest {
     }
   }
 
-  static class WasEven extends EvenResult {
+  class WasEven extends EvenResult {
 
-    protected WasEven(int result) {
+    WasEven(int result) {
       super(result);
+      tasks.add("WasEven "  + result);
     }
   }
 
-  static class MadeEven extends EvenResult {
+  class MadeEven extends EvenResult {
 
-    protected MadeEven(int result) {
+    MadeEven(int result) {
       super(result);
+      tasks.add("MadeEven "  + result);
     }
   }
 
-  static <T> Matcher<Iterable<? extends T>> containsInOrder(T a, T b) {
+  private static <T> Matcher<Iterable<? extends T>> containsInOrder(T a, T b) {
     Objects.requireNonNull(a);
     Objects.requireNonNull(b);
     return new TypeSafeMatcher<Iterable<? extends T>>() {

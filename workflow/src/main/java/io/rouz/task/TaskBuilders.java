@@ -15,7 +15,6 @@ import io.rouz.task.dsl.TaskBuilder.TaskBuilderC;
 import io.rouz.task.dsl.TaskBuilder.TaskBuilderC0;
 
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Stream.concat;
 
 /**
  * Package local implementation of the {@link TaskBuilder} tree.
@@ -48,25 +47,23 @@ final class TaskBuilders {
 
     @Override
     public <R> Task<R> constant(F0<R> code) {
-      return Task.create(toStream(), tc -> code.get(), taskName, args);
+      return Task.create(tc -> code.get(), taskName, args);
     }
 
     @Override
     public <A> TaskBuilder1<A> in(F0<Task<A>> aTask) {
       return new Builder1<>(
-          toStream(aTask),
           taskName, args,
           f1 -> tc -> f1.apply(
               aTask.get().internalOut(tc)));
     }
 
     @Override
-    public <A> TaskBuilder1<List<A>> ins(F0<Stream<Task<A>>> aTasks) {
+    public <A> TaskBuilder1<List<A>> ins(F0<List<Task<A>>> aTasks) {
       return new Builder1<>(
-          toFlatStream(aTasks),
           taskName, args,
           f1 -> tc -> f1.apply(
-              aTasks.get().map(t -> t.internalOut(tc)).collect(toList())));
+              aTasks.get().stream().map(t -> t.internalOut(tc)).collect(toList())));
     }
 
     @Override
@@ -80,25 +77,23 @@ final class TaskBuilders {
       implements TaskBuilderC0<R> {
 
     BuilderC0(String taskName, Object[] args) {
-      super(toStream(), a -> tc -> a, taskName, args);
+      super(a -> tc -> a, taskName, args);
     }
 
     @Override
     public <A> TaskBuilderC<F1<A, R>, R> in(F0<Task<A>> aTask) {
       return new BuilderC<>(
-          concat(tasks, toStream(aTask)),
           taskName, args,
           fn -> tc -> fn.apply(
               aTask.get().internalOut(tc)));
     }
 
     @Override
-    public <A> TaskBuilderC<F1<List<A>, R>, R> ins(F0<Stream<Task<A>>> aTasks) {
+    public <A> TaskBuilderC<F1<List<A>, R>, R> ins(F0<List<Task<A>>> aTasks) {
       return new BuilderC<>(
-          concat(tasks, toFlatStream(aTasks)),
           taskName, args,
           fn -> tc -> fn.apply(
-              aTasks.get().map(t -> t.internalOut(tc)).collect(toList())));
+              aTasks.get().stream().map(t -> t.internalOut(tc)).collect(toList())));
     }
   }
 
@@ -108,19 +103,18 @@ final class TaskBuilders {
       extends BaseRefs<F>
       implements TaskBuilderC<F, R> {
 
-    private BuilderC(Stream<Task<?>> tasks, String taskName, Object[] args, Lifter<F> lifter) {
-      super(tasks, lifter, taskName, args);
+    private BuilderC(String taskName, Object[] args, Lifter<F> lifter) {
+      super(lifter, taskName, args);
     }
 
     @Override
     public Task<R> process(F fn) {
-      return Task.create(toStream(), lifter.liftWithCast(fn), "test");
+      return Task.create(lifter.liftWithCast(fn), "test");
     }
 
     @Override
     public <A> TaskBuilderC<F1<A, F>, R> in(F0<Task<A>> aTask) {
       return new BuilderC<>(
-          concat(tasks, toStream(aTask)),
           taskName, args,
           lifter.mapWithContext(
               (tc, fn) -> fn.apply(
@@ -128,13 +122,12 @@ final class TaskBuilders {
     }
 
     @Override
-    public <A> TaskBuilderC<F1<List<A>, F>, R> ins(F0<Stream<Task<A>>> aTasks) {
+    public <A> TaskBuilderC<F1<List<A>, F>, R> ins(F0<List<Task<A>>> aTasks) {
       return new BuilderC<>(
-          concat(tasks, toFlatStream(aTasks)),
           taskName, args,
           lifter.mapWithContext(
               (tc, fn) -> fn.apply(
-                  aTasks.get().map(t -> t.internalOut(tc)).collect(toList()))));
+                  aTasks.get().stream().map(t -> t.internalOut(tc)).collect(toList()))));
     }
   }
 
@@ -144,19 +137,18 @@ final class TaskBuilders {
       extends BaseRefs<F1<A, ?>>
       implements TaskBuilder1<A> {
 
-    Builder1(Stream<Task<?>> tasks, String taskName, Object[] args, Lifter<F1<A, ?>> lifter) {
-      super(tasks, lifter, taskName, args);
+    Builder1(String taskName, Object[] args, Lifter<F1<A, ?>> lifter) {
+      super(lifter, taskName, args);
     }
 
     @Override
     public <R> Task<R> process(F1<A, R> code) {
-      return Task.create(tasks, lifter.liftWithCast(code), taskName, args);
+      return Task.create(lifter.liftWithCast(code), taskName, args);
     }
 
     @Override
     public <B> TaskBuilder2<A, B> in(F0<Task<B>> bTask) {
       return new Builder2<>(
-          concat(tasks, toStream(bTask)),
           taskName, args,
           lifter.mapWithContext(
               (tc, f2) -> a -> f2.apply(
@@ -165,14 +157,13 @@ final class TaskBuilders {
     }
 
     @Override
-    public <B> TaskBuilder2<A, List<B>> ins(F0<Stream<Task<B>>> bTasks) {
+    public <B> TaskBuilder2<A, List<B>> ins(F0<List<Task<B>>> bTasks) {
       return new Builder2<>(
-          concat(tasks, toFlatStream(bTasks)),
           taskName, args,
           lifter.mapWithContext(
               (tc, f2) -> a -> f2.apply(
                   a,
-                  bTasks.get().map(t -> t.internalOut(tc)).collect(toList()))));
+                  bTasks.get().stream().map(t -> t.internalOut(tc)).collect(toList()))));
     }
   }
 
@@ -182,19 +173,18 @@ final class TaskBuilders {
       extends BaseRefs<F2<A, B, ?>>
       implements TaskBuilder2<A, B> {
 
-    Builder2(Stream<Task<?>> tasks, String taskName, Object[] args, Lifter<F2<A, B, ?>> lifter) {
-      super(tasks, lifter, taskName, args);
+    Builder2(String taskName, Object[] args, Lifter<F2<A, B, ?>> lifter) {
+      super(lifter, taskName, args);
     }
 
     @Override
     public <R> Task<R> process(F2<A, B, R> code) {
-      return Task.create(tasks, lifter.liftWithCast(code), taskName, args);
+      return Task.create(lifter.liftWithCast(code), taskName, args);
     }
 
     @Override
     public <C> TaskBuilder3<A, B, C> in(F0<Task<C>> cTask) {
       return new Builder3<>(
-          concat(tasks, toStream(cTask)),
           taskName, args,
           lifter.mapWithContext(
               (tc, f3) -> (a, b) -> f3.apply(
@@ -203,14 +193,13 @@ final class TaskBuilders {
     }
 
     @Override
-    public <C> TaskBuilder3<A, B, List<C>> ins(F0<Stream<Task<C>>> cTasks) {
+    public <C> TaskBuilder3<A, B, List<C>> ins(F0<List<Task<C>>> cTasks) {
       return new Builder3<>(
-          concat(tasks, toFlatStream(cTasks)),
           taskName, args,
           lifter.mapWithContext(
               (tc, f3) -> (a, b) -> f3.apply(
                   a, b,
-                  cTasks.get().map(t -> t.internalOut(tc)).collect(toList()))));
+                  cTasks.get().stream().map(t -> t.internalOut(tc)).collect(toList()))));
     }
   }
 
@@ -220,13 +209,13 @@ final class TaskBuilders {
       extends BaseRefs<F3<A, B, C, ?>>
       implements TaskBuilder3<A, B, C> {
 
-    Builder3(Stream<Task<?>> tasks, String taskName, Object[] args, Lifter<F3<A, B, C, ?>> lifter) {
-      super(tasks, lifter, taskName, args);
+    Builder3(String taskName, Object[] args, Lifter<F3<A, B, C, ?>> lifter) {
+      super(lifter, taskName, args);
     }
 
     @Override
     public <R> Task<R> process(F3<A, B, C, R> code) {
-      return Task.create(tasks, lifter.liftWithCast(code), taskName, args);
+      return Task.create(lifter.liftWithCast(code), taskName, args);
     }
   }
 
@@ -240,20 +229,17 @@ final class TaskBuilders {
    */
   private static class BaseRefs<F> {
 
-    protected final Stream<Task<?>> tasks;
     protected final Lifter<F> lifter;
     protected final String taskName;
     protected final Object[] args;
 
-    protected BaseRefs(Stream<Task<?>> tasks, Lifter<F> lifter, String taskName, Object[] args) {
-      this.tasks = tasks;
+    protected BaseRefs(Lifter<F> lifter, String taskName, Object[] args) {
       this.lifter = lifter;
       this.taskName = taskName;
       this.args = args;
     }
 
     protected BaseRefs(String taskName, Object[] args) {
-      this.tasks = null;
       this.lifter = null;
       this.taskName = taskName;
       this.args = args;
@@ -339,12 +325,24 @@ final class TaskBuilders {
    * @return A stream of the same tasks
    */
   @SafeVarargs
-  private static Stream<Task<?>> toStream(F0<? extends Task<?>>... tasks) {
-    return Stream.of(tasks).map(F0::get);
+  private static List<Task<?>> asList(F0<? extends Task<?>>... tasks) {
+    return Stream.of(tasks)
+        .map(F0::get)
+        .collect(toList());
   }
 
   @SafeVarargs
-  private static Stream<Task<?>> toFlatStream(F0<? extends Stream<? extends Task<?>>>... tasks) {
-    return Stream.of(tasks).flatMap(F0::get);
+  private static List<Task<?>> asFlatList(F0<? extends List<? extends Task<?>>>... tasks) {
+    return Stream.of(tasks)
+        .map(F0::get)
+        .flatMap(List::stream)
+        .collect(toList());
+  }
+
+  @SafeVarargs
+  private static List<Task<?>> concat(List<Task<?>>... lists) {
+    return Stream.of(lists)
+        .flatMap(List::stream)
+        .collect(toList());
   }
 }
