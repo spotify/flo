@@ -6,10 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
 
 import io.rouz.task.dsl.TaskBuilder;
 import io.rouz.task.dsl.TaskBuilder.F0;
 import io.rouz.task.dsl.TaskBuilder.F1;
+
+import static java.util.Collections.emptyList;
 
 /**
  * TODO:
@@ -45,10 +49,11 @@ public abstract class Task<T> implements Serializable {
   }
 
   public static <T> Task<T> create(F0<T> code, String taskName, Object... args) {
-    return create(tc -> code.get(), taskName, args);
+    return create(Collections::emptyList, tc -> code.get(), taskName, args);
   }
 
   static <T> Task<T> create(
+      F0<List<TaskId>> inputs,
       F1<TaskContext, T> code,
       String taskName,
       Object... args) {

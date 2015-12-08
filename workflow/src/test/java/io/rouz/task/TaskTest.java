@@ -115,27 +115,41 @@ public class TaskTest {
   }
 
   @Test
-  public void shoulAllowMultipleRunsWithStreamParameters() throws Exception {
+  public void shouldOnlyEvaluateInputsParameterOnce() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
-    F0<List<Task<Integer>>> fiveInts = () -> Stream
-        .generate(countSupplier)
-        .limit(5)
-        .collect(toList());
-
     Task<Integer> sum = Task.named("Sum")
-        .ins(fiveInts)
-        .process(this::sumInts);
+        .in(countSupplier::get)
+        .in(countSupplier::get)
+        .in(countSupplier::get)
+        .process((a, b, c) -> a + b + c);
 
-    // discard first five
+    // dummy run
     sum.out();
 
-    // 6+7+8+9+10 = 40
-    assertThat(sum.out(), is(40));
+    // 1+2+3 = 6
+    assertThat(sum.out(), is(6));
   }
 
   @Test
-  public void shouldMultipleRunsWithMultipleStreamParameters() throws Exception {
+  public void shouldOnlyEvaluateCurriedInputsParameterOnce() throws Exception {
+    F0<Task<Integer>> countSupplier = countConstructor();
+
+    Task<Integer> sum = Task.named("Sum").curryTo(Integer.class)
+        .in(countSupplier::get)
+        .in(countSupplier::get)
+        .in(countSupplier::get)
+        .process(a -> b -> c -> a + b + c);
+
+    // dummy run
+    sum.out();
+
+    // 1+2+3 = 6
+    assertThat(sum.out(), is(6));
+  }
+
+  @Test
+  public void shoulOnlyEvaluateStreamParameterOnce() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
     F0<List<Task<Integer>>> fiveInts = () -> Stream
@@ -146,13 +160,38 @@ public class TaskTest {
     Task<Integer> sum = Task.named("Sum")
         .ins(fiveInts)
         .ins(fiveInts)
-        .process((first5, second5) -> sumInts(first5) + sumInts(second5));
+        .ins(fiveInts)
+        .process((first5, second5, third5) -> sumInts(first5) + sumInts(second5) + sumInts(third5));
 
-    // discard first 2 groups of five
+    // dummy run
     sum.out();
 
-    // (11+12+13+14+15) + (16+17+18+19+20) = 155
-    assertThat(sum.out(), is(155));
+    // (1+2+3+4+5) + (6+7+8+9+10) + (11+12+13+14+15) = 120
+    assertThat(sum.out(), is(120));
+  }
+
+  @Test
+  public void shoulOnlyEvaluateCurriedStreamParameterOnce() throws Exception {
+    F0<Task<Integer>> countSupplier = countConstructor();
+
+    F0<List<Task<Integer>>> fiveInts = () -> Stream
+        .generate(countSupplier)
+        .limit(5)
+        .collect(toList());
+
+    Task<Integer> sum = Task.named("Sum").curryTo(Integer.class)
+        .ins(fiveInts)
+        .ins(fiveInts)
+        .ins(fiveInts)
+        .process(
+            first5 -> second5 -> third5 ->
+                sumInts(first5) + sumInts(second5) + sumInts(third5));
+
+    // dummy run
+    sum.out();
+
+    // (1+2+3+4+5) + (6+7+8+9+10) + (11+12+13+14+15) = 120
+    assertThat(sum.out(), is(120));
   }
 
   @Test

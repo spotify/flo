@@ -1,6 +1,8 @@
 package io.rouz.task;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import io.rouz.task.dsl.TaskBuilder;
@@ -47,23 +49,25 @@ final class TaskBuilders {
 
     @Override
     public <R> Task<R> constant(F0<R> code) {
-      return Task.create(tc -> code.get(), taskName, args);
+      return Task.create(inputs, tc -> code.get(), taskName, args);
     }
 
     @Override
     public <A> TaskBuilder1<A> in(F0<Task<A>> aTask) {
+      F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new Builder1<>(
           taskName, args,
           f1 -> tc -> f1.apply(
-              aTask.get().internalOut(tc)));
+              aTaskSingleton.get().internalOut(tc)));
     }
 
     @Override
     public <A> TaskBuilder1<List<A>> ins(F0<List<Task<A>>> aTasks) {
+      F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new Builder1<>(
           taskName, args,
           f1 -> tc -> f1.apply(
-              aTasks.get().stream().map(t -> t.internalOut(tc)).collect(toList())));
+              aTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList())));
     }
 
     @Override
@@ -82,18 +86,20 @@ final class TaskBuilders {
 
     @Override
     public <A> TaskBuilderC<F1<A, R>, R> in(F0<Task<A>> aTask) {
+      F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new BuilderC<>(
           taskName, args,
           fn -> tc -> fn.apply(
-              aTask.get().internalOut(tc)));
+              aTaskSingleton.get().internalOut(tc)));
     }
 
     @Override
     public <A> TaskBuilderC<F1<List<A>, R>, R> ins(F0<List<Task<A>>> aTasks) {
+      F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new BuilderC<>(
           taskName, args,
           fn -> tc -> fn.apply(
-              aTasks.get().stream().map(t -> t.internalOut(tc)).collect(toList())));
+              aTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList())));
     }
   }
 
@@ -107,27 +113,33 @@ final class TaskBuilders {
       super(lifter, taskName, args);
     }
 
+    private BuilderC(F0<List<TaskId>> inputs, String taskName, Object[] args, Lifter<F> lifter) {
+      super(inputs, lifter, taskName, args);
+    }
+
     @Override
     public Task<R> process(F fn) {
-      return Task.create(lifter.liftWithCast(fn), "test");
+      return Task.create(inputs, lifter.liftWithCast(fn), "test");
     }
 
     @Override
     public <A> TaskBuilderC<F1<A, F>, R> in(F0<Task<A>> aTask) {
+      F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new BuilderC<>(
           taskName, args,
           lifter.mapWithContext(
               (tc, fn) -> fn.apply(
-                  aTask.get().internalOut(tc))));
+                  aTaskSingleton.get().internalOut(tc))));
     }
 
     @Override
     public <A> TaskBuilderC<F1<List<A>, F>, R> ins(F0<List<Task<A>>> aTasks) {
+      F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new BuilderC<>(
           taskName, args,
           lifter.mapWithContext(
               (tc, fn) -> fn.apply(
-                  aTasks.get().stream().map(t -> t.internalOut(tc)).collect(toList()))));
+                  aTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList()))));
     }
   }
 
@@ -143,27 +155,29 @@ final class TaskBuilders {
 
     @Override
     public <R> Task<R> process(F1<A, R> code) {
-      return Task.create(lifter.liftWithCast(code), taskName, args);
+      return Task.create(inputs, lifter.liftWithCast(code), taskName, args);
     }
 
     @Override
     public <B> TaskBuilder2<A, B> in(F0<Task<B>> bTask) {
+      F0<Task<B>> bTaskSingleton = Singleton.create(bTask);
       return new Builder2<>(
           taskName, args,
           lifter.mapWithContext(
               (tc, f2) -> a -> f2.apply(
                   a,
-                  bTask.get().internalOut(tc))));
+                  bTaskSingleton.get().internalOut(tc))));
     }
 
     @Override
     public <B> TaskBuilder2<A, List<B>> ins(F0<List<Task<B>>> bTasks) {
+      F0<List<Task<B>>> bTasksSingleton = Singleton.create(bTasks);
       return new Builder2<>(
           taskName, args,
           lifter.mapWithContext(
               (tc, f2) -> a -> f2.apply(
                   a,
-                  bTasks.get().stream().map(t -> t.internalOut(tc)).collect(toList()))));
+                  bTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList()))));
     }
   }
 
@@ -179,27 +193,29 @@ final class TaskBuilders {
 
     @Override
     public <R> Task<R> process(F2<A, B, R> code) {
-      return Task.create(lifter.liftWithCast(code), taskName, args);
+      return Task.create(inputs, lifter.liftWithCast(code), taskName, args);
     }
 
     @Override
     public <C> TaskBuilder3<A, B, C> in(F0<Task<C>> cTask) {
+      F0<Task<C>> cTaskSingleton = Singleton.create(cTask);
       return new Builder3<>(
           taskName, args,
           lifter.mapWithContext(
               (tc, f3) -> (a, b) -> f3.apply(
                   a, b,
-                  cTask.get().internalOut(tc))));
+                  cTaskSingleton.get().internalOut(tc))));
     }
 
     @Override
     public <C> TaskBuilder3<A, B, List<C>> ins(F0<List<Task<C>>> cTasks) {
+      F0<List<Task<C>>> cTasksSingleton = Singleton.create(cTasks);
       return new Builder3<>(
           taskName, args,
           lifter.mapWithContext(
               (tc, f3) -> (a, b) -> f3.apply(
                   a, b,
-                  cTasks.get().stream().map(t -> t.internalOut(tc)).collect(toList()))));
+                  cTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList()))));
     }
   }
 
@@ -215,7 +231,7 @@ final class TaskBuilders {
 
     @Override
     public <R> Task<R> process(F3<A, B, C, R> code) {
-      return Task.create(lifter.liftWithCast(code), taskName, args);
+      return Task.create(inputs, lifter.liftWithCast(code), taskName, args);
     }
   }
 
@@ -229,18 +245,22 @@ final class TaskBuilders {
    */
   private static class BaseRefs<F> {
 
+    protected final F0<List<TaskId>> inputs;
     protected final Lifter<F> lifter;
     protected final String taskName;
     protected final Object[] args;
 
-    protected BaseRefs(Lifter<F> lifter, String taskName, Object[] args) {
-      this.lifter = lifter;
-      this.taskName = taskName;
-      this.args = args;
+    protected BaseRefs(String taskName, Object[] args) {
+      this(Collections::emptyList, null, taskName, args);
     }
 
-    protected BaseRefs(String taskName, Object[] args) {
-      this.lifter = null;
+    protected BaseRefs(Lifter<F> lifter, String taskName, Object[] args) {
+      this(Collections::emptyList, lifter, taskName, args);
+    }
+
+    protected BaseRefs(F0<List<TaskId>> inputs, Lifter<F> lifter, String taskName, Object[] args) {
+      this.inputs = inputs;
+      this.lifter = lifter;
       this.taskName = taskName;
       this.args = args;
     }
@@ -344,5 +364,31 @@ final class TaskBuilders {
     return Stream.of(lists)
         .flatMap(List::stream)
         .collect(toList());
+  }
+
+  private static class Singleton<T> implements F0<T> {
+
+    private final F0<T> supplier;
+    private volatile T value;
+
+    private Singleton(F0<T> supplier) {
+      this.supplier = Objects.requireNonNull(supplier);
+    }
+
+    private static <T> F0<T> create(F0<T> fn) {
+      return new Singleton<>(fn);
+    }
+
+    @Override
+    public T get() {
+      if (value == null) {
+        synchronized (this) {
+          if (value == null) {
+            value = supplier.get();
+          }
+        }
+      }
+      return value;
+    }
   }
 }
