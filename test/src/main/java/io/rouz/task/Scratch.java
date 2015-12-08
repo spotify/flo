@@ -107,7 +107,7 @@ public class Scratch {
           .process((sum, fib) -> something(parameter, sum, fib));
     }
 
-    static String something(String parameter, int sum, int fib) {
+    static String something(String parameter, int sum, long fib) {
       return "len('" + parameter + "') + " + PLUS + " = " + sum + ", " +
              "btw fib(" + parameter.length() + ") = "+ fib;
     }

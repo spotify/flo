@@ -6,11 +6,11 @@
 class Fib {
 
   @RootTask
-  static Task<Long> nth(int n) {
+  static Task<Long> nth(long n) {
     TaskBuilder fib = Task.named("Fib", n);
-    if (n < 3) {
+    if (n < 2) {
       return fib
-          .process(() -> 1L);
+          .constant(() -> n);
     } else {
       return fib
           .in(() -> Fib.nth(n - 1))

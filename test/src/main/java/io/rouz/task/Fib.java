@@ -8,15 +8,15 @@ import io.rouz.task.dsl.TaskBuilder;
 final class Fib {
 
   public static void main(String[] args) {
-    Task<Integer> fib33 = create(33);
+    Task<Long> fib33 = create(92);
     System.out.println("fib33.out() = " + fib33.out());
   }
 
-  static Task<Integer> create(int n) {
+  static Task<Long> create(long n) {
     TaskBuilder fib = Task.named("Fib", n);
     if (n < 2) {
       return fib
-          .constant(() -> 1);
+          .constant(() -> n);
     } else {
       return fib
           .in(() -> Fib.create(n - 1))
@@ -25,7 +25,7 @@ final class Fib {
     }
   }
 
-  static int fib(int a, int b) {
+  static long fib(long a, long b) {
     System.out.println("Fib.process(" + a + " + " + b + ")");
     return a + b;
   }
