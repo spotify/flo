@@ -8,12 +8,11 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import io.rouz.task.dsl.TaskBuilder;
 import io.rouz.task.dsl.TaskBuilder.F0;
 import io.rouz.task.dsl.TaskBuilder.F1;
-
-import static java.util.Collections.emptyList;
 
 /**
  * TODO:
@@ -36,6 +35,19 @@ public abstract class Task<T> implements Serializable {
 
   abstract F1<TaskContext, T> code();
 
+  abstract F0<List<Task<?>>> lazyInputs();
+
+  public List<Task<?>> inputs() {
+    return lazyInputs().get();
+  }
+
+  public Stream<Task<?>> inputsInOrder() {
+    return inputs().stream()
+        .flatMap(input -> Stream.concat(
+            input.inputsInOrder(),
+            Stream.of(input)));
+  }
+
   public T out() {
     return code().apply(new TaskContextImpl());
   }
@@ -53,12 +65,12 @@ public abstract class Task<T> implements Serializable {
   }
 
   static <T> Task<T> create(
-      F0<List<TaskId>> inputs,
+      F0<List<Task<?>>> inputs,
       F1<TaskContext, T> code,
       String taskName,
       Object... args) {
     final TaskId taskId = TaskIds.create(taskName, args);
-    return new AutoValue_Task<>(taskId, memoize(taskId, code));
+    return new AutoValue_Task<>(taskId, memoize(taskId, code), inputs);
   }
 
   private static <T> F1<TaskContext, T> memoize(TaskId taskId, F1<TaskContext, T> fn) {

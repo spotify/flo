@@ -2,7 +2,6 @@ package io.rouz.task;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 import io.rouz.task.dsl.TaskBuilder;
@@ -56,6 +55,7 @@ final class TaskBuilders {
     public <A> TaskBuilder1<A> in(F0<Task<A>> aTask) {
       F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new Builder1<>(
+          concat(inputs, asList(aTaskSingleton)),
           taskName, args,
           f1 -> tc -> f1.apply(
               aTaskSingleton.get().internalOut(tc)));
@@ -65,6 +65,7 @@ final class TaskBuilders {
     public <A> TaskBuilder1<List<A>> ins(F0<List<Task<A>>> aTasks) {
       F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new Builder1<>(
+          concat(inputs, asFlatList(aTasksSingleton)),
           taskName, args,
           f1 -> tc -> f1.apply(
               aTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList())));
@@ -81,13 +82,14 @@ final class TaskBuilders {
       implements TaskBuilderC0<R> {
 
     BuilderC0(String taskName, Object[] args) {
-      super(a -> tc -> a, taskName, args);
+      super(taskName, args);
     }
 
     @Override
     public <A> TaskBuilderC<F1<A, R>, R> in(F0<Task<A>> aTask) {
       F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new BuilderC<>(
+          concat(inputs, asList(aTaskSingleton)),
           taskName, args,
           fn -> tc -> fn.apply(
               aTaskSingleton.get().internalOut(tc)));
@@ -97,6 +99,7 @@ final class TaskBuilders {
     public <A> TaskBuilderC<F1<List<A>, R>, R> ins(F0<List<Task<A>>> aTasks) {
       F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new BuilderC<>(
+          concat(inputs, asFlatList(aTasksSingleton)),
           taskName, args,
           fn -> tc -> fn.apply(
               aTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList())));
@@ -109,11 +112,7 @@ final class TaskBuilders {
       extends BaseRefs<F>
       implements TaskBuilderC<F, R> {
 
-    private BuilderC(String taskName, Object[] args, Lifter<F> lifter) {
-      super(lifter, taskName, args);
-    }
-
-    private BuilderC(F0<List<TaskId>> inputs, String taskName, Object[] args, Lifter<F> lifter) {
+    private BuilderC(F0<List<Task<?>>> inputs, String taskName, Object[] args, Lifter<F> lifter) {
       super(inputs, lifter, taskName, args);
     }
 
@@ -126,6 +125,7 @@ final class TaskBuilders {
     public <A> TaskBuilderC<F1<A, F>, R> in(F0<Task<A>> aTask) {
       F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new BuilderC<>(
+          concat(inputs, asList(aTaskSingleton)),
           taskName, args,
           lifter.mapWithContext(
               (tc, fn) -> fn.apply(
@@ -136,6 +136,7 @@ final class TaskBuilders {
     public <A> TaskBuilderC<F1<List<A>, F>, R> ins(F0<List<Task<A>>> aTasks) {
       F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new BuilderC<>(
+          concat(inputs, asFlatList(aTasksSingleton)),
           taskName, args,
           lifter.mapWithContext(
               (tc, fn) -> fn.apply(
@@ -149,8 +150,8 @@ final class TaskBuilders {
       extends BaseRefs<F1<A, ?>>
       implements TaskBuilder1<A> {
 
-    Builder1(String taskName, Object[] args, Lifter<F1<A, ?>> lifter) {
-      super(lifter, taskName, args);
+    Builder1(F0<List<Task<?>>> inputs, String taskName, Object[] args, Lifter<F1<A, ?>> lifter) {
+      super(inputs, lifter, taskName, args);
     }
 
     @Override
@@ -162,6 +163,7 @@ final class TaskBuilders {
     public <B> TaskBuilder2<A, B> in(F0<Task<B>> bTask) {
       F0<Task<B>> bTaskSingleton = Singleton.create(bTask);
       return new Builder2<>(
+          concat(inputs, asList(bTaskSingleton)),
           taskName, args,
           lifter.mapWithContext(
               (tc, f2) -> a -> f2.apply(
@@ -173,6 +175,7 @@ final class TaskBuilders {
     public <B> TaskBuilder2<A, List<B>> ins(F0<List<Task<B>>> bTasks) {
       F0<List<Task<B>>> bTasksSingleton = Singleton.create(bTasks);
       return new Builder2<>(
+          concat(inputs, asFlatList(bTasksSingleton)),
           taskName, args,
           lifter.mapWithContext(
               (tc, f2) -> a -> f2.apply(
@@ -187,8 +190,8 @@ final class TaskBuilders {
       extends BaseRefs<F2<A, B, ?>>
       implements TaskBuilder2<A, B> {
 
-    Builder2(String taskName, Object[] args, Lifter<F2<A, B, ?>> lifter) {
-      super(lifter, taskName, args);
+    Builder2(F0<List<Task<?>>> inputs, String taskName, Object[] args, Lifter<F2<A, B, ?>> lifter) {
+      super(inputs, lifter, taskName, args);
     }
 
     @Override
@@ -200,6 +203,7 @@ final class TaskBuilders {
     public <C> TaskBuilder3<A, B, C> in(F0<Task<C>> cTask) {
       F0<Task<C>> cTaskSingleton = Singleton.create(cTask);
       return new Builder3<>(
+          concat(inputs, asList(cTaskSingleton)),
           taskName, args,
           lifter.mapWithContext(
               (tc, f3) -> (a, b) -> f3.apply(
@@ -211,6 +215,7 @@ final class TaskBuilders {
     public <C> TaskBuilder3<A, B, List<C>> ins(F0<List<Task<C>>> cTasks) {
       F0<List<Task<C>>> cTasksSingleton = Singleton.create(cTasks);
       return new Builder3<>(
+          concat(inputs, asFlatList(cTasksSingleton)),
           taskName, args,
           lifter.mapWithContext(
               (tc, f3) -> (a, b) -> f3.apply(
@@ -225,8 +230,8 @@ final class TaskBuilders {
       extends BaseRefs<F3<A, B, C, ?>>
       implements TaskBuilder3<A, B, C> {
 
-    Builder3(String taskName, Object[] args, Lifter<F3<A, B, C, ?>> lifter) {
-      super(lifter, taskName, args);
+    Builder3(F0<List<Task<?>>> inputs, String taskName, Object[] args, Lifter<F3<A, B, C, ?>> lifter) {
+      super(inputs, lifter, taskName, args);
     }
 
     @Override
@@ -245,7 +250,7 @@ final class TaskBuilders {
    */
   private static class BaseRefs<F> {
 
-    protected final F0<List<TaskId>> inputs;
+    protected final F0<List<Task<?>>> inputs;
     protected final Lifter<F> lifter;
     protected final String taskName;
     protected final Object[] args;
@@ -254,11 +259,7 @@ final class TaskBuilders {
       this(Collections::emptyList, null, taskName, args);
     }
 
-    protected BaseRefs(Lifter<F> lifter, String taskName, Object[] args) {
-      this(Collections::emptyList, lifter, taskName, args);
-    }
-
-    protected BaseRefs(F0<List<TaskId>> inputs, Lifter<F> lifter, String taskName, Object[] args) {
+    protected BaseRefs(F0<List<Task<?>>> inputs, Lifter<F> lifter, String taskName, Object[] args) {
       this.inputs = inputs;
       this.lifter = lifter;
       this.taskName = taskName;
@@ -335,60 +336,35 @@ final class TaskBuilders {
   }
 
   /**
-   * Converts an array of {@link F0}s of {@link Task}s to a {@link Stream} of the same
-   * {@link Task}s.
+   * Converts an array of {@link F0}s of {@link Task}s to a {@link F0} of a list of
+   * those tasks {@link Task}s.
    *
-   * It will only evaluate the {@link Task} instances (through calling {@link F0#get()})
-   * when the returned {@link Stream} is consumed. Thus it retains lazyness.
+   * It will only evaluate the functions (through calling {@link F0#get()})
+   * when the returned function is invoked. Thus it retains lazyness.
    *
-   * @param tasks  An array of tasks
-   * @return A stream of the same tasks
+   * @param tasks  An array of lazy evaluated tasks
+   * @return A function of a list of lazily evaluated tasks
    */
   @SafeVarargs
-  private static List<Task<?>> asList(F0<? extends Task<?>>... tasks) {
-    return Stream.of(tasks)
+  private static F0<List<Task<?>>> asList(F0<? extends Task<?>>... tasks) {
+    return () -> Stream.of(tasks)
         .map(F0::get)
         .collect(toList());
   }
 
   @SafeVarargs
-  private static List<Task<?>> asFlatList(F0<? extends List<? extends Task<?>>>... tasks) {
-    return Stream.of(tasks)
+  private static F0<List<Task<?>>> asFlatList(F0<? extends List<? extends Task<?>>>... tasks) {
+    return () -> Stream.of(tasks)
         .map(F0::get)
         .flatMap(List::stream)
         .collect(toList());
   }
 
   @SafeVarargs
-  private static List<Task<?>> concat(List<Task<?>>... lists) {
-    return Stream.of(lists)
+  private static <T> F0<List<T>> concat(F0<List<T>>... lists) {
+    return () -> Stream.of(lists)
+        .map(F0::get)
         .flatMap(List::stream)
         .collect(toList());
-  }
-
-  private static class Singleton<T> implements F0<T> {
-
-    private final F0<T> supplier;
-    private volatile T value;
-
-    private Singleton(F0<T> supplier) {
-      this.supplier = Objects.requireNonNull(supplier);
-    }
-
-    private static <T> F0<T> create(F0<T> fn) {
-      return new Singleton<>(fn);
-    }
-
-    @Override
-    public T get() {
-      if (value == null) {
-        synchronized (this) {
-          if (value == null) {
-            value = supplier.get();
-          }
-        }
-      }
-      return value;
-    }
   }
 }

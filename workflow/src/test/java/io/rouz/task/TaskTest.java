@@ -5,7 +5,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,11 +19,10 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 
 public class TaskTest {
-
-  private final List<String> tasks = new ArrayList<>();
 
   @Test
   public void shouldRunAsExpected() throws Exception {
@@ -195,18 +193,83 @@ public class TaskTest {
   }
 
   @Test
+  public void shouldListInputIds() throws Exception {
+    Task<String> top = Task.named("Top")
+        .in(() -> isEven(0))
+        .in(() -> isEven(1))
+        .in(() -> isEven(3))
+        .process((a, b, c) -> "done");
+
+    List<TaskId> inputs = top.inputs().stream().map(Task::id).collect(toList());
+
+    TaskId isEven0Id = isEven(0).id();
+    TaskId isEven1Id = isEven(1).id();
+    TaskId isEven3Id = isEven(3).id();
+
+    assertThat(inputs, containsInOrder(isEven0Id, isEven1Id));
+    assertThat(inputs, containsInOrder(isEven0Id, isEven3Id));
+    assertThat(inputs, containsInOrder(isEven1Id, isEven3Id));
+  }
+
+  @Test
+  public void shouldListCurriedInputIds() throws Exception {
+    Task<String> top = Task.named("Top").curryTo(String.class)
+        .in(() -> isEven(0))
+        .in(() -> isEven(1))
+        .in(() -> isEven(3))
+        .process(a -> b -> c -> "done");
+
+    List<TaskId> inputs = top.inputs().stream().map(Task::id).collect(toList());
+
+    TaskId isEven0Id = isEven(0).id();
+    TaskId isEven1Id = isEven(1).id();
+    TaskId isEven3Id = isEven(3).id();
+
+    assertThat(inputs, containsInOrder(isEven0Id, isEven1Id));
+    assertThat(inputs, containsInOrder(isEven0Id, isEven3Id));
+    assertThat(inputs, containsInOrder(isEven1Id, isEven3Id));
+  }
+
+  @Test
+  public void shouldListInputsLazily() throws Exception {
+    F0<Task<Integer>> countSupplier = countConstructor();
+
+    Task<Integer> sum = Task.named("Sum")
+        .in(countSupplier::get)
+        .in(countSupplier::get)
+        .in(countSupplier::get)
+        .process((a, b, c) -> a + b + c);
+
+    // pre fetch one
+    Task<Integer> one = countSupplier.get();
+
+    // both run and and get inputs
+    sum.out();
+    List<TaskId> inputs = sum.inputs().stream().map(Task::id).collect(toList());
+
+    assertThat(inputs.get(0).toString(), startsWith("Count(2)"));
+    assertThat(inputs.get(1).toString(), startsWith("Count(3)"));
+    assertThat(inputs.get(2).toString(), startsWith("Count(4)"));
+
+    assertThat(one.out(), is(1));
+    assertThat(sum.out(), is(9)); // 2+3+4 = 9
+  }
+
+  @Test
   public void shouldLinearizeTasks() throws Exception {
     Task<String> top = Task.named("Top")
         .in(() -> isEven(0))
         .in(() -> isEven(1))
         .process((a, b) -> "done");
 
-    top.out();
+    List<TaskId> taskIds = top.inputsInOrder()
+        .map(Task::id)
+        .collect(toList());
 
-    String madeEven2 = "MadeEven 2";
-    String evenify1 = "Evenify 1";
+    TaskId evenify1Id = evenify(1).id();
+    TaskId isEven1Id = isEven(1).id();
 
-    assertThat(tasks, containsInOrder(evenify1, madeEven2));
+    assertThat(taskIds, containsInOrder(evenify1Id, isEven1Id));
   }
 
   @Test
@@ -215,16 +278,15 @@ public class TaskTest {
         .ins(() -> asList(isEven(0), isEven(1)))
         .process(results -> "done " + results.size());
 
-    top.out();
+    List<TaskId> taskIds = top.inputsInOrder()
+        .map(Task::id)
+        .collect(toList());
 
-    String evenify1 = "Evenify 1";
-    String madeEven2 = "MadeEven 2";
-    String wasEven0 = "WasEven 0";
+    TaskId isEven1Id = isEven(1).id();
+    TaskId evenify1Id = evenify(1).id();
 
-    assertThat(tasks.size(), is(3));
-    assertThat(tasks, containsInOrder(wasEven0, evenify1));
-    assertThat(tasks, containsInOrder(wasEven0, madeEven2));
-    assertThat(tasks, containsInOrder(evenify1, madeEven2));
+    assertThat(taskIds.size(), is(3));
+    assertThat(taskIds, containsInOrder(evenify1Id, isEven1Id));
   }
 
   @Test
@@ -240,16 +302,20 @@ public class TaskTest {
         .ins(() -> singletonList(evenResult.apply(3)))
         .process((a, ints, b) -> a.result() + sumInts(ints) + sumInts(b));
 
-    sum.out();
+    List<TaskId> taskIds = sum.inputsInOrder()
+        .map(Task::id)
+        .collect(toList());
 
-    String evenify5 = "Evenify 5";
-    String evenify1 = "Evenify 1";
-    String evenify3 = "Evenify 3";
+    TaskId evenify5Id = evenify(5).id();
+    TaskId evenify1Id = evenify(1).id();
+    TaskId evenify3Id = evenify(3).id();
 
-    assertThat(tasks.size(), is(7));
-    assertThat(tasks, containsInOrder(evenify5, evenify1));
-    assertThat(tasks, containsInOrder(evenify5, evenify3));
-    assertThat(tasks, containsInOrder(evenify1, evenify3));
+    System.out.println("taskIds = " + taskIds);
+
+    assertThat(taskIds.size(), is(10));
+    assertThat(taskIds, containsInOrder(evenify5Id, evenify1Id));
+    assertThat(taskIds, containsInOrder(evenify5Id, evenify3Id));
+    assertThat(taskIds, containsInOrder(evenify1Id, evenify3Id));
   }
 
   @Test
@@ -321,10 +387,7 @@ public class TaskTest {
 
   private Task<Integer> evenify(int n) {
     return Task.named("Evenify", n)
-        .constant(() -> {
-          tasks.add("Evenify " + n);
-          return n * 2;
-        });
+        .constant(() -> n * 2);
   }
 
   // Result ADT
@@ -345,7 +408,6 @@ public class TaskTest {
 
     WasEven(int result) {
       super(result);
-      tasks.add("WasEven "  + result);
     }
   }
 
@@ -353,7 +415,6 @@ public class TaskTest {
 
     MadeEven(int result) {
       super(result);
-      tasks.add("MadeEven "  + result);
     }
   }
 
