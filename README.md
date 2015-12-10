@@ -1,5 +1,7 @@
 # flo
 
+[![CircleCI](https://img.shields.io/circleci/project/rouzwawi/flo.svg)](https://circleci.com/gh/rouzwawi/flo)
+
 > It's in the flow
 
 ```java
