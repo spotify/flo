@@ -4,7 +4,9 @@ import com.google.auto.value.AutoValue;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import io.rouz.task.dsl.TaskBuilder;
@@ -37,10 +39,19 @@ public abstract class Task<T> implements Serializable {
   }
 
   public Stream<Task<?>> inputsInOrder() {
+    return inputsInOrder(new HashSet<>());
+  }
+
+  private Stream<Task<?>> inputsInOrder(Set<TaskId> visits) {
     return inputs().stream()
-        .flatMap(input -> Stream.concat(
-            input.inputsInOrder(),
-            Stream.of(input)));
+        .filter(input -> !visits.contains(input.id()))
+        .flatMap(input -> {
+          visits.add(input.id());
+          return Stream.concat(
+              input.inputsInOrder(visits),
+              Stream.of(input)
+          );
+        });
   }
 
   public T out() {
