@@ -2,9 +2,6 @@ package io.rouz.task;
 
 import com.google.auto.value.AutoValue;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -29,8 +26,6 @@ import io.rouz.task.dsl.TaskBuilder.F1;
 @AutoValue
 public abstract class Task<T> implements Serializable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(Task.class);
-
   public abstract TaskId id();
 
   abstract F1<TaskContext, T> code();
@@ -49,11 +44,11 @@ public abstract class Task<T> implements Serializable {
   }
 
   public T out() {
-    return code().apply(new TaskContextImpl());
+    return new TaskContextImpl().apply(id(), code());
   }
 
   T internalOut(TaskContext taskContext) {
-    return code().apply(taskContext);
+    return taskContext.apply(id(), code());
   }
 
   public static TaskBuilder named(String taskName, Object... args) {
@@ -69,21 +64,6 @@ public abstract class Task<T> implements Serializable {
       F1<TaskContext, T> code,
       String taskName,
       Object... args) {
-    final TaskId taskId = TaskIds.create(taskName, args);
-    return new AutoValue_Task<>(taskId, memoize(taskId, code), inputs);
-  }
-
-  private static <T> F1<TaskContext, T> memoize(TaskId taskId, F1<TaskContext, T> fn) {
-    return taskContext -> {
-      if (taskContext.has(taskId)) {
-        final T value = taskContext.value(taskId);
-        LOG.debug("Found calculated value for {} = {}", taskId, value);
-        return value;
-      } else {
-        final T value = fn.apply(taskContext);
-        taskContext.put(taskId, value);
-        return value;
-      }
-    };
+    return new AutoValue_Task<>(TaskIds.create(taskName, args), code, inputs);
   }
 }
