@@ -1,14 +1,19 @@
-package io.rouz.task;
+package io.rouz.scratch;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import io.rouz.task.Task;
 import io.rouz.task.proc.Exec;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpecBuilder;
+import io.rouz.task.processor.RootTask;
 
-import static java.util.Arrays.asList;
-import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Task definitions have (TD)
@@ -38,28 +43,53 @@ import static java.util.Objects.requireNonNull;
 public class Scratch {
 
   public static void main(String[] args) throws IOException {
-    OptionParser parser = parser();
-    OptionSet parse = parser.parse(args);
+    Task<Exec.Result> foo = exec("foobar", 123);
+    foo.inputsInOrder()
+        .map(Task::id)
+        .forEachOrdered(System.out::println);
 
-    if (parse.has("h")) {
-      parser.printHelpOn(System.err);
-      System.exit(1);
-    }
-
-    System.out.println("parse.asMap() = " + parse.asMap());
-    System.out.println("parse.has(\"parameter\") = " + parse.has("parameter"));
-    System.out.println("parse.has(\"number\") = " + parse.has("number"));
-    System.out.println("parse.has(\"wink\") = " + parse.has("wink"));
-
-    System.out.println("parameter = " + requireNonNull(parse.valueOf("parameter")));
-    System.out.println("parameter = " + parse.valueOf("parameter").getClass());
-    System.out.println("number = " + (int) requireNonNull(parse.valueOf("number")));
-    System.out.println("number = " + parse.valueOf("number").getClass());
-
-//    Cli.forFactories(FloRootTaskFactory::exec).run(args);
+    Job job = asJob(foo, new HashSet<>());
+    ObjectMapper objectMapper = new ObjectMapper()
+      .enable(SerializationFeature.INDENT_OUTPUT);
+    String json = objectMapper.writeValueAsString(job);
+    System.out.println(json);
   }
 
-//  @RootTask
+  static Job asJob(Task<?> task, Set<String> visits) {
+    String id = task.id().toString();
+    if (visits.contains(id)) {
+      return Job.ref(id);
+    } else {
+      visits.add(id);
+    }
+
+    List<Job> upstreams = task.inputs().stream()
+        .map(t -> asJob(t, visits))
+        .collect(toList());
+    return Job.create(id, upstreams);
+  }
+
+  static class Job {
+    public final String id;
+    public final boolean reference;
+    public final List<Job> upstreams;
+
+    Job(String id, boolean reference, List<Job> upstreams) {
+      this.id = id;
+      this.reference = reference;
+      this.upstreams = upstreams;
+    }
+
+    public static Job ref(String id) {
+      return new Job(id, true, Collections.emptyList());
+    }
+
+    public static Job create(String id, List<Job> upstreams) {
+      return new Job(id, false, upstreams);
+    }
+  }
+
+  @RootTask
   static Task<Exec.Result> exec(String parameter, int number) {
     Task<String> task1 = MyTask.create(parameter);
     Task<Integer> task2 = Adder.create(number, number + 2);
@@ -68,29 +98,6 @@ public class Scratch {
         .in(() -> task1)
         .in(() -> task2)
         .process(Exec.exec((str, i) -> args("/bin/sh", "-c", "\"echo " + i + "\"")));
-  }
-
-  static OptionParser parser() {
-    final OptionParser parser = new OptionParser();
-
-    opt("parameter", String.class, parser);
-    opt("number", int.class, parser);
-    opt("wink", boolean.class, parser);
-
-    parser.acceptsAll(asList("h", "help")).forHelp();
-
-    return parser;
-  }
-
-  static void opt(String name, Class<?> type, OptionParser parser) {
-    final boolean isFlag = boolean.class.equals(type);
-    final OptionSpecBuilder spec = (isFlag)
-        ? parser.accepts(name, "(default: false)")
-        : parser.accepts(name);
-
-    if (!isFlag) {
-      spec.withRequiredArg().ofType(type).describedAs(name).required();
-    }
   }
 
   private static String[] args(String... args) {
