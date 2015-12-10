@@ -1,0 +1,11 @@
+machine:
+  java:
+    version: oraclejdk8
+
+dependencies:
+  override:
+    -  mvn dependency:resolve --fail-never
+
+test:
+  override:
+    - mvn verify
