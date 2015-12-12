@@ -55,7 +55,7 @@ final class TaskBuilders {
     public <A> TaskBuilder1<A> in(F0<Task<A>> aTask) {
       F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new Builder1<>(
-          concat(inputs, asList(aTaskSingleton)),
+          lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskName, args,
           f1 -> tc -> f1.apply(
               aTaskSingleton.get().internalOut(tc)));
@@ -65,7 +65,7 @@ final class TaskBuilders {
     public <A> TaskBuilder1<List<A>> ins(F0<List<Task<A>>> aTasks) {
       F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new Builder1<>(
-          concat(inputs, asFlatList(aTasksSingleton)),
+          lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskName, args,
           f1 -> tc -> f1.apply(
               aTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList())));
@@ -89,7 +89,7 @@ final class TaskBuilders {
     public <A> TaskBuilderC<F1<A, R>, R> in(F0<Task<A>> aTask) {
       F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new BuilderC<>(
-          concat(inputs, asList(aTaskSingleton)),
+          lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskName, args,
           fn -> tc -> fn.apply(
               aTaskSingleton.get().internalOut(tc)));
@@ -99,7 +99,7 @@ final class TaskBuilders {
     public <A> TaskBuilderC<F1<List<A>, R>, R> ins(F0<List<Task<A>>> aTasks) {
       F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new BuilderC<>(
-          concat(inputs, asFlatList(aTasksSingleton)),
+          lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskName, args,
           fn -> tc -> fn.apply(
               aTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList())));
@@ -125,7 +125,7 @@ final class TaskBuilders {
     public <A> TaskBuilderC<F1<A, F>, R> in(F0<Task<A>> aTask) {
       F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new BuilderC<>(
-          concat(inputs, asList(aTaskSingleton)),
+          lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskName, args,
           lifter.mapWithContext(
               (tc, fn) -> fn.apply(
@@ -136,7 +136,7 @@ final class TaskBuilders {
     public <A> TaskBuilderC<F1<List<A>, F>, R> ins(F0<List<Task<A>>> aTasks) {
       F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new BuilderC<>(
-          concat(inputs, asFlatList(aTasksSingleton)),
+          lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskName, args,
           lifter.mapWithContext(
               (tc, fn) -> fn.apply(
@@ -163,7 +163,7 @@ final class TaskBuilders {
     public <B> TaskBuilder2<A, B> in(F0<Task<B>> bTask) {
       F0<Task<B>> bTaskSingleton = Singleton.create(bTask);
       return new Builder2<>(
-          concat(inputs, asList(bTaskSingleton)),
+          lazyFlatten(inputs, lazyList(bTaskSingleton)),
           taskName, args,
           lifter.mapWithContext(
               (tc, f2) -> a -> f2.apply(
@@ -175,7 +175,7 @@ final class TaskBuilders {
     public <B> TaskBuilder2<A, List<B>> ins(F0<List<Task<B>>> bTasks) {
       F0<List<Task<B>>> bTasksSingleton = Singleton.create(bTasks);
       return new Builder2<>(
-          concat(inputs, asFlatList(bTasksSingleton)),
+          lazyFlatten(inputs, lazyFlatten(bTasksSingleton)),
           taskName, args,
           lifter.mapWithContext(
               (tc, f2) -> a -> f2.apply(
@@ -203,7 +203,7 @@ final class TaskBuilders {
     public <C> TaskBuilder3<A, B, C> in(F0<Task<C>> cTask) {
       F0<Task<C>> cTaskSingleton = Singleton.create(cTask);
       return new Builder3<>(
-          concat(inputs, asList(cTaskSingleton)),
+          lazyFlatten(inputs, lazyList(cTaskSingleton)),
           taskName, args,
           lifter.mapWithContext(
               (tc, f3) -> (a, b) -> f3.apply(
@@ -215,7 +215,7 @@ final class TaskBuilders {
     public <C> TaskBuilder3<A, B, List<C>> ins(F0<List<Task<C>>> cTasks) {
       F0<List<Task<C>>> cTasksSingleton = Singleton.create(cTasks);
       return new Builder3<>(
-          concat(inputs, asFlatList(cTasksSingleton)),
+          lazyFlatten(inputs, lazyFlatten(cTasksSingleton)),
           taskName, args,
           lifter.mapWithContext(
               (tc, f3) -> (a, b) -> f3.apply(
@@ -346,22 +346,14 @@ final class TaskBuilders {
    * @return A function of a list of lazily evaluated tasks
    */
   @SafeVarargs
-  private static F0<List<Task<?>>> asList(F0<? extends Task<?>>... tasks) {
+  private static F0<List<Task<?>>> lazyList(F0<? extends Task<?>>... tasks) {
     return () -> Stream.of(tasks)
         .map(F0::get)
         .collect(toList());
   }
 
   @SafeVarargs
-  private static F0<List<Task<?>>> asFlatList(F0<? extends List<? extends Task<?>>>... tasks) {
-    return () -> Stream.of(tasks)
-        .map(F0::get)
-        .flatMap(List::stream)
-        .collect(toList());
-  }
-
-  @SafeVarargs
-  private static <T> F0<List<T>> concat(F0<List<T>>... lists) {
+  private static <T> F0<List<T>> lazyFlatten(F0<? extends List<? extends T>>... lists) {
     return () -> Stream.of(lists)
         .map(F0::get)
         .flatMap(List::stream)
