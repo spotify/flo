@@ -19,6 +19,8 @@ __Some key features__
 * Extensible workflow graph evaluation
 * A command line parser generator for instantiation of workflow definitions: `flo-cli`
 
+## Example: Fibonacci
+
 
 ```java
 class Fib {
