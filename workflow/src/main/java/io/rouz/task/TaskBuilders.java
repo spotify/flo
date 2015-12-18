@@ -118,7 +118,7 @@ final class TaskBuilders {
 
     @Override
     public Task<R> process(F fn) {
-      return Task.create(inputs, lifter.liftWithCast(fn), "test");
+      return Task.create(inputs, lifter.liftWithCast(fn), taskName, args);
     }
 
     @Override
