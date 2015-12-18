@@ -2,7 +2,23 @@
 
 [![CircleCI](https://img.shields.io/circleci/project/rouzwawi/flo.svg)](https://circleci.com/gh/rouzwawi/flo)
 
-> It's in the flow
+> __disclaimer__, `flo` is under development during my spare time and might not yet live up to all the listed features.
+
+`flo` is a lightweight workflow definition library
+
+* It's not a workflow management system
+* It's not a workflow scheduler
+
+__Some key features__
+
+* Programmatic Java and Scala API for expressing workflow construction _(graph expansion)_
+* Use of arbitrary program logic for workflow graph expansion
+* Recursive definitions
+* Lazy workflow graph expansion
+* Workflow graph serialization (for 3rd party persistence)
+* Extensible workflow graph evaluation
+* A command line parser generator for instantiation of workflow definitions: `flo-cli`
+
 
 ```java
 class Fib {
