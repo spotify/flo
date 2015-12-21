@@ -3,7 +3,7 @@
 [![CircleCI](https://img.shields.io/circleci/project/rouzwawi/flo.svg)](https://circleci.com/gh/rouzwawi/flo)
 [![License](https://img.shields.io/github/license/rouzwawi/flo.svg)](LICENSE.txt)
 
-> __disclaimer__, `flo` is under development during my spare time and might not yet live up to all the listed features.
+> `flo` is under development and might not yet live up to all the listed features.
 
 `flo` is a lightweight workflow definition library
 
@@ -20,13 +20,21 @@ __Some key features__
 * Extensible workflow graph evaluation
 * A command line parser generator for instantiation of workflow definitions: `flo-cli`
 
-## Example: Fibonacci
+## Dependency
 
+```xml
+<dependency>
+  <groupId>io.rouz</groupId>
+  <artifactId>flo-workflow</artifactId>
+  <version>${flo.version}</version>
+</dependency>
+```
+
+## Example: Fibonacci
 
 ```java
 class Fib {
 
-  @RootTask
   static Task<Long> nth(long n) {
     TaskBuilder fib = Task.named("Fib", n);
     if (n < 2) {
@@ -41,10 +49,41 @@ class Fib {
   }
 
   public static void main(String[] args) throws IOException {
+    Task<Long> fib92 = nth(92);
+    System.out.println("fib92.out() = " + fib92.out());
+  }
+}
+```
+
+## CLI generator
+
+> `flo-cli` is in an experimental stage of development and not really useful at this time.
+
+```xml
+<dependency>
+  <groupId>io.rouz</groupId>
+  <artifactId>flo-cli</artifactId>
+  <version>${flo.version}</version>
+  <scope>optional</scope>
+</dependency>
+```
+
+By adding the `@RootTask` annotation to the `nth(long)` constructor in the Fibonacci example, `flo` will generate a CLI:
+
+```java
+class Fib {
+
+  @RootTask
+  static Task<Long> nth(long n) {
+    // ...
+  }
+
+  public static void main(String[] args) throws IOException {
     Cli.forFactories(FloRootTaskFactory.Fib_Nth()).run(args);
   }
 }
 ```
+
 
 ```
 $ java -jar fib.jar list
@@ -62,9 +101,8 @@ Option (* = required)  Description
 ```
 
 ```
-$ time java -jar fib.jar create Fib.nth -n 92
+$ java -jar fib.jar create Fib.nth -n 92
 
 task.id() = Fib(92)#7178b126
 task.out() = 7540113804746346429
-0.49s user 0.05s system 178% cpu 0.304 total
 ```
