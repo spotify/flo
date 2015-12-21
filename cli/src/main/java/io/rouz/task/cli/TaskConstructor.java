@@ -5,7 +5,7 @@ import io.rouz.task.Task;
 import joptsimple.OptionParser;
 
 /**
- * Used to create a {@link Task<T>} by parsing arguments from a String array.
+ * Used to create a {@link Task} by parsing arguments from a String array.
  *
  * Use with {@link Cli}.
  */
