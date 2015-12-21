@@ -9,8 +9,8 @@ import io.rouz.task.dsl.TaskBuilder;
 final class Fib {
 
   public static void main(String[] args) {
-    Task<Long> fib33 = create(92);
-    System.out.println("fib33.out() = " + fib33.out());
+    Task<Long> fib92 = create(92);
+    System.out.println("fib92.out() = " + fib92.out());
   }
 
   static Task<Long> create(long n) {
