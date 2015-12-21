@@ -3,6 +3,7 @@
 
     <name>Flo</name>
     <description>A lightweight workflow definition library</description>
+    <url>https://github.com/rouzwawi/flo</url>
     <groupId>io.rouz</groupId>
     <artifactId>flo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
