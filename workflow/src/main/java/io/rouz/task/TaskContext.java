@@ -8,7 +8,7 @@ import io.rouz.task.dsl.TaskBuilder.F1;
 /**
  * A context for task evaluation
  */
-interface TaskContext {
+public interface TaskContext {
 
   Logger LOG = LoggerFactory.getLogger(TaskContext.class);
 
@@ -26,5 +26,9 @@ interface TaskContext {
       put(taskId, value);
     }
     return value;
+  }
+
+  static TaskContext inmem() {
+    return new TaskContextImpl();
   }
 }
