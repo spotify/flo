@@ -18,8 +18,8 @@
 
     <scm>
         <url>https://github.com/rouzwawi/flo</url>
-        <connection>scm:git:git@github.com/rouzwawi/flo.git</connection>
-        <developerConnection>scm:git:git@github.com/rouzwawi/flo.git</developerConnection>
+        <connection>scm:git:git@github.com:rouzwawi/flo.git</connection>
+        <developerConnection>scm:git:git@github.com:rouzwawi/flo.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
