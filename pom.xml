@@ -2,10 +2,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <name>Flo</name>
+    <description>A lightweight workflow definition library</description>
     <groupId>io.rouz</groupId>
     <artifactId>flo</artifactId>
-    <packaging>pom</packaging>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
     <licenses>
         <license>
