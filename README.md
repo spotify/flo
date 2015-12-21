@@ -26,7 +26,7 @@ __Some key features__
 <dependency>
   <groupId>io.rouz</groupId>
   <artifactId>flo-workflow</artifactId>
-  <version>${flo.version}</version>
+  <version>0.0.1</version>
 </dependency>
 ```
 
@@ -63,8 +63,8 @@ class Fib {
 <dependency>
   <groupId>io.rouz</groupId>
   <artifactId>flo-cli</artifactId>
-  <version>${flo.version}</version>
-  <scope>optional</scope>
+  <version>0.0.1</version>
+  <optional>true</optional>
 </dependency>
 ```
 
