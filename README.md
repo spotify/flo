@@ -1,6 +1,7 @@
 # flo
 
 [![CircleCI](https://img.shields.io/circleci/project/rouzwawi/flo.svg)](https://circleci.com/gh/rouzwawi/flo)
+[![License](https://img.shields.io/github/license/rouzwawi/flo.svg)](LICENSE.txt)
 
 > __disclaimer__, `flo` is under development during my spare time and might not yet live up to all the listed features.
 
