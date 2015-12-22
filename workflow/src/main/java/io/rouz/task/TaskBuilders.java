@@ -58,7 +58,7 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskName, args,
           f1 -> tc -> f1.apply(
-              aTaskSingleton.get().internalOut(tc)));
+              tc.evaluate(aTaskSingleton.get())));
     }
 
     @Override
@@ -68,7 +68,7 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskName, args,
           f1 -> tc -> f1.apply(
-              aTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList())));
+              aTasksSingleton.get().stream().map(tc::evaluate).collect(toList())));
     }
 
     @Override
@@ -92,7 +92,7 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskName, args,
           fn -> tc -> fn.apply(
-              aTaskSingleton.get().internalOut(tc)));
+              tc.evaluate(aTaskSingleton.get())));
     }
 
     @Override
@@ -102,7 +102,7 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskName, args,
           fn -> tc -> fn.apply(
-              aTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList())));
+              aTasksSingleton.get().stream().map(tc::evaluate).collect(toList())));
     }
   }
 
@@ -129,7 +129,7 @@ final class TaskBuilders {
           taskName, args,
           lifter.mapWithContext(
               (tc, fn) -> fn.apply(
-                  aTaskSingleton.get().internalOut(tc))));
+                  tc.evaluate(aTaskSingleton.get()))));
     }
 
     @Override
@@ -140,7 +140,7 @@ final class TaskBuilders {
           taskName, args,
           lifter.mapWithContext(
               (tc, fn) -> fn.apply(
-                  aTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList()))));
+                  aTasksSingleton.get().stream().map(tc::evaluate).collect(toList()))));
     }
   }
 
@@ -168,7 +168,7 @@ final class TaskBuilders {
           lifter.mapWithContext(
               (tc, f2) -> a -> f2.apply(
                   a,
-                  bTaskSingleton.get().internalOut(tc))));
+                  tc.evaluate(bTaskSingleton.get()))));
     }
 
     @Override
@@ -180,7 +180,7 @@ final class TaskBuilders {
           lifter.mapWithContext(
               (tc, f2) -> a -> f2.apply(
                   a,
-                  bTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList()))));
+                  bTasksSingleton.get().stream().map(tc::evaluate).collect(toList()))));
     }
   }
 
@@ -208,7 +208,7 @@ final class TaskBuilders {
           lifter.mapWithContext(
               (tc, f3) -> (a, b) -> f3.apply(
                   a, b,
-                  cTaskSingleton.get().internalOut(tc))));
+                  tc.evaluate(cTaskSingleton.get()))));
     }
 
     @Override
@@ -220,7 +220,7 @@ final class TaskBuilders {
           lifter.mapWithContext(
               (tc, f3) -> (a, b) -> f3.apply(
                   a, b,
-                  cTasksSingleton.get().stream().map(t -> t.internalOut(tc)).collect(toList()))));
+                  cTasksSingleton.get().stream().map(tc::evaluate).collect(toList()))));
     }
   }
 

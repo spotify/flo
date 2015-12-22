@@ -1,6 +1,7 @@
 package io.rouz.scratch;
 
 import io.rouz.task.Task;
+import io.rouz.task.TaskContext;
 import io.rouz.task.dsl.TaskBuilder;
 
 /**
@@ -10,7 +11,9 @@ final class Fib {
 
   public static void main(String[] args) {
     Task<Long> fib92 = create(92);
-    System.out.println("fib92.out() = " + fib92.out());
+    TaskContext context = TaskContext.inmem();
+    long out = context.evaluate(fib92);
+    System.out.println("out = " + out);
   }
 
   static Task<Long> create(long n) {

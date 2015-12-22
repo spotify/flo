@@ -55,15 +55,7 @@ public abstract class Task<T> implements Serializable {
   }
 
   public T out() {
-    return internalOut(TaskContext.inmem());
-  }
-
-  public T evaluateInContext(TaskContext taskContext) {
-    return internalOut(taskContext);
-  }
-
-  T internalOut(TaskContext taskContext) {
-    return taskContext.apply(id(), code());
+    return TaskContext.inmem().evaluate(this);
   }
 
   public static TaskBuilder named(String taskName, Object... args) {

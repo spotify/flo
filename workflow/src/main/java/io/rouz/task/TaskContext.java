@@ -16,7 +16,10 @@ public interface TaskContext {
   <V> V value(TaskId taskId);
   <V> void put(TaskId taskId, V value);
 
-  default <T> T apply(TaskId taskId, F1<TaskContext, T> code) {
+  default <T> T evaluate(Task<T> task) {
+    final TaskId taskId =  task.id();
+    final F1<TaskContext, T> code = task.code();
+
     final T value;
     if (has(taskId)) {
       value = value(taskId);
