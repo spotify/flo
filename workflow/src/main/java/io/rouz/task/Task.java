@@ -7,11 +7,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import io.rouz.task.dsl.TaskBuilder;
 import io.rouz.task.dsl.TaskBuilder.F0;
-import io.rouz.task.dsl.TaskBuilder.F1;
 
 /**
  * TODO:
@@ -30,7 +32,7 @@ public abstract class Task<T> implements Serializable {
 
   public abstract TaskId id();
 
-  abstract F1<TaskContext, T> code();
+  abstract EvalClosure<T> code();
 
   abstract F0<List<Task<?>>> lazyInputs();
 
@@ -54,8 +56,26 @@ public abstract class Task<T> implements Serializable {
         });
   }
 
+  // FIXME: this method is too specific in it's TaskContext usage
   public T out() {
-    return TaskContext.inmem().evaluate(this);
+    final AtomicReference<T> ref = new AtomicReference<>();
+    final CountDownLatch latch = new CountDownLatch(1);
+
+    TaskContext.inmem()
+        .evaluate(this)
+        .consume(v -> {
+          ref.set(v);
+          latch.countDown();
+        });
+
+    try {
+      latch.await(60, TimeUnit.SECONDS);
+      return ref.get();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    throw new RuntimeException("waited for a minute, nothing happened");
   }
 
   public static TaskBuilder named(String taskName, Object... args) {
@@ -63,12 +83,12 @@ public abstract class Task<T> implements Serializable {
   }
 
   public static <T> Task<T> create(F0<T> code, String taskName, Object... args) {
-    return create(Collections::emptyList, tc -> code.get(), taskName, args);
+    return create(Collections::emptyList, tc -> tc.value(code.get()), taskName, args);
   }
 
   static <T> Task<T> create(
       F0<List<Task<?>>> inputs,
-      F1<TaskContext, T> code,
+      EvalClosure<T> code,
       String taskName,
       Object... args) {
     return new AutoValue_Task<>(TaskIds.create(taskName, args), code, inputs);

@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
+import io.rouz.task.TaskContext.Value;
 import io.rouz.task.dsl.TaskBuilder;
 import io.rouz.task.dsl.TaskBuilder.F0;
 import io.rouz.task.dsl.TaskBuilder.F1;
@@ -48,7 +49,7 @@ final class TaskBuilders {
 
     @Override
     public <R> Task<R> constant(F0<R> code) {
-      return Task.create(inputs, tc -> code.get(), taskName, args);
+      return Task.create(inputs, tc -> tc.value(code.get()), taskName, args);
     }
 
     @Override
@@ -57,8 +58,8 @@ final class TaskBuilders {
       return new Builder1<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskName, args,
-          f1 -> tc -> f1.apply(
-              tc.evaluate(aTaskSingleton.get())));
+          f1 -> tc -> tc.evaluate(aTaskSingleton.get())
+              .map(f1::apply));
     }
 
     @Override
@@ -67,8 +68,9 @@ final class TaskBuilders {
       return new Builder1<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskName, args,
-          f1 -> tc -> f1.apply(
-              aTasksSingleton.get().stream().map(tc::evaluate).collect(toList())));
+          f1 -> tc -> aTasksSingleton.get()
+              .stream().map(tc::evaluate).collect(tc.toValueList())
+              .map(f1::apply));
     }
 
     @Override
@@ -91,8 +93,8 @@ final class TaskBuilders {
       return new BuilderC<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskName, args,
-          fn -> tc -> fn.apply(
-              tc.evaluate(aTaskSingleton.get())));
+          fn -> tc -> tc.evaluate(aTaskSingleton.get())
+              .map(fn::apply));
     }
 
     @Override
@@ -101,8 +103,9 @@ final class TaskBuilders {
       return new BuilderC<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskName, args,
-          fn -> tc -> fn.apply(
-              aTasksSingleton.get().stream().map(tc::evaluate).collect(toList())));
+          fn -> tc -> aTasksSingleton.get()
+              .stream().map(tc::evaluate).collect(tc.toValueList())
+              .map(fn::apply));
     }
   }
 
@@ -128,8 +131,8 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskName, args,
           lifter.mapWithContext(
-              (tc, fn) -> fn.apply(
-                  tc.evaluate(aTaskSingleton.get()))));
+              (tc, fn) -> tc.evaluate(aTaskSingleton.get())
+                  .map(fn::apply)));
     }
 
     @Override
@@ -139,8 +142,9 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskName, args,
           lifter.mapWithContext(
-              (tc, fn) -> fn.apply(
-                  aTasksSingleton.get().stream().map(tc::evaluate).collect(toList()))));
+              (tc, fn) -> aTasksSingleton.get()
+                  .stream().map(tc::evaluate).collect(tc.toValueList())
+                  .map(fn::apply)));
     }
   }
 
@@ -166,9 +170,8 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyList(bTaskSingleton)),
           taskName, args,
           lifter.mapWithContext(
-              (tc, f2) -> a -> f2.apply(
-                  a,
-                  tc.evaluate(bTaskSingleton.get()))));
+              (tc, f2) -> tc.evaluate(bTaskSingleton.get())
+                  .map(b -> a -> f2.apply(a, b))));
     }
 
     @Override
@@ -178,9 +181,9 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyFlatten(bTasksSingleton)),
           taskName, args,
           lifter.mapWithContext(
-              (tc, f2) -> a -> f2.apply(
-                  a,
-                  bTasksSingleton.get().stream().map(tc::evaluate).collect(toList()))));
+              (tc, f2) -> bTasksSingleton.get()
+                  .stream().map(tc::evaluate).collect(tc.toValueList())
+                  .map(b -> a -> f2.apply(a, b))));
     }
   }
 
@@ -206,9 +209,8 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyList(cTaskSingleton)),
           taskName, args,
           lifter.mapWithContext(
-              (tc, f3) -> (a, b) -> f3.apply(
-                  a, b,
-                  tc.evaluate(cTaskSingleton.get()))));
+              (tc, f3) -> tc.evaluate(cTaskSingleton.get())
+                  .map(c -> (a, b) -> f3.apply(a, b, c))));
     }
 
     @Override
@@ -218,9 +220,9 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyFlatten(cTasksSingleton)),
           taskName, args,
           lifter.mapWithContext(
-              (tc, f3) -> (a, b) -> f3.apply(
-                  a, b,
-                  cTasksSingleton.get().stream().map(tc::evaluate).collect(toList()))));
+              (tc, f3) -> cTasksSingleton.get()
+                  .stream().map(tc::evaluate).collect(tc.toValueList())
+                  .map(c -> (a, b) -> f3.apply(a, b, c))));
     }
   }
 
@@ -282,6 +284,7 @@ final class TaskBuilders {
    * The Reader 'environment' is the function that we want to lift. Because of the special casing,
    * it can have a special 'withReader' function that allows us to change the environment while
    * having access to the {@link TaskContext} argument that will be used by the output function.
+   * {@link EvalClosure} is the function taking a {@link TaskContext} as an argument.
    *
    * We implement this special 'withReader' function in {@link #mapWithContext(F2)}.
    *
@@ -300,7 +303,7 @@ final class TaskBuilders {
    * @param <F>  The type of the function that can be lifted
    */
   @FunctionalInterface
-  private interface Lifter<F> extends F1<F, F1<TaskContext, ?>> {
+  private interface Lifter<F> extends F1<F, EvalClosure<?>> {
 
     /**
      * Maps this {@link Lifter} into a {@link Lifter} of a different function based on a function
@@ -316,8 +319,8 @@ final class TaskBuilders {
      * @param <G>    The function type of the new lifter
      * @return A new lifter that can lift functions of type {@link G}
      */
-    default <G> Lifter<G> mapWithContext(F2<TaskContext, G, F> mapFn) {
-      return g -> tc -> this.apply(mapFn.apply(tc, g)).apply(tc);
+    default <G> Lifter<G> mapWithContext(F2<TaskContext, G, Value<F>> mapFn) {
+      return g -> tc -> mapFn.apply(tc, g).flatMap(f -> this.apply(f).eval(tc));
     }
 
     /**
@@ -328,10 +331,10 @@ final class TaskBuilders {
      * @param <R>  The forced return type
      * @return A function from {@link TaskContext} to the forced type
      */
-    default <R> F1<TaskContext, R> liftWithCast(F fn) {
+    default <R> EvalClosure<R> liftWithCast(F fn) {
       // force the return type of the lifter function to R
       // not type safe, but isolated to this file
-      return (F1<TaskContext, R>) this.apply(fn);
+      return (EvalClosure<R>) this.apply(fn);
     }
   }
 

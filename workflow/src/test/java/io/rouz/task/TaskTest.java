@@ -247,9 +247,9 @@ public class TaskTest {
     sum.out();
     List<TaskId> inputs = sum.inputs().stream().map(Task::id).collect(toList());
 
-    assertThat(inputs.get(0).toString(), startsWith("Count(2)"));
+    assertThat(inputs.get(0).toString(), startsWith("Count(4)"));
     assertThat(inputs.get(1).toString(), startsWith("Count(3)"));
-    assertThat(inputs.get(2).toString(), startsWith("Count(4)"));
+    assertThat(inputs.get(2).toString(), startsWith("Count(2)"));
 
     assertThat(one.out(), is(1));
     assertThat(sum.out(), is(9)); // 2+3+4 = 9
