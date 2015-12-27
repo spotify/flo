@@ -40,25 +40,9 @@ public interface TaskContext {
    * The semantics of joining {@link Value}s is decided by this {@link TaskContext}.
    */
   default <T> Collector<Value<T>, ?, Value<List<T>>> toValueList() {
-    final Function<List<Value<T>>, Value<List<T>>> finisher = list -> {
-      Value<List<T>> values = value(new ArrayList<>());
-      for (Value<T> tValue : list) {
-        values = values.flatMap(
-            l -> tValue.map(
-                t -> {
-                  l.add(t);
-                  return l;
-                }
-            ));
-      }
-      return values;
-    };
-
     return Collector.of(
-        ArrayList::new,
-        List::add,
-        (a,b) -> { a.addAll(b); return a; },
-        finisher);
+        ArrayList::new, List::add, (a,b) -> { a.addAll(b); return a; },
+        ValueFold.inContext(this));
   }
 
   /**
