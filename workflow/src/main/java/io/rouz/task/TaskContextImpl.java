@@ -14,24 +14,38 @@ class TaskContextImpl implements TaskContext {
   private Map<TaskId, Object> cache =  new HashMap<>();
 
   @Override
-  public boolean has(TaskId taskId) {
-    return cache.containsKey(taskId);
-  }
+  public <T> Value<T> evaluate(Task<T> task) {
+    final TaskId taskId =  task.id();
+    final EvalClosure<T> code = task.code();
 
-  @Override
-  public <V> V value(TaskId taskId) {
-    //noinspection unchecked
-    return (V) cache.get(taskId);
-  }
+    final Value<T> value;
+    if (has(taskId)) {
+      value = get(taskId);
+      LOG.debug("Found calculated value for {} = {}", taskId, value);
+    } else {
+      value = code.eval(this);
+      put(taskId, value);
+    }
 
-  @Override
-  public <V> void put(TaskId taskId, V value) {
-    cache.put(taskId, value);
+    return value;
   }
 
   @Override
   public <T> Value<T> value(T value) {
     return new ImmediateValue<>(value);
+  }
+
+  private boolean has(TaskId taskId) {
+    return cache.containsKey(taskId);
+  }
+
+  private <V> void put(TaskId taskId, V value) {
+    cache.put(taskId, value);
+  }
+
+  private <V> V get(TaskId taskId) {
+    //noinspection unchecked
+    return (V) cache.get(taskId);
   }
 
   private class ImmediateValue<T> implements Value<T> {

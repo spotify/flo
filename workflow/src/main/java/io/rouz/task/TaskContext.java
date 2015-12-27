@@ -19,25 +19,19 @@ public interface TaskContext {
 
   Logger LOG = LoggerFactory.getLogger(TaskContext.class);
 
-  boolean has(TaskId taskId);
-  <V> V value(TaskId taskId);
-  <V> void put(TaskId taskId, V value);
-
   default <T> Value<T> evaluate(Task<T> task) {
-    final TaskId taskId =  task.id();
     final EvalClosure<T> code = task.code();
-
-    final Value<T> value;
-    if (has(taskId)) {
-      value = value(taskId);
-      LOG.debug("Found calculated value for {} = {}", taskId, value);
-    } else {
-      value = code.eval(this);
-      put(taskId, value);
-    }
-
-    return value;
+    return code.eval(this);
   }
+
+  /**
+   * Create a {@link Value} with semantics defined by this {@link TaskContext}
+   *
+   * @param value  An actual value to wrap
+   * @param <T>    The type of the value
+   * @return A value with added semantics
+   */
+  <T> Value<T> value(T value);
 
   /**
    * A {@link Collector} that collects a {@link Stream} of {@link Value}s into a {@link Value}
@@ -66,16 +60,6 @@ public interface TaskContext {
         (a,b) -> { a.addAll(b); return a; },
         finisher);
   }
-
-
-  /**
-   * Create a {@link Value} with semantics defined by this {@link TaskContext}
-   *
-   * @param value  An actual value to wrap
-   * @param <T>    The type of the value
-   * @return A value with added semantics
-   */
-  <T> Value<T> value(T value);
 
   /**
    * A wrapped value with additional semantics for how to run computations.

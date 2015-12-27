@@ -48,21 +48,6 @@ public class TaskContextTest {
     }
 
     @Override
-    public boolean has(TaskId taskId) {
-      return false;
-    }
-
-    @Override
-    public <V> V value(TaskId taskId) {
-      throw new UnsupportedOperationException("Should not happen");
-    }
-
-    @Override
-    public <V> void put(TaskId taskId, V value) {
-      // noop
-    }
-
-    @Override
     public <T> Value<T> value(T value) {
       return new SyncValue<>(value);
     }
