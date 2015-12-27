@@ -22,17 +22,17 @@ public interface TaskBuilder {
   <A> TaskBuilder1<A> in(F0<Task<A>> task);
   <A> TaskBuilder1<List<A>> ins(F0<List<Task<A>>> tasks);
 
-  <R> TaskBuilderC0<R> curryTo(Class<R> returnClass);
+  <Z> TaskBuilderC0<Z> curryTo();
 
-  interface TaskBuilderC0<R> {
-    <A> TaskBuilderC<F1<A, R>, R> in(F0<Task<A>> task);
-    <A> TaskBuilderC<F1<List<A>, R>, R> ins(F0<List<Task<A>>> tasks);
+  interface TaskBuilderC0<Z> {
+    <A> TaskBuilderC<A, Z, Z> in(F0<Task<A>> task);
+    <A> TaskBuilderC<List<A>, Z, Z> ins(F0<List<Task<A>>> tasks);
   }
 
-  interface TaskBuilderC<F, R> {
-    Task<R> process(F code);
-    <A> TaskBuilderC<F1<A, F>, R> in(F0<Task<A>> task);
-    <A> TaskBuilderC<F1<List<A>, F>, R> ins(F0<List<Task<A>>> tasks);
+  interface TaskBuilderC<A, Y, Z> {
+    Task<Z> process(F1<A, Y> code);
+    <B> TaskBuilderC<B, F1<A, Y>, Z> in(F0<Task<B>> task);
+    <B> TaskBuilderC<List<B>, F1<A, Y>, Z> ins(F0<List<Task<B>>> tasks);
   }
 
   interface TaskBuilder1<A> {

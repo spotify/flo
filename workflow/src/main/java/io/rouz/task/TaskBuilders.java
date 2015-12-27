@@ -74,21 +74,21 @@ final class TaskBuilders {
     }
 
     @Override
-    public <R> TaskBuilderC0<R> curryTo(Class<R> returnClass) {
+    public <Z> TaskBuilderC0<Z> curryTo() {
       return new BuilderC0<>(taskName, args);
     }
   }
 
-  private static class BuilderC0<R>
+  private static class BuilderC0<Z>
       extends BaseRefs<Void>
-      implements TaskBuilderC0<R> {
+      implements TaskBuilderC0<Z> {
 
     BuilderC0(String taskName, Object[] args) {
       super(taskName, args);
     }
 
     @Override
-    public <A> TaskBuilderC<F1<A, R>, R> in(F0<Task<A>> aTask) {
+    public <A> TaskBuilderC<A, Z, Z> in(F0<Task<A>> aTask) {
       F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new BuilderC<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
@@ -98,7 +98,7 @@ final class TaskBuilders {
     }
 
     @Override
-    public <A> TaskBuilderC<F1<List<A>, R>, R> ins(F0<List<Task<A>>> aTasks) {
+    public <A> TaskBuilderC<List<A>, Z, Z> ins(F0<List<Task<A>>> aTasks) {
       F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new BuilderC<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
@@ -111,38 +111,41 @@ final class TaskBuilders {
 
   // #############################################################################################
 
-  private static class BuilderC<F, R>
-      extends BaseRefs<F>
-      implements TaskBuilderC<F, R> {
+  private static class BuilderC<A, Y, Z>
+      extends BaseRefs<F1<A, Y>>
+      implements TaskBuilderC<A, Y, Z> {
 
-    private BuilderC(F0<List<Task<?>>> inputs, String taskName, Object[] args, Lifter<F> lifter) {
+    private BuilderC(
+        F0<List<Task<?>>> inputs,
+        String taskName, Object[] args,
+        Lifter<F1<A, Y>> lifter) {
       super(inputs, lifter, taskName, args);
     }
 
     @Override
-    public Task<R> process(F fn) {
+    public Task<Z> process(F1<A, Y> fn) {
       return Task.create(inputs, lifter.liftWithCast(fn), taskName, args);
     }
 
     @Override
-    public <A> TaskBuilderC<F1<A, F>, R> in(F0<Task<A>> aTask) {
-      F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
+    public <B> TaskBuilderC<B, F1<A, Y>, Z> in(F0<Task<B>> bTask) {
+      F0<Task<B>> bTaskSingleton = Singleton.create(bTask);
       return new BuilderC<>(
-          lazyFlatten(inputs, lazyList(aTaskSingleton)),
+          lazyFlatten(inputs, lazyList(bTaskSingleton)),
           taskName, args,
           lifter.mapWithContext(
-              (tc, fn) -> tc.evaluate(aTaskSingleton.get())
+              (tc, fn) -> tc.evaluate(bTaskSingleton.get())
                   .map(fn::apply)));
     }
 
     @Override
-    public <A> TaskBuilderC<F1<List<A>, F>, R> ins(F0<List<Task<A>>> aTasks) {
-      F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
+    public <B> TaskBuilderC<List<B>, F1<A, Y>, Z> ins(F0<List<Task<B>>> bTasks) {
+      F0<List<Task<B>>> bTasksSingleton = Singleton.create(bTasks);
       return new BuilderC<>(
-          lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
+          lazyFlatten(inputs, lazyFlatten(bTasksSingleton)),
           taskName, args,
           lifter.mapWithContext(
-              (tc, fn) -> aTasksSingleton.get()
+              (tc, fn) -> bTasksSingleton.get()
                   .stream().map(tc::evaluate).collect(tc.toValueList())
                   .map(fn::apply)));
     }

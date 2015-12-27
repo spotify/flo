@@ -133,7 +133,7 @@ public class TaskTest {
   public void shouldOnlyEvaluateCurriedInputsParameterOnce() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
-    Task<Integer> sum = Task.named("Sum").curryTo(Integer.class)
+    Task<Integer> sum = Task.named("Sum").<Integer>curryTo()
         .in(countSupplier::get)
         .in(countSupplier::get)
         .in(countSupplier::get)
@@ -177,7 +177,7 @@ public class TaskTest {
         .limit(5)
         .collect(toList());
 
-    Task<Integer> sum = Task.named("Sum").curryTo(Integer.class)
+    Task<Integer> sum = Task.named("Sum").<Integer>curryTo()
         .ins(fiveInts)
         .ins(fiveInts)
         .ins(fiveInts)
@@ -213,7 +213,7 @@ public class TaskTest {
 
   @Test
   public void shouldListCurriedInputIds() throws Exception {
-    Task<String> top = Task.named("Top").curryTo(String.class)
+    Task<String> top = Task.named("Top").<String>curryTo()
         .in(() -> isEven(0))
         .in(() -> isEven(1))
         .in(() -> isEven(3))
@@ -321,7 +321,7 @@ public class TaskTest {
   @Test
   public void shouldBuildArbitraryDeepCurriedLambda() throws Exception {
     final Task<Integer> curried = Task.named("Curried")
-        .curryTo(Integer.class)
+        .<Integer>curryTo()
         .in(() -> isEven(0)) // 0
         .in(() -> isEven(1)) // 2
         .in(() -> isEven(2)) // 2
@@ -344,7 +344,7 @@ public class TaskTest {
   @Test
   public void shouldBuildCurriedLambdaWithLists() throws Exception {
     final Task<Integer> curried = Task.named("Curried")
-        .curryTo(Integer.class)
+        .<Integer>curryTo()
         .ins(() -> asList(isEven(11), isEven(20))) // [22, 20]
         .in(() -> isEven(0)) // 0
         .ins(() -> asList(isEven(1), isEven(2))) // [2, 2]
