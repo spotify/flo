@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import io.rouz.task.dsl.TaskBuilder.F0;
+
 /**
  * Not thread safe, use with one thread only
  */
@@ -31,7 +33,12 @@ class TaskContextImpl implements TaskContext {
   }
 
   @Override
-  public <T> Value<T> value(T value) {
+  public <T> Value<T> value(F0<T> value) {
+    return immediateValue(value.get());
+  }
+
+  @Override
+  public <T> Value<T> immediateValue(T value) {
     return new ImmediateValue<>(value);
   }
 

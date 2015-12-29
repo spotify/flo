@@ -10,6 +10,8 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
+import io.rouz.task.dsl.TaskBuilder.F0;
+
 /**
  * A context for task evaluation
  *
@@ -20,9 +22,17 @@ public interface TaskContext {
   Logger LOG = LoggerFactory.getLogger(TaskContext.class);
 
   default <T> Value<T> evaluate(Task<T> task) {
-    final EvalClosure<T> code = task.code();
-    return code.eval(this);
+    return task.code().eval(this);
   }
+
+  /**
+   * Create a {@link Value} with semantics defined by this {@link TaskContext}
+   *
+   * @param value  A value value supplier
+   * @param <T>    The type of the value
+   * @return A value with added semantics
+   */
+  <T> Value<T> value(F0<T> value);
 
   /**
    * Create a {@link Value} with semantics defined by this {@link TaskContext}
@@ -31,7 +41,7 @@ public interface TaskContext {
    * @param <T>    The type of the value
    * @return A value with added semantics
    */
-  <T> Value<T> value(T value);
+  <T> Value<T> immediateValue(T value);
 
   /**
    * A {@link Collector} that collects a {@link Stream} of {@link Value}s into a {@link Value}
@@ -66,16 +76,30 @@ public interface TaskContext {
      */
     void consume(Consumer<T> consumer);
 
+    /**
+     * TODO: document
+     *
+     * @param fn
+     * @param <U>
+     * @return
+     */
     default <U> Value<U> map(Function<? super T, ? extends U> fn) {
-      return flatMap(fn.andThen(context()::value));
+      return flatMap(fn.andThen(context()::immediateValue));
     }
 
+    /**
+     * TODO: document
+     *
+     * @param fn
+     * @param <U>
+     * @return
+     */
     <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> fn);
   }
 
   /**
    * Get a default, in-memory, immediate {@link TaskContext}. The values produced by this context
-   * should behave like synchronously created values. Any graph memoization is done completely
+   * should behave like synchronously created values. All graph memoization is done completely
    * in memory.
    *
    * @return The context

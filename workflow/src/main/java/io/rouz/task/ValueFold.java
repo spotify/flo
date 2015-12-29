@@ -28,7 +28,7 @@ final class ValueFold<T> implements Function<List<Value<T>>, Value<List<T>>> {
 
   @Override
   public Value<List<T>> apply(List<Value<T>> list) {
-    Value<List<T>> values = taskContext.value(new ArrayList<>());
+    Value<List<T>> values = taskContext.immediateValue(new ArrayList<>());
     for (Value<T> tValue : list) {
       values = values.flatMap(
           l -> tValue.map(

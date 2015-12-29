@@ -1,5 +1,6 @@
 package io.rouz.task;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
@@ -24,12 +25,10 @@ import static java.util.stream.Collectors.toList;
  * These classes tackle the exponential growth of paths that can be taken through the
  * {@link TaskBuilder}X interfaces by linearizing the implementation through composing functions.
  *
- * The linearization is implemented by letting the next builder in the chain take a higher-order
- * function {@link Lifter}. This function allows the builder to lift a function with the right
- * number of arguments into a function from {@link TaskContext} to the result. This function can
- * then either be used to terminate the builder into a {@link Task} (see process(...) methods) or
- * to construct a new {@link Lifter} for the next builder in the chain, adding one more argument to
- * the liftable function.
+ * The linearization is implemented by letting the next builder in the chain take either a
+ * {@link RecursiveEval} or {@link ChainingEval}. This evaluator allows the builder to chain
+ * onto the evaluation by including more input tasks. The evaluator will finally be used to
+ * terminate the builder by enclosing a function into an {@link EvalClosure} for a {@link Task}.
  */
 final class TaskBuilders {
 
@@ -39,9 +38,7 @@ final class TaskBuilders {
 
   // #############################################################################################
 
-  private static class Builder0
-      extends BaseRefs<Void>
-      implements TaskBuilder {
+  private static class Builder0 extends BaseRefs implements TaskBuilder {
 
     Builder0(String taskName, Object[] args) {
       super(taskName, args);
@@ -49,7 +46,7 @@ final class TaskBuilders {
 
     @Override
     public <R> Task<R> constant(F0<R> code) {
-      return Task.create(inputs, tc -> tc.value(code.get()), taskName, args);
+      return Task.create(inputs, tc -> tc.value(code), taskName, args);
     }
 
     @Override
@@ -58,8 +55,10 @@ final class TaskBuilders {
       return new Builder1<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskName, args,
-          f1 -> tc -> tc.evaluate(aTaskSingleton.get())
-              .map(f1::apply));
+          leafEvalFn(tc -> {
+            Value<A> aValue = tc.evaluate(aTaskSingleton.get());
+            return f1 -> aValue.map(f1::apply);
+          }));
     }
 
     @Override
@@ -68,9 +67,11 @@ final class TaskBuilders {
       return new Builder1<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskName, args,
-          f1 -> tc -> aTasksSingleton.get()
-              .stream().map(tc::evaluate).collect(tc.toValueList())
-              .map(f1::apply));
+          leafEvalFn(tc -> {
+            Value<List<A>> aListValue = aTasksSingleton.get()
+                .stream().map(tc::evaluate).collect(tc.toValueList());
+            return f1 -> aListValue.map(f1::apply);
+          }));
     }
 
     @Override
@@ -79,9 +80,7 @@ final class TaskBuilders {
     }
   }
 
-  private static class BuilderC0<Z>
-      extends BaseRefs<Void>
-      implements TaskBuilderC0<Z> {
+  private static class BuilderC0<Z> extends BaseRefs implements TaskBuilderC0<Z> {
 
     BuilderC0(String taskName, Object[] args) {
       super(taskName, args);
@@ -93,8 +92,8 @@ final class TaskBuilders {
       return new BuilderC<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskName, args,
-          fn -> tc -> tc.evaluate(aTaskSingleton.get())
-              .map(fn::apply));
+          leafEval(
+              tc -> tc.evaluate(aTaskSingleton.get())));
     }
 
     @Override
@@ -103,28 +102,30 @@ final class TaskBuilders {
       return new BuilderC<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskName, args,
-          fn -> tc -> aTasksSingleton.get()
-              .stream().map(tc::evaluate).collect(tc.toValueList())
-              .map(fn::apply));
+          leafEval(
+              tc -> aTasksSingleton.get()
+                  .stream().map(tc::evaluate).collect(tc.toValueList())));
     }
   }
 
   // #############################################################################################
 
-  private static class BuilderC<A, Y, Z>
-      extends BaseRefs<F1<A, Y>>
-      implements TaskBuilderC<A, Y, Z> {
+  private static class BuilderC<A, Y, Z> extends BaseRefs implements TaskBuilderC<A, Y, Z> {
+
+    private final RecursiveEval<A, Y, Z> evaluator;
 
     private BuilderC(
         F0<List<Task<?>>> inputs,
-        String taskName, Object[] args,
-        Lifter<F1<A, Y>> lifter) {
-      super(inputs, lifter, taskName, args);
+        String taskName,
+        Object[] args,
+        RecursiveEval<A, Y, Z> evaluator) {
+      super(inputs, taskName, args);
+      this.evaluator = evaluator;
     }
 
     @Override
     public Task<Z> process(F1<A, Y> fn) {
-      return Task.create(inputs, lifter.liftWithCast(fn), taskName, args);
+      return Task.create(inputs, evaluator.enclose(fn), taskName, args);
     }
 
     @Override
@@ -133,9 +134,8 @@ final class TaskBuilders {
       return new BuilderC<>(
           lazyFlatten(inputs, lazyList(bTaskSingleton)),
           taskName, args,
-          lifter.mapWithContext(
-              (tc, fn) -> tc.evaluate(bTaskSingleton.get())
-                  .map(fn::apply)));
+          evaluator.curry(
+              tc -> tc.evaluate(bTaskSingleton.get())));
     }
 
     @Override
@@ -144,26 +144,30 @@ final class TaskBuilders {
       return new BuilderC<>(
           lazyFlatten(inputs, lazyFlatten(bTasksSingleton)),
           taskName, args,
-          lifter.mapWithContext(
-              (tc, fn) -> bTasksSingleton.get()
-                  .stream().map(tc::evaluate).collect(tc.toValueList())
-                  .map(fn::apply)));
+          evaluator.curry(
+              tc -> bTasksSingleton.get()
+                  .stream().map(tc::evaluate).collect(tc.toValueList())));
     }
   }
 
   // #############################################################################################
 
-  private static class Builder1<A>
-      extends BaseRefs<F1<A, ?>>
-      implements TaskBuilder1<A> {
+  private static class Builder1<A> extends BaseRefs implements TaskBuilder1<A> {
 
-    Builder1(F0<List<Task<?>>> inputs, String taskName, Object[] args, Lifter<F1<A, ?>> lifter) {
-      super(inputs, lifter, taskName, args);
+    private final ChainingEval<F1<A, ?>> evaluator;
+
+    Builder1(
+        F0<List<Task<?>>> inputs,
+        String taskName,
+        Object[] args,
+        ChainingEval<F1<A, ?>> evaluator) {
+      super(inputs, taskName, args);
+      this.evaluator = evaluator;
     }
 
     @Override
     public <R> Task<R> process(F1<A, R> code) {
-      return Task.create(inputs, lifter.liftWithCast(code), taskName, args);
+      return Task.create(inputs, evaluator.enclose(code), taskName, args);
     }
 
     @Override
@@ -172,9 +176,10 @@ final class TaskBuilders {
       return new Builder2<>(
           lazyFlatten(inputs, lazyList(bTaskSingleton)),
           taskName, args,
-          lifter.mapWithContext(
-              (tc, f2) -> tc.evaluate(bTaskSingleton.get())
-                  .map(b -> a -> f2.apply(a, b))));
+          evaluator.chain(tc -> {
+            Value<B> bValue = tc.evaluate(bTaskSingleton.get());
+            return f2 -> bValue.map(b -> (a) -> f2.apply(a, b));
+          }));
     }
 
     @Override
@@ -183,26 +188,32 @@ final class TaskBuilders {
       return new Builder2<>(
           lazyFlatten(inputs, lazyFlatten(bTasksSingleton)),
           taskName, args,
-          lifter.mapWithContext(
-              (tc, f2) -> bTasksSingleton.get()
-                  .stream().map(tc::evaluate).collect(tc.toValueList())
-                  .map(b -> a -> f2.apply(a, b))));
+          evaluator.chain(tc -> {
+            Value<List<B>> bListValue = bTasksSingleton.get()
+                .stream().map(tc::evaluate).collect(tc.toValueList());
+            return f2 -> bListValue.map(b -> (a) -> f2.apply(a, b));
+          }));
     }
   }
 
   // #############################################################################################
 
-  private static class Builder2<A, B>
-      extends BaseRefs<F2<A, B, ?>>
-      implements TaskBuilder2<A, B> {
+  private static class Builder2<A, B> extends BaseRefs implements TaskBuilder2<A, B> {
 
-    Builder2(F0<List<Task<?>>> inputs, String taskName, Object[] args, Lifter<F2<A, B, ?>> lifter) {
-      super(inputs, lifter, taskName, args);
+    private final ChainingEval<F2<A, B, ?>> evaluator;
+
+    Builder2(
+        F0<List<Task<?>>> inputs,
+        String taskName,
+        Object[] args,
+        ChainingEval<F2<A, B, ?>> evaluator) {
+      super(inputs, taskName, args);
+      this.evaluator = evaluator;
     }
 
     @Override
     public <R> Task<R> process(F2<A, B, R> code) {
-      return Task.create(inputs, lifter.liftWithCast(code), taskName, args);
+      return Task.create(inputs, evaluator.enclose(code), taskName, args);
     }
 
     @Override
@@ -211,9 +222,10 @@ final class TaskBuilders {
       return new Builder3<>(
           lazyFlatten(inputs, lazyList(cTaskSingleton)),
           taskName, args,
-          lifter.mapWithContext(
-              (tc, f3) -> tc.evaluate(cTaskSingleton.get())
-                  .map(c -> (a, b) -> f3.apply(a, b, c))));
+          evaluator.chain(tc -> {
+            Value<C> cValue = tc.evaluate(cTaskSingleton.get());
+            return f2 -> cValue.map(c -> (a, b) -> f2.apply(a, b, c));
+          }));
     }
 
     @Override
@@ -222,26 +234,32 @@ final class TaskBuilders {
       return new Builder3<>(
           lazyFlatten(inputs, lazyFlatten(cTasksSingleton)),
           taskName, args,
-          lifter.mapWithContext(
-              (tc, f3) -> cTasksSingleton.get()
-                  .stream().map(tc::evaluate).collect(tc.toValueList())
-                  .map(c -> (a, b) -> f3.apply(a, b, c))));
+          evaluator.chain(tc -> {
+            Value<List<C>> cListValue = cTasksSingleton.get()
+                .stream().map(tc::evaluate).collect(tc.toValueList());
+            return f3 -> cListValue.map(c -> (a, b) -> f3.apply(a, b, c));
+          }));
     }
   }
 
   // #############################################################################################
 
-  private static class Builder3<A, B, C>
-      extends BaseRefs<F3<A, B, C, ?>>
-      implements TaskBuilder3<A, B, C> {
+  private static class Builder3<A, B, C> extends BaseRefs implements TaskBuilder3<A, B, C> {
 
-    Builder3(F0<List<Task<?>>> inputs, String taskName, Object[] args, Lifter<F3<A, B, C, ?>> lifter) {
-      super(inputs, lifter, taskName, args);
+    private final ChainingEval<F3<A, B, C, ?>> evaluator;
+
+    Builder3(
+        F0<List<Task<?>>> inputs,
+        String taskName,
+        Object[] args,
+        ChainingEval<F3<A, B, C, ?>> evaluator) {
+      super(inputs, taskName, args);
+      this.evaluator = evaluator;
     }
 
     @Override
     public <R> Task<R> process(F3<A, B, C, R> code) {
-      return Task.create(inputs, lifter.liftWithCast(code), taskName, args);
+      return Task.create(inputs, evaluator.enclose(code), taskName, args);
     }
   }
 
@@ -250,23 +268,22 @@ final class TaskBuilders {
   /**
    * A convenience class for holding some reference. This is only so that we don't have to repeat
    * these declaration in every class above.
-   *
-   * @param <F>  The function type that is relevant for the builder
    */
-  private static class BaseRefs<F> {
+  private static class BaseRefs {
 
     protected final F0<List<Task<?>>> inputs;
-    protected final Lifter<F> lifter;
     protected final String taskName;
     protected final Object[] args;
 
     protected BaseRefs(String taskName, Object[] args) {
-      this(Collections::emptyList, null, taskName, args);
+      this(Collections::emptyList, taskName, args);
     }
 
-    protected BaseRefs(F0<List<Task<?>>> inputs, Lifter<F> lifter, String taskName, Object[] args) {
+    protected BaseRefs(
+        F0<List<Task<?>>> inputs,
+        String taskName,
+        Object[] args) {
       this.inputs = inputs;
-      this.lifter = lifter;
       this.taskName = taskName;
       this.args = args;
     }
@@ -274,70 +291,76 @@ final class TaskBuilders {
 
   // #############################################################################################
 
-  /**
-   * Higher order function that lifts an arbitrary function {@link F} into a function from
-   * {@link TaskContext} to an unknown type.
-   *
-   * Because the mix of a fluent task input construction and multiple input type structures, the
-   * implementation graph of {@link TaskBuilder} would grow exponentially by the number of
-   * arguments. This interface allows us to use a progressive argument construction technique in
-   * the implementation, resulting in a linear amount of classes.
-   *
-   * It is a special case of a Reader Monad that outputs a function taking a {@link TaskContext}.
-   * The Reader 'environment' is the function that we want to lift. Because of the special casing,
-   * it can have a special 'withReader' function that allows us to change the environment while
-   * having access to the {@link TaskContext} argument that will be used by the output function.
-   * {@link EvalClosure} is the function taking a {@link TaskContext} as an argument.
-   *
-   * We implement this special 'withReader' function in {@link #mapWithContext(F2)}.
-   *
-   * {@code
-   *    Haskell: Reader r a
-   *
-   *    -- regular withReader function
-   *    withReader :: (r' -> r) -> Reader r a -> Reader r' a
-   *    withReader f m = Reader $ runReader m . f
-   *
-   *    -- our special case
-   *    withReaderValue :: (r' -> a -> r) -> Reader r (a -> b) -> Reader r' (a -> b)
-   *    withReaderValue f m = Reader $ \r' a -> (runReader m) (f r' a) a
-   * }
-   *
-   * @param <F>  The type of the function that can be lifted
-   */
-  @FunctionalInterface
-  private interface Lifter<F> extends F1<F, EvalClosure<?>> {
+  private static <A, B> RecursiveEval<A, B, B> leafEval(EvalClosure<A> aClosure) {
+    return new RecursiveEval<>(aClosure, taskContext -> taskContext::immediateValue);
+  }
 
-    /**
-     * Maps this {@link Lifter} into a {@link Lifter} of a different function based on a function
-     * with the signature of the current {@link F}. The mapping function will run with the
-     * {@link TaskContext} argument available to it.
-     *
-     * Note that since we're mapping functions to new functions, the types of {@code mapFn} are
-     * reversed. Essentially, what the mapping function should do is: "given a function {@link G},
-     * give me a function {@link F} that I will apply with this {@link Lifter}". That lets us
-     * construct a {@link Lifter} for {@link G}.
-     *
-     * @param mapFn  The mapping function from {@link G} to {@link F}
-     * @param <G>    The function type of the new lifter
-     * @return A new lifter that can lift functions of type {@link G}
-     */
-    default <G> Lifter<G> mapWithContext(F2<TaskContext, G, Value<F>> mapFn) {
-      return g -> tc -> mapFn.apply(tc, g).flatMap(f -> this.apply(f).eval(tc));
+  private static <F> ChainingEval<F> leafEvalFn(F1<TaskContext, F1<F, Value<?>>> fClosure) {
+    return new ChainingEval<>(fClosure);
+  }
+
+  private static final class RecursiveEval<A, B, Z> implements Serializable {
+
+    private final EvalClosure<A> aClosure;
+    private final F1<TaskContext, F1<B, Value<Z>>> contClosure;
+
+    RecursiveEval(EvalClosure<A> aClosure, F1<TaskContext, F1<B, Value<Z>>> contClosure) {
+      this.aClosure = aClosure;
+      this.contClosure = contClosure;
+    }
+
+    public EvalClosure<Z> enclose(F1<A, B> fn) {
+      return taskContext -> {
+        F1<B, Value<Z>> cont = contClosure.apply(taskContext);
+        Value<A> aVal = aClosure.eval(taskContext);
+
+        return aVal.map(fn::apply).flatMap(cont::apply);
+      };
+    }
+
+    public <T> RecursiveEval<T, F1<A, B>, Z> curry(EvalClosure<T> tClosure) {
+      return new RecursiveEval<>(tClosure, this::continuation);
     }
 
     /**
-     * Lift a function {@code fn} while casting the return type. This is the only place we do
-     * this cast.
+     * TODO: doc about how this behaves different from {@link #enclose(F1)}, and why
      *
-     * @param fn   Function to lift
-     * @param <R>  The forced return type
-     * @return A function from {@link TaskContext} to the forced type
+     * @param taskContext  Task Context
+     * @return a continuation of this calculation
      */
-    default <R> EvalClosure<R> liftWithCast(F fn) {
-      // force the return type of the lifter function to R
-      // not type safe, but isolated to this file
-      return (EvalClosure<R>) this.apply(fn);
+    private F1<F1<A, B>, Value<Z>> continuation(TaskContext taskContext) {
+      F1<B, Value<Z>> cont = contClosure.apply(taskContext);
+      Value<A> aVal = aClosure.eval(taskContext);
+
+      return fn -> aVal.map(fn::apply).flatMap(cont::apply);
+    }
+  }
+
+  private static final class ChainingEval<F> implements Serializable {
+
+    private final F1<TaskContext, F1<F, Value<?>>> fClosure;
+
+    ChainingEval(F1<TaskContext, F1<F, Value<?>>> fClosure) {
+      this.fClosure = fClosure;
+    }
+
+    public <Z> EvalClosure<Z> enclose(F f) {
+      return tc -> {
+        F1<F, Value<?>> fnf = fClosure.apply(tc);
+
+        //noinspection unchecked
+        return (Value<Z>) fnf.apply(f);
+      };
+    }
+
+    public <G> ChainingEval<G> chain(F1<TaskContext, F1<G, Value<F>>> mapClosure) {
+      F1<TaskContext, F1<G, Value<?>>> continuation = tc -> {
+        F1<G, Value<F>> fng = mapClosure.apply(tc);
+        F1<F, Value<?>> fnf = fClosure.apply(tc);
+
+        return g -> fng.apply(g).flatMap(fnf::apply);
+      };
+      return new ChainingEval<>(continuation);
     }
   }
 
