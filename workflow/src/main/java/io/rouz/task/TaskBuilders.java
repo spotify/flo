@@ -310,24 +310,13 @@ final class TaskBuilders {
     }
 
     public EvalClosure<Z> enclose(F1<A, B> fn) {
-      return taskContext -> {
-        F1<B, Value<Z>> cont = contClosure.apply(taskContext);
-        Value<A> aVal = aClosure.eval(taskContext);
-
-        return aVal.map(fn::apply).flatMap(cont::apply);
-      };
+      return taskContext -> continuation(taskContext).apply(fn);
     }
 
     public <T> RecursiveEval<T, F1<A, B>, Z> curry(EvalClosure<T> tClosure) {
       return new RecursiveEval<>(tClosure, this::continuation);
     }
 
-    /**
-     * TODO: doc about how this behaves different from {@link #enclose(F1)}, and why
-     *
-     * @param taskContext  Task Context
-     * @return a continuation of this calculation
-     */
     private F1<F1<A, B>, Value<Z>> continuation(TaskContext taskContext) {
       F1<B, Value<Z>> cont = contClosure.apply(taskContext);
       Value<A> aVal = aClosure.eval(taskContext);
@@ -345,12 +334,8 @@ final class TaskBuilders {
     }
 
     public <Z> EvalClosure<Z> enclose(F f) {
-      return tc -> {
-        F1<F, Value<?>> fnf = fClosure.apply(tc);
-
-        //noinspection unchecked
-        return (Value<Z>) fnf.apply(f);
-      };
+      //noinspection unchecked
+      return tc -> (Value<Z>) fClosure.apply(tc).apply(f);
     }
 
     public <G> ChainingEval<G> chain(F1<TaskContext, F1<G, Value<F>>> mapClosure) {
