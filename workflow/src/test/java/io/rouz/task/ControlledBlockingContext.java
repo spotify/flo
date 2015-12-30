@@ -129,12 +129,7 @@ class ControlledBlockingContext implements TaskContext {
 
   @Override
   public <T> Value<T> value(F0<T> value) {
-    return immediateValue(value.get());
-  }
-
-  @Override
-  public <T> Value<T> immediateValue(T value) {
-    return new SettableValue<>(value);
+    return new SettableValue<>(value.get());
   }
 
   class SettableValue<T> implements Value<T> {

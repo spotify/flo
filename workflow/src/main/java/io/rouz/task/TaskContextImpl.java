@@ -34,12 +34,7 @@ class TaskContextImpl implements TaskContext {
 
   @Override
   public <T> Value<T> value(F0<T> value) {
-    return immediateValue(value.get());
-  }
-
-  @Override
-  public <T> Value<T> immediateValue(T value) {
-    return new ImmediateValue<>(value);
+    return new ImmediateValue<>(value.get());
   }
 
   private boolean has(TaskId taskId) {
