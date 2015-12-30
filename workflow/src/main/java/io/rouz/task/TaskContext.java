@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
+import io.rouz.task.context.InMemImmediateContext;
 import io.rouz.task.dsl.TaskBuilder.F0;
 
 /**
@@ -126,6 +127,6 @@ public interface TaskContext {
    * @return The context
    */
   static TaskContext inmem() {
-    return new TaskContextImpl();
+    return InMemImmediateContext.create();
   }
 }

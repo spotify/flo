@@ -1,4 +1,4 @@
-package io.rouz.task;
+package io.rouz.task.context;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,26 +6,37 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import io.rouz.task.Task;
+import io.rouz.task.TaskContext;
+import io.rouz.task.TaskId;
 import io.rouz.task.dsl.TaskBuilder.F0;
 
 /**
- * Not thread safe, use with one thread only
+ * A {@link TaskContext} that evaluates tasks immediately and memoizes results in memory.
+ *
+ * Memoized results are tied to the instance the evaluated the values.
  */
-class TaskContextImpl implements TaskContext {
+public class InMemImmediateContext implements TaskContext {
 
   private Map<TaskId, Object> cache =  new HashMap<>();
+
+  private InMemImmediateContext() {
+  }
+
+  public static TaskContext create() {
+    return new InMemImmediateContext();
+  }
 
   @Override
   public <T> Value<T> evaluate(Task<T> task) {
     final TaskId taskId =  task.id();
-    final EvalClosure<T> code = task.code();
 
     final Value<T> value;
     if (has(taskId)) {
       value = get(taskId);
       LOG.debug("Found calculated value for {} = {}", taskId, value);
     } else {
-      value = code.eval(this);
+      value = TaskContext.super.evaluate(task);
       put(taskId, value);
     }
 
@@ -60,7 +71,7 @@ class TaskContextImpl implements TaskContext {
 
     @Override
     public TaskContext context() {
-      return TaskContextImpl.this;
+      return InMemImmediateContext.this;
     }
 
     @Override
