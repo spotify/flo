@@ -23,7 +23,7 @@ public class TaskEvalTest {
   }
 
   @Test
-  public void shouldInvokeCurriedTaskWhenInputsBecomeAwailable() throws Exception {
+  public void shouldInvokeCurriedTaskWhenInputsBecomeAvailable() throws Exception {
     AtomicReference<String> bValue = new AtomicReference<>();
     CountDownLatch gotB = new CountDownLatch(1);
     Task<String> task = Task.named("WithInputs").<String>curryTo()
@@ -53,7 +53,7 @@ public class TaskEvalTest {
   }
 
   @Test
-  public void shouldEvaluateInputsInParalellForCurriedTask() throws Exception {
+  public void shouldEvaluateInputsInParallelForCurriedTask() throws Exception {
     AtomicBoolean processed = new AtomicBoolean(false);
     Task<String> task = Task.named("WithInputs").<String>curryTo()
         .in(() -> leaf("A"))
@@ -64,11 +64,11 @@ public class TaskEvalTest {
           return "done: " + a + b + c;
         });
 
-    validateParalellEvaluation(task, processed);
+    validateParallelEvaluation(task, processed);
   }
 
   @Test
-  public void shouldEvaluateInputsInParalellForChainedTask() throws Exception {
+  public void shouldEvaluateInputsInParallelForChainedTask() throws Exception {
     AtomicBoolean processed = new AtomicBoolean(false);
     Task<String> task = Task.named("WithInputs")
         .in(() -> leaf("A"))
@@ -79,10 +79,10 @@ public class TaskEvalTest {
           return "done: " + a + b + c;
         });
 
-    validateParalellEvaluation(task, processed);
+    validateParallelEvaluation(task, processed);
   }
 
-  private void validateParalellEvaluation(Task<String> task, AtomicBoolean processed)
+  private void validateParallelEvaluation(Task<String> task, AtomicBoolean processed)
       throws InterruptedException {
 
     ControlledBlockingContext context = new ControlledBlockingContext();

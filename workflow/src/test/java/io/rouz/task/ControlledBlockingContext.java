@@ -48,7 +48,7 @@ class ControlledBlockingContext implements TaskContext {
   }
 
   /**
-   * Blocks until the given task becomes awailable for execution.
+   * Blocks until the given task becomes available for execution.
    *
    * @param task  the task to wait for
    * @throws InterruptedException if the blocked thread gets interrupted
