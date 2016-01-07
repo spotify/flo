@@ -23,7 +23,7 @@ public interface TaskContext {
   Logger LOG = LoggerFactory.getLogger(TaskContext.class);
 
   /**
-   * The entry point for evalating a {@link Value} from a {@link Task}.
+   * The entry point for evaluating a {@link Value} from a {@link Task}.
    *
    * All upstreams to the task will also be evaluated through this same method.
    *
