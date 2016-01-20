@@ -91,6 +91,6 @@ public abstract class Task<T> implements Serializable {
       EvalClosure<T> code,
       String taskName,
       Object... args) {
-    return new AutoValue_Task<>(TaskIds.create(taskName, args), code, inputs);
+    return new AutoValue_Task<>(TaskId.create(taskName, args), code, inputs);
   }
 }

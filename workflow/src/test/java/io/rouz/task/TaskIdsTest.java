@@ -12,19 +12,44 @@ public class TaskIdsTest {
 
   @Test
   public void shouldHaveHumanReadableToString() {
-    TaskId taskId = TaskIds.create("MyTask", "a", 1, 2.3, new Param(7));
+    TaskId taskId = TaskId.create("MyTask", "a", 1, 2.3, new Param(7));
 
     assertThat(taskId.toString(), startsWith("MyTask(a,1,2.3,Param{arg=7})"));
   }
 
   @Test
   public void shouldHaveIdentity() {
-    TaskId taskId1 = TaskIds.create("MyTask", "a", 1, 2.3, new Param(7));
-    TaskId taskId2 = TaskIds.create("MyTask", "a", 1, 2.3, new Param(7));
+    TaskId taskId1 = TaskId.create("MyTask", "a", 1, 2.3, new Param(7));
+    TaskId taskId2 = TaskId.create("MyTask", "a", 1, 2.3, new Param(7));
 
     assertThat(taskId1, not(sameInstance(taskId2)));
     assertThat(taskId1, equalTo(taskId2));
     assertThat(taskId2, equalTo(taskId1));
+  }
+
+  @Test
+  public void parsedIdEqualToActual() throws Exception {
+    TaskId taskId1 = TaskId.create("MyTask", "a", 1, 2.3, new Param(7));
+    TaskId taskId2 = TaskId.parse(taskId1.toString());
+
+    assertThat(taskId1, not(sameInstance(taskId2)));
+    assertThat(taskId1, equalTo(taskId2));
+    assertThat(taskId2, equalTo(taskId1));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldNotAllowOpenParenthesisInName() throws Exception {
+    TaskId.create("MyTa(sk");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldNotAllowCloseParenthesisInName() throws Exception {
+    TaskId.create("MyTa)sk");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldNotParseInvalidId() throws Exception {
+    TaskId.parse("Wat)#(123)#hello");
   }
 
   private static class Param {
