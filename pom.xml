@@ -6,7 +6,7 @@
     <url>https://github.com/rouzwawi/flo</url>
     <groupId>io.rouz</groupId>
     <artifactId>flo</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.2</version>
     <packaging>pom</packaging>
 
     <licenses>
@@ -21,7 +21,7 @@
         <url>https://github.com/rouzwawi/flo</url>
         <connection>scm:git:git@github.com:rouzwawi/flo.git</connection>
         <developerConnection>scm:git:git@github.com:rouzwawi/flo.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>v0.0.2</tag>
     </scm>
 
     <developers>
