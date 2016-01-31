@@ -81,6 +81,11 @@ public class AsyncContext implements TaskContext {
     }
 
     @Override
+    public <U> Value<U> map(Function<? super T, ? extends U> fn) {
+      return new FutureValue<>(future.thenApply(fn));
+    }
+
+    @Override
     public <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> function) {
       return flatten(future.thenApply(function));
     }

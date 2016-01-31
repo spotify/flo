@@ -1,7 +1,6 @@
 package io.rouz.task.cli;
 
 import io.rouz.task.Task;
-
 import joptsimple.OptionParser;
 
 /**

@@ -335,7 +335,7 @@ final class TaskBuilders {
 
     public <Z> EvalClosure<Z> enclose(F f) {
       //noinspection unchecked
-      return tc -> (Value<Z>) fClosure.apply(tc).apply(f);
+      return taskContext -> (Value<Z>) fClosure.apply(taskContext).apply(f);
     }
 
     public <G> ChainingEval<G> chain(F1<TaskContext, F1<G, Value<F>>> mapClosure) {
