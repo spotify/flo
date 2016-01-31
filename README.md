@@ -31,6 +31,8 @@ __Some key features__
 </dependency>
 ```
 
+JavaDocs here: http://rouz.io/flo/maven/apidocs
+
 ## Example: Fibonacci
 
 ```java
