@@ -24,7 +24,7 @@ import static org.junit.Assert.fail;
  */
 class ControlledBlockingContext implements TaskContext {
 
-  private static final int MAX_WAIT_MILLIS = 1000;
+  private static final int MAX_WAIT_MILLIS = 5000;
 
   private final Map<TaskId, CountDownLatch> awaiting = new HashMap<>();
   private final AtomicInteger activeCount = new AtomicInteger(0);

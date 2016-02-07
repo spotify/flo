@@ -7,7 +7,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.hamcrest.core.Is.is;
+import io.rouz.task.TaskContext.Promise;
+
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -48,8 +50,217 @@ public class TaskEvalTest {
 
     context.release(leaf("B first"));
     context.waitUntilNumConcurrent(2); // {WithInputs, A}
-    gotB.await(100, TimeUnit.MILLISECONDS);
+    assertTrue(gotB.await(100, TimeUnit.MILLISECONDS));
     assertThat(bValue.get(), is("B first"));
+  }
+
+  @Test
+  public void shouldEvaluateWithContext0() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext").processWithContext(tc -> {
+      Promise<String> promise = tc.promise();
+      promiseRef.set(promise);
+      return promise.value();
+    });
+
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    ControlledBlockingContext context = new ControlledBlockingContext();
+    context.evaluate(task).consume(val);
+
+    context.waitFor(task);
+    context.release(task);
+    context.waitUntilNumConcurrent(1);
+    assertFalse(val.isAvailable());
+
+    //noinspection StatementWithEmptyBody
+    while (promiseRef.get() == null) {
+    }
+
+    promiseRef.get().set("hello");
+    context.waitUntilNumConcurrent(0);
+    assertThat(val.awaitAndGet(), is("hello"));
+  }
+
+  @Test
+  public void shouldEvaluateWithContext1() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext")
+        .in(() -> leaf("A"))
+        .processWithContext((tc, a) -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a);
+        });
+
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    ControlledBlockingContext context = new ControlledBlockingContext();
+    context.evaluate(task).consume(val);
+
+    context.waitFor(task);
+    context.release(task);
+    context.waitUntilNumConcurrent(2); // {InContext, A}
+    assertTrue(context.isWaiting(leaf("A")));
+    assertFalse(val.isAvailable());
+
+    context.release(leaf("A"));
+    context.waitUntilNumConcurrent(1); // InContext will not complete, promise still waiting
+    assertFalse(val.isAvailable());
+
+    //noinspection StatementWithEmptyBody
+    while (promiseRef.get() == null) {
+    }
+
+    promiseRef.get().set("done: from here");
+    context.waitUntilNumConcurrent(0);
+    assertThat(val.awaitAndGet(), is("done: from here - A"));
+  }
+
+  @Test
+  public void shouldEvaluateWithContext2() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext")
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .processWithContext((tc, a, b) -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a + " - " + b);
+        });
+
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    ControlledBlockingContext context = new ControlledBlockingContext();
+    context.evaluate(task).consume(val);
+
+    context.waitFor(task);
+    context.release(task);
+    context.waitUntilNumConcurrent(3); // {InContext, A, B}
+    assertTrue(context.isWaiting(leaf("A")));
+    assertTrue(context.isWaiting(leaf("B")));
+    assertFalse(val.isAvailable());
+
+    context.release(leaf("A"));
+    context.release(leaf("B"));
+    context.waitUntilNumConcurrent(1); // InContext will not complete, promise still waiting
+    assertFalse(val.isAvailable());
+
+    //noinspection StatementWithEmptyBody
+    while (promiseRef.get() == null) {
+    }
+
+    promiseRef.get().set("done: from here");
+    context.waitUntilNumConcurrent(0);
+    assertThat(val.awaitAndGet(), is("done: from here - A - B"));
+  }
+
+  @Test
+  public void shouldEvaluateWithContext3() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext")
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .in(() -> leaf("C"))
+        .processWithContext((tc, a, b, c) -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a + " - " + b +" - " + c);
+        });
+
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    ControlledBlockingContext context = new ControlledBlockingContext();
+    context.evaluate(task).consume(val);
+
+    context.waitFor(task);
+    context.release(task);
+    context.waitUntilNumConcurrent(4); // {InContext, A, B, C}
+    assertTrue(context.isWaiting(leaf("A")));
+    assertTrue(context.isWaiting(leaf("B")));
+    assertTrue(context.isWaiting(leaf("C")));
+    assertFalse(val.isAvailable());
+
+    context.release(leaf("A"));
+    context.release(leaf("B"));
+    context.release(leaf("C"));
+    context.waitUntilNumConcurrent(1); // InContext will not complete, promise still waiting
+    assertFalse(val.isAvailable());
+
+    //noinspection StatementWithEmptyBody
+    while (promiseRef.get() == null) {
+    }
+
+    promiseRef.get().set("done: from here");
+    context.waitUntilNumConcurrent(0);
+    assertThat(val.awaitAndGet(), is("done: from here - A - B - C"));
+  }
+
+  @Test
+  public void shouldEvaluateCurriedWithContext() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext").<String>curryToValue()
+        .in(() -> leaf("A"))
+        .process(tc -> a -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a);
+        });
+
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    ControlledBlockingContext context = new ControlledBlockingContext();
+    context.evaluate(task).consume(val);
+
+    context.waitFor(task);
+    context.release(task);
+    context.waitUntilNumConcurrent(2); // {InContext, A}
+    assertTrue(context.isWaiting(leaf("A")));
+    assertFalse(val.isAvailable());
+
+    context.release(leaf("A"));
+    context.waitUntilNumConcurrent(1); // InContext will not complete, promise still waiting
+    assertFalse(val.isAvailable());
+
+    //noinspection StatementWithEmptyBody
+    while (promiseRef.get() == null) {
+    }
+
+    promiseRef.get().set("done: from here");
+    context.waitUntilNumConcurrent(0);
+    assertThat(val.awaitAndGet(), is("done: from here - A"));
+  }
+
+  @Test
+  public void shouldEvaluateMultiLevelCurriedWithContext() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext").<String>curryToValue()
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .process(tc -> b -> a -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a + " - " + b);
+        });
+
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    ControlledBlockingContext context = new ControlledBlockingContext();
+    context.evaluate(task).consume(val);
+
+    context.waitFor(task);
+    context.release(task);
+    context.waitUntilNumConcurrent(3); // {InContext, A, B}
+    assertTrue(context.isWaiting(leaf("A")));
+    assertTrue(context.isWaiting(leaf("B")));
+    assertFalse(val.isAvailable());
+
+    context.release(leaf("A"));
+    context.release(leaf("B"));
+    context.waitUntilNumConcurrent(1); // InContext will not complete, promise still waiting
+    assertFalse(val.isAvailable());
+
+    //noinspection StatementWithEmptyBody
+    while (promiseRef.get() == null) {
+    }
+
+    promiseRef.get().set("done: from here");
+    context.waitUntilNumConcurrent(0);
+    assertThat(val.awaitAndGet(), is("done: from here - A - B"));
   }
 
   @Test

@@ -25,7 +25,7 @@ public final class AwaitingConsumer<T> implements Consumer<T> {
   }
 
   public T awaitAndGet() throws InterruptedException {
-    assertTrue(latch.await(1, TimeUnit.SECONDS));
+    assertTrue("wait for value", latch.await(1, TimeUnit.SECONDS));
     return value;
   }
 }
