@@ -2,12 +2,10 @@ package io.rouz.task.context;
 
 import org.junit.Test;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
+import io.rouz.task.AwaitingConsumer;
 import io.rouz.task.TaskContext;
 import io.rouz.task.TaskContext.Promise;
 import io.rouz.task.TaskContext.Value;
@@ -109,26 +107,5 @@ public class AsyncContextTest {
     Promise<String> promise = context.promise();
     promise.set("hello");
     promise.set("nope");
-  }
-
-  private static final class AwaitingConsumer<T> implements Consumer<T> {
-
-    private final CountDownLatch latch = new CountDownLatch(1);
-    private T value;
-
-    @Override
-    public void accept(T t) {
-      value = t;
-      latch.countDown();
-    }
-
-    boolean isAvailable() {
-      return latch.getCount() == 0;
-    }
-
-    T awaitAndGet() throws InterruptedException {
-      assertTrue(latch.await(1, TimeUnit.SECONDS));
-      return value;
-    }
   }
 }
