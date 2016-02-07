@@ -354,7 +354,7 @@ final class TaskBuilders {
    * those tasks {@link Task}s.
    *
    * It will only evaluate the functions (through calling {@link F0#get()})
-   * when the returned function is invoked. Thus it retains lazyness.
+   * when the returned function is invoked. Thus it retains laziness.
    *
    * @param tasks  An array of lazy evaluated tasks
    * @return A function of a list of lazily evaluated tasks

@@ -69,9 +69,9 @@ public class AsyncContext implements TaskContext {
 
   private final class FutureValue<T> implements Value<T> {
 
-    private final CompletableFuture<T> future;
+    private final CompletionStage<T> future;
 
-    private FutureValue(CompletableFuture<T> future) {
+    private FutureValue(CompletionStage<T> future) {
       this.future = future;
     }
 
