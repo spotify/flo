@@ -60,6 +60,14 @@ public interface TaskContext {
   }
 
   /**
+   * Create a promise for a value that can be fulfilled somewhere else.
+   *
+   * @param <T>  The type of the promised value
+   * @return A promise
+   */
+  <T> Promise<T> promise();
+
+  /**
    * A {@link Collector} that collects a {@link Stream} of {@link Value}s into a {@link Value}
    * of a {@link List}.
    *
@@ -119,6 +127,34 @@ public interface TaskContext {
      * @return A new value with a different type
      */
     <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> fn);
+  }
+
+  /**
+   * A promise for a {@link Value} that is supposed to be {@link #set(Object)}.
+   *
+   * This is supposed to be used where the processing for producing a value happens in a different
+   * environment but is needed by values produced in this context.
+   *
+   * @param <T>  The type of the promised value
+   */
+  interface Promise<T> {
+
+    /**
+     * The value for this promise. When this promise is fulfilled, the value will become available.
+     *
+     * @return The value corresponding to this promise
+     */
+    Value<T> value();
+
+    /**
+     * Fulfill the promise.
+     *
+     * @param value  The value to fulfill the promise with
+     * @throws IllegalStateException if the promise was already fulfilled
+     */
+    void set(T value);
+
+    // todo: set error
   }
 
   /**

@@ -132,6 +132,11 @@ class ControlledBlockingContext implements TaskContext {
     return new SettableValue<>(value.get());
   }
 
+  @Override
+  public <T> Promise<T> promise() {
+    return new ValuePromise<>();
+  }
+
   class SettableValue<T> implements Value<T> {
 
     private T value;
@@ -178,6 +183,21 @@ class ControlledBlockingContext implements TaskContext {
       for (Consumer<T> consumer : consumers) {
         consumer.accept(value);
       }
+    }
+  }
+
+  class ValuePromise<T> implements Promise<T> {
+
+    private final SettableValue<T> value = new SettableValue<>();
+
+    @Override
+    public Value<T> value() {
+      return value;
+    }
+
+    @Override
+    public void set(T t) {
+      value.setValue(t);
     }
   }
 }

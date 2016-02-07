@@ -44,6 +44,11 @@ public class AsyncContext implements TaskContext {
     return new FutureValue<>(CompletableFuture.completedFuture(t));
   }
 
+  @Override
+  public <T> Promise<T> promise() {
+    return new FuturePromise<>();
+  }
+
   protected final <T> Value<T> flatten(F0<Value<T>> t) {
     return flatten(CompletableFuture.supplyAsync(t, executor));
   }
@@ -64,9 +69,9 @@ public class AsyncContext implements TaskContext {
 
   private final class FutureValue<T> implements Value<T> {
 
-    private final CompletionStage<T> future;
+    private final CompletableFuture<T> future;
 
-    private FutureValue(CompletionStage<T> future) {
+    private FutureValue(CompletableFuture<T> future) {
       this.future = future;
     }
 
@@ -88,6 +93,25 @@ public class AsyncContext implements TaskContext {
     @Override
     public <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> function) {
       return flatten(future.thenApply(function));
+    }
+  }
+
+  private final class FuturePromise<T> implements Promise<T> {
+
+    private final CompletableFuture<T> future = new CompletableFuture<>();
+    private final FutureValue<T> value = new FutureValue<>(future);
+
+    @Override
+    public Value<T> value() {
+      return value;
+    }
+
+    @Override
+    public void set(T t) {
+      final boolean completed = future.complete(t);
+      if (!completed) {
+        throw new IllegalStateException("Promise was already completed");
+      }
     }
   }
 }
