@@ -63,6 +63,34 @@ class Fib {
 }
 ```
 
+## Tasks are lazy
+
+Creating instances of `Task<T>` is cheap. No matter how complex and deep the task graph might be, creating the top level `Task<T>` will not cause the whole graph to be created. This is because all inputs are declared using a `Supplier<T>`, utilizing their properties for deferred evaluation:
+
+```java
+someLibrary.maybeNeedsValue(() -> expensiveCalculation());
+```
+
+This pattern is on its way to become an idiom for achieve lazyness in Java 8. A good example is the additions to the [Java 8 Logger] class which lets the logger decide if the log line for a certain log level should be computed or not.
+
+So we can easily create an endlessly recursive task (useless, but illustrative) and still be able to construct instances of it without having worry about how complex the graph is.
+
+```java
+static Task<String> endless() {
+  return Task.named("Endless")
+      .in(() -> endless())
+      .process((impossible) -> impossible);
+}
+```
+
+This means that we can always refer to tasks directly by using their definition:
+
+```java
+TaskId endlessTaskId = endless().id();
+```
+
+[Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-
+
 ## CLI generator
 
 > `flo-cli` is in an experimental stage of development and not really useful at this time.
