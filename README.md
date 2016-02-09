@@ -53,7 +53,7 @@ class Fib {
     }
   }
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     Task<Long> fib92 = nth(92);
     TaskContext taskContext = TaskContext.inmem();
     TaskContext.Value<Long> value = taskContext.evaluate(fib92);
@@ -93,14 +93,52 @@ TaskId endlessTaskId = endless().id();
 
 ## Task graphs as data structures
 
-A `Task<T>` can be transformed into a data structure where a materialized view of the workflow graph is needed.
+A `Task<T>` can be transformed into a data structure where a materialized view of the workflow graph is needed. In this example we have two simple tasks where one is used as the input to the other.
 
 ```java
 static Task<String> first(String arg) {
+  return Task.named("First", arg)
+      .constant(() -> "hello " + arg);
+}
+
+static Task<String> second(String arg) {
+  return Task.named("Second", arg)
+      .in(() -> first(arg))
+      .process((firstResult) -> "well, " + firstResult);
+}
+
+public static void main(String[] args) {
+  Task<String> task = second("flo");
+  TaskInfo taskInfo = TaskInfo.ofTask(task);
+  System.out.println("taskInfo = " + taskInfo);
 }
 ```
 
-## CLI generator
+`taskInfo` in this example will be:
+
+```
+taskInfo = TaskInfo {
+  id=Second(flo)#375f5234,
+  isReference=false,
+  inputs=[
+    TaskInfo {
+      id=First(flo)#65f4e738,
+      isReference=false,
+      inputs=[]
+    }
+  ]
+}
+```
+
+The `id` and `inputs` fileds should be pretty self explanatory. `isReference` is a boolean which signals if some task has already been materialized eariler in the tree, given a depth first, post-order traversal.
+
+Recall that the graph expansion can chose inputs artibrarily based on the arguments. In workflow libraries where expansion is coupled with evaluation, it's hard to know what will be evaluated beforehand. Evaluation planning and result caching/memoizing becomes integral parts of such libraries. `flo` aims to expose useful information together with flexible evaluation apis to make it a library for easily building workflow management systems, rather than trying to be the can-do-it-all workflow management system itself. More about how this is achieved in the `TaskContext` sections.
+
+# TaskContext
+
+tbw
+
+# CLI generator
 
 > `flo-cli` is in an experimental stage of development and not really useful at this time.
 
