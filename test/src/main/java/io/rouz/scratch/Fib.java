@@ -12,9 +12,10 @@ final class Fib {
 
   public static void main(String[] args) {
     Task<Long> fib92 = create(92);
-    TaskContext context = TaskContext.inmem();
-    Value<Long> evaluate = context.evaluate(fib92);
-    evaluate.consume(out -> System.out.println("out = " + out));
+    TaskContext taskContext = TaskContext.inmem();
+    TaskContext.Value<Long> value = taskContext.evaluate(fib92);
+
+    value.consume(f92 -> System.out.println("fib(92) = " + f92));
   }
 
   static Task<Long> create(long n) {

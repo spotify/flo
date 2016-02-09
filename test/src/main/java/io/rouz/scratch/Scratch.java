@@ -125,5 +125,4 @@ public class Scratch {
       return Task.named("Adder", a, b).constant(() -> a + b);
     }
   }
-
 }

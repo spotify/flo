@@ -35,6 +35,8 @@ JavaDocs here: http://rouz.io/flo/maven/apidocs
 
 ## Example: Fibonacci
 
+Fibonacci serves as a good example even though it's not at all the kind of thing that `flo` is meant to be used for. Nevertheless, it demonstrates how a workflow graph can be recursively defined with arbitrary logic governing which inputs are chosen.
+
 ```java
 class Fib {
 
@@ -53,7 +55,10 @@ class Fib {
 
   public static void main(String[] args) throws IOException {
     Task<Long> fib92 = nth(92);
-    System.out.println("fib92.out() = " + fib92.out());
+    TaskContext taskContext = TaskContext.inmem();
+    TaskContext.Value<Long> value = taskContext.evaluate(fib92);
+
+    value.consume(f92 -> System.out.println("fib(92) = " + f92));
   }
 }
 ```
