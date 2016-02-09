@@ -91,6 +91,15 @@ TaskId endlessTaskId = endless().id();
 
 [Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-
 
+## Task graphs as data structures
+
+A `Task<T>` can be transformed into a data structure where a materialized view of the workflow graph is needed.
+
+```java
+static Task<String> first(String arg) {
+}
+```
+
 ## CLI generator
 
 > `flo-cli` is in an experimental stage of development and not really useful at this time.
