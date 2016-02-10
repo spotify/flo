@@ -117,6 +117,30 @@ class MyTask extends Task<Integer> {
 }
 ```
 
+There's of course nothing stopping you from having the task defined in a regular class. It might even be useful if your evaluation function is part of an existing class. `flo` does not force anything on to your types, it just needs to know what to run.
+
+```java
+class SomeExistingClass {
+
+  private final String arg;
+
+  public SomeExistingClass(String arg) {
+    this.arg = arg;
+  }
+
+  Task<Integer> task() {
+    return Task.named("MyTask", arg)
+        .in(() -> otherTask(arg))
+        .in(() -> yetATask(arg))
+        .process(this::process);
+  }
+
+  int process(String otherResult, int yetAResult) {
+    // ...
+  }
+}
+```
+
 ## Tasks are lazy
 
 Creating instances of `Task<T>` is cheap. No matter how complex and deep the task graph might be, creating the top level `Task<T>` will not cause the whole graph to be created. This is because all inputs are declared using a `Supplier<T>`, utilizing their properties for deferred evaluation:
@@ -125,7 +149,7 @@ Creating instances of `Task<T>` is cheap. No matter how complex and deep the tas
 someLibrary.maybeNeedsValue(() -> expensiveCalculation());
 ```
 
-This pattern is on its way to become an idiom for achieve lazyness in Java 8. A good example is the additions to the [Java 8 Logger] class which lets the logger decide if the log line for a certain log level should be computed or not.
+This pattern is on its way to become an idiom for achieving lazyness in Java 8. A good example is the additions to the [Java 8 Logger] class which lets the logger decide if the log line for a certain log level should be computed or not.
 
 So we can easily create an endlessly recursive task (useless, but illustrative) and still be able to construct instances of it without having to worry about how complex or resource consuming the construction might be.
 
