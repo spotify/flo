@@ -38,6 +38,7 @@ JavaDocs here: http://rouz.io/flo/maven/apidocs
 - [Quick Example: Fibonacci](#quick-example-fibonacci)
 - [`Task<T>`](#taskt)
   - [Tasks are defined by regular methods](#tasks-are-defined-by-regular-methods)
+    - [Task embedding](#task-embedding)
   - [Tasks are lazy](#tasks-are-lazy)
   - [Task graphs as data structures](#task-graphs-as-data-structures)
 - [`TaskContext`](#taskcontext)
@@ -99,7 +100,7 @@ class MyTask extends Task<Integer> {
 
   private final String arg;
 
-  public MyTask(String arg) {
+  MyTask(String arg) {
     super("MyTask", arg);
     this.arg = arg;
   }
@@ -117,6 +118,8 @@ class MyTask extends Task<Integer> {
 }
 ```
 
+### Task embedding
+
 There's of course nothing stopping you from having the task defined in a regular class. It might even be useful if your evaluation function is part of an existing class. `flo` does not force anything on to your types, it just needs to know what to run.
 
 ```java
@@ -124,12 +127,12 @@ class SomeExistingClass {
 
   private final String arg;
 
-  public SomeExistingClass(String arg) {
+  SomeExistingClass(String arg) {
     this.arg = arg;
   }
 
   Task<Integer> task() {
-    return Task.named("MyTask", arg)
+    return Task.named("EmbeddedTask", arg)
         .in(() -> otherTask(arg))
         .in(() -> yetATask(arg))
         .process(this::process);
