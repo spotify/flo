@@ -86,19 +86,19 @@ This is how the same thing would typically look like in other libraries:
 
 ```java
 class MyTask extends Task<Integer> {
-  
+
   private final String arg;
-  
+
   public MyTask(String arg) {
     super("MyTask", arg);
     this.arg = arg;
   }
-  
+
   @Override
   public List<? extends Task<?>> inputs() {
     return Arrays.asList(new OtherTask(arg), new YetATask(arg));
   }
-  
+
   @Override
   public Integer process(List<Object> inputs) {
     // loose all type safety and guess your inputs
@@ -120,7 +120,7 @@ This pattern is on its way to become an idiom for achieve lazyness in Java 8. A 
 So we can easily create an endlessly recursive task (useless, but illustrative) and still be able to construct instances of it without having to worry about how complex or resource consuming the construction might be.
 
 ```java
-static Task<String> endless() {
+Task<String> endless() {
   return Task.named("Endless")
       .in(() -> endless())
       .process((impossible) -> impossible);
@@ -138,18 +138,18 @@ TaskId endlessTaskId = endless().id();
 A `Task<T>` can be transformed into a data structure where a materialized view of the workflow graph is needed. In this example we have two simple tasks where one is used as the input to the other.
 
 ```java
-static Task<String> first(String arg) {
+Task<String> first(String arg) {
   return Task.named("First", arg)
       .constant(() -> "hello " + arg);
 }
 
-static Task<String> second(String arg) {
+Task<String> second(String arg) {
   return Task.named("Second", arg)
       .in(() -> first(arg))
       .process((firstResult) -> "well, " + firstResult);
 }
 
-public static void main(String[] args) {
+void printTaskInfo() {
   Task<String> task = second("flo");
   TaskInfo taskInfo = TaskInfo.ofTask(task);
   System.out.println("taskInfo = " + taskInfo);
@@ -174,15 +174,16 @@ taskInfo = TaskInfo {
 
 The `id` and `inputs` fileds should be pretty self explanatory. `isReference` is a boolean which signals if some task has already been materialized eariler in the tree, given a depth first, post-order traversal.
 
-Recall that the graph expansion can chose inputs artibrarily based on the arguments. In workflow libraries where expansion is coupled with evaluation, it's hard to know what will be evaluated beforehand. Evaluation planning and result caching/memoizing becomes integral parts of such libraries. `flo` aims to expose useful information together with flexible evaluation apis to make it a library for easily building workflow management systems, rather than trying to be the can-do-it-all workflow management system itself. More about how this is achieved in the `TaskContext` sections.
+Recall that the graph expansion can chose inputs artibrarily based on the arguments. In workflow libraries where expansion is coupled with evaluation, it's hard to know what will be evaluated beforehand. Evaluation planning and result caching/memoizing becomes integral parts of such libraries. `flo` aims to expose useful information together with flexible evaluation apis to make it a library for easily building workflow management systems, rather than trying to be the can-do-it-all workflow management system itself. More about how this is achieved in the [`TaskContext`][TaskContext] sections.
+
+# [`TaskContext`][TaskContext]
+
+tbw
 
 [Task]: http://rouz.io/flo/maven/apidocs/io/rouz/task/Task.html
 [TaskBuilder]: http://rouz.io/flo/maven/apidocs/io/rouz/task/dsl/TaskBuilder.html
+[TaskContext]: http://rouz.io/flo/maven/apidocs/io/rouz/task/TaskContext.html
 [Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-
-
-# TaskContext
-
-tbw
 
 # CLI generator
 
