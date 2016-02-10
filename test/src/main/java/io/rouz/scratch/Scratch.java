@@ -4,16 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
+import io.rouz.TaskInfo;
 import io.rouz.task.Task;
 import io.rouz.task.proc.Exec;
 import io.rouz.task.processor.RootTask;
-
-import static java.util.stream.Collectors.toList;
 
 /**
  * Task definitions have (TD)
@@ -48,45 +43,11 @@ public class Scratch {
         .map(Task::id)
         .forEachOrdered(System.out::println);
 
-    Job job = asJob(foo, new HashSet<>());
+    TaskInfo taskInfo = TaskInfo.ofTask(foo);
     ObjectMapper objectMapper = new ObjectMapper()
       .enable(SerializationFeature.INDENT_OUTPUT);
-    String json = objectMapper.writeValueAsString(job);
+    String json = objectMapper.writeValueAsString(taskInfo);
     System.out.println(json);
-  }
-
-  static Job asJob(Task<?> task, Set<String> visits) {
-    String id = task.id().toString();
-    if (visits.contains(id)) {
-      return Job.ref(id);
-    } else {
-      visits.add(id);
-    }
-
-    List<Job> upstreams = task.inputs().stream()
-        .map(t -> asJob(t, visits))
-        .collect(toList());
-    return Job.create(id, upstreams);
-  }
-
-  static class Job {
-    public final String id;
-    public final boolean reference;
-    public final List<Job> upstreams;
-
-    Job(String id, boolean reference, List<Job> upstreams) {
-      this.id = id;
-      this.reference = reference;
-      this.upstreams = upstreams;
-    }
-
-    public static Job ref(String id) {
-      return new Job(id, true, Collections.emptyList());
-    }
-
-    public static Job create(String id, List<Job> upstreams) {
-      return new Job(id, false, upstreams);
-    }
   }
 
   @RootTask
@@ -125,5 +86,4 @@ public class Scratch {
       return Task.named("Adder", a, b).constant(() -> a + b);
     }
   }
-
 }
