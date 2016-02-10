@@ -1,3 +1,19 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [flo](#flo)
+  - [Dependency](#dependency)
+  - [Quick Example: Fibonacci](#quick-example-fibonacci)
+- [[`Task<T>`][Task]](#taskttask)
+  - [Tasks are defined by regular methods](#tasks-are-defined-by-regular-methods)
+  - [Tasks are lazy](#tasks-are-lazy)
+  - [Task graphs as data structures](#task-graphs-as-data-structures)
+- [[`TaskContext`][TaskContext]](#taskcontexttaskcontext)
+- [CLI generator](#cli-generator)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # flo
 
 [![CircleCI](https://img.shields.io/circleci/project/rouzwawi/flo.svg)](https://circleci.com/gh/rouzwawi/flo)
