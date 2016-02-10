@@ -36,11 +36,11 @@ JavaDocs here: http://rouz.io/flo/maven/apidocs
 ## Table of contents
 
 - [Quick Example: Fibonacci](#quick-example-fibonacci)
-- [[`Task<T>`][Task]](#taskttask)
+- [`Task<T>`](#taskttask)
   - [Tasks are defined by regular methods](#tasks-are-defined-by-regular-methods)
   - [Tasks are lazy](#tasks-are-lazy)
   - [Task graphs as data structures](#task-graphs-as-data-structures)
-- [[`TaskContext`][TaskContext]](#taskcontexttaskcontext)
+- [`TaskContext`](#taskcontexttaskcontext)
 - [CLI generator](#cli-generator)
 
 ## Quick Example: Fibonacci
