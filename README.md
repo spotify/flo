@@ -74,7 +74,7 @@ Your workflow tasks are not defined as classes that extend [`Task<T>`][Task], ra
 Here's a simple example of a `flo` task depending on two other tasks:
 
 ```java
-static Task<Integer> myTask(String arg) {
+Task<Integer> myTask(String arg) {
   return Task.named("MyTask", arg)
       .in(() -> otherTask(arg))
       .in(() -> yetATask(arg))
