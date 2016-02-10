@@ -117,7 +117,7 @@ someLibrary.maybeNeedsValue(() -> expensiveCalculation());
 
 This pattern is on its way to become an idiom for achieve lazyness in Java 8. A good example is the additions to the [Java 8 Logger] class which lets the logger decide if the log line for a certain log level should be computed or not.
 
-So we can easily create an endlessly recursive task (useless, but illustrative) and still be able to construct instances of it without having worry about how complex the graph is.
+So we can easily create an endlessly recursive task (useless, but illustrative) and still be able to construct instances of it without having to worry about how complex or resource consuming the construction might be.
 
 ```java
 static Task<String> endless() {
