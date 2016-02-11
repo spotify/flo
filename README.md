@@ -76,7 +76,7 @@ class Fib {
 
 # [`Task<T>`][Task]
 
-[`Task<T>`][Task] is one of the more central types in `flo`. It represents some task which will evaluate a value of type `T`. It has a parameterized name, a number of input tasks and a process code block which will be executed when inputs are evaluated. Tasks come with a few key properties governing how they are defined, behave and are interacted with. We'll cover these in the following sections.
+[`Task<T>`][Task] is one of the more central types in `flo`. It represents some task which will evaluate a value of type `T`. It has a parameterized name, zero or more input tasks and a processing function which will be executed when inputs are evaluated. Tasks come with a few key properties governing how they are defined, behave and are interacted with. We'll cover these in the following sections.
 
 ## Tasks are defined by regular methods
 
