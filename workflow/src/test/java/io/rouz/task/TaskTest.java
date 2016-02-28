@@ -1,556 +1,378 @@
 package io.rouz.task;
 
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
-import io.rouz.task.dsl.TaskBuilder;
-import io.rouz.task.dsl.TaskBuilder.F0;
-import io.rouz.task.dsl.TaskBuilder.F1;
+import io.rouz.task.TaskContext.Promise;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Tests that verify the interaction between {@link Task} instances and the {@link TaskContext}.
+ * Naming convention for tests
+ * XXX_X
+ * ^^^ ^
+ * ||| `--> N,R = normal, curried
+ * ||`----> D,C = direct, context
+ * |`-----> I,L = in, ins
+ * `------> arity
  *
- * todo: rewrite tests using {@link Task#out()}
+ * eg 2RD_IL = arity 2 curried direct processed task with single input and list input
  */
 public class TaskTest {
 
-  @Test
-  public void shouldRunAsExpected() throws Exception {
-    Task<EvenResult> wasEven = isEven(6);
-    Task<EvenResult> madeEven = isEven(5);
-
-    assertThat(wasEven.out(), instanceOf(WasEven.class));
-    assertThat(wasEven.out().result(), is(6));
-    assertThat(madeEven.out(), instanceOf(MadeEven.class));
-    assertThat(madeEven.out().result(), is(10));
-  }
+  // 0. ===========================================================================================
 
   @Test
-  public void shouldMemoizeTaskProcessing() throws Exception {
-    AtomicInteger counter = new AtomicInteger(0);
-    Task<Integer> count = Task.named("Count")
-        .constant(counter::incrementAndGet);
-
-    Task<Integer> sum = Task.named("Sum")
-        .in(() -> count)
-        .in(() -> count)
-        .in(() -> count)
-        .process((a, b, c) -> a + b + c);
-
-    assertThat(sum.out(), is(3));
-    assertThat(counter.get(), is(1)); // only called once
-
-    // only memoized during each execution
-    assertThat(count.out(), is(2));
-    assertThat(count.out(), is(3));
-    assertThat(counter.get(), is(3)); // called twice more
-  }
-
-  @Test
-  public void shouldHanleStreamParameters() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
-
-    // 1,2,3,4,5
-    List<Task<Integer>> fiveInts = Stream
-        .generate(countSupplier)
-        .limit(5)
-        .collect(toList());
-
-    Task<Integer> sum = Task.named("Sum")
-        .ins(() -> fiveInts)
-        .process(this::sumInts);
-
-    // 1+2+3+4+5 = 15
-    assertThat(sum.out(), is(15));
-  }
-
-  @Test
-  public void shouldHanleMixedStreamAndPlainParameters() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
-
-    // 1,2,3,4,5
-    List<Task<Integer>> fiveInts = Stream
-        .generate(countSupplier)
-        .limit(5)
-        .collect(toList());
-
-    Task<Integer> sum = Task.named("Sum")
-        .in(() -> isEven(5))
-        .ins(() -> fiveInts)
-        .in(() -> isEven(2))
-        .process((a, ints, b) -> a.result() + sumInts(ints) + b.result());
-
-    // (5*2) + (1+2+3+4+5) + 2 = 27
-    assertThat(sum.out(), is(27));
-  }
-
-  @Test
-  public void shouldHanleMultipleStreamParameters() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
-
-    F0<List<Task<Integer>>> fiveInts = () -> Stream
-        .generate(countSupplier)
-        .limit(5)
-        .collect(toList());
-
-    Task<Integer> sum = Task.named("Sum")
-        .ins(fiveInts)
-        .ins(fiveInts)
-        .process((first5, second5) -> sumInts(first5) + sumInts(second5));
-
-    // (1+2+3+4+5) + (6+7+8+9+10) = 55
-    assertThat(sum.out(), is(55));
-  }
-
-  @Test
-  public void shouldOnlyEvaluateInputsParameterOnce() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
-
-    Task<Integer> sum = Task.named("Sum")
-        .in(countSupplier::get)
-        .in(countSupplier::get)
-        .in(countSupplier::get)
-        .process((a, b, c) -> a + b + c);
-
-    // dummy run
-    sum.out();
-
-    // 1+2+3 = 6
-    assertThat(sum.out(), is(6));
-  }
-
-  @Test
-  public void shouldOnlyEvaluateCurriedInputsParameterOnce() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
-
-    Task<Integer> sum = Task.named("Sum").<Integer>curryTo()
-        .in(countSupplier::get)
-        .in(countSupplier::get)
-        .in(countSupplier::get)
-        .process(a -> b -> c -> a + b + c);
-
-    // dummy run
-    sum.out();
-
-    // 1+2+3 = 6
-    assertThat(sum.out(), is(6));
-  }
-
-  @Test
-  public void shoulOnlyEvaluateStreamParameterOnce() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
-
-    F0<List<Task<Integer>>> fiveInts = () -> Stream
-        .generate(countSupplier)
-        .limit(5)
-        .collect(toList());
-
-    Task<Integer> sum = Task.named("Sum")
-        .ins(fiveInts)
-        .ins(fiveInts)
-        .ins(fiveInts)
-        .process((first5, second5, third5) -> sumInts(first5) + sumInts(second5) + sumInts(third5));
-
-    // dummy run
-    sum.out();
-
-    // (1+2+3+4+5) + (6+7+8+9+10) + (11+12+13+14+15) = 120
-    assertThat(sum.out(), is(120));
-  }
-
-  @Test
-  public void shoulOnlyEvaluateCurriedStreamParameterOnce() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
-
-    F0<List<Task<Integer>>> fiveInts = () -> Stream
-        .generate(countSupplier)
-        .limit(5)
-        .collect(toList());
-
-    Task<Integer> sum = Task.named("Sum").<Integer>curryTo()
-        .ins(fiveInts)
-        .ins(fiveInts)
-        .ins(fiveInts)
-        .process(
-            first5 -> second5 -> third5 ->
-                sumInts(first5) + sumInts(second5) + sumInts(third5));
-
-    // dummy run
-    sum.out();
-
-    // (1+2+3+4+5) + (6+7+8+9+10) + (11+12+13+14+15) = 120
-    assertThat(sum.out(), is(120));
-  }
-
-  @Test
-  public void shouldListInputIds() throws Exception {
-    Task<String> top = Task.named("Top")
-        .in(() -> isEven(0))
-        .in(() -> isEven(1))
-        .in(() -> isEven(3))
-        .process((a, b, c) -> "done");
-
-    List<TaskId> inputs = top.inputs().stream().map(Task::id).collect(toList());
-
-    TaskId isEven0Id = isEven(0).id();
-    TaskId isEven1Id = isEven(1).id();
-    TaskId isEven3Id = isEven(3).id();
-
-    assertThat(inputs, containsInOrder(isEven0Id, isEven1Id));
-    assertThat(inputs, containsInOrder(isEven0Id, isEven3Id));
-    assertThat(inputs, containsInOrder(isEven1Id, isEven3Id));
-  }
-
-  @Test
-  public void shouldListCurriedInputIds() throws Exception {
-    Task<String> top = Task.named("Top").<String>curryTo()
-        .in(() -> isEven(0))
-        .in(() -> isEven(1))
-        .in(() -> isEven(3))
-        .process(a -> b -> c -> "done");
-
-    List<TaskId> inputs = top.inputs().stream().map(Task::id).collect(toList());
-
-    TaskId isEven0Id = isEven(0).id();
-    TaskId isEven1Id = isEven(1).id();
-    TaskId isEven3Id = isEven(3).id();
-
-    assertThat(inputs, containsInOrder(isEven0Id, isEven1Id));
-    assertThat(inputs, containsInOrder(isEven0Id, isEven3Id));
-    assertThat(inputs, containsInOrder(isEven1Id, isEven3Id));
-  }
-
-  @Test
-  public void shouldListInputsLazily() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
-
-    Task<Integer> sum = Task.named("Sum")
-        .in(countSupplier::get)
-        .in(countSupplier::get)
-        .in(countSupplier::get)
-        .process((a, b, c) -> a + b + c);
-
-    // pre fetch one
-    Task<Integer> one = countSupplier.get();
-
-    // both run and and get inputs
-    sum.out();
-    List<TaskId> inputs = sum.inputs().stream().map(Task::id).collect(toList());
-
-    assertThat(inputs.get(0).toString(), startsWith("Count(4)"));
-    assertThat(inputs.get(1).toString(), startsWith("Count(3)"));
-    assertThat(inputs.get(2).toString(), startsWith("Count(2)"));
-
-    assertThat(one.out(), is(1));
-    assertThat(sum.out(), is(9)); // 2+3+4 = 9
-  }
-
-  @Test
-  public void shouldLinearizeTasks() throws Exception {
-    Task<String> top = Task.named("Top")
-        .in(() -> isEven(0))
-        .in(() -> isEven(1))
-        .process((a, b) -> "done");
-
-    List<TaskId> taskIds = top.inputsInOrder()
-        .map(Task::id)
-        .collect(toList());
-
-    TaskId evenify1Id = evenify(1).id();
-    TaskId isEven1Id = isEven(1).id();
-
-    assertThat(taskIds, containsInOrder(evenify1Id, isEven1Id));
-  }
-
-  @Test
-  public void shouldFlattenStreamParameters() throws Exception {
-    Task<String> top = Task.named("Top")
-        .ins(() -> asList(isEven(0), isEven(1)))
-        .process(results -> "done " + results.size());
-
-    List<TaskId> taskIds = top.inputsInOrder()
-        .map(Task::id)
-        .collect(toList());
-
-    TaskId isEven1Id = isEven(1).id();
-    TaskId evenify1Id = evenify(1).id();
-
-    assertThat(taskIds.size(), is(3));
-    assertThat(taskIds, containsInOrder(evenify1Id, isEven1Id));
-  }
-
-  @Test
-  public void shouldLinearizeMixedStreamAndPlainParameters() throws Exception {
-    F1<Integer, Task<Integer>> evenResult = n ->
-        Task.named("EvenResult", n)
-            .in(() -> isEven(n))
-            .process(EvenResult::result);
-
-    Task<Integer> sum = Task.named("Sum")
-        .in(() -> isEven(5))
-        .ins(() -> asList(evenResult.apply(0), evenResult.apply(1)))
-        .ins(() -> singletonList(evenResult.apply(3)))
-        .process((a, ints, b) -> a.result() + sumInts(ints) + sumInts(b));
-
-    List<TaskId> taskIds = sum.inputsInOrder()
-        .map(Task::id)
-        .collect(toList());
-
-    TaskId evenify5Id = evenify(5).id();
-    TaskId evenify1Id = evenify(1).id();
-    TaskId evenify3Id = evenify(3).id();
-
-    System.out.println("taskIds = " + taskIds);
-
-    assertThat(taskIds.size(), is(10));
-    assertThat(taskIds, containsInOrder(evenify5Id, evenify1Id));
-    assertThat(taskIds, containsInOrder(evenify5Id, evenify3Id));
-    assertThat(taskIds, containsInOrder(evenify1Id, evenify3Id));
-  }
-
-  @Test
-  public void shouldBuildArbitraryDeepCurriedLambda() throws Exception {
-    final Task<Integer> curried = Task.named("Curried")
-        .<Integer>curryTo()
-        .in(() -> isEven(0)) // 0
-        .in(() -> isEven(1)) // 2
-        .in(() -> isEven(2)) // 2
-        .in(() -> isEven(3)) // 6
-        .in(() -> isEven(4)) // 4
-        .in(() -> isEven(5)) // 10
-        .process(
-            a -> b -> c -> d -> e -> f ->
-                a.result +
-                b.result +
-                c.result +
-                d.result +
-                e.result +
-                f.result
-        );
-
-    assertThat(curried.out(), is(24));
-  }
-
-  @Test
-  public void shouldBuildCurriedLambdaWithLists() throws Exception {
-    final Task<Integer> curried = Task.named("Curried")
-        .<Integer>curryTo()
-        .ins(() -> asList(isEven(11), isEven(20))) // [22, 20]
-        .in(() -> isEven(0)) // 0
-        .ins(() -> asList(isEven(1), isEven(2))) // [2, 2]
-        .in(() -> isEven(5)) // 10
-        .process(
-            a -> b -> c -> d ->
-                a.result +
-                b.stream().mapToInt(EvenResult::result).sum() +
-                c.result +
-                d.stream().mapToInt(EvenResult::result).sum()
-        );
-
-    assertThat(curried.out(), is(56));
-  }
-
-  @Test
-  public void shouldInvokeCurriedTaskWhenInputsBecomeAvailable() throws Exception {
-    AtomicReference<String> bValue = new AtomicReference<>();
-    CountDownLatch gotB = new CountDownLatch(1);
-    Task<String> task = Task.named("WithInputs").<String>curryTo()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B first"))
-        .process(b -> {
-          bValue.set(b);
-          gotB.countDown();
-          return a -> "done: " + a + b;
-        });
-
+  public void shouldEvaluate0ND() throws Exception {
+    Task<String> task = Task.named("InContext")
+        .constant(() -> "constant");
+
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
     ControlledBlockingContext context = new ControlledBlockingContext();
-    context.evaluate(task);
+    context.evaluate(task).consume(val);
 
-    // first wait for the main task to be in progress then release it
-    // to trigger upstreams to start evaluating
     context.waitFor(task);
     context.release(task);
-
-    context.waitUntilNumConcurrent(3); // {WithInputs, A, B}
-    assertNull(bValue.get());
-
-    context.release(leaf("B first"));
-    context.waitUntilNumConcurrent(2); // {WithInputs, A}
-    assertTrue(gotB.await(100, TimeUnit.MILLISECONDS));
-    assertThat(bValue.get(), is("B first"));
+    context.waitUntilNumConcurrent(0);
+    assertThat(val.awaitAndGet(), is("constant"));
   }
 
   @Test
-  public void shouldEvaluateInputsInParallelForCurriedTask() throws Exception {
-    AtomicBoolean processed = new AtomicBoolean(false);
-    Task<String> task = Task.named("WithInputs").<String>curryTo()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .in(() -> leaf("C"))
-        .process(c -> b -> a -> {
-          processed.set(true);
-          return "done: " + a + b + c;
-        });
+  public void shouldEvaluate0NC() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext").processWithContext(tc -> {
+      Promise<String> promise = tc.promise();
+      promiseRef.set(promise);
+      return promise.value();
+    });
 
-    validateParallelEvaluation(task, processed);
+    validatePromiseEvaluation(task, promiseRef, "");
+  }
+
+  // 1. ===========================================================================================
+
+  @Test
+  public void shouldEvaluate1ND_I() throws Exception {
+    Task<String> task = Task.named("InContext")
+        .in(() -> leaf("A"))
+        .process((a) -> "done: " + a);
+
+    validateEvaluation(task, "done: A", leaf("A"));
   }
 
   @Test
-  public void shouldEvaluateInputsInParallelForChainedTask() throws Exception {
-    AtomicBoolean processed = new AtomicBoolean(false);
-    Task<String> task = Task.named("WithInputs")
+  public void shouldEvaluate1ND_L() throws Exception {
+    Task<String> task = Task.named("InContext")
+        .ins(() -> asList(leaf("A"), leaf("B")))
+        .process((ab) -> "done: " + ab);
+
+    validateEvaluation(task, "done: [A, B]", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldEvaluate1NC_I() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext")
+        .in(() -> leaf("A"))
+        .processWithContext((tc, a) -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a);
+        });
+
+    validatePromiseEvaluation(task, promiseRef, " - A", leaf("A"));
+  }
+
+  @Test
+  public void shouldEvaluate1NC_L() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext")
+        .ins(() -> asList(leaf("A"), leaf("B")))
+        .processWithContext((tc, ab) -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + ab);
+        });
+
+    validatePromiseEvaluation(task, promiseRef, " - [A, B]", leaf("A"), leaf("B"));
+  }
+
+  // 2. ===========================================================================================
+
+  @Test
+  public void shouldEvaluate2ND_II() throws Exception {
+    Task<String> task = Task.named("InContext")
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .process((a, b) -> "done: " + a + " - " + b);
+
+    validateEvaluation(task, "done: A - B", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldEvaluate2ND_IL() throws Exception {
+    Task<String> task = Task.named("InContext")
+        .in(() -> leaf("A"))
+        .ins(() -> asList(leaf("B"), leaf("C")))
+        .process((a, bc) -> "done: " + a + " - " + bc);
+
+    validateEvaluation(task, "done: A - [B, C]", leaf("A"), leaf("B"), leaf("C"));
+  }
+
+  @Test
+  public void shouldEvaluate2NC_II() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext")
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .processWithContext((tc, a, b) -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a + " - " + b);
+        });
+
+    validatePromiseEvaluation(task, promiseRef, " - A - B", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldEvaluate2NC_IL() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext")
+        .in(() -> leaf("A"))
+        .ins(() -> asList(leaf("B"), leaf("C")))
+        .processWithContext((tc, a, bc) -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a + " - " + bc);
+        });
+
+    validatePromiseEvaluation(task, promiseRef, " - A - [B, C]", leaf("A"), leaf("B"), leaf("C"));
+  }
+
+  // 3. ===========================================================================================
+
+  @Test
+  public void shouldEvaluate3ND_III() throws Exception {
+    Task<String> task = Task.named("InContext")
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .in(() -> leaf("C"))
-        .process((a, b, c) -> {
-          processed.set(true);
-          return "done: " + a + b + c;
-        });
+        .process((a, b, c) -> "done: " + a + " - " + b +" - " + c);
 
-    validateParallelEvaluation(task, processed);
+    validateEvaluation(task, "done: A - B - C", leaf("A"), leaf("B"), leaf("C"));
   }
 
-  private void validateParallelEvaluation(Task<String> task, AtomicBoolean processed)
+  @Test
+  public void shouldEvaluate3ND_IIL() throws Exception {
+    Task<String> task = Task.named("InContext")
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .ins(() -> asList(leaf("C"), leaf("D")))
+        .process((a, b, cd) -> "done: " + a + " - " + b +" - " + cd);
+
+    validateEvaluation(task, "done: A - B - [C, D]", leaf("A"), leaf("B"), leaf("C"), leaf("D"));
+  }
+
+  @Test
+  public void shouldEvaluate3NC_III() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext")
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .in(() -> leaf("C"))
+        .processWithContext((tc, a, b, c) -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a + " - " + b +" - " + c);
+        });
+
+    validatePromiseEvaluation(task, promiseRef, " - A - B - C", leaf("A"), leaf("B"), leaf("C"));
+  }
+
+  @Test
+  public void shouldEvaluate3NC_IIL() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext")
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .ins(() -> asList(leaf("C"), leaf("D")))
+        .processWithContext((tc, a, b, cd) -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a + " - " + b +" - " + cd);
+        });
+
+    validatePromiseEvaluation(task, promiseRef, " - A - B - [C, D]", leaf("A"), leaf("B"),
+                              leaf("C"), leaf("D"));
+  }
+
+  // Curried ======================================================================================
+
+  @Test
+  public void shouldEvaluate1RN_I() throws Exception {
+    Task<String> task = Task.named("InContext").<String>curryTo()
+        .in(() -> leaf("A"))
+        .process(a -> "done: " + a);
+
+    validateEvaluation(task, "done: A", leaf("A"));
+  }
+
+  @Test
+  public void shouldEvaluate1RN_L() throws Exception {
+    Task<String> task = Task.named("InContext").<String>curryTo()
+        .ins(() -> asList(leaf("A"), leaf("B")))
+        .process(ab -> "done: " + ab);
+
+    validateEvaluation(task, "done: [A, B]", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldEvaluate1RC_I() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext").<String>curryToValue()
+        .in(() -> leaf("A"))
+        .process(tc -> a -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a);
+        });
+
+    validatePromiseEvaluation(task, promiseRef, " - A", leaf("A"));
+  }
+
+  @Test
+  public void shouldEvaluate1RC_L() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext").<String>curryToValue()
+        .ins(() -> asList(leaf("A"), leaf("B")))
+        .process(tc -> ab -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + ab);
+        });
+
+    validatePromiseEvaluation(task, promiseRef, " - [A, B]", leaf("A"), leaf("B"));
+  }
+
+  // 2. (higher arities tested inductively)
+
+  @Test
+  public void shouldEvaluate2RN_II() throws Exception {
+    Task<String> task = Task.named("InContext").<String>curryTo()
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .process(b -> a -> "done: " + a  + " - " + b);
+
+    validateEvaluation(task, "done: A - B", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldEvaluate2RN_IL() throws Exception {
+    Task<String> task = Task.named("InContext").<String>curryTo()
+        .in(() -> leaf("A"))
+        .ins(() -> asList(leaf("B"), leaf("C")))
+        .process(bc -> a -> "done: " + a + " - " + bc);
+
+    validateEvaluation(task, "done: A - [B, C]", leaf("A"), leaf("B"), leaf("C"));
+  }
+
+  @Test
+  public void shouldEvaluate2RC_II() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext").<String>curryToValue()
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .process(tc -> b -> a -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a + " - " + b);
+        });
+
+    validatePromiseEvaluation(task, promiseRef, " - A - B", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldEvaluate2RC_IL() throws Exception {
+    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
+    Task<String> task = Task.named("InContext").<String>curryToValue()
+        .in(() -> leaf("A"))
+        .ins(() -> asList(leaf("B"), leaf("C")))
+        .process(tc -> bc -> a -> {
+          Promise<String> promise = tc.promise();
+          promiseRef.set(promise);
+          return promise.value().map(v -> v + " - " + a + " - " + bc);
+        });
+
+    validatePromiseEvaluation(task, promiseRef, " - A - [B, C]", leaf("A"), leaf("B"), leaf("C"));
+  }
+
+  // Validators ===================================================================================
+
+  private void validateEvaluation(
+      Task<String> task,
+      String expectedOutput,
+      Task... inputs)
       throws InterruptedException {
 
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
     ControlledBlockingContext context = new ControlledBlockingContext();
-    context.evaluate(task);
+    context.evaluate(task).consume(val);
 
-    // first wait for the main task to be in progress then release it
-    // to trigger upstreams to start evaluating
     context.waitFor(task);
     context.release(task);
+    context.waitUntilNumConcurrent(inputs.length + 1); // task + inputs
+    for (Task input : inputs) {
+      assertTrue(context.isWaiting(input));
+    }
+    assertFalse(val.isAvailable());
 
-    context.waitUntilNumConcurrent(4); // {WithInputs, A, B, C}
-    assertTrue(context.isWaiting(leaf("A")));
-    assertTrue(context.isWaiting(leaf("B")));
-    assertTrue(context.isWaiting(leaf("C")));
-    assertFalse(processed.get());
-
-    context.release(leaf("C"));
-    context.waitUntilNumConcurrent(3); // {WithInputs, A, B}
-    assertTrue(context.isWaiting(leaf("A")));
-    assertTrue(context.isWaiting(leaf("B")));
-    assertFalse(context.isWaiting(leaf("C")));
-
-    context.release(leaf("B"));
-    context.release(leaf("A"));
-    context.waitUntilNumConcurrent(0); // WithInputs will also complete here
-    assertTrue(processed.get());
+    for (Task input : inputs) {
+      context.release(input);
+    }
+    context.waitUntilNumConcurrent(0);
+    assertThat(val.awaitAndGet(), is(expectedOutput));
   }
 
-  private Task<String> leaf(String s) {
+  private void validatePromiseEvaluation(
+      Task<String> task,
+      AtomicReference<Promise<String>> promiseRef,
+      String expectedOutput,
+      Task... inputs)
+      throws InterruptedException {
+
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    ControlledBlockingContext context = new ControlledBlockingContext();
+    context.evaluate(task).consume(val);
+
+    context.waitFor(task);
+    context.release(task);
+    context.waitUntilNumConcurrent(inputs.length + 1); // task + inputs
+    for (Task input : inputs) {
+      assertTrue(context.isWaiting(input));
+    }
+    assertFalse(val.isAvailable());
+
+    for (Task input : inputs) {
+      context.release(input);
+    }
+    context.waitUntilNumConcurrent(1); // task will not complete, promise still waiting
+    assertFalse(val.isAvailable());
+
+    //noinspection StatementWithEmptyBody
+    while (promiseRef.get() == null) {
+    }
+
+    promiseRef.get().set("done: from here");
+    context.waitUntilNumConcurrent(0);
+    assertThat(val.awaitAndGet(), is("done: from here" + expectedOutput));
+  }
+
+  Task<String> leaf(String s) {
     return Task.named("Leaf", s).constant(() -> s);
-  }
-
-  private F0<Task<Integer>> countConstructor() {
-    AtomicInteger counter = new AtomicInteger(0);
-    return () -> {
-      int n = counter.incrementAndGet();
-      return Task.named("Count", n)
-          .constant(() -> n);
-    };
-  }
-
-  private int sumInts(List<Integer> intsList) {
-    return intsList.stream().reduce(0, (a, b) -> a + b);
-  }
-
-  private Task<EvenResult> isEven(int n) {
-    TaskBuilder isEven = Task.named("IsEven", n);
-
-    if (n % 2 == 0) {
-      return isEven.constant(() -> new WasEven(n));
-    }
-
-    return isEven
-        .in(() -> evenify(n))
-        .process(MadeEven::new);
-  }
-
-  private Task<Integer> evenify(int n) {
-    return Task.named("Evenify", n)
-        .constant(() -> n * 2);
-  }
-
-  // Result ADT
-  abstract class EvenResult {
-
-    private final int result;
-
-    EvenResult(int result) {
-      this.result = result;
-    }
-
-    int result() {
-      return result;
-    }
-  }
-
-  class WasEven extends EvenResult {
-
-    WasEven(int result) {
-      super(result);
-    }
-  }
-
-  class MadeEven extends EvenResult {
-
-    MadeEven(int result) {
-      super(result);
-    }
-  }
-
-  private static <T> Matcher<Iterable<? extends T>> containsInOrder(T a, T b) {
-    Objects.requireNonNull(a);
-    Objects.requireNonNull(b);
-    return new TypeSafeMatcher<Iterable<? extends T>>() {
-
-      @Override
-      protected boolean matchesSafely(Iterable<? extends T> ts) {
-        int ai = -1, bi = -1, i = 0;
-        for (T t : ts) {
-          if (a.equals(t)) {
-            ai = i;
-          }
-          if (b.equals(t)) {
-            bi = i;
-          }
-          i++;
-        }
-
-        return ai > -1 && bi > -1 && ai < bi;
-      }
-
-      @Override
-      public void describeTo(Description description) {
-        description.appendText("Contains ");
-        description.appendValue(a);
-        description.appendText(" before ");
-        description.appendValue(b);
-      }
-    };
   }
 }
