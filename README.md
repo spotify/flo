@@ -31,7 +31,7 @@ __Some key features__
 </dependency>
 ```
 
-JavaDocs here: http://rouz.io/flo/maven/apidocs
+JavaDocs here: http://rouz.io/flo/maven/latest/apidocs/
 
 ## Table of contents
 
@@ -217,9 +217,9 @@ Recall that the graph expansion can chose inputs artibrarily based on the argume
 
 tbw
 
-[Task]: http://rouz.io/flo/maven/apidocs/io/rouz/task/Task.html
-[TaskBuilder]: http://rouz.io/flo/maven/apidocs/io/rouz/task/dsl/TaskBuilder.html
-[TaskContext]: http://rouz.io/flo/maven/apidocs/io/rouz/task/TaskContext.html
+[Task]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/task/Task.html
+[TaskBuilder]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/task/dsl/TaskBuilder.html
+[TaskContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/task/TaskContext.html
 [Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-
 
 # CLI generator
