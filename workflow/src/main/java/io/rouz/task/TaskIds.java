@@ -41,7 +41,7 @@ abstract class TaskIds implements TaskId, Serializable {
 
     return new AutoValue_TaskIds(
         name,
-        Integer.parseInt(hash, 16),
+        Integer.parseUnsignedInt(hash, 16),
         args);
   }
 

@@ -37,6 +37,13 @@ public class TaskIdsTest {
     assertThat(taskId2, equalTo(taskId1));
   }
 
+  @Test
+  public void shouldParseBigHash() throws Exception {
+    TaskId taskId = TaskId.parse("FooBar(a,1)#8adaddda");
+
+    assertThat(taskId.hash(), equalTo(-1965367846));
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void shouldNotAllowOpenParenthesisInName() throws Exception {
     TaskId.create("MyTa(sk");
