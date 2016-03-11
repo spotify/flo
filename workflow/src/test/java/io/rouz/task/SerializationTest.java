@@ -25,7 +25,7 @@ public class SerializationTest {
   @Test
   public void shouldJavaUtilSerialize() throws Exception {
     Task<Long> task1 = Task.named("Foo", "Bar", 39)
-        .constant(() -> 9999L);
+        .process(() -> 9999L);
     Task<String> task2 = Task.named("Baz", 40)
         .in(() -> task1)
         .ins(() -> singletonList(task1))
@@ -41,7 +41,7 @@ public class SerializationTest {
   @Test(expected = NotSerializableException.class)
   public void shouldNotSerializeWithInstanceFieldReference() throws Exception {
     Task<String> task = Task.named("WithRef")
-        .constant(() -> instanceField + " causes an outer reference");
+        .process(() -> instanceField + " causes an outer reference");
 
     serialize(task);
   }
@@ -51,7 +51,7 @@ public class SerializationTest {
     String local = instanceField;
 
     Task<String> task = Task.named("WithLocalRef")
-        .constant(() -> local + " won't cause an outer reference");
+        .process(() -> local + " won't cause an outer reference");
 
     serialize(task);
     Task<?> des = deserialize();
@@ -76,7 +76,7 @@ public class SerializationTest {
   @Test(expected = NotSerializableException.class)
   public void shouldNotSerializeAnonymousClass() throws Exception {
     Task<String> task = Task.named("WithAnonClass")
-        .constant(
+        .process(
             new F0<String>() {
               @Override
               public String get() {

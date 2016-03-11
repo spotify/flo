@@ -48,7 +48,7 @@ final class TaskBuilders {
     }
 
     @Override
-    public <R> Task<R> constant(F0<R> code) {
+    public <R> Task<R> process(F0<R> code) {
       return Task.create(inputs, tc -> tc.value(code), taskId);
     }
 
