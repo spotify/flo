@@ -79,18 +79,14 @@ public abstract class Task<T> implements Serializable {
   }
 
   public static TaskBuilder named(String taskName, Object... args) {
-    return TaskBuilders.rootBuilder(taskName, args);
+    return TaskBuilders.rootBuilder(TaskId.create(taskName, args));
   }
 
   public static <T> Task<T> create(F0<T> code, String taskName, Object... args) {
-    return create(Collections::emptyList, tc -> tc.value(code), taskName, args);
+    return create(Collections::emptyList, tc -> tc.value(code), TaskId.create(taskName, args));
   }
 
-  static <T> Task<T> create(
-      F0<List<Task<?>>> inputs,
-      EvalClosure<T> code,
-      String taskName,
-      Object... args) {
-    return new AutoValue_Task<>(TaskId.create(taskName, args), code, inputs);
+  static <T> Task<T> create(F0<List<Task<?>>> inputs, EvalClosure<T> code, TaskId taskId) {
+    return new AutoValue_Task<>(taskId, code, inputs);
   }
 }
