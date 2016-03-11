@@ -51,7 +51,7 @@ public class TaskEvalBehaviorTest {
   public void shouldMemoizeTaskProcessing() throws Exception {
     AtomicInteger counter = new AtomicInteger(0);
     Task<Integer> count = Task.named("Count")
-        .constant(counter::incrementAndGet);
+        .process(counter::incrementAndGet);
 
     Task<Integer> sum = Task.named("Sum")
         .in(() -> count)
@@ -462,7 +462,7 @@ public class TaskEvalBehaviorTest {
   }
 
   private Task<String> leaf(String s) {
-    return Task.named("Leaf", s).constant(() -> s);
+    return Task.named("Leaf", s).process(() -> s);
   }
 
   private F0<Task<Integer>> countConstructor() {
@@ -470,7 +470,7 @@ public class TaskEvalBehaviorTest {
     return () -> {
       int n = counter.incrementAndGet();
       return Task.named("Count", n)
-          .constant(() -> n);
+          .process(() -> n);
     };
   }
 
@@ -482,7 +482,7 @@ public class TaskEvalBehaviorTest {
     TaskBuilder isEven = Task.named("IsEven", n);
 
     if (n % 2 == 0) {
-      return isEven.constant(() -> new WasEven(n));
+      return isEven.process(() -> new WasEven(n));
     }
 
     return isEven
@@ -492,7 +492,7 @@ public class TaskEvalBehaviorTest {
 
   private Task<Integer> evenify(int n) {
     return Task.named("Evenify", n)
-        .constant(() -> n * 2);
+        .process(() -> n * 2);
   }
 
   // Result ADT

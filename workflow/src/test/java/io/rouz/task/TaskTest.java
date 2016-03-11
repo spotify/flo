@@ -30,7 +30,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate0ND() throws Exception {
     Task<String> task = Task.named("InContext")
-        .constant(() -> "constant");
+        .process(() -> "constant");
 
     AwaitingConsumer<String> val = new AwaitingConsumer<>();
     ControlledBlockingContext context = new ControlledBlockingContext();
@@ -373,6 +373,6 @@ public class TaskTest {
   }
 
   Task<String> leaf(String s) {
-    return Task.named("Leaf", s).constant(() -> s);
+    return Task.named("Leaf", s).process(() -> s);
   }
 }

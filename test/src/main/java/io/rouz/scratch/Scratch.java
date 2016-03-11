@@ -83,7 +83,7 @@ public class Scratch {
 
   static class Adder {
     static Task<Integer> create(int a, int b) {
-      return Task.named("Adder", a, b).constant(() -> a + b);
+      return Task.named("Adder", a, b).process(() -> a + b);
     }
   }
 }

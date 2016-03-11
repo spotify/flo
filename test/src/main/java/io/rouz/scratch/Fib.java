@@ -2,7 +2,6 @@ package io.rouz.scratch;
 
 import io.rouz.task.Task;
 import io.rouz.task.TaskContext;
-import io.rouz.task.TaskContext.Value;
 import io.rouz.task.dsl.TaskBuilder;
 
 /**
@@ -22,7 +21,7 @@ final class Fib {
     TaskBuilder fib = Task.named("Fib", n);
     if (n < 2) {
       return fib
-          .constant(() -> n);
+          .process(() -> n);
     } else {
       return fib
           .in(() -> Fib.create(n - 1))

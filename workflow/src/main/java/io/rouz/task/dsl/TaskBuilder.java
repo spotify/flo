@@ -20,7 +20,7 @@ import io.rouz.task.TaskContext.Value;
  */
 public interface TaskBuilder {
 
-  <R> Task<R> constant(F0<R> code);
+  <R> Task<R> process(F0<R> code);
   <R> Task<R> processWithContext(F1<TaskContext, Value<R>> code);
   <A> TaskBuilder1<A> in(F0<Task<A>> task);
   <A> TaskBuilder1<List<A>> ins(F0<List<Task<A>>> tasks);

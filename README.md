@@ -55,7 +55,7 @@ class Fib {
     TaskBuilder fib = Task.named("Fib", n);
     if (n < 2) {
       return fib
-          .constant(() -> n);
+          .process(() -> n);
     } else {
       return fib
           .in(() -> Fib.nth(n - 1))
@@ -177,7 +177,7 @@ A `Task<T>` can be transformed into a data structure where a materialized view o
 ```java
 Task<String> first(String arg) {
   return Task.named("First", arg)
-      .constant(() -> "hello " + arg);
+      .process(() -> "hello " + arg);
 }
 
 Task<String> second(String arg) {
