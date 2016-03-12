@@ -517,6 +517,14 @@ public class TaskEvalBehaviorTest {
   }
 
   @Test
+  public void shouldInterceptProcessFunctionInContext0C() throws Exception {
+    Task<String> top = Task.named("Top")
+        .processWithContext((tc) -> tc.immediateValue("done"));
+
+    validateInterception(top, "done");
+  }
+
+  @Test
   public void shouldInterceptProcessFunctionInContextC() throws Exception {
     Task<String> top = Task.named("Top")
         .in(() -> leaf("A"))

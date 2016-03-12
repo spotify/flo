@@ -54,7 +54,7 @@ final class TaskBuilders {
 
     @Override
     public <R> Task<R> processWithContext(F1<TaskContext, Value<R>> code) {
-      return Task.create(inputs, code::apply, taskId);
+      return Task.create(inputs, gatedVal(taskId, code), taskId);
     }
 
     @Override
@@ -503,6 +503,10 @@ final class TaskBuilders {
 
   private static <R> EvalClosure<R> gated(TaskId taskId, F0<R> code) {
     return tc -> tc.invokeProcessFn(taskId, () -> tc.value(code));
+  }
+
+  private static <R> EvalClosure<R> gatedVal(TaskId taskId, F1<TaskContext, Value<R>> code) {
+    return tc -> tc.invokeProcessFn(taskId, () -> code.apply(tc));
   }
 
   /**
