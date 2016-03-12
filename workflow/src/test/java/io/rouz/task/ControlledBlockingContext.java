@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import io.rouz.task.dsl.TaskBuilder.F0;
+import io.rouz.task.dsl.TaskBuilder.F1;
 
 import static org.junit.Assert.fail;
 
@@ -26,6 +27,7 @@ class ControlledBlockingContext implements TaskContext {
 
   private static final int MAX_WAIT_MILLIS = 5000;
 
+  private final Map<TaskId, Interceptor<?>> interceptors = new HashMap<>();
   private final Map<TaskId, CountDownLatch> awaiting = new HashMap<>();
   private final AtomicInteger activeCount = new AtomicInteger(0);
 
@@ -93,6 +95,17 @@ class ControlledBlockingContext implements TaskContext {
     return Collections.unmodifiableSet(awaiting.keySet());
   }
 
+  /**
+   * Intercept the creation of a task value.
+   *
+   * @param task  The task to intercept
+   * @param fn    The interceptor
+   * @param <T>   The value type of the task
+   */
+  <T> void intercept(Task<T> task, Interceptor<T> fn) {
+    interceptors.put(task.id(), fn);
+  }
+
   @Override
   public <T> Value<T> evaluate(Task<T> task) {
     TaskId taskId = task.id();
@@ -125,6 +138,18 @@ class ControlledBlockingContext implements TaskContext {
     thread.start();
 
     return value;
+  }
+
+  @Override
+  public <T> Value<T> invokeProcessFn(TaskId taskId, F0<Value<T>> processFn) {
+    //noinspection unchecked
+    final Interceptor<T> interceptor = (Interceptor<T>) interceptors.get(taskId);
+    if (interceptor != null) {
+      LOG.info("Intercepting {}", taskId);
+      return interceptor.apply(processFn);
+    }
+
+    return processFn.get();
   }
 
   @Override
@@ -199,5 +224,9 @@ class ControlledBlockingContext implements TaskContext {
     public void set(T t) {
       value.setValue(t);
     }
+  }
+
+  @FunctionalInterface
+  interface Interceptor<T> extends F1<F0<Value<T>>, Value<T>> {
   }
 }

@@ -40,6 +40,30 @@ public interface TaskContext {
   }
 
   /**
+   * Invoke the process function of a task.
+   *
+   * This method will be called when the process function of a task is ready to be invoked. This
+   * gives this {@link TaskContext} the responsibility of invoking user code. By overriding this
+   * method, one can intercept the evaluation flow just at the moment between inputs being ready
+   * and when the user supplied function for task processing is being invoked.
+   *
+   * The default implementation will simply invoke the function immediately.
+   *
+   * Interception of curried process functions will gate the innermost function, while
+   * for regular arity 1-3 process functions gating happens around the whole function.
+   *
+   * todo: reconsider difference between arity and curried function interception.
+   *
+   * @param taskId     The id of the task being invoked
+   * @param processFn  A lazily evaluated handle to the process function
+   * @param <T>        The task value type
+   * @return The value of the process function invocation
+   */
+  default <T> Value<T> invokeProcessFn(TaskId taskId, F0<Value<T>> processFn) {
+    return processFn.get();
+  }
+
+  /**
    * Create a {@link Value} with semantics defined by this {@link TaskContext}
    *
    * @param value  A value value supplier

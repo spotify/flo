@@ -4,14 +4,13 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import io.rouz.task.dsl.TaskBuilder;
@@ -21,11 +20,11 @@ import io.rouz.task.dsl.TaskBuilder.F1;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -35,6 +34,8 @@ import static org.junit.Assert.assertTrue;
  * todo: rewrite tests using {@link Task#out()}
  */
 public class TaskEvalBehaviorTest {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TaskEvalBehaviorTest.class);
 
   @Test
   public void shouldRunAsExpected() throws Exception {
@@ -69,7 +70,7 @@ public class TaskEvalBehaviorTest {
   }
 
   @Test
-  public void shouldHanleStreamParameters() throws Exception {
+  public void shouldHandleStreamParameters() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
     // 1,2,3,4,5
@@ -87,7 +88,7 @@ public class TaskEvalBehaviorTest {
   }
 
   @Test
-  public void shouldHanleMixedStreamAndPlainParameters() throws Exception {
+  public void shouldHandleMixedStreamAndPlainParameters() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
     // 1,2,3,4,5
@@ -107,7 +108,7 @@ public class TaskEvalBehaviorTest {
   }
 
   @Test
-  public void shouldHanleMultipleStreamParameters() throws Exception {
+  public void shouldHandleMultipleStreamParameters() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
     F0<List<Task<Integer>>> fiveInts = () -> Stream
@@ -159,7 +160,7 @@ public class TaskEvalBehaviorTest {
   }
 
   @Test
-  public void shoulOnlyEvaluateStreamParameterOnce() throws Exception {
+  public void shouldOnlyEvaluateStreamParameterOnce() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
     F0<List<Task<Integer>>> fiveInts = () -> Stream
@@ -181,7 +182,7 @@ public class TaskEvalBehaviorTest {
   }
 
   @Test
-  public void shoulOnlyEvaluateCurriedStreamParameterOnce() throws Exception {
+  public void shouldOnlyEvaluateCurriedStreamParameterOnce() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
     F0<List<Task<Integer>>> fiveInts = () -> Stream
@@ -374,14 +375,12 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInvokeCurriedTaskWhenInputsBecomeAvailable() throws Exception {
-    AtomicReference<String> bValue = new AtomicReference<>();
-    CountDownLatch gotB = new CountDownLatch(1);
+    AwaitingConsumer<String> bValue = new AwaitingConsumer<>();
     Task<String> task = Task.named("WithInputs").<String>curryTo()
         .in(() -> leaf("A"))
         .in(() -> leaf("B first"))
         .process(b -> {
-          bValue.set(b);
-          gotB.countDown();
+          bValue.accept(b);
           return a -> "done: " + a + b;
         });
 
@@ -394,12 +393,11 @@ public class TaskEvalBehaviorTest {
     context.release(task);
 
     context.waitUntilNumConcurrent(3); // {WithInputs, A, B}
-    assertNull(bValue.get());
+    assertFalse(bValue.isAvailable());
 
     context.release(leaf("B first"));
     context.waitUntilNumConcurrent(2); // {WithInputs, A}
-    assertTrue(gotB.await(100, TimeUnit.MILLISECONDS));
-    assertThat(bValue.get(), is("B first"));
+    assertThat(bValue.awaitAndGet(), is("B first"));
   }
 
   @Test
@@ -459,6 +457,179 @@ public class TaskEvalBehaviorTest {
     context.release(leaf("A"));
     context.waitUntilNumConcurrent(0); // WithInputs will also complete here
     assertTrue(processed.get());
+  }
+
+  @Test
+  public void shouldInterceptProcessFunctionInContext0() throws Exception {
+    Task<String> top = Task.named("Top")
+        .process(() -> "done");
+
+    validateInterception(top, "done");
+  }
+
+  @Test
+  public void shouldInterceptProcessFunctionInContext1() throws Exception {
+    Task<String> top = Task.named("Top")
+        .in(() -> leaf("A"))
+        .process((a) -> "done");
+
+    validateInterception(top, "done", leaf("A"));
+  }
+
+  @Test
+  public void shouldInterceptProcessFunctionInContext1L() throws Exception {
+    Task<String> top = Task.named("Top")
+        .ins(() -> singletonList(leaf("A")))
+        .process((a) -> "done");
+
+    validateInterception(top, "done", leaf("A"));
+  }
+
+  @Test
+  public void shouldInterceptProcessFunctionInContext2() throws Exception {
+    Task<String> top = Task.named("Top")
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .process((a, b) -> "done");
+
+    validateInterception(top, "done", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldInterceptProcessFunctionInContext2L() throws Exception {
+    Task<String> top = Task.named("Top")
+        .ins(() -> singletonList(leaf("A")))
+        .ins(() -> singletonList(leaf("B")))
+        .process((a, b) -> "done");
+
+    validateInterception(top, "done", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldInterceptProcessFunctionInContext3() throws Exception {
+    Task<String> top = Task.named("Top")
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .in(() -> leaf("C"))
+        .process((a, b, c) -> "done");
+
+    validateInterception(top, "done", leaf("A"), leaf("B"), leaf("C"));
+  }
+
+  @Test
+  public void shouldInterceptProcessFunctionInContextC() throws Exception {
+    Task<String> top = Task.named("Top")
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .processWithContext((tc, a, b) -> tc.immediateValue("done"));
+
+    validateInterception(top, "done", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldInterceptProcessFunctionInContextCL() throws Exception {
+    Task<String> top = Task.named("Top")
+        .ins(() -> singletonList(leaf("A")))
+        .ins(() -> singletonList(leaf("B")))
+        .processWithContext((tc, a, b) -> tc.immediateValue("done"));
+
+    validateInterception(top, "done", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldInterceptCurriedProcessFunctionInContext() throws Exception {
+    Task<String> top = Task.named("Top").<String>curryTo()
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .process(b -> {
+          LOG.info("b = {}", b);
+          return a -> {
+            LOG.info("a = {}", a);
+            return "done";
+          };
+        });
+
+    validateInterception(top, "done", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldInterceptCurriedProcessFunctionInContextL() throws Exception {
+    Task<String> top = Task.named("Top").<String>curryTo()
+        .ins(() -> singletonList(leaf("A")))
+        .ins(() -> singletonList(leaf("B")))
+        .process(b -> {
+          LOG.info("b = {}", b);
+          return a -> {
+            LOG.info("a = {}", a);
+            return "done";
+          };
+        });
+
+    validateInterception(top, "done", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldInterceptCurriedProcessFunctionInContextC() throws Exception {
+    Task<String> top = Task.named("Top").<String>curryToValue()
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .process(tc -> b -> {
+          LOG.info("b = {}", b);
+          return a -> {
+            LOG.info("a = {}", a);
+            return tc.immediateValue("done");
+          };
+        });
+
+    validateInterception(top, "done", leaf("A"), leaf("B"));
+  }
+
+  @Test
+  public void shouldInterceptCurriedProcessFunctionInContextCL() throws Exception {
+    Task<String> top = Task.named("Top").<String>curryToValue()
+        .ins(() -> singletonList(leaf("A")))
+        .ins(() -> singletonList(leaf("B")))
+        .process(tc -> b -> {
+          LOG.info("b = {}", b);
+          return a -> {
+            LOG.info("a = {}", a);
+            return tc.immediateValue("done");
+          };
+        });
+
+    validateInterception(top, "done", leaf("A"), leaf("B"));
+  }
+
+  private void validateInterception(Task<String> task, String res, Task<?>... inputs)
+      throws Exception {
+    AtomicBoolean intercepted = new AtomicBoolean(false);
+
+    // gating mechanism used in ControlledBlockingContext to implement intercepts
+    ControlledBlockingContext context = new ControlledBlockingContext();
+    context.intercept(task, valueFn -> {
+      intercepted.set(true);
+      return valueFn.get().map(done -> "!!" + done + "!!");
+    });
+
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    context.evaluate(task).consume(val);
+
+    context.waitFor(task);
+    context.release(task);
+
+    // release inputs one at a time and verify interception does not happen
+    for (int i = 0; i < inputs.length; i++) {
+      context.waitUntilNumConcurrent(1 + inputs.length - i);
+      for (int j = i; j < inputs.length; j++) {
+        assertThat(context.waitingTasks(), hasItem(inputs[j].id()));
+      }
+      assertFalse(intercepted.get());
+
+      context.release(inputs[i]);
+    }
+
+    assertThat(val.awaitAndGet(), is("!!" + res + "!!"));
+    assertTrue(intercepted.get());
   }
 
   private Task<String> leaf(String s) {

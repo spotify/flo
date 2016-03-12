@@ -49,7 +49,7 @@ final class TaskBuilders {
 
     @Override
     public <R> Task<R> process(F0<R> code) {
-      return Task.create(inputs, tc -> tc.value(code), taskId);
+      return Task.create(inputs, gated(taskId, code), taskId);
     }
 
     @Override
@@ -60,34 +60,36 @@ final class TaskBuilders {
     @Override
     public <A> TaskBuilder1<A> in(F0<Task<A>> aTask) {
       F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
+      TaskId taskId = this.taskId; // local ref to drop ref to Builder0 instance
       return new Builder1<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskId,
           leafEvalFn(tc -> {
             Value<A> aValue = tc.evaluate(aTaskSingleton.get());
-            return f1 -> aValue.map(f1::apply);
+            return f1 -> aValue.flatMap(gated(taskId, tc, f1));
           }),
           leafEvalFn(tc -> {
             Value<A> aValue = tc.evaluate(aTaskSingleton.get());
-            return f1 -> aValue.flatMap(f1::apply);
+            return f1 -> aValue.flatMap(gatedVal(taskId, tc, f1));
           }));
     }
 
     @Override
     public <A> TaskBuilder1<List<A>> ins(F0<List<Task<A>>> aTasks) {
       F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
+      TaskId taskId = this.taskId; // local ref to drop ref to Builder0 instance
       return new Builder1<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskId,
           leafEvalFn(tc -> {
             Value<List<A>> aListValue = aTasksSingleton.get()
                 .stream().map(tc::evaluate).collect(tc.toValueList());
-            return f1 -> aListValue.map(f1::apply);
+            return f1 -> aListValue.flatMap(gated(taskId, tc, f1));
           }),
           leafEvalFn(tc -> {
             Value<List<A>> aListValue = aTasksSingleton.get()
                 .stream().map(tc::evaluate).collect(tc.toValueList());
-            return f1 -> aListValue.flatMap(f1::apply);
+            return f1 -> aListValue.flatMap(gatedVal(taskId, tc, f1));
           }));
     }
 
@@ -115,6 +117,7 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskId,
           leafEval(
+              taskId,
               tc -> tc.evaluate(aTaskSingleton.get())));
     }
 
@@ -125,6 +128,7 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskId,
           leafEval(
+              taskId,
               tc -> aTasksSingleton.get()
                   .stream().map(tc::evaluate).collect(tc.toValueList())));
     }
@@ -143,6 +147,7 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskId,
           leafValEval(
+              taskId,
               tc -> tc.evaluate(aTaskSingleton.get())));
     }
 
@@ -153,6 +158,7 @@ final class TaskBuilders {
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskId,
           leafValEval(
+              taskId,
               tc -> aTasksSingleton.get()
                   .stream().map(tc::evaluate).collect(tc.toValueList())));
     }
@@ -411,12 +417,16 @@ final class TaskBuilders {
 
   // #############################################################################################
 
-  private static <A, B> RecursiveEval<A, B, B> leafEval(EvalClosure<A> aClosure) {
-    return new RecursiveEval<>(aClosure, taskContext -> taskContext::immediateValue);
+  private static <A, B> RecursiveEval<A, B, B> leafEval(
+      TaskId taskId,
+      EvalClosure<A> aClosure) {
+    return new RecursiveEval<>(true, taskId, aClosure, taskContext -> taskContext::immediateValue);
   }
 
-  private static <A, B> RecursiveEval<A, Value<B>, B> leafValEval(EvalClosure<A> aClosure) {
-    return new RecursiveEval<>(aClosure, taskContext -> val -> val);
+  private static <A, B> RecursiveEval<A, Value<B>, B> leafValEval(
+      TaskId taskId,
+      EvalClosure<A> aClosure) {
+    return new RecursiveEval<>(true, taskId, aClosure, taskContext -> val -> val);
   }
 
   private static <F> ChainingEval<F> leafEvalFn(F1<TaskContext, F1<F, Value<?>>> fClosure) {
@@ -425,10 +435,18 @@ final class TaskBuilders {
 
   private static final class RecursiveEval<A, B, Z> implements Serializable {
 
+    private final boolean leaf;
+    private final TaskId taskId;
     private final EvalClosure<A> aClosure;
     private final F1<TaskContext, F1<B, Value<Z>>> contClosure;
 
-    RecursiveEval(EvalClosure<A> aClosure, F1<TaskContext, F1<B, Value<Z>>> contClosure) {
+    RecursiveEval(
+        boolean leaf,
+        TaskId taskId,
+        EvalClosure<A> aClosure,
+        F1<TaskContext, F1<B, Value<Z>>> contClosure) {
+      this.leaf = leaf;
+      this.taskId = taskId;
       this.aClosure = aClosure;
       this.contClosure = contClosure;
     }
@@ -438,14 +456,16 @@ final class TaskBuilders {
     }
 
     public <T> RecursiveEval<T, F1<A, B>, Z> curry(EvalClosure<T> tClosure) {
-      return new RecursiveEval<>(tClosure, this::continuation);
+      return new RecursiveEval<>(false, taskId, tClosure, this::continuation);
     }
 
     private F1<F1<A, B>, Value<Z>> continuation(TaskContext taskContext) {
       F1<B, Value<Z>> cont = contClosure.apply(taskContext);
       Value<A> aVal = aClosure.eval(taskContext);
 
-      return fn -> aVal.map(fn::apply).flatMap(cont::apply);
+      return fn -> aVal.flatMap((a) -> (leaf)
+          ? taskContext.invokeProcessFn(taskId, () -> cont.apply(fn.apply(a)))
+          : cont.apply(fn.apply(a)));
     }
   }
 
@@ -471,6 +491,18 @@ final class TaskBuilders {
       };
       return new ChainingEval<>(continuation);
     }
+  }
+
+  private static <A> F1<A, Value<?>> gated(TaskId taskId, TaskContext tc, F1<A, ?> f1) {
+    return (a) -> tc.invokeProcessFn(taskId, () -> tc.immediateValue(f1.apply(a)));
+  }
+
+  private static <A> F1<A, Value<?>> gatedVal(TaskId taskId, TaskContext tc, F1<A, Value<?>> f1) {
+    return (a) -> tc.invokeProcessFn(taskId, () -> f1.apply(a));
+  }
+
+  private static <R> EvalClosure<R> gated(TaskId taskId, F0<R> code) {
+    return tc -> tc.invokeProcessFn(taskId, () -> tc.value(code));
   }
 
   /**
