@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.IOException;
 
-import io.rouz.TaskInfo;
 import io.rouz.task.Task;
+import io.rouz.task.TaskInfo;
 import io.rouz.task.proc.Exec;
 import io.rouz.task.processor.RootTask;
 

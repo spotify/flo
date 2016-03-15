@@ -1,4 +1,4 @@
-package io.rouz;
+package io.rouz.task;
 
 import com.google.auto.value.AutoValue;
 
@@ -6,9 +6,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import io.rouz.task.Task;
-import io.rouz.task.TaskId;
 
 import static java.util.stream.Collectors.toList;
 
