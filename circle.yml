@@ -8,4 +8,6 @@ dependencies:
 
 test:
   override:
-    - mvn verify
+    - mvn verify -Pcoverage
+  post:
+    - bash <(curl -s https://codecov.io/bash)
