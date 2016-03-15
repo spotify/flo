@@ -233,6 +233,12 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/io/rouz/scratch/**</exclude>
+                                <exclude>**/io/rouz/task/proc/**</exclude>
+                            </excludes>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
