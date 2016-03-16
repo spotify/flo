@@ -36,6 +36,10 @@ abstract class TaskIds implements TaskId, Serializable {
     }
 
     final String name = stringId.substring(0, pOpen);
+    if (name.contains(")")) {
+      throw new IllegalArgumentException("Name can not contain any parenthesis");
+    }
+
     final String args = stringId.substring(pOpen + 1, pClose);
     final String hash = stringId.substring(pHash + 1);
 

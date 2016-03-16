@@ -54,9 +54,29 @@ public class TaskIdsTest {
     TaskId.create("MyTa)sk");
   }
 
+  @Test(expected = NumberFormatException.class)
+  public void shouldNotParseInvalidIdHash() throws Exception {
+    TaskId.parse("Wat(123)#hello");
+  }
+
   @Test(expected = IllegalArgumentException.class)
-  public void shouldNotParseInvalidId() throws Exception {
-    TaskId.parse("Wat)#(123)#hello");
+  public void shouldNotParseInvalidName() throws Exception {
+    TaskId.parse("Wat)#(123)#beef");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldNotParseInvalidParens() throws Exception {
+    TaskId.parse("Wat)foo(#beef");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldNotParseInvalidParensNoOpen() throws Exception {
+    TaskId.parse("Wat)foo#beef");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldNotParseInvalidHashPlacement() throws Exception {
+    TaskId.parse("Wat(#)beef");
   }
 
   private static class Param {
