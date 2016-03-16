@@ -7,9 +7,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import io.rouz.task.dsl.TaskBuilder;
@@ -54,28 +51,6 @@ public abstract class Task<T> implements Serializable {
               Stream.of(input)
           );
         });
-  }
-
-  // FIXME: this method is too specific in it's TaskContext usage
-  public T out() {
-    final AtomicReference<T> ref = new AtomicReference<>();
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    TaskContext.inmem()
-        .evaluate(this)
-        .consume(v -> {
-          ref.set(v);
-          latch.countDown();
-        });
-
-    try {
-      latch.await(60, TimeUnit.SECONDS);
-      return ref.get();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-
-    throw new RuntimeException("waited for a minute, nothing happened");
   }
 
   public static TaskBuilder named(String taskName, Object... args) {

@@ -1,11 +1,11 @@
 package io.rouz.task.cli;
 
-import io.rouz.task.Task;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.rouz.task.Task;
+import io.rouz.task.TaskContext;
 import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -90,9 +90,12 @@ public final class Cli {
           return;
         }
 
+        final TaskContext context = TaskContext.inmem();
         final Task<?> createdTask = factory.create(args);
-        out.println("task.id() = " + createdTask.id());
-        out.println("task.out() = " + createdTask.out());
+        context.evaluate(createdTask).consume((value) -> {
+          out.println("task.id() = " + createdTask.id());
+          out.println("task value = " + value);
+        });
         return;
       }
     }

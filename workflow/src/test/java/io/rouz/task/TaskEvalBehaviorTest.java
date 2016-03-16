@@ -30,8 +30,6 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Tests that verify the interaction between {@link Task} instances and the {@link TaskContext}.
- *
- * todo: rewrite tests using {@link Task#out()}
  */
 public class TaskEvalBehaviorTest {
 
@@ -42,10 +40,10 @@ public class TaskEvalBehaviorTest {
     Task<EvenResult> wasEven = isEven(6);
     Task<EvenResult> madeEven = isEven(5);
 
-    assertThat(wasEven.out(), instanceOf(WasEven.class));
-    assertThat(wasEven.out().result(), is(6));
-    assertThat(madeEven.out(), instanceOf(MadeEven.class));
-    assertThat(madeEven.out().result(), is(10));
+    assertThat(evalAndGet(wasEven), instanceOf(WasEven.class));
+    assertThat(evalAndGet(wasEven).result(), is(6));
+    assertThat(evalAndGet(madeEven), instanceOf(MadeEven.class));
+    assertThat(evalAndGet(madeEven).result(), is(10));
   }
 
   @Test
@@ -60,12 +58,12 @@ public class TaskEvalBehaviorTest {
         .in(() -> count)
         .process((a, b, c) -> a + b + c);
 
-    assertThat(sum.out(), is(3));
+    assertThat(evalAndGet(sum), is(3));
     assertThat(counter.get(), is(1)); // only called once
 
     // only memoized during each execution
-    assertThat(count.out(), is(2));
-    assertThat(count.out(), is(3));
+    assertThat(evalAndGet(count), is(2));
+    assertThat(evalAndGet(count), is(3));
     assertThat(counter.get(), is(3)); // called twice more
   }
 
@@ -84,7 +82,7 @@ public class TaskEvalBehaviorTest {
         .process(this::sumInts);
 
     // 1+2+3+4+5 = 15
-    assertThat(sum.out(), is(15));
+    assertThat(evalAndGet(sum), is(15));
   }
 
   @Test
@@ -104,7 +102,7 @@ public class TaskEvalBehaviorTest {
         .process((a, ints, b) -> a.result() + sumInts(ints) + b.result());
 
     // (5*2) + (1+2+3+4+5) + 2 = 27
-    assertThat(sum.out(), is(27));
+    assertThat(evalAndGet(sum), is(27));
   }
 
   @Test
@@ -122,7 +120,7 @@ public class TaskEvalBehaviorTest {
         .process((first5, second5) -> sumInts(first5) + sumInts(second5));
 
     // (1+2+3+4+5) + (6+7+8+9+10) = 55
-    assertThat(sum.out(), is(55));
+    assertThat(evalAndGet(sum), is(55));
   }
 
   @Test
@@ -136,10 +134,10 @@ public class TaskEvalBehaviorTest {
         .process((a, b, c) -> a + b + c);
 
     // dummy run
-    sum.out();
+    evalAndGet(sum);
 
     // 1+2+3 = 6
-    assertThat(sum.out(), is(6));
+    assertThat(evalAndGet(sum), is(6));
   }
 
   @Test
@@ -153,10 +151,10 @@ public class TaskEvalBehaviorTest {
         .process(a -> b -> c -> a + b + c);
 
     // dummy run
-    sum.out();
+    evalAndGet(sum);
 
     // 1+2+3 = 6
-    assertThat(sum.out(), is(6));
+    assertThat(evalAndGet(sum), is(6));
   }
 
   @Test
@@ -175,10 +173,10 @@ public class TaskEvalBehaviorTest {
         .process((first5, second5, third5) -> sumInts(first5) + sumInts(second5) + sumInts(third5));
 
     // dummy run
-    sum.out();
+    evalAndGet(sum);
 
     // (1+2+3+4+5) + (6+7+8+9+10) + (11+12+13+14+15) = 120
-    assertThat(sum.out(), is(120));
+    assertThat(evalAndGet(sum), is(120));
   }
 
   @Test
@@ -199,10 +197,10 @@ public class TaskEvalBehaviorTest {
                 sumInts(first5) + sumInts(second5) + sumInts(third5));
 
     // dummy run
-    sum.out();
+    evalAndGet(sum);
 
     // (1+2+3+4+5) + (6+7+8+9+10) + (11+12+13+14+15) = 120
-    assertThat(sum.out(), is(120));
+    assertThat(evalAndGet(sum), is(120));
   }
 
   @Test
@@ -257,15 +255,15 @@ public class TaskEvalBehaviorTest {
     Task<Integer> one = countSupplier.get();
 
     // both run and and get inputs
-    sum.out();
+    evalAndGet(sum);
     List<TaskId> inputs = sum.inputs().stream().map(Task::id).collect(toList());
 
     assertThat(inputs.get(0).toString(), startsWith("Count(4)"));
     assertThat(inputs.get(1).toString(), startsWith("Count(3)"));
     assertThat(inputs.get(2).toString(), startsWith("Count(2)"));
 
-    assertThat(one.out(), is(1));
-    assertThat(sum.out(), is(9)); // 2+3+4 = 9
+    assertThat(evalAndGet(one), is(1));
+    assertThat(evalAndGet(sum), is(9)); // 2+3+4 = 9
   }
 
   @Test
@@ -351,7 +349,7 @@ public class TaskEvalBehaviorTest {
                 f.result
         );
 
-    assertThat(curried.out(), is(24));
+    assertThat(evalAndGet(curried), is(24));
   }
 
   @Test
@@ -370,7 +368,13 @@ public class TaskEvalBehaviorTest {
                 d.stream().mapToInt(EvenResult::result).sum()
         );
 
-    assertThat(curried.out(), is(56));
+    assertThat(evalAndGet(curried), is(56));
+  }
+
+  private <T> T evalAndGet(Task<T> task) throws InterruptedException {
+    AwaitingConsumer<T> val = new AwaitingConsumer<>();
+    TaskContext.inmem().evaluate(task).consume(val);
+    return val.awaitAndGet();
   }
 
   @Test

@@ -21,6 +21,8 @@ public class SerializationTest {
   transient File tempFile = tempFile();
 
   final String instanceField = "from instance";
+  final TaskContext context = TaskContext.inmem();
+  final AwaitingConsumer<String> val = new AwaitingConsumer<>();
 
   @Test
   public void shouldJavaUtilSerialize() throws Exception {
@@ -32,10 +34,11 @@ public class SerializationTest {
         .process((t1, t1l) -> t1l + " hello " + (t1 + 5));
 
     serialize(task2);
-    Task<?> des = deserialize();
+    Task<String> des = deserialize();
+    context.evaluate(des).consume(val);
 
     assertEquals(des.id().name(), "Baz");
-    assertEquals(des.out(), "[9999] hello 10004");
+    assertEquals(val.awaitAndGet(), "[9999] hello 10004");
   }
 
   @Test(expected = NotSerializableException.class)
@@ -54,9 +57,10 @@ public class SerializationTest {
         .process(() -> local + " won't cause an outer reference");
 
     serialize(task);
-    Task<?> des = deserialize();
+    Task<String> des = deserialize();
+    context.evaluate(des).consume(val);
 
-    assertEquals(des.out(), "from instance won't cause an outer reference");
+    assertEquals(val.awaitAndGet(), "from instance won't cause an outer reference");
   }
 
   @Test
@@ -64,9 +68,10 @@ public class SerializationTest {
     Task<String> task = closure(instanceField);
 
     serialize(task);
-    Task<?> des = deserialize();
+    Task<String> des = deserialize();
+    context.evaluate(des).consume(val);
 
-    assertEquals(des.out(), "from instance is enclosed");
+    assertEquals(val.awaitAndGet(), "from instance is enclosed");
   }
 
   private Task<String> closure(String arg) {
@@ -93,9 +98,10 @@ public class SerializationTest {
     }
   }
 
-  private Task<?> deserialize() throws Exception {
+  private <T> Task<T> deserialize() throws Exception {
     try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(tempFile))) {
-      return (Task<?>) ois.readObject();
+      //noinspection unchecked
+      return (Task<T>) ois.readObject();
     }
   }
 
