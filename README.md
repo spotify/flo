@@ -1,4 +1,4 @@
-# ![flo](http://rouz.io/flo/doc/flo-logo.svg) [![CircleCI](https://img.shields.io/circleci/project/rouzwawi/flo.svg)](https://circleci.com/gh/rouzwawi/flo) [![Codecov](https://img.shields.io/codecov/c/github/rouzwawi/flo.svg)](https://codecov.io/github/rouzwawi/flo) [![Maven Central](https://img.shields.io/maven-central/v/io.rouz/flo.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22io.rouz%22%20flo*) [![License](https://img.shields.io/github/license/rouzwawi/flo.svg)](LICENSE.txt)
+# ![flo](http://rouz.io/flo/doc/flo-logo.svg) &nbsp;&nbsp; [![CircleCI](https://img.shields.io/circleci/project/rouzwawi/flo.svg)](https://circleci.com/gh/rouzwawi/flo) [![Codecov](https://img.shields.io/codecov/c/github/rouzwawi/flo.svg)](https://codecov.io/github/rouzwawi/flo) [![Maven Central](https://img.shields.io/maven-central/v/io.rouz/flo.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22io.rouz%22%20flo*) [![License](https://img.shields.io/github/license/rouzwawi/flo.svg)](LICENSE.txt)
 
 `flo` is a lightweight workflow definition library
 
