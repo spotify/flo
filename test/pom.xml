@@ -38,31 +38,5 @@
 
     <build>
         <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>com.github.chrischristo</groupId>
-                <artifactId>capsule-maven-plugin</artifactId>
-                <version>0.10.8</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>build</goal>
-                        </goals>
-                        <configuration>
-                            <appClass>io.rouz.scratch.Scratch</appClass>
-                            <types>fat</types>
-                            <customDescriptorFat>-cmd</customDescriptorFat>
-                            <chmod>true</chmod>
-                            <manifest>
-                                <entry>
-                                    <key>JVM-Args</key>
-                                    <value>-Xmx32m</value>
-                                </entry>
-                            </manifest>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
     </build>
 </project>
