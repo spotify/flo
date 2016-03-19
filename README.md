@@ -21,7 +21,7 @@ __Some key features__
 <dependency>
   <groupId>io.rouz</groupId>
   <artifactId>flo-workflow</artifactId>
-  <version>0.0.2</version>
+  <version>${flo.version}</version>
 </dependency>
 ```
 
