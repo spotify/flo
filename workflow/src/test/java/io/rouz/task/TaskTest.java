@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import io.rouz.task.TaskContext.Promise;
 
 import static java.util.Arrays.asList;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -29,7 +30,7 @@ public class TaskTest {
 
   @Test
   public void shouldEvaluate0ND() throws Exception {
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .process(() -> "constant");
 
     AwaitingConsumer<String> val = new AwaitingConsumer<>();
@@ -45,7 +46,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate0NC() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").processWithContext(tc -> {
+    Task<String> task = Task.ofType(String.class).named("InContext").processWithContext(tc -> {
       Promise<String> promise = tc.promise();
       promiseRef.set(promise);
       return promise.value();
@@ -58,7 +59,7 @@ public class TaskTest {
 
   @Test
   public void shouldEvaluate1ND_I() throws Exception {
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .in(() -> leaf("A"))
         .process((a) -> "done: " + a);
 
@@ -67,7 +68,7 @@ public class TaskTest {
 
   @Test
   public void shouldEvaluate1ND_L() throws Exception {
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .ins(() -> asList(leaf("A"), leaf("B")))
         .process((ab) -> "done: " + ab);
 
@@ -77,7 +78,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate1NC_I() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .in(() -> leaf("A"))
         .processWithContext((tc, a) -> {
           Promise<String> promise = tc.promise();
@@ -91,7 +92,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate1NC_L() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .ins(() -> asList(leaf("A"), leaf("B")))
         .processWithContext((tc, ab) -> {
           Promise<String> promise = tc.promise();
@@ -106,7 +107,7 @@ public class TaskTest {
 
   @Test
   public void shouldEvaluate2ND_II() throws Exception {
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .process((a, b) -> "done: " + a + " - " + b);
@@ -116,7 +117,7 @@ public class TaskTest {
 
   @Test
   public void shouldEvaluate2ND_IL() throws Exception {
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .in(() -> leaf("A"))
         .ins(() -> asList(leaf("B"), leaf("C")))
         .process((a, bc) -> "done: " + a + " - " + bc);
@@ -127,7 +128,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate2NC_II() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .processWithContext((tc, a, b) -> {
@@ -142,7 +143,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate2NC_IL() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .in(() -> leaf("A"))
         .ins(() -> asList(leaf("B"), leaf("C")))
         .processWithContext((tc, a, bc) -> {
@@ -158,7 +159,7 @@ public class TaskTest {
 
   @Test
   public void shouldEvaluate3ND_III() throws Exception {
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .in(() -> leaf("C"))
@@ -169,7 +170,7 @@ public class TaskTest {
 
   @Test
   public void shouldEvaluate3ND_IIL() throws Exception {
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .ins(() -> asList(leaf("C"), leaf("D")))
@@ -181,7 +182,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate3NC_III() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .in(() -> leaf("C"))
@@ -197,7 +198,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate3NC_IIL() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext")
+    Task<String> task = Task.ofType(String.class).named("InContext")
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .ins(() -> asList(leaf("C"), leaf("D")))
@@ -215,7 +216,7 @@ public class TaskTest {
 
   @Test
   public void shouldEvaluate1RN_I() throws Exception {
-    Task<String> task = Task.named("InContext").<String>curryTo()
+    Task<String> task = Task.ofType(String.class).named("InContext").curried()
         .in(() -> leaf("A"))
         .process(a -> "done: " + a);
 
@@ -224,7 +225,7 @@ public class TaskTest {
 
   @Test
   public void shouldEvaluate1RN_L() throws Exception {
-    Task<String> task = Task.named("InContext").<String>curryTo()
+    Task<String> task = Task.ofType(String.class).named("InContext").curried()
         .ins(() -> asList(leaf("A"), leaf("B")))
         .process(ab -> "done: " + ab);
 
@@ -234,7 +235,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate1RC_I() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").<String>curryToValue()
+    Task<String> task = Task.ofType(String.class).named("InContext").curriedWithContext()
         .in(() -> leaf("A"))
         .process(tc -> a -> {
           Promise<String> promise = tc.promise();
@@ -248,7 +249,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate1RC_L() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").<String>curryToValue()
+    Task<String> task = Task.ofType(String.class).named("InContext").curriedWithContext()
         .ins(() -> asList(leaf("A"), leaf("B")))
         .process(tc -> ab -> {
           Promise<String> promise = tc.promise();
@@ -263,7 +264,7 @@ public class TaskTest {
 
   @Test
   public void shouldEvaluate2RN_II() throws Exception {
-    Task<String> task = Task.named("InContext").<String>curryTo()
+    Task<String> task = Task.ofType(String.class).named("InContext").curried()
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .process(b -> a -> "done: " + a  + " - " + b);
@@ -273,7 +274,7 @@ public class TaskTest {
 
   @Test
   public void shouldEvaluate2RN_IL() throws Exception {
-    Task<String> task = Task.named("InContext").<String>curryTo()
+    Task<String> task = Task.ofType(String.class).named("InContext").curried()
         .in(() -> leaf("A"))
         .ins(() -> asList(leaf("B"), leaf("C")))
         .process(bc -> a -> "done: " + a + " - " + bc);
@@ -284,7 +285,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate2RC_II() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").<String>curryToValue()
+    Task<String> task = Task.ofType(String.class).named("InContext").curriedWithContext()
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .process(tc -> b -> a -> {
@@ -299,7 +300,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate2RC_IL() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").<String>curryToValue()
+    Task<String> task = Task.ofType(String.class).named("InContext").curriedWithContext()
         .in(() -> leaf("A"))
         .ins(() -> asList(leaf("B"), leaf("C")))
         .process(tc -> bc -> a -> {
@@ -309,6 +310,61 @@ public class TaskTest {
         });
 
     validatePromiseEvaluation(task, promiseRef, " - A - [B, C]", leaf("A"), leaf("B"), leaf("C"));
+  }
+
+  // ==============================================================================================
+
+  @Test
+  public void shouldHaveClassOfTaskType() throws Exception {
+    Task<String> task0 = Task.ofType(String.class).named("WithType")
+        .process(() -> "");
+    Task<String> task1 = Task.ofType(String.class).named("WithType")
+        .in(() -> leaf("A"))
+        .process((a) -> a);
+    Task<String> task1c = Task.ofType(String.class).named("WithType").curried()
+        .in(() -> leaf("A"))
+        .process(a -> a);
+    Task<String> task1cc = Task.ofType(String.class).named("WithType").curriedWithContext()
+        .in(() -> leaf("A"))
+        .process(tc -> tc::immediateValue);
+    Task<String> task2 = Task.ofType(String.class).named("WithType")
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .process((a, b) -> a + " - " + b);
+    Task<String> task2c = Task.ofType(String.class).named("WithType").curried()
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .process(a -> b -> a + " - " + b);
+    Task<String> task2cc = Task.ofType(String.class).named("WithType").curriedWithContext()
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .process(tc -> a -> b -> tc.immediateValue(a + " - " + b));
+    Task<String> task3 = Task.ofType(String.class).named("WithType")
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .in(() -> leaf("C"))
+        .process((a, b, c) -> a + " - " + b +" - " + c);
+    Task<String> task3c = Task.ofType(String.class).named("WithType").curried()
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .in(() -> leaf("C"))
+        .process(a -> b -> c -> a + " - " + b +" - " + c);
+    Task<String> task3cc = Task.ofType(String.class).named("WithType").curriedWithContext()
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .in(() -> leaf("C"))
+        .process(tc -> a -> b -> c -> tc.immediateValue(a + " - " + b +" - " + c));
+
+    assertThat(task0.type(), equalTo(String.class));
+    assertThat(task1.type(), equalTo(String.class));
+    assertThat(task1c.type(), equalTo(String.class));
+    assertThat(task1cc.type(), equalTo(String.class));
+    assertThat(task2.type(), equalTo(String.class));
+    assertThat(task2c.type(), equalTo(String.class));
+    assertThat(task2cc.type(), equalTo(String.class));
+    assertThat(task3.type(), equalTo(String.class));
+    assertThat(task3c.type(), equalTo(String.class));
+    assertThat(task3cc.type(), equalTo(String.class));
   }
 
   // Validators ===================================================================================
@@ -373,6 +429,6 @@ public class TaskTest {
   }
 
   Task<String> leaf(String s) {
-    return Task.named("Leaf", s).process(() -> s);
+    return Task.ofType(String.class).named("Leaf", s).process(() -> s);
   }
 }

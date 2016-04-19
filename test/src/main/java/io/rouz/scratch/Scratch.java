@@ -55,7 +55,7 @@ public class Scratch {
     Task<String> task1 = MyTask.create(parameter);
     Task<Integer> task2 = Adder.create(number, number + 2);
 
-    return Task.named("exec", "/bin/sh")
+    return Task.ofType(Exec.Result.class).named("exec", "/bin/sh")
         .in(() -> task1)
         .in(() -> task2)
         .process(Exec.exec((str, i) -> args("/bin/sh", "-c", "\"echo " + i + "\"")));
@@ -69,7 +69,7 @@ public class Scratch {
     static final int PLUS = 10;
 
     static Task<String> create(String parameter) {
-      return Task.named("MyTask", parameter)
+      return Task.ofType(String.class).named("MyTask", parameter)
           .in(() -> Adder.create(parameter.length(), PLUS))
           .in(() -> Fib.create(parameter.length()))
           .process((sum, fib) -> something(parameter, sum, fib));
@@ -83,7 +83,7 @@ public class Scratch {
 
   static class Adder {
     static Task<Integer> create(int a, int b) {
-      return Task.named("Adder", a, b).process(() -> a + b);
+      return Task.ofType(Integer.class).named("Adder", a, b).process(() -> a + b);
     }
   }
 }

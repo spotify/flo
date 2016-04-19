@@ -35,35 +35,35 @@ import static java.util.stream.Collectors.toList;
  */
 final class TaskBuilders {
 
-  static TaskBuilder rootBuilder(TaskId taskId) {
-    return new Builder0(taskId);
+  static <Z> TaskBuilder<Z> rootBuilder(TaskId taskId, Class<Z> type) {
+    return new Builder0<>(taskId, type);
   }
 
   // #############################################################################################
 
-  private static class Builder0 extends BaseRefs implements TaskBuilder {
+  private static class Builder0<Z> extends BaseRefs<Z> implements TaskBuilder<Z> {
 
-    Builder0(TaskId taskId) {
-      super(taskId);
+    Builder0(TaskId taskId, Class<Z> type) {
+      super(taskId, type);
     }
 
     @Override
-    public <R> Task<R> process(F0<R> code) {
-      return Task.create(inputs, gated(taskId, code), taskId);
+    public Task<Z> process(F0<Z> code) {
+      return Task.create(inputs, type, gated(taskId, code), taskId);
     }
 
     @Override
-    public <R> Task<R> processWithContext(F1<TaskContext, Value<R>> code) {
-      return Task.create(inputs, gatedVal(taskId, code), taskId);
+    public Task<Z> processWithContext(F1<TaskContext, Value<Z>> code) {
+      return Task.create(inputs, type, gatedVal(taskId, code), taskId);
     }
 
     @Override
-    public <A> TaskBuilder1<A> in(F0<Task<A>> aTask) {
+    public <A> TaskBuilder1<A, Z> in(F0<Task<A>> aTask) {
       F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       TaskId taskId = this.taskId; // local ref to drop ref to Builder0 instance
       return new Builder1<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
-          taskId,
+          taskId, type,
           leafEvalFn(tc -> {
             Value<A> aValue = tc.evaluate(aTaskSingleton.get());
             return f1 -> aValue.flatMap(gated(taskId, tc, f1));
@@ -75,12 +75,12 @@ final class TaskBuilders {
     }
 
     @Override
-    public <A> TaskBuilder1<List<A>> ins(F0<List<Task<A>>> aTasks) {
+    public <A> TaskBuilder1<List<A>, Z> ins(F0<List<Task<A>>> aTasks) {
       F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       TaskId taskId = this.taskId; // local ref to drop ref to Builder0 instance
       return new Builder1<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
-          taskId,
+          taskId, type,
           leafEvalFn(tc -> {
             Value<List<A>> aListValue = aTasksSingleton.get()
                 .stream().map(tc::evaluate).collect(tc.toValueList());
@@ -94,20 +94,20 @@ final class TaskBuilders {
     }
 
     @Override
-    public <Z> TaskBuilderC0<Z> curryTo() {
-      return new BuilderC0<>(taskId);
+    public TaskBuilderC0<Z> curried() {
+      return new BuilderC0<>(taskId, type);
     }
 
     @Override
-    public <Z> TaskBuilderCV0<Z> curryToValue() {
-      return new BuilderCV0<>(taskId);
+    public TaskBuilderCV0<Z> curriedWithContext() {
+      return new BuilderCV0<>(taskId, type);
     }
   }
 
-  private static class BuilderC0<Z> extends BaseRefs implements TaskBuilderC0<Z> {
+  private static class BuilderC0<Z> extends BaseRefs<Z> implements TaskBuilderC0<Z> {
 
-    BuilderC0(TaskId taskId) {
-      super(taskId);
+    BuilderC0(TaskId taskId, Class<Z> type) {
+      super(taskId, type);
     }
 
     @Override
@@ -115,7 +115,7 @@ final class TaskBuilders {
       F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new BuilderC<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
-          taskId,
+          taskId, type,
           leafEval(
               taskId,
               tc -> tc.evaluate(aTaskSingleton.get())));
@@ -126,7 +126,7 @@ final class TaskBuilders {
       F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new BuilderC<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
-          taskId,
+          taskId, type,
           leafEval(
               taskId,
               tc -> aTasksSingleton.get()
@@ -134,10 +134,10 @@ final class TaskBuilders {
     }
   }
 
-  private static class BuilderCV0<Z> extends BaseRefs implements TaskBuilderCV0<Z> {
+  private static class BuilderCV0<Z> extends BaseRefs<Z> implements TaskBuilderCV0<Z> {
 
-    BuilderCV0(TaskId taskId) {
-      super(taskId);
+    BuilderCV0(TaskId taskId, Class<Z> type) {
+      super(taskId, type);
     }
 
     @Override
@@ -145,7 +145,7 @@ final class TaskBuilders {
       F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new BuilderCV<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
-          taskId,
+          taskId, type,
           leafValEval(
               taskId,
               tc -> tc.evaluate(aTaskSingleton.get())));
@@ -156,7 +156,7 @@ final class TaskBuilders {
       F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new BuilderCV<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
-          taskId,
+          taskId, type,
           leafValEval(
               taskId,
               tc -> aTasksSingleton.get()
@@ -166,18 +166,19 @@ final class TaskBuilders {
 
   // #############################################################################################
 
-  private static class BuilderC<A, Y, Z> extends BaseRefs implements TaskBuilderC<A, Y, Z> {
+  private static class BuilderC<A, Y, Z> extends BaseRefs<Z> implements TaskBuilderC<A, Y, Z> {
 
     private final RecursiveEval<A, Y, Z> evaluator;
 
-    private BuilderC(F0<List<Task<?>>> inputs, TaskId taskId, RecursiveEval<A, Y, Z> evaluator) {
-      super(inputs, taskId);
+    private BuilderC(
+        F0<List<Task<?>>> inputs, TaskId taskId, Class<Z> type, RecursiveEval<A, Y, Z> evaluator) {
+      super(inputs, taskId, type);
       this.evaluator = evaluator;
     }
 
     @Override
     public Task<Z> process(F1<A, Y> fn) {
-      return Task.create(inputs, evaluator.enclose(fn), taskId);
+      return Task.create(inputs, type, evaluator.enclose(fn), taskId);
     }
 
     @Override
@@ -185,7 +186,7 @@ final class TaskBuilders {
       F0<Task<B>> bTaskSingleton = Singleton.create(bTask);
       return new BuilderC<>(
           lazyFlatten(inputs, lazyList(bTaskSingleton)),
-          taskId,
+          taskId, type,
           evaluator.curry(
               tc -> tc.evaluate(bTaskSingleton.get())));
     }
@@ -195,26 +196,27 @@ final class TaskBuilders {
       F0<List<Task<B>>> bTasksSingleton = Singleton.create(bTasks);
       return new BuilderC<>(
           lazyFlatten(inputs, lazyFlatten(bTasksSingleton)),
-          taskId,
+          taskId, type,
           evaluator.curry(
               tc -> bTasksSingleton.get()
                   .stream().map(tc::evaluate).collect(tc.toValueList())));
     }
   }
 
-  private static class BuilderCV<A, Y, Z> extends BaseRefs implements TaskBuilderCV<A, Y, Z> {
+  private static class BuilderCV<A, Y, Z> extends BaseRefs<Z> implements TaskBuilderCV<A, Y, Z> {
 
     private final RecursiveEval<A, Y, Z> evaluator;
 
-    private BuilderCV(F0<List<Task<?>>> inputs, TaskId taskId, RecursiveEval<A, Y, Z> evaluator) {
-      super(inputs, taskId);
+    private BuilderCV(
+        F0<List<Task<?>>> inputs, TaskId taskId, Class<Z> type, RecursiveEval<A, Y, Z> evaluator) {
+      super(inputs, taskId, type);
       this.evaluator = evaluator;
     }
 
     @Override
     public Task<Z> process(F1<TaskContext, F1<A, Y>> code) {
       EvalClosure<Z> closure = tc -> evaluator.<Z>enclose((a) -> code.apply(tc).apply(a)).eval(tc);
-      return Task.create(inputs, closure, taskId);
+      return Task.create(inputs, type, closure, taskId);
     }
 
     @Override
@@ -222,7 +224,7 @@ final class TaskBuilders {
       F0<Task<B>> bTaskSingleton = Singleton.create(bTask);
       return new BuilderCV<>(
           lazyFlatten(inputs, lazyList(bTaskSingleton)),
-          taskId,
+          taskId, type,
           evaluator.curry(
               tc -> tc.evaluate(bTaskSingleton.get())));
     }
@@ -232,7 +234,7 @@ final class TaskBuilders {
       F0<List<Task<B>>> bTasksSingleton = Singleton.create(bTasks);
       return new BuilderCV<>(
           lazyFlatten(inputs, lazyFlatten(bTasksSingleton)),
-          taskId,
+          taskId, type,
           evaluator.curry(
               tc -> bTasksSingleton.get()
                   .stream().map(tc::evaluate).collect(tc.toValueList())));
@@ -241,7 +243,7 @@ final class TaskBuilders {
 
   // #############################################################################################
 
-  private static class Builder1<A> extends BaseRefs implements TaskBuilder1<A> {
+  private static class Builder1<A, Z> extends BaseRefs<Z> implements TaskBuilder1<A, Z> {
 
     private final ChainingEval<F1<A, ?>> evaluator;
     private final ChainingEval<F1<A, Value<?>>> valEvaluator;
@@ -249,30 +251,31 @@ final class TaskBuilders {
     Builder1(
         F0<List<Task<?>>> inputs,
         TaskId taskId,
+        Class<Z> type,
         ChainingEval<F1<A, ?>> evaluator,
         ChainingEval<F1<A, Value<?>>> valEvaluator) {
-      super(inputs, taskId);
+      super(inputs, taskId, type);
       this.evaluator = evaluator;
       this.valEvaluator = valEvaluator;
     }
 
     @Override
-    public <R> Task<R> process(F1<A, R> code) {
-      return Task.create(inputs, evaluator.enclose(code), taskId);
+    public Task<Z> process(F1<A, Z> code) {
+      return Task.create(inputs, type, evaluator.enclose(code), taskId);
     }
 
     @Override
-    public <R> Task<R> processWithContext(F2<TaskContext, A, Value<R>> code) {
-      EvalClosure<R> closure = tc -> valEvaluator.<R>enclose((a) -> code.apply(tc, a)).eval(tc);
-      return Task.create(inputs, closure, taskId);
+    public Task<Z> processWithContext(F2<TaskContext, A, Value<Z>> code) {
+      EvalClosure<Z> closure = tc -> valEvaluator.<Z>enclose((a) -> code.apply(tc, a)).eval(tc);
+      return Task.create(inputs, type, closure, taskId);
     }
 
     @Override
-    public <B> TaskBuilder2<A, B> in(F0<Task<B>> bTask) {
+    public <B> TaskBuilder2<A, B, Z> in(F0<Task<B>> bTask) {
       F0<Task<B>> bTaskSingleton = Singleton.create(bTask);
       return new Builder2<>(
           lazyFlatten(inputs, lazyList(bTaskSingleton)),
-          taskId,
+          taskId, type,
           evaluator.chain(tc -> {
             Value<B> bValue = tc.evaluate(bTaskSingleton.get());
             return f2 -> bValue.map(b -> (a) -> f2.apply(a, b));
@@ -284,11 +287,11 @@ final class TaskBuilders {
     }
 
     @Override
-    public <B> TaskBuilder2<A, List<B>> ins(F0<List<Task<B>>> bTasks) {
+    public <B> TaskBuilder2<A, List<B>, Z> ins(F0<List<Task<B>>> bTasks) {
       F0<List<Task<B>>> bTasksSingleton = Singleton.create(bTasks);
       return new Builder2<>(
           lazyFlatten(inputs, lazyFlatten(bTasksSingleton)),
-          taskId,
+          taskId, type,
           evaluator.chain(tc -> {
             Value<List<B>> bListValue = bTasksSingleton.get()
                 .stream().map(tc::evaluate).collect(tc.toValueList());
@@ -304,7 +307,7 @@ final class TaskBuilders {
 
   // #############################################################################################
 
-  private static class Builder2<A, B> extends BaseRefs implements TaskBuilder2<A, B> {
+  private static class Builder2<A, B, Z> extends BaseRefs<Z> implements TaskBuilder2<A, B, Z> {
 
     private final ChainingEval<F2<A, B, ?>> evaluator;
     private final ChainingEval<F2<A, B, Value<?>>> valEvaluator;
@@ -312,30 +315,31 @@ final class TaskBuilders {
     Builder2(
         F0<List<Task<?>>> inputs,
         TaskId taskId,
+        Class<Z> type,
         ChainingEval<F2<A, B, ?>> evaluator,
         ChainingEval<F2<A, B, Value<?>>> valEvaluator) {
-      super(inputs, taskId);
+      super(inputs, taskId, type);
       this.evaluator = evaluator;
       this.valEvaluator = valEvaluator;
     }
 
     @Override
-    public <R> Task<R> process(F2<A, B, R> code) {
-      return Task.create(inputs, evaluator.enclose(code), taskId);
+    public Task<Z> process(F2<A, B, Z> code) {
+      return Task.create(inputs, type, evaluator.enclose(code), taskId);
     }
 
     @Override
-    public <R> Task<R> processWithContext(F3<TaskContext, A, B, Value<R>> code) {
-      EvalClosure<R> closure = tc -> valEvaluator.<R>enclose((a, b) -> code.apply(tc, a, b)).eval(tc);
-      return Task.create(inputs, closure, taskId);
+    public Task<Z> processWithContext(F3<TaskContext, A, B, Value<Z>> code) {
+      EvalClosure<Z> closure = tc -> valEvaluator.<Z>enclose((a, b) -> code.apply(tc, a, b)).eval(tc);
+      return Task.create(inputs, type, closure, taskId);
     }
 
     @Override
-    public <C> TaskBuilder3<A, B, C> in(F0<Task<C>> cTask) {
+    public <C> TaskBuilder3<A, B, C, Z> in(F0<Task<C>> cTask) {
       F0<Task<C>> cTaskSingleton = Singleton.create(cTask);
       return new Builder3<>(
           lazyFlatten(inputs, lazyList(cTaskSingleton)),
-          taskId,
+          taskId, type,
           evaluator.chain(tc -> {
             Value<C> cValue = tc.evaluate(cTaskSingleton.get());
             return f2 -> cValue.map(c -> (a, b) -> f2.apply(a, b, c));
@@ -347,11 +351,11 @@ final class TaskBuilders {
     }
 
     @Override
-    public <C> TaskBuilder3<A, B, List<C>> ins(F0<List<Task<C>>> cTasks) {
+    public <C> TaskBuilder3<A, B, List<C>, Z> ins(F0<List<Task<C>>> cTasks) {
       F0<List<Task<C>>> cTasksSingleton = Singleton.create(cTasks);
       return new Builder3<>(
           lazyFlatten(inputs, lazyFlatten(cTasksSingleton)),
-          taskId,
+          taskId, type,
           evaluator.chain(tc -> {
             Value<List<C>> cListValue = cTasksSingleton.get()
                 .stream().map(tc::evaluate).collect(tc.toValueList());
@@ -367,7 +371,7 @@ final class TaskBuilders {
 
   // #############################################################################################
 
-  private static class Builder3<A, B, C> extends BaseRefs implements TaskBuilder3<A, B, C> {
+  private static class Builder3<A, B, C, Z> extends BaseRefs<Z> implements TaskBuilder3<A, B, C, Z> {
 
     private final ChainingEval<F3<A, B, C, ?>> evaluator;
     private final ChainingEval<F3<A, B, C, Value<?>>> valEvaluator;
@@ -375,22 +379,23 @@ final class TaskBuilders {
     Builder3(
         F0<List<Task<?>>> inputs,
         TaskId taskId,
+        Class<Z> type,
         ChainingEval<F3<A, B, C, ?>> evaluator,
         ChainingEval<F3<A, B, C, Value<?>>> valEvaluator) {
-      super(inputs, taskId);
+      super(inputs, taskId, type);
       this.evaluator = evaluator;
       this.valEvaluator = valEvaluator;
     }
 
     @Override
-    public <R> Task<R> process(F3<A, B, C, R> code) {
-      return Task.create(inputs, evaluator.enclose(code), taskId);
+    public Task<Z> process(F3<A, B, C, Z> code) {
+      return Task.create(inputs, type, evaluator.enclose(code), taskId);
     }
 
     @Override
-    public <R> Task<R> processWithContext(F4<TaskContext, A, B, C, Value<R>> code) {
-      EvalClosure<R> closure = tc -> valEvaluator.<R>enclose((a, b, c) -> code.apply(tc, a, b, c)).eval(tc);
-      return Task.create(inputs, closure, taskId);
+    public Task<Z> processWithContext(F4<TaskContext, A, B, C, Value<Z>> code) {
+      EvalClosure<Z> closure = tc -> valEvaluator.<Z>enclose((a, b, c) -> code.apply(tc, a, b, c)).eval(tc);
+      return Task.create(inputs, type, closure, taskId);
     }
   }
 
@@ -400,18 +405,20 @@ final class TaskBuilders {
    * A convenience class for holding some reference. This is only so that we don't have to repeat
    * these declaration in every class above.
    */
-  private static class BaseRefs {
+  private static class BaseRefs<Z> {
 
     protected final F0<List<Task<?>>> inputs;
     protected final TaskId taskId;
+    protected final Class<Z> type;
 
-    protected BaseRefs(TaskId taskId) {
-      this(Collections::emptyList, taskId);
+    protected BaseRefs(TaskId taskId, Class<Z> type) {
+      this(Collections::emptyList, taskId, type);
     }
 
-    protected BaseRefs(F0<List<Task<?>>> inputs,TaskId taskId) {
+    protected BaseRefs(F0<List<Task<?>>> inputs, TaskId taskId, Class<Z> type) {
       this.inputs = inputs;
       this.taskId = taskId;
+      this.type = type;
     }
   }
 

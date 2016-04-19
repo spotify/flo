@@ -11,16 +11,15 @@ import java.util.stream.Stream;
 
 import io.rouz.task.dsl.TaskBuilder;
 import io.rouz.task.dsl.TaskBuilder.F0;
+import io.rouz.task.dsl.TaskBuilderSeed;
 
 /**
  * TODO:
  * d make inputs lazily instantiated to allow short circuiting graph generation
- * . output task graph
+ * d output task graph
  * . external outputs - outputs that might already be available (ie a file on disk)
  *   - can be implemented with a regular task, but better support can be added
- * . id task
- *
- * {@code Task<T>(param1=value1, param2=valu2) => t}
+ * . identity task
  *
  * @param <T>  A type carrying the execution metadata of this task
  */
@@ -28,6 +27,8 @@ import io.rouz.task.dsl.TaskBuilder.F0;
 public abstract class Task<T> implements Serializable {
 
   public abstract TaskId id();
+
+  public abstract Class<T> type();
 
   abstract EvalClosure<T> code();
 
@@ -53,15 +54,16 @@ public abstract class Task<T> implements Serializable {
         });
   }
 
-  public static TaskBuilder named(String taskName, Object... args) {
-    return TaskBuilders.rootBuilder(TaskId.create(taskName, args));
+  public static <Z> TaskBuilderSeed<Z> ofType(Class<Z> type) {
+    return (taskName, args) -> TaskBuilders.rootBuilder(TaskId.create(taskName, args), type);
   }
 
-  public static <T> Task<T> create(F0<T> code, String taskName, Object... args) {
-    return create(Collections::emptyList, tc -> tc.value(code), TaskId.create(taskName, args));
+  public static <T> Task<T> create(F0<T> code, Class<T> type, String taskName, Object... args) {
+    return create(Collections::emptyList, type, tc -> tc.value(code), TaskId.create(taskName, args));
   }
 
-  static <T> Task<T> create(F0<List<Task<?>>> inputs, EvalClosure<T> code, TaskId taskId) {
-    return new AutoValue_Task<>(taskId, code, inputs);
+  static <T> Task<T> create(
+      F0<List<Task<?>>> inputs, Class<T> type, EvalClosure<T> code, TaskId taskId) {
+    return new AutoValue_Task<>(taskId, type, code, inputs);
   }
 }

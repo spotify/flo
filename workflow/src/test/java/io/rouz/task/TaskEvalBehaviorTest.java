@@ -49,10 +49,10 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldMemoizeTaskProcessing() throws Exception {
     AtomicInteger counter = new AtomicInteger(0);
-    Task<Integer> count = Task.named("Count")
+    Task<Integer> count = Task.ofType(Integer.class).named("Count")
         .process(counter::incrementAndGet);
 
-    Task<Integer> sum = Task.named("Sum")
+    Task<Integer> sum = Task.ofType(Integer.class).named("Sum")
         .in(() -> count)
         .in(() -> count)
         .in(() -> count)
@@ -77,7 +77,7 @@ public class TaskEvalBehaviorTest {
         .limit(5)
         .collect(toList());
 
-    Task<Integer> sum = Task.named("Sum")
+    Task<Integer> sum = Task.ofType(Integer.class).named("Sum")
         .ins(() -> fiveInts)
         .process(this::sumInts);
 
@@ -95,7 +95,7 @@ public class TaskEvalBehaviorTest {
         .limit(5)
         .collect(toList());
 
-    Task<Integer> sum = Task.named("Sum")
+    Task<Integer> sum = Task.ofType(Integer.class).named("Sum")
         .in(() -> isEven(5))
         .ins(() -> fiveInts)
         .in(() -> isEven(2))
@@ -114,7 +114,7 @@ public class TaskEvalBehaviorTest {
         .limit(5)
         .collect(toList());
 
-    Task<Integer> sum = Task.named("Sum")
+    Task<Integer> sum = Task.ofType(Integer.class).named("Sum")
         .ins(fiveInts)
         .ins(fiveInts)
         .process((first5, second5) -> sumInts(first5) + sumInts(second5));
@@ -127,7 +127,7 @@ public class TaskEvalBehaviorTest {
   public void shouldOnlyEvaluateInputsParameterOnce() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
-    Task<Integer> sum = Task.named("Sum")
+    Task<Integer> sum = Task.ofType(Integer.class).named("Sum")
         .in(countSupplier::get)
         .in(countSupplier::get)
         .in(countSupplier::get)
@@ -144,7 +144,7 @@ public class TaskEvalBehaviorTest {
   public void shouldOnlyEvaluateCurriedInputsParameterOnce() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
-    Task<Integer> sum = Task.named("Sum").<Integer>curryTo()
+    Task<Integer> sum = Task.ofType(Integer.class).named("Sum").curried()
         .in(countSupplier::get)
         .in(countSupplier::get)
         .in(countSupplier::get)
@@ -166,7 +166,7 @@ public class TaskEvalBehaviorTest {
         .limit(5)
         .collect(toList());
 
-    Task<Integer> sum = Task.named("Sum")
+    Task<Integer> sum = Task.ofType(Integer.class).named("Sum")
         .ins(fiveInts)
         .ins(fiveInts)
         .ins(fiveInts)
@@ -188,7 +188,7 @@ public class TaskEvalBehaviorTest {
         .limit(5)
         .collect(toList());
 
-    Task<Integer> sum = Task.named("Sum").<Integer>curryTo()
+    Task<Integer> sum = Task.ofType(Integer.class).named("Sum").curried()
         .ins(fiveInts)
         .ins(fiveInts)
         .ins(fiveInts)
@@ -205,7 +205,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldListInputIds() throws Exception {
-    Task<String> top = Task.named("Top")
+    Task<String> top = Task.ofType(String.class).named("Top")
         .in(() -> isEven(0))
         .in(() -> isEven(1))
         .in(() -> isEven(3))
@@ -224,7 +224,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldListCurriedInputIds() throws Exception {
-    Task<String> top = Task.named("Top").<String>curryTo()
+    Task<String> top = Task.ofType(String.class).named("Top").curried()
         .in(() -> isEven(0))
         .in(() -> isEven(1))
         .in(() -> isEven(3))
@@ -245,7 +245,7 @@ public class TaskEvalBehaviorTest {
   public void shouldListInputsLazily() throws Exception {
     F0<Task<Integer>> countSupplier = countConstructor();
 
-    Task<Integer> sum = Task.named("Sum")
+    Task<Integer> sum = Task.ofType(Integer.class).named("Sum")
         .in(countSupplier::get)
         .in(countSupplier::get)
         .in(countSupplier::get)
@@ -268,7 +268,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldLinearizeTasks() throws Exception {
-    Task<String> top = Task.named("Top")
+    Task<String> top = Task.ofType(String.class).named("Top")
         .in(() -> isEven(0))
         .in(() -> isEven(1))
         .process((a, b) -> "done");
@@ -285,7 +285,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldFlattenStreamParameters() throws Exception {
-    Task<String> top = Task.named("Top")
+    Task<String> top = Task.ofType(String.class).named("Top")
         .ins(() -> asList(isEven(0), isEven(1)))
         .process(results -> "done " + results.size());
 
@@ -303,11 +303,11 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldLinearizeMixedStreamAndPlainParameters() throws Exception {
     F1<Integer, Task<Integer>> evenResult = n ->
-        Task.named("EvenResult", n)
+        Task.ofType(Integer.class).named("EvenResult", n)
             .in(() -> isEven(n))
             .process(EvenResult::result);
 
-    Task<Integer> sum = Task.named("Sum")
+    Task<Integer> sum = Task.ofType(Integer.class).named("Sum")
         .in(() -> isEven(5))
         .ins(() -> asList(evenResult.apply(0), evenResult.apply(1)))
         .ins(() -> singletonList(evenResult.apply(3)))
@@ -331,8 +331,8 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldBuildArbitraryDeepCurriedLambda() throws Exception {
-    final Task<Integer> curried = Task.named("Curried")
-        .<Integer>curryTo()
+    final Task<Integer> curried = Task.ofType(Integer.class).named("Curried")
+        .curried()
         .in(() -> isEven(0)) // 0
         .in(() -> isEven(1)) // 2
         .in(() -> isEven(2)) // 2
@@ -354,8 +354,8 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldBuildCurriedLambdaWithLists() throws Exception {
-    final Task<Integer> curried = Task.named("Curried")
-        .<Integer>curryTo()
+    final Task<Integer> curried = Task.ofType(Integer.class).named("Curried")
+        .curried()
         .ins(() -> asList(isEven(11), isEven(20))) // [22, 20]
         .in(() -> isEven(0)) // 0
         .ins(() -> asList(isEven(1), isEven(2))) // [2, 2]
@@ -380,7 +380,7 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldInvokeCurriedTaskWhenInputsBecomeAvailable() throws Exception {
     AwaitingConsumer<String> bValue = new AwaitingConsumer<>();
-    Task<String> task = Task.named("WithInputs").<String>curryTo()
+    Task<String> task = Task.ofType(String.class).named("WithInputs").curried()
         .in(() -> leaf("A"))
         .in(() -> leaf("B first"))
         .process(b -> {
@@ -407,7 +407,7 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldEvaluateInputsInParallelForCurriedTask() throws Exception {
     AtomicBoolean processed = new AtomicBoolean(false);
-    Task<String> task = Task.named("WithInputs").<String>curryTo()
+    Task<String> task = Task.ofType(String.class).named("WithInputs").curried()
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .in(() -> leaf("C"))
@@ -422,7 +422,7 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldEvaluateInputsInParallelForChainedTask() throws Exception {
     AtomicBoolean processed = new AtomicBoolean(false);
-    Task<String> task = Task.named("WithInputs")
+    Task<String> task = Task.ofType(String.class).named("WithInputs")
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .in(() -> leaf("C"))
@@ -465,7 +465,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptProcessFunctionInContext0() throws Exception {
-    Task<String> top = Task.named("Top")
+    Task<String> top = Task.ofType(String.class).named("Top")
         .process(() -> "done");
 
     validateInterception(top, "done");
@@ -473,7 +473,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptProcessFunctionInContext1() throws Exception {
-    Task<String> top = Task.named("Top")
+    Task<String> top = Task.ofType(String.class).named("Top")
         .in(() -> leaf("A"))
         .process((a) -> "done");
 
@@ -482,7 +482,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptProcessFunctionInContext1L() throws Exception {
-    Task<String> top = Task.named("Top")
+    Task<String> top = Task.ofType(String.class).named("Top")
         .ins(() -> singletonList(leaf("A")))
         .process((a) -> "done");
 
@@ -491,7 +491,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptProcessFunctionInContext2() throws Exception {
-    Task<String> top = Task.named("Top")
+    Task<String> top = Task.ofType(String.class).named("Top")
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .process((a, b) -> "done");
@@ -501,7 +501,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptProcessFunctionInContext2L() throws Exception {
-    Task<String> top = Task.named("Top")
+    Task<String> top = Task.ofType(String.class).named("Top")
         .ins(() -> singletonList(leaf("A")))
         .ins(() -> singletonList(leaf("B")))
         .process((a, b) -> "done");
@@ -511,7 +511,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptProcessFunctionInContext3() throws Exception {
-    Task<String> top = Task.named("Top")
+    Task<String> top = Task.ofType(String.class).named("Top")
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .in(() -> leaf("C"))
@@ -522,7 +522,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptProcessFunctionInContext0C() throws Exception {
-    Task<String> top = Task.named("Top")
+    Task<String> top = Task.ofType(String.class).named("Top")
         .processWithContext((tc) -> tc.immediateValue("done"));
 
     validateInterception(top, "done");
@@ -530,7 +530,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptProcessFunctionInContextC() throws Exception {
-    Task<String> top = Task.named("Top")
+    Task<String> top = Task.ofType(String.class).named("Top")
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .processWithContext((tc, a, b) -> tc.immediateValue("done"));
@@ -540,7 +540,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptProcessFunctionInContextCL() throws Exception {
-    Task<String> top = Task.named("Top")
+    Task<String> top = Task.ofType(String.class).named("Top")
         .ins(() -> singletonList(leaf("A")))
         .ins(() -> singletonList(leaf("B")))
         .processWithContext((tc, a, b) -> tc.immediateValue("done"));
@@ -550,7 +550,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptCurriedProcessFunctionInContext() throws Exception {
-    Task<String> top = Task.named("Top").<String>curryTo()
+    Task<String> top = Task.ofType(String.class).named("Top").curried()
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .process(b -> {
@@ -566,7 +566,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptCurriedProcessFunctionInContextL() throws Exception {
-    Task<String> top = Task.named("Top").<String>curryTo()
+    Task<String> top = Task.ofType(String.class).named("Top").curried()
         .ins(() -> singletonList(leaf("A")))
         .ins(() -> singletonList(leaf("B")))
         .process(b -> {
@@ -582,7 +582,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptCurriedProcessFunctionInContextC() throws Exception {
-    Task<String> top = Task.named("Top").<String>curryToValue()
+    Task<String> top = Task.ofType(String.class).named("Top").curriedWithContext()
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .process(tc -> b -> {
@@ -598,7 +598,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldInterceptCurriedProcessFunctionInContextCL() throws Exception {
-    Task<String> top = Task.named("Top").<String>curryToValue()
+    Task<String> top = Task.ofType(String.class).named("Top").curriedWithContext()
         .ins(() -> singletonList(leaf("A")))
         .ins(() -> singletonList(leaf("B")))
         .process(tc -> b -> {
@@ -645,14 +645,14 @@ public class TaskEvalBehaviorTest {
   }
 
   private Task<String> leaf(String s) {
-    return Task.named("Leaf", s).process(() -> s);
+    return Task.ofType(String.class).named("Leaf", s).process(() -> s);
   }
 
   private F0<Task<Integer>> countConstructor() {
     AtomicInteger counter = new AtomicInteger(0);
     return () -> {
       int n = counter.incrementAndGet();
-      return Task.named("Count", n)
+      return Task.ofType(Integer.class).named("Count", n)
           .process(() -> n);
     };
   }
@@ -662,7 +662,7 @@ public class TaskEvalBehaviorTest {
   }
 
   private Task<EvenResult> isEven(int n) {
-    TaskBuilder isEven = Task.named("IsEven", n);
+    TaskBuilder<EvenResult> isEven = Task.ofType(EvenResult.class).named("IsEven", n);
 
     if (n % 2 == 0) {
       return isEven.process(() -> new WasEven(n));
@@ -674,7 +674,7 @@ public class TaskEvalBehaviorTest {
   }
 
   private Task<Integer> evenify(int n) {
-    return Task.named("Evenify", n)
+    return Task.ofType(Integer.class).named("Evenify", n)
         .process(() -> n * 2);
   }
 
