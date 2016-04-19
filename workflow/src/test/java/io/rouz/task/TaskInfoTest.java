@@ -28,13 +28,13 @@ public class TaskInfoTest {
   }
 
   private Task<String> first() {
-    return Task.named("First")
+    return Task.ofType(String.class).named("First")
         .in(() -> second(1))
         .process((s) -> "foo");
   }
 
   private Task<String> second(int i) {
-    return Task.named("Second", i)
+    return Task.ofType(String.class).named("Second", i)
         .in(() -> second(i))
         .process((self) -> "bar");
   }

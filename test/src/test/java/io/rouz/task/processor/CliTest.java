@@ -1,9 +1,9 @@
 package io.rouz.task.processor;
 
+import org.junit.Test;
+
 import io.rouz.task.Task;
 import io.rouz.task.cli.Cli;
-
-import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
@@ -32,7 +32,7 @@ public class CliTest {
   public static Task<String> standardArgs(int first, String second) {
     firstInt = first;
     secondString = second;
-    return Task.named("StandardArgs", first, second)
+    return Task.ofType(String.class).named("StandardArgs", first, second)
         .process(() -> second + " " + first * 100);
   }
 
@@ -49,7 +49,7 @@ public class CliTest {
   public static Task<String> flags(boolean flag1, boolean flag2) {
     firstFlag = flag1;
     secondFlag = flag2;
-    return Task.named("Flags", flag1, flag2)
+    return Task.ofType(String.class).named("Flags", flag1, flag2)
         .process(() -> flag1 + " " + flag2);
   }
 
@@ -64,7 +64,7 @@ public class CliTest {
   @RootTask
   public static Task<String> enums(CustomEnum enm) {
     parsedEnum = enm;
-    return Task.named("Enums", enm)
+    return Task.ofType(String.class).named("Enums", enm)
         .process(enm::toString);
   }
 
@@ -79,7 +79,7 @@ public class CliTest {
   @RootTask
   public static Task<String> customType(CustomType myType) {
     parsedType = myType;
-    return Task.named("Types", myType.content)
+    return Task.ofType(String.class).named("Types", myType.content)
         .process(() -> myType.content);
   }
 

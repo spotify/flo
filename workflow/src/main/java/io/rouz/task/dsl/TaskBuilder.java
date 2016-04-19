@@ -18,15 +18,15 @@ import io.rouz.task.TaskContext.Value;
  * Note, the inner types should never have to explicitly be mentioned or imported. The API is
  * supposed to be used through fluent calls that eventually lead to a {@link Task} instance.
  */
-public interface TaskBuilder {
+public interface TaskBuilder<Z> {
 
-  <R> Task<R> process(F0<R> code);
-  <R> Task<R> processWithContext(F1<TaskContext, Value<R>> code);
-  <A> TaskBuilder1<A> in(F0<Task<A>> task);
-  <A> TaskBuilder1<List<A>> ins(F0<List<Task<A>>> tasks);
+  Task<Z> process(F0<Z> code);
+  Task<Z> processWithContext(F1<TaskContext, Value<Z>> code);
+  <A> TaskBuilder1<A, Z> in(F0<Task<A>> task);
+  <A> TaskBuilder1<List<A>, Z> ins(F0<List<Task<A>>> tasks);
 
-  <Z> TaskBuilderC0<Z> curryTo();
-  <Z> TaskBuilderCV0<Z> curryToValue();
+  TaskBuilderC0<Z> curried();
+  TaskBuilderCV0<Z> curriedWithContext();
 
   interface TaskBuilderC0<Z> {
     <A> TaskBuilderC<A, Z, Z> in(F0<Task<A>> task);
@@ -50,23 +50,23 @@ public interface TaskBuilder {
     <B> TaskBuilderCV<List<B>, F1<A, Y>, Z> ins(F0<List<Task<B>>> tasks);
   }
 
-  interface TaskBuilder1<A> {
-    <R> Task<R> process(F1<A, R> code);
-    <R> Task<R> processWithContext(F2<TaskContext, A, Value<R>> code);
-    <B> TaskBuilder2<A, B> in(F0<Task<B>> task);
-    <B> TaskBuilder2<A, List<B>> ins(F0<List<Task<B>>> tasks);
+  interface TaskBuilder1<A, Z> {
+    Task<Z> process(F1<A, Z> code);
+    Task<Z> processWithContext(F2<TaskContext, A, Value<Z>> code);
+    <B> TaskBuilder2<A, B, Z> in(F0<Task<B>> task);
+    <B> TaskBuilder2<A, List<B>, Z> ins(F0<List<Task<B>>> tasks);
   }
 
-  interface TaskBuilder2<A, B> {
-    <R> Task<R> process(F2<A, B, R> code);
-    <R> Task<R> processWithContext(F3<TaskContext, A, B, Value<R>> code);
-    <C> TaskBuilder3<A, B, C> in(F0<Task<C>> task);
-    <C> TaskBuilder3<A, B, List<C>> ins(F0<List<Task<C>>> tasks);
+  interface TaskBuilder2<A, B, Z> {
+    Task<Z> process(F2<A, B, Z> code);
+    Task<Z> processWithContext(F3<TaskContext, A, B, Value<Z>> code);
+    <C> TaskBuilder3<A, B, C, Z> in(F0<Task<C>> task);
+    <C> TaskBuilder3<A, B, List<C>, Z> ins(F0<List<Task<C>>> tasks);
   }
 
-  interface TaskBuilder3<A, B, C> {
-    <R> Task<R> process(F3<A, B, C, R> code);
-    <R> Task<R> processWithContext(F4<TaskContext, A, B, C, Value<R>> code);
+  interface TaskBuilder3<A, B, C, Z> {
+    Task<Z> process(F3<A, B, C, Z> code);
+    Task<Z> processWithContext(F4<TaskContext, A, B, C, Value<Z>> code);
   }
 
   @FunctionalInterface
