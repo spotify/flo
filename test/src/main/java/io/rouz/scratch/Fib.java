@@ -18,7 +18,7 @@ final class Fib {
   }
 
   static Task<Long> create(long n) {
-    TaskBuilder<Long> fib = Task.ofType(Long.class).named("Fib", n);
+    TaskBuilder<Long> fib = Task.named("Fib", n).ofType(Long.class);
     if (n < 2) {
       return fib
           .process(() -> n);

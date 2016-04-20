@@ -46,7 +46,7 @@ Fibonacci serves as a good example even though it's not at all the kind of thing
 class Fib {
 
   static Task<Long> nth(long n) {
-    TaskBuilder<Long> fib = Task.ofType(Long.class).named("Fib", n);
+    TaskBuilder<Long> fib = Task.named("Fib", n).ofType(Long.class);
     if (n < 2) {
       return fib
           .process(() -> n);
@@ -80,7 +80,7 @@ Here's a simple example of a `flo` task depending on two other tasks:
 
 ```java
 Task<Integer> myTask(String arg) {
-  return Task.ofType(Integer.class).named("MyTask", arg)
+  return Task.named("MyTask", arg).ofType(Integer.class)
       .in(() -> otherTask(arg))
       .in(() -> yetATask(arg))
       .process((otherResult, yetAResult) -> /* ... */);
@@ -126,7 +126,7 @@ class SomeExistingClass {
   }
 
   Task<Integer> task() {
-    return Task.ofType(Integer.class).named("EmbeddedTask", arg)
+    return Task.named("EmbeddedTask", arg).ofType(Integer.class)
         .in(() -> otherTask(arg))
         .in(() -> yetATask(arg))
         .process(this::process);
@@ -152,7 +152,7 @@ So we can easily create an endlessly recursive task (useless, but illustrative) 
 
 ```java
 Task<String> endless() {
-  return Task.ofType(String.class).named("Endless")
+  return Task.named("Endless").ofType(String.class)
       .in(() -> endless())
       .process((impossible) -> impossible);
 }
@@ -170,12 +170,12 @@ A `Task<T>` can be transformed into a data structure where a materialized view o
 
 ```java
 Task<String> first(String arg) {
-  return Task.ofType(String.class).named("First", arg)
+  return Task.named("First", arg).ofType(String.class)
       .process(() -> "hello " + arg);
 }
 
 Task<String> second(String arg) {
-  return Task.ofType(String.class).named("Second", arg)
+  return Task.named("Second", arg).ofType(String.class)
       .in(() -> first(arg))
       .process((firstResult) -> "well, " + firstResult);
 }

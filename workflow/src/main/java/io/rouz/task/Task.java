@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import io.rouz.task.dsl.NamedTaskBuilder;
 import io.rouz.task.dsl.TaskBuilder;
 import io.rouz.task.dsl.TaskBuilder.F0;
-import io.rouz.task.dsl.TaskBuilderSeed;
 
 /**
  * TODO:
@@ -54,8 +54,8 @@ public abstract class Task<T> implements Serializable {
         });
   }
 
-  public static <Z> TaskBuilderSeed<Z> ofType(Class<Z> type) {
-    return (taskName, args) -> TaskBuilders.rootBuilder(TaskId.create(taskName, args), type);
+  public static NamedTaskBuilder named(String taskName, Object... args) {
+    return new NTB(TaskId.create(taskName, args));
   }
 
   public static <T> Task<T> create(F0<T> code, Class<T> type, String taskName, Object... args) {
@@ -65,5 +65,23 @@ public abstract class Task<T> implements Serializable {
   static <T> Task<T> create(
       F0<List<Task<?>>> inputs, Class<T> type, EvalClosure<T> code, TaskId taskId) {
     return new AutoValue_Task<>(taskId, type, code, inputs);
+  }
+
+  /**
+   * This is only needed because a generic lambda can not be implemented
+   * in {@link #named(String, Object...)}.
+   */
+  private static final class NTB implements NamedTaskBuilder {
+
+    private final TaskId taskId;
+
+    private NTB(TaskId taskId) {
+      this.taskId = taskId;
+    }
+
+    @Override
+    public <Z> TaskBuilder<Z> ofType(Class<Z> type) {
+      return TaskBuilders.rootBuilder(taskId, type);
+    }
   }
 }

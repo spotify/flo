@@ -26,9 +26,9 @@ public class SerializationTest {
 
   @Test
   public void shouldJavaUtilSerialize() throws Exception {
-    Task<Long> task1 = Task.ofType(Long.class).named("Foo", "Bar", 39)
+    Task<Long> task1 = Task.named("Foo", "Bar", 39).ofType(Long.class)
         .process(() -> 9999L);
-    Task<String> task2 = Task.ofType(String.class).named("Baz", 40)
+    Task<String> task2 = Task.named("Baz", 40).ofType(String.class)
         .in(() -> task1)
         .ins(() -> singletonList(task1))
         .process((t1, t1l) -> t1l + " hello " + (t1 + 5));
@@ -43,7 +43,7 @@ public class SerializationTest {
 
   @Test(expected = NotSerializableException.class)
   public void shouldNotSerializeWithInstanceFieldReference() throws Exception {
-    Task<String> task = Task.ofType(String.class).named("WithRef")
+    Task<String> task = Task.named("WithRef").ofType(String.class)
         .process(() -> instanceField + " causes an outer reference");
 
     serialize(task);
@@ -53,7 +53,7 @@ public class SerializationTest {
   public void shouldSerializeWithLocalReference() throws Exception {
     String local = instanceField;
 
-    Task<String> task = Task.ofType(String.class).named("WithLocalRef")
+    Task<String> task = Task.named("WithLocalRef").ofType(String.class)
         .process(() -> local + " won't cause an outer reference");
 
     serialize(task);
@@ -75,12 +75,12 @@ public class SerializationTest {
   }
 
   private Task<String> closure(String arg) {
-    return Task.ofType(String.class).named("Closed").process(() -> arg + " is enclosed");
+    return Task.named("Closed").ofType(String.class).process(() -> arg + " is enclosed");
   }
 
   @Test(expected = NotSerializableException.class)
   public void shouldNotSerializeAnonymousClass() throws Exception {
-    Task<String> task = Task.ofType(String.class).named("WithAnonClass")
+    Task<String> task = Task.named("WithAnonClass").ofType(String.class)
         .process(
             new F0<String>() {
               @Override
