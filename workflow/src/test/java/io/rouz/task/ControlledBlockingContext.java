@@ -189,6 +189,11 @@ class ControlledBlockingContext implements TaskContext {
     }
 
     @Override
+    public void onFail(Consumer<Throwable> errorConsumer) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> fn) {
       SettableValue<U> uValue = new SettableValue<>();
       consume(t -> fn.apply(t).consume(uValue::setValue));
@@ -223,6 +228,11 @@ class ControlledBlockingContext implements TaskContext {
     @Override
     public void set(T t) {
       value.setValue(t);
+    }
+
+    @Override
+    public void fail(Throwable throwable) {
+      throw new UnsupportedOperationException();
     }
   }
 

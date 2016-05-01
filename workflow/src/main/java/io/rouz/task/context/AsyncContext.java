@@ -2,6 +2,7 @@ package io.rouz.task.context;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -58,13 +59,20 @@ public class AsyncContext implements TaskContext {
     future.whenCompleteAsync(
         (value, throwable) -> {
           if (throwable != null) {
-            next.completeExceptionally(throwable);
+            next.completeExceptionally(resolveAppThrowable(throwable)
+            );
           } else {
             value.consume(next::complete);
           }
         },
         executor);
     return new FutureValue<>(next);
+  }
+
+  private static Throwable resolveAppThrowable(Throwable throwable) {
+    return (throwable instanceof CompletionException)
+        ? resolveAppThrowable(throwable.getCause())
+        : throwable;
   }
 
   private final class FutureValue<T> implements Value<T> {
@@ -82,17 +90,26 @@ public class AsyncContext implements TaskContext {
 
     @Override
     public void consume(Consumer<T> consumer) {
-      future.thenAccept(consumer);
+      future.thenAcceptAsync(consumer, executor);
+    }
+
+    @Override
+    public void onFail(Consumer<Throwable> errorConsumer) {
+      future.whenCompleteAsync((ˍ, throwable) -> {
+        if (throwable != null) {
+          errorConsumer.accept(resolveAppThrowable(throwable));
+        }
+      }, executor);
     }
 
     @Override
     public <U> Value<U> map(Function<? super T, ? extends U> fn) {
-      return new FutureValue<>(future.thenApply(fn));
+      return new FutureValue<>(future.thenApplyAsync(fn, executor));
     }
 
     @Override
     public <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> function) {
-      return flatten(future.thenApply(function));
+      return flatten(future.thenApplyAsync(function, executor));
     }
   }
 
@@ -109,6 +126,14 @@ public class AsyncContext implements TaskContext {
     @Override
     public void set(T t) {
       final boolean completed = future.complete(t);
+      if (!completed) {
+        throw new IllegalStateException("Promise was already completed");
+      }
+    }
+
+    @Override
+    public void fail(Throwable throwable) {
+      final boolean completed = future.completeExceptionally(throwable);
       if (!completed) {
         throw new IllegalStateException("Promise was already completed");
       }

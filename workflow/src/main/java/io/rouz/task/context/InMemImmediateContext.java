@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -70,17 +71,24 @@ public class InMemImmediateContext implements TaskContext {
 
   private final class BlockingValue<T> implements Value<T> {
 
-    private final CountDownLatch setLatch;
-    private AtomicReference<T> value;
+    private final Semaphore setLatch;
+    private final CountDownLatch releaseLatch;
+
+    private volatile T value;
+    private volatile Throwable error;
 
     private BlockingValue() {
-      this.value = new AtomicReference<>(null);
-      this.setLatch = new CountDownLatch(1);
+      this.value = null;
+      this.error = null;
+      this.setLatch = new Semaphore(1);
+      this.releaseLatch = new CountDownLatch(1);
     }
 
     private BlockingValue(T value) {
-      this.value = new AtomicReference<>(Objects.requireNonNull(value));
-      this.setLatch = new CountDownLatch(0);
+      this.value = Objects.requireNonNull(value);
+      this.error = null;
+      this.setLatch = new Semaphore(0);
+      this.releaseLatch = new CountDownLatch(0);
     }
 
     @Override
@@ -90,22 +98,38 @@ public class InMemImmediateContext implements TaskContext {
 
     @Override
     public <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> fn) {
-      //noinspection unchecked
-      return (Value<U>) fn.apply(blockingWait());
+      blockingWait();
+      if (value != null) {
+        //noinspection unchecked
+        return (Value<U>) fn.apply(value);
+      } else {
+        //noinspection unchecked
+        return (Value<U>) this;
+      }
     }
 
     @Override
     public void consume(Consumer<T> consumer) {
-      consumer.accept(blockingWait());
+      blockingWait();
+      if (value != null) {
+        consumer.accept(value);
+      }
     }
 
-    private T blockingWait() {
+    @Override
+    public void onFail(Consumer<Throwable> errorConsumer) {
+      blockingWait();
+      if (error != null) {
+        errorConsumer.accept(error);
+      }
+    }
+
+    private void blockingWait() {
       try {
-        setLatch.await();
+        releaseLatch.await();
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
-      return value.get();
     }
   }
 
@@ -120,11 +144,23 @@ public class InMemImmediateContext implements TaskContext {
 
     @Override
     public void set(T t) {
-      final boolean completed = value.value.compareAndSet(null, t);
+      final boolean completed = value.setLatch.tryAcquire();
       if (!completed) {
         throw new IllegalStateException("Promise was already completed");
       } else {
-        value.setLatch.countDown();
+        value.value = t;
+        value.releaseLatch.countDown();
+      }
+    }
+
+    @Override
+    public void fail(Throwable throwable) {
+      final boolean completed = value.setLatch.tryAcquire();
+      if (!completed) {
+        throw new IllegalStateException("Promise was already completed");
+      } else {
+        value.error = throwable;
+        value.releaseLatch.countDown();
       }
     }
   }

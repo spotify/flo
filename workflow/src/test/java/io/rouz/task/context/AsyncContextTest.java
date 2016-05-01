@@ -32,22 +32,7 @@ public class AsyncContextTest {
     AwaitingConsumer<String> val = new AwaitingConsumer<>();
     context.immediateValue("hello").consume(val);
 
-    assertTrue(val.isAvailable());
     assertThat(val.awaitAndGet(), is("hello"));
-  }
-
-  @Test
-  public void suppliedValueIsEvaluatedOnExecutorThread() throws Exception {
-    String outerThread = Thread.currentThread().getName();
-    AtomicReference<String> evalThread = new AtomicReference<>();
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
-    context.value(() -> {
-      evalThread.set(Thread.currentThread().getName());
-      return "hello";
-    }).consume(val);
-
-    assertThat(val.awaitAndGet(), is("hello"));
-    assertThat(evalThread.get(), not(is(outerThread)));
   }
 
   @Test
@@ -102,10 +87,137 @@ public class AsyncContextTest {
     assertThat(val2.awaitAndGet(), is("hello world!"));
   }
 
+  @Test
+  public void propagateFailure() throws Exception {
+    AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
+    Promise<String> promise = context.promise();
+
+    promise.value().onFail(val);
+
+    assertThrown(val, promise);
+  }
+
+  @Test
+  public void propagateFailureThroughMap() throws Exception {
+    AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
+    Promise<String> promise = context.promise();
+
+    promise.value()
+        .map(s -> s + " world")
+        .onFail(val);
+
+    assertThrown(val, promise);
+  }
+
+  @Test
+  public void propagateFailureThroughFlatMap() throws Exception {
+    AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
+    Promise<String> promise = context.promise();
+
+    promise.value()
+        .flatMap(s -> context.immediateValue(s + " world"))
+        .onFail(val);
+
+    assertThrown(val, promise);
+  }
+
+  @Test
+  public void propagateFailureThroughMapAndFlatMapMix() throws Exception {
+    AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
+    Promise<String> promise = context.promise();
+
+    promise.value()
+        .map(s -> s + " world")
+        .flatMap(s -> context.immediateValue(s + " world"))
+        .flatMap(s -> context.immediateValue(s + " world"))
+        .map(s -> s + " world")
+        .map(s -> s + " world")
+        .flatMap(s -> context.immediateValue(s + " world"))
+        .onFail(val);
+
+    assertThrown(val, promise);
+  }
+
+  private void assertThrown(AwaitingConsumer<Throwable> val, Promise<String> promise) throws Exception {
+    Throwable thrown = new Throwable();
+    promise.fail(thrown);
+    Throwable throwable = val.awaitAndGet();
+
+    assertTrue(throwable == thrown);
+  }
+
+  @Test
+  public void consumedValueIsAcceptedOnExecutorThread() throws Exception {
+    String outerThread = Thread.currentThread().getName();
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    context.immediateValue("hello").consume(val);
+
+    assertThat(val.acceptingThreadName(), not(is(outerThread)));
+  }
+
+  @Test
+  public void suppliedValueIsComputedOnExecutorThread() throws Exception {
+    String outerThread = Thread.currentThread().getName();
+    AtomicReference<String> evalThread = new AtomicReference<>();
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    context.value(() -> {
+      evalThread.set(Thread.currentThread().getName());
+      return "hello";
+    }).consume(val);
+
+    assertThat(val.awaitAndGet(), is("hello"));
+    assertThat(evalThread.get(), not(is(outerThread)));
+  }
+
+  @Test
+  public void settingPromiseShouldConsumeValueOnExecutorThread() throws Exception {
+    String outerThread = Thread.currentThread().getName();
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    Promise<String> promise = context.promise();
+    promise.value().consume(val);
+
+    promise.set("hello");
+    assertThat(val.awaitAndGet(), is("hello"));
+    assertThat(val.acceptingThreadName(), not(is(outerThread)));
+  }
+
+  @Test
+  public void settingMappedValueShouldComputeOnExecutorThread() throws Exception {
+    String outerThread = Thread.currentThread().getName();
+    AtomicReference<String> evalThread1 = new AtomicReference<>();
+    AtomicReference<String> evalThread2 = new AtomicReference<>();
+    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    Promise<String> promise = context.promise();
+
+    promise.value()
+        .map(hello -> {
+          evalThread1.set(Thread.currentThread().getName());
+          return hello + " world";
+        })
+        .flatMap(helloWorld -> {
+          evalThread2.set(Thread.currentThread().getName());
+          return context.immediateValue(helloWorld + "!");
+        })
+        .consume(val);
+
+    promise.set("hello");
+    assertThat(val.awaitAndGet(), is("hello world!"));
+    assertThat(val.acceptingThreadName(), not(is(outerThread)));
+    assertThat(evalThread1.get(), not(is(outerThread)));
+    assertThat(evalThread2.get(), not(is(outerThread)));
+  }
+
   @Test(expected = IllegalStateException.class)
   public void promiseShouldOnlyAllowSetOnce() throws Exception {
     Promise<String> promise = context.promise();
     promise.set("hello");
     promise.set("nope");
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void promiseShouldOnlyAllowFailOnce() throws Exception {
+    Promise<String> promise = context.promise();
+    promise.fail(new Throwable());
+    promise.fail(new Throwable());
   }
 }
