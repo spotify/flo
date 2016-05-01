@@ -1,9 +1,10 @@
 package io.rouz.task.context;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -17,6 +18,8 @@ import io.rouz.task.dsl.TaskBuilder.F0;
  * A {@link TaskContext} that evaluates tasks immediately and memoizes results in memory.
  *
  * Memoized results are tied to the instance the evaluated the values.
+ *
+ * This context is not thread safe.
  */
 public class InMemImmediateContext implements TaskContext {
 
@@ -47,7 +50,7 @@ public class InMemImmediateContext implements TaskContext {
 
   @Override
   public <T> Value<T> value(F0<T> value) {
-    return new BlockingValue<>(value.get());
+    return new DirectValue<>(value.get());
   }
 
   @Override
@@ -68,19 +71,24 @@ public class InMemImmediateContext implements TaskContext {
     return (V) cache.get(taskId);
   }
 
-  private final class BlockingValue<T> implements Value<T> {
+  private final class DirectValue<T> implements Value<T> {
 
-    private final CountDownLatch setLatch;
-    private AtomicReference<T> value;
+    private final Semaphore setLatch;
+    private final List<Consumer<T>> valueConsumers = new ArrayList<>();
+    private final List<Consumer<Throwable>> failureConsumers = new ArrayList<>();
+    private final AtomicReference<Consumer<Consumer<T>>> valueReceiver;
+    private final AtomicReference<Consumer<Consumer<Throwable>>> failureReceiver;
 
-    private BlockingValue() {
-      this.value = new AtomicReference<>(null);
-      this.setLatch = new CountDownLatch(1);
+    private DirectValue() {
+      valueReceiver = new AtomicReference<>(valueConsumers::add);
+      failureReceiver = new AtomicReference<>(failureConsumers::add);
+      this.setLatch = new Semaphore(1);
     }
 
-    private BlockingValue(T value) {
-      this.value = new AtomicReference<>(Objects.requireNonNull(value));
-      this.setLatch = new CountDownLatch(0);
+    private DirectValue(T value) {
+      valueReceiver = new AtomicReference<>(c -> c.accept(value));
+      failureReceiver = new AtomicReference<>(c -> {});
+      this.setLatch = new Semaphore(0);
     }
 
     @Override
@@ -90,28 +98,26 @@ public class InMemImmediateContext implements TaskContext {
 
     @Override
     public <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> fn) {
-      //noinspection unchecked
-      return (Value<U>) fn.apply(blockingWait());
+      Promise<U> promise = promise();
+      consume(t -> fn.apply(t).consume(promise::set));
+      onFail(promise::fail);
+      return promise.value();
     }
 
     @Override
     public void consume(Consumer<T> consumer) {
-      consumer.accept(blockingWait());
+      valueReceiver.get().accept(consumer);
     }
 
-    private T blockingWait() {
-      try {
-        setLatch.await();
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-      return value.get();
+    @Override
+    public void onFail(Consumer<Throwable> errorConsumer) {
+      failureReceiver.get().accept(errorConsumer);
     }
   }
 
   private final class ValuePromise<T> implements Promise<T> {
 
-    private final BlockingValue<T> value = new BlockingValue<>();
+    private final DirectValue<T> value = new DirectValue<>();
 
     @Override
     public Value<T> value() {
@@ -120,11 +126,23 @@ public class InMemImmediateContext implements TaskContext {
 
     @Override
     public void set(T t) {
-      final boolean completed = value.value.compareAndSet(null, t);
+      final boolean completed = value.setLatch.tryAcquire();
       if (!completed) {
         throw new IllegalStateException("Promise was already completed");
       } else {
-        value.setLatch.countDown();
+        value.valueReceiver.set(c -> c.accept(t));
+        value.valueConsumers.forEach(c -> c.accept(t));
+      }
+    }
+
+    @Override
+    public void fail(Throwable throwable) {
+      final boolean completed = value.setLatch.tryAcquire();
+      if (!completed) {
+        throw new IllegalStateException("Promise was already completed");
+      } else {
+        value.failureReceiver.set(c -> c.accept(throwable));
+        value.failureConsumers.forEach(c -> c.accept(throwable));
       }
     }
   }

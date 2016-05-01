@@ -130,6 +130,13 @@ public interface TaskContext {
     void consume(Consumer<T> consumer);
 
     /**
+     * Consume any error the occurred while constructing the enclosed value.
+     *
+     * @param errorConsumer  The code that should consume the error
+     */
+    void onFail(Consumer<Throwable> errorConsumer);
+
+    /**
      * Map the enclosed value through a function and return a {@link Value} enclosing that result.
      *
      * @param fn   The function to map the enclosed value through
@@ -178,7 +185,12 @@ public interface TaskContext {
      */
     void set(T value);
 
-    // todo: set error
+    /**
+     * Fail the promise.
+     *
+     * @param throwable  The exception that is the cause of the failure
+     */
+    void fail(Throwable throwable);
   }
 
   /**

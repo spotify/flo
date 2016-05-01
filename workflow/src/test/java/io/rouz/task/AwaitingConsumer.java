@@ -13,9 +13,11 @@ public final class AwaitingConsumer<T> implements Consumer<T> {
 
   private final CountDownLatch latch = new CountDownLatch(1);
   private T value;
+  private String acceptingThreadName;
 
   @Override
   public void accept(T t) {
+    acceptingThreadName = Thread.currentThread().getName();
     value = t;
     latch.countDown();
   }
@@ -27,5 +29,9 @@ public final class AwaitingConsumer<T> implements Consumer<T> {
   public T awaitAndGet() throws InterruptedException {
     assertTrue("wait for value", latch.await(1, TimeUnit.SECONDS));
     return value;
+  }
+
+  public String acceptingThreadName() {
+    return acceptingThreadName;
   }
 }
