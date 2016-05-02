@@ -122,6 +122,20 @@ public class AsyncContextTest {
   }
 
   @Test
+  public void propagateFailureFromInnerValueOnFlatMap() throws Exception {
+    AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
+    Promise<String> promise1 = context.promise();
+    Promise<String> promise2 = context.promise();
+
+    promise1.value()
+        .flatMap(s -> promise2.value().map(s2 -> s + s2))
+        .onFail(val);
+
+    promise1.set("hello");
+    assertThrown(val, promise2);
+  }
+
+  @Test
   public void propagateFailureThroughMapAndFlatMapMix() throws Exception {
     AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
     Promise<String> promise = context.promise();
