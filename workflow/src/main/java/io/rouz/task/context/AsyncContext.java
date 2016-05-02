@@ -59,10 +59,10 @@ public class AsyncContext implements TaskContext {
     future.whenCompleteAsync(
         (value, throwable) -> {
           if (throwable != null) {
-            next.completeExceptionally(resolveAppThrowable(throwable)
-            );
+            next.completeExceptionally(resolveAppThrowable(throwable));
           } else {
             value.consume(next::complete);
+            value.onFail(next::completeExceptionally);
           }
         },
         executor);

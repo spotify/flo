@@ -99,7 +99,11 @@ public class InMemImmediateContext implements TaskContext {
     @Override
     public <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> fn) {
       Promise<U> promise = promise();
-      consume(t -> fn.apply(t).consume(promise::set));
+      consume(t -> {
+        final Value<? extends U> apply = fn.apply(t);
+        apply.consume(promise::set);
+        apply.onFail(promise::fail);
+      });
       onFail(promise::fail);
       return promise.value();
     }
