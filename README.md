@@ -7,12 +7,12 @@
 
 __Some key features__
 
-* Programmatic Java and Scala API for expressing workflow construction _(graph expansion)_
-* Use of arbitrary program logic for workflow graph expansion
+* Programmatic Java and Scala API for expressing workflow construction (_task [DAG] expansion_)
+* Use of arbitrary program logic for DAG expansion
 * Recursive definitions
-* Lazy workflow graph expansion
-* Workflow graph serialization (for 3rd party persistence)
-* Extensible workflow graph evaluation
+* Lazy DAG expansion
+* DAG serialization (for 3rd party persistence)
+* Extensible DAG evaluation
 * A command line parser generator for instantiation of workflow definitions: `flo-cli`
 
 ## Dependency
@@ -34,13 +34,13 @@ JavaDocs here: http://rouz.io/flo/maven/latest/apidocs/
   - [Tasks are defined by regular methods](#tasks-are-defined-by-regular-methods)
     - [Task embedding](#task-embedding)
   - [Tasks are lazy](#tasks-are-lazy)
-  - [Task graphs as data structures](#task-graphs-as-data-structures)
+  - [Task DAGs as data structures](#task-dags-as-data-structures)
 - [`TaskContext`](#taskcontext)
 - [CLI generator](#cli-generator)
 
 ## Quick Example: Fibonacci
 
-Fibonacci serves as a good example even though it's not at all the kind of thing that `flo` is meant to be used for. Nevertheless, it demonstrates how a workflow graph can be recursively defined with arbitrary logic governing which inputs are chosen.
+Fibonacci serves as a good example even though it's not at all the kind of thing that `flo` is meant to be used for. Nevertheless, it demonstrates how a task DAG can be recursively defined with arbitrary logic governing which inputs are chosen.
 
 ```java
 class Fib {
@@ -140,7 +140,7 @@ class SomeExistingClass {
 
 ## Tasks are lazy
 
-Creating instances of `Task<T>` is cheap. No matter how complex and deep the task graph might be, creating the top level `Task<T>` will not cause the whole graph to be created. This is because all inputs are declared using a `Supplier<T>`, utilizing their properties for deferred evaluation:
+Creating instances of `Task<T>` is cheap. No matter how complex and deep the task DAG might be, creating the top level `Task<T>` will not cause the whole DAG to be created. This is because all inputs are declared using a `Supplier<T>`, utilizing their properties for deferred evaluation:
 
 ```java
 someLibrary.maybeNeedsValue(() -> expensiveCalculation());
@@ -164,9 +164,9 @@ This means that we can always refer to tasks directly by using their definition:
 TaskId endlessTaskId = endless().id();
 ```
 
-## Task graphs as data structures
+## Task DAGs as data structures
 
-A `Task<T>` can be transformed into a data structure where a materialized view of the workflow graph is needed. In this example we have two simple tasks where one is used as the input to the other.
+A `Task<T>` can be transformed into a data structure where a materialized view of the task DAG is needed. In this example we have two simple tasks where one is used as the input to the other.
 
 ```java
 Task<String> first(String arg) {
@@ -205,16 +205,34 @@ taskInfo = TaskInfo {
 
 The `id` and `inputs` fileds should be pretty self explanatory. `isReference` is a boolean which signals if some task has already been materialized eariler in the tree, given a depth first, post-order traversal.
 
-Recall that the graph expansion can chose inputs artibrarily based on the arguments. In workflow libraries where expansion is coupled with evaluation, it's hard to know what will be evaluated beforehand. Evaluation planning and result caching/memoizing becomes integral parts of such libraries. `flo` aims to expose useful information together with flexible evaluation apis to make it a library for easily building workflow management systems, rather than trying to be the can-do-it-all workflow management system itself. More about how this is achieved in the [`TaskContext`][TaskContext] sections.
+Recall that the DAG expansion can chose inputs artibrarily based on the arguments. In workflow libraries where expansion is coupled with evaluation, it's hard to know what will be evaluated beforehand. Evaluation planning and result caching/memoizing becomes integral parts of such libraries. `flo` aims to expose useful information together with flexible evaluation apis to make it a library for easily building workflow management systems, rather than trying to be the can-do-it-all workflow management system itself. More about how this is achieved in the [`TaskContext`][TaskContext] sections.
 
 # [`TaskContext`][TaskContext]
 
-tbw
+[`TaskContext`][TaskContext] defines an interface to a context in which `Task<T>` instances are
+evaluated. The context is responsible for expanding the task DAG and invoking the task
+process-functions. It gives library authors a powerful abstraction to use when implementing
+the specific details of evaluating a task DAG. All details around setting up wiring of dependencies
+between tasks, interaction with user code for DAG expansion, invoking task functions with upstream
+arguments, and other mundane plumbing is dealt with by flo.
+
+These are just a few aspects of evaluation that can be implemented in a `TaskContext`:
+
+* Evaluation concurrency and thread pool management
+* Persisted memoization of previous task evaluations
+* Distributed coordination of evaluating shared DAGs
+* Short-circuiting DAG expansion of previously evaluated tasks
+
+Since multi worker, asynchronous evaluation is a very common pre-requisite for many evaluation
+implementations, flo comes with a base implementation of an [`AsyncContext`][AsyncContext] that
+can be extended with further behaviour.
 
 [Task]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/task/Task.html
 [TaskBuilder]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/task/dsl/TaskBuilder.html
 [TaskContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/task/TaskContext.html
+[AsyncContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/task/context/AsyncContext.html
 [Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-
+[DAG]: https://en.wikipedia.org/wiki/Directed_acyclic_graph
 
 # CLI generator
 
@@ -224,8 +242,7 @@ tbw
 <dependency>
   <groupId>io.rouz</groupId>
   <artifactId>flo-cli</artifactId>
-  <version>0.0.2</version>
-  <optional>true</optional>
+  <version>${flo.version}</version>
 </dependency>
 ```
 
