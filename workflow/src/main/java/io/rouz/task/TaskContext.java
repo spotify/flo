@@ -96,6 +96,9 @@ public interface TaskContext {
    * of a {@link List}.
    *
    * The semantics of joining {@link Value}s is decided by this {@link TaskContext}.
+   *
+   * @param <T>  The inner type of the values
+   * @return A collector for a stream of values
    */
   default <T> Collector<Value<T>, ?, Value<List<T>>> toValueList() {
     return Collector.of(

@@ -13,7 +13,7 @@ import io.rouz.task.TaskContext.Value;
 /**
  * Types for the fluent task setup API
  *
- * The entry point for this api is {@link Task#ofType(Class)}.
+ * The entry point for this api is {@link Task#named(String, Object...)}}.
  *
  * Note, the inner types should never have to explicitly be mentioned or imported. The API is
  * supposed to be used through fluent calls that eventually lead to a {@link Task} instance.
