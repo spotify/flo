@@ -22,9 +22,4 @@ public interface TaskConstructor<T> {
    * @return an instance of the task
    */
   Task<T> create(String... args);
-
-  /**
-   * @return The underlying {@link joptsimple.OptionParser} for this task constructor
-   */
-  OptionParser parser();
 }

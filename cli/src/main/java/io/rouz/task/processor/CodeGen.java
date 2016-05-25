@@ -143,7 +143,6 @@ final class CodeGen {
 
     // public OptionParser parser() {
     final MethodSpec.Builder parserBuilder = methodBuilder("parser")
-        .addAnnotation(Override.class)
         .addModifiers(PUBLIC)
         .returns(OptionParser.class)
         .addStatement(

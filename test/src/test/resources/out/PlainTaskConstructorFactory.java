@@ -48,7 +48,6 @@ public final class FloRootTaskFactory {
       return PlainTaskConstructor.simple();
     }
 
-    @Override
     public OptionParser parser() {
       final OptionParser parser = new OptionParser();
 

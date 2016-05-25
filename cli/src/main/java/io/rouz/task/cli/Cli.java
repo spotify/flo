@@ -84,11 +84,11 @@ public final class Cli {
     out.println("creating tasks:\n");
     for (TaskConstructor<?> factory : factories) {
       if (factory.name().equalsIgnoreCase(name)) {
-        final OptionParser parser = factory.parser();
-        if (parser.parse(args).has("h")) {
-          parser.printHelpOn(out);
-          return;
-        }
+//        final OptionParser parser = factory.parser();
+//        if (parser.parse(args).has("h")) {
+//          parser.printHelpOn(out);
+//          return;
+//        }
 
         final TaskContext context = TaskContext.inmem();
         final Task<?> createdTask = factory.create(args);
