@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.rouz</groupId>
+    <artifactId>flo</artifactId>
+    <version>0.0.5-SNAPSHOT</version>
+  </parent>
+
+  <name>Flo Scala API</name>
+  <artifactId>flo-scala_${scala.baseVersion}</artifactId>
+
+  <properties>
+    <scala.baseVersion>2.11</scala.baseVersion>
+    <scala.version>2.11.8</scala.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.rouz</groupId>
+      <artifactId>flo-cli</artifactId>
+      <version>0.0.5-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>3.2.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <scalaVersion>${scala.version}</scalaVersion>
+          <sendJavaToScalac>false</sendJavaToScalac>
+          <addScalacArgs>-Xexperimental</addScalacArgs>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -42,6 +42,7 @@
         <module>workflow</module>
         <module>cli</module>
         <module>test</module>
+        <module>flo-scala</module>
     </modules>
 
     <dependencyManagement>
