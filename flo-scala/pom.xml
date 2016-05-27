@@ -8,9 +8,10 @@
   </parent>
 
   <name>Flo Scala API</name>
-  <artifactId>flo-scala</artifactId>
+  <artifactId>flo-scala_${scala.baseVersion}</artifactId>
 
   <properties>
+    <scala.baseVersion>2.11</scala.baseVersion>
     <scala.version>2.11.8</scala.version>
   </properties>
 
