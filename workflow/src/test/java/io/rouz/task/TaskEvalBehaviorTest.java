@@ -405,6 +405,72 @@ public class TaskEvalBehaviorTest {
   }
 
   @Test
+  public void shouldGetTaskIdFromContext0() throws Exception {
+    Task<TaskId> task = Task.named("MyOwnId").ofType(TaskId.class)
+        .processWithContext(tc -> tc.immediateValue(tc.currentTaskId().get()));
+
+    validateReturnsOwnTaskId(task);
+  }
+
+  @Test
+  public void shouldGetTaskIdFromContext1() throws Exception {
+    Task<TaskId> task = Task.named("MyOwnId").ofType(TaskId.class)
+        .in(() -> leaf("A"))
+        .processWithContext((tc, a) -> tc.immediateValue(tc.currentTaskId().get()));
+
+    validateReturnsOwnTaskId(task);
+  }
+
+  @Test
+  public void shouldGetTaskIdFromContext2() throws Exception {
+    Task<TaskId> task = Task.named("MyOwnId").ofType(TaskId.class)
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .processWithContext((tc, a, b) -> tc.immediateValue(tc.currentTaskId().get()));
+
+    validateReturnsOwnTaskId(task);
+  }
+
+  @Test
+  public void shouldGetTaskIdFromContext3() throws Exception {
+    Task<TaskId> task = Task.named("MyOwnId").ofType(TaskId.class)
+        .in(() -> leaf("A"))
+        .in(() -> leaf("B"))
+        .in(() -> leaf("C"))
+        .processWithContext((tc, a, b, c) -> tc.immediateValue(tc.currentTaskId().get()));
+
+    validateReturnsOwnTaskId(task);
+  }
+
+  @Test
+  public void shouldGetTaskIdFromContextC1() throws Exception {
+    Task<TaskId> task = Task.named("MyOwnId").ofType(TaskId.class).curriedWithContext()
+        .in(() -> leaf("A"))
+        .process(tc -> a -> tc.immediateValue(tc.currentTaskId().get()));
+
+    validateReturnsOwnTaskId(task);
+  }
+
+  @Test
+  public void shouldGetTaskIdFromContextC2() throws Exception {
+    Task<TaskId> task = Task.named("MyOwnId").ofType(TaskId.class).curriedWithContext()
+        .in(() -> leaf("A"))
+        .in(() -> leaf("b"))
+        .process(tc -> a -> b -> tc.immediateValue(tc.currentTaskId().get()));
+
+    validateReturnsOwnTaskId(task);
+  }
+
+  private void validateReturnsOwnTaskId(Task<TaskId> task) throws InterruptedException {
+    AwaitingConsumer<TaskId> val = new AwaitingConsumer<>();
+    TaskContext.inmem()
+        .evaluate(task)
+        .consume(val);
+
+    assertThat(val.awaitAndGet(), is(task.id()));
+  }
+
+  @Test
   public void shouldEvaluateInputsInParallelForCurriedTask() throws Exception {
     AtomicBoolean processed = new AtomicBoolean(false);
     Task<String> task = Task.named("WithInputs").ofType(String.class).curried()

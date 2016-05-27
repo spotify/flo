@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -61,6 +62,22 @@ public interface TaskContext {
    */
   default <T> Value<T> invokeProcessFn(TaskId taskId, F0<Value<T>> processFn) {
     return processFn.get();
+  }
+
+  /**
+   * When called from within any of the functions passed to {@code processWithContext}, this
+   * method will return the {@link TaskId} of the task being processed. Otherwise an empty value
+   * will be returned.
+   *
+   * The return value of this method is stable for each instance of {@link TaskContext} that is
+   * passed into the process functions. Calls from multiple threads will see the same result as
+   * longs as the calls are made to the same instance.
+   *
+   * @return The id of the task that is being evaluated or empty if called from outside of a
+   * process function
+   */
+  default Optional<TaskId> currentTaskId() {
+    return Optional.empty();
   }
 
   /**
