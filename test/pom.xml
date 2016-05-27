@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.rouz</groupId>
         <artifactId>flo</artifactId>
-        <version>0.0.5-SNAPSHOT</version>
+        <version>0.0.5</version>
     </parent>
 
     <name>Flo Integration Tests</name>
@@ -14,7 +14,7 @@
         <dependency>
             <groupId>io.rouz</groupId>
             <artifactId>flo-cli</artifactId>
-            <version>0.0.5-SNAPSHOT</version>
+            <version>0.0.5</version>
         </dependency>
 
         <dependency>
