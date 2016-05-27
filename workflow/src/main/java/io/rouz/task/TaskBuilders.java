@@ -20,6 +20,7 @@ import io.rouz.task.dsl.TaskBuilder.TaskBuilderC0;
 import io.rouz.task.dsl.TaskBuilder.TaskBuilderCV;
 import io.rouz.task.dsl.TaskBuilder.TaskBuilderCV0;
 
+import static io.rouz.task.TaskContextWithId.withId;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -215,7 +216,8 @@ final class TaskBuilders {
 
     @Override
     public Task<Z> process(F1<TaskContext, F1<A, Y>> code) {
-      EvalClosure<Z> closure = tc -> evaluator.<Z>enclose((a) -> code.apply(tc).apply(a)).eval(tc);
+      EvalClosure<Z> closure =
+          tc -> evaluator.<Z>enclose((a) -> code.apply(withId(tc, taskId)).apply(a)).eval(tc);
       return Task.create(inputs, type, closure, taskId);
     }
 
@@ -266,7 +268,8 @@ final class TaskBuilders {
 
     @Override
     public Task<Z> processWithContext(F2<TaskContext, A, Value<Z>> code) {
-      EvalClosure<Z> closure = tc -> valEvaluator.<Z>enclose((a) -> code.apply(tc, a)).eval(tc);
+      EvalClosure<Z> closure =
+          tc -> valEvaluator.<Z>enclose((a) -> code.apply(withId(tc, taskId), a)).eval(tc);
       return Task.create(inputs, type, closure, taskId);
     }
 
@@ -330,7 +333,8 @@ final class TaskBuilders {
 
     @Override
     public Task<Z> processWithContext(F3<TaskContext, A, B, Value<Z>> code) {
-      EvalClosure<Z> closure = tc -> valEvaluator.<Z>enclose((a, b) -> code.apply(tc, a, b)).eval(tc);
+      EvalClosure<Z> closure =
+          tc -> valEvaluator.<Z>enclose((a, b) -> code.apply(withId(tc, taskId), a, b)).eval(tc);
       return Task.create(inputs, type, closure, taskId);
     }
 
@@ -394,7 +398,8 @@ final class TaskBuilders {
 
     @Override
     public Task<Z> processWithContext(F4<TaskContext, A, B, C, Value<Z>> code) {
-      EvalClosure<Z> closure = tc -> valEvaluator.<Z>enclose((a, b, c) -> code.apply(tc, a, b, c)).eval(tc);
+      EvalClosure<Z> closure =
+          tc -> valEvaluator.<Z>enclose((a, b, c) -> code.apply(withId(tc, taskId), a, b, c)).eval(tc);
       return Task.create(inputs, type, closure, taskId);
     }
   }
@@ -513,7 +518,7 @@ final class TaskBuilders {
   }
 
   private static <R> EvalClosure<R> gatedVal(TaskId taskId, F1<TaskContext, Value<R>> code) {
-    return tc -> tc.invokeProcessFn(taskId, () -> code.apply(tc));
+    return tc -> tc.invokeProcessFn(taskId, () -> code.apply(withId(tc, taskId)));
   }
 
   /**
