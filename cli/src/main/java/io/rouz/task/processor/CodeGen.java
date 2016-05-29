@@ -1,7 +1,5 @@
 package io.rouz.task.processor;
 
-import io.rouz.task.cli.TaskConstructor;
-import io.rouz.task.processor.Binding.Argument;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -19,6 +17,8 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
+import io.rouz.task.cli.TaskConstructor;
+import io.rouz.task.processor.Binding.Argument;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;

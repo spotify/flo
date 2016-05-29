@@ -1,0 +1,39 @@
+package {{packageName}};
+
+import io.rouz.task.Task;
+import io.rouz.task.TaskContext;
+import io.rouz.task.TaskContext.Value;
+
+import java.io.Serializable;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import javax.annotation.Generated;
+
+@Generated("io.rouz.flo.gen.ApiGeneratorProcessor")
+public interface {{className}}<Z> {
+
+  Task<Z> process(F0<Z> code);
+  Task<Z> processWithContext(F1<TaskContext, TaskContext.Value<Z>> code);
+
+  <A> {{className}}1<A, Z> in(F0<Task<A>> task);
+
+  interface {{className}}1<A, Z> {
+    Task<Z> process(F1<A, Z> code);
+    Task<Z> processWithContext(F2<TaskContext, A, Value<Z>> code);
+  }
+  {{#genUpTo}}
+
+  @FunctionalInterface
+  interface F{{iter.position}}<{{#typeArgs}}{{iter.position}}{{/typeArgs}}Z> extends
+      {{#jdkInterface}}{{iter.position}}{{/jdkInterface}}Serializable {
+    {{#iter.isFirst}}
+    Z get();
+    {{/iter.isFirst}}
+    {{^iter.isFirst}}
+    Z apply({{#parameters}}{{iter.position}}{{/parameters}});
+    {{/iter.isFirst}}
+  }
+  {{/genUpTo}}
+}
