@@ -5,12 +5,21 @@ import io.rouz.task.TaskContext;
 import io.rouz.task.TaskContext.Value;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.annotation.Generated;
 
+/**
+ * Types for the fluent task setup API
+ *
+ * The entry point for this api is {@link Task#named(String, Object...)}}.
+ *
+ * Note, the inner types should never have to explicitly be mentioned or imported. The API is
+ * supposed to be used through fluent calls that eventually lead to a {@link Task} instance.
+ */
 @Generated("io.rouz.flo.gen.ApiGeneratorProcessor")
 public interface {{className}}<Z> {
 
@@ -18,22 +27,29 @@ public interface {{className}}<Z> {
   Task<Z> processWithContext(F1<TaskContext, TaskContext.Value<Z>> code);
 
   <A> {{className}}1<A, Z> in(F0<Task<A>> task);
+{{#genBuilder}}
 
-  interface {{className}}1<A, Z> {
-    Task<Z> process(F1<A, Z> code);
-    Task<Z> processWithContext(F2<TaskContext, A, Value<Z>> code);
+  interface {{className}}{{arity}}<{{typeArgs}}Z> {
+    Task<Z> process(F{{arity}}<{{typeArgs}}Z> code);
+    Task<Z> processWithContext(F{{arityPlus}}<TaskContext, {{typeArgs}}Value<Z>> code);
+  {{^iter.isLast}}
+
+    <{{nextArg}}> {{className}}{{arityPlus}}<{{typeArgs}}{{nextArg}}, Z> in(F0<Task<{{nextArg}}>> task);
+    <{{nextArg}}> {{className}}{{arityPlus}}<{{typeArgs}}List<{{nextArg}}>, Z> ins(F0<List<Task<{{nextArg}}>>> tasks);
+  {{/iter.isLast}}
   }
-  {{#genUpTo}}
+{{/genBuilder}}
+{{#genFn}}
 
   @FunctionalInterface
-  interface F{{iter.position}}<{{#typeArgs}}{{iter.position}}{{/typeArgs}}Z> extends
-      {{#jdkInterface}}{{iter.position}}{{/jdkInterface}}Serializable {
-    {{#iter.isFirst}}
+  interface F{{arity}}<{{typeArgs}}Z> extends
+      {{{jdkInterface}}}Serializable {
+  {{#iter.isFirst}}
     Z get();
-    {{/iter.isFirst}}
-    {{^iter.isFirst}}
-    Z apply({{#parameters}}{{iter.position}}{{/parameters}});
-    {{/iter.isFirst}}
+  {{/iter.isFirst}}
+  {{^iter.isFirst}}
+    Z apply({{parameters}});
+  {{/iter.isFirst}}
   }
-  {{/genUpTo}}
+{{/genFn}}
 }

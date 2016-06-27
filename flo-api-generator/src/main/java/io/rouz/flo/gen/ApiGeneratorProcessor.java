@@ -3,8 +3,7 @@ package io.rouz.flo.gen;
 import org.trimou.engine.MustacheEngine;
 import org.trimou.engine.MustacheEngineBuilder;
 import org.trimou.engine.locator.ClassPathTemplateLocator;
-import org.trimou.lambda.Lambda;
-import org.trimou.lambda.SimpleLambdas;
+import org.trimou.util.ImmutableMap;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -12,7 +11,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -61,9 +59,6 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     engine = MustacheEngineBuilder
         .newBuilder()
         .addTemplateLocator(ClassPathTemplateLocator.builder(1).setSuffix("mustache").build())
-        .addGlobalData("typeArgs", lambda(this::typeArgs))
-        .addGlobalData("parameters", lambda(this::parameters))
-        .addGlobalData("jdkInterface", lambda(this::jdkInterface))
         .build();
 
     messager.printMessage(NOTE, ApiGeneratorProcessor.class.getSimpleName() + " loaded");
@@ -93,9 +88,12 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
           final String className = templateElement.getSimpleName().toString().replaceAll("Template$", "");
 
           final Map<String, Object> data = new HashMap<>();
-          data.put("genUpTo", new Object[genTaskBuilder.upTo() + 1]);
           data.put("packageName", packageName);
           data.put("className", className);
+          data.put("genFn", IntStream.rangeClosed(0, genTaskBuilder.upTo())
+              .mapToObj(this::fn).toArray());
+          data.put("genBuilder", IntStream.range(1, genTaskBuilder.upTo())
+              .mapToObj(this::builder).toArray());
           final String output = engine.getMustache("TaskBuilder").render(data);
 
           final String fileName = packageName + "." + className;
@@ -115,11 +113,23 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     return true;
   }
 
-  private Object lambda(Function<String, String> fn) {
-    return SimpleLambdas.builder()
-        .inputType(Lambda.InputType.PROCESSED)
-        .invoke(fn)
-        .build();
+  private Map<String, Object> builder(int n) {
+    return ImmutableMap.of(
+        "arity", n,
+        "arityPlus", n + 1,
+        "nextArg", letters(n + 1).skip(n).findFirst().get(),
+        "typeArgs", typeArgs(n),
+        "typeArgsMinus", typeArgs(n - 1)
+    );
+  }
+
+  private Map<String, Object> fn(int n) {
+    return ImmutableMap.of(
+        "arity", n,
+        "typeArgs", typeArgs(n),
+        "jdkInterface", jdkInterface(n),
+        "parameters", parameters(n)
+    );
   }
 
   private Stream<String> letters(int n) {
@@ -127,22 +137,19 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
         .mapToObj(i -> Character.toString((char) ('A' + i)));
   }
 
-  private String typeArgs(String nStr) {
-    final int n = Integer.parseInt(nStr);
+  private String typeArgs(int n) {
     return letters(n)
                .collect(Collectors.joining(", "))
            + (n > 0 ? ", " : "");
   }
 
-  private String parameters(String nStr) {
-    final int n = Integer.parseInt(nStr);
+  private String parameters(int n) {
     return letters(n)
         .map(l -> l + " " + l.toLowerCase())
         .collect(Collectors.joining(", "));
   }
 
-  private String jdkInterface(String nStr) {
-    final int n = Integer.parseInt(nStr);
+  private String jdkInterface(int n) {
     switch (n) {
       case 0: return "Supplier<Z>, ";
       case 1: return "Function<A, Z>, ";

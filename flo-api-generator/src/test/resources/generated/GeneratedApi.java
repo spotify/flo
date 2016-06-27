@@ -5,6 +5,7 @@ import io.rouz.task.TaskContext;
 import io.rouz.task.TaskContext.Value;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -22,6 +23,22 @@ public interface GeneratedApi<Z> {
   interface GeneratedApi1<A, Z> {
     Task<Z> process(F1<A, Z> code);
     Task<Z> processWithContext(F2<TaskContext, A, Value<Z>> code);
+
+    <B> GeneratedApi2<A, B, Z> in(F0<Task<B>> task);
+    <B> GeneratedApi2<A, List<B>, Z> ins(F0<List<Task<B>>> tasks);
+  }
+
+  interface GeneratedApi2<A, B, Z> {
+    Task<Z> process(F2<A, B, Z> code);
+    Task<Z> processWithContext(F3<TaskContext, A, B, Value<Z>> code);
+
+    <C> GeneratedApi3<A, B, C, Z> in(F0<Task<C>> task);
+    <C> GeneratedApi3<A, B, List<C>, Z> ins(F0<List<Task<C>>> tasks);
+  }
+
+  interface GeneratedApi3<A, B, C, Z> {
+    Task<Z> process(F3<A, B, C, Z> code);
+    Task<Z> processWithContext(F4<TaskContext, A, B, C, Value<Z>> code);
   }
 
   @FunctionalInterface
