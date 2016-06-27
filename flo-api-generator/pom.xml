@@ -15,12 +15,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>io.rouz</groupId>
-      <artifactId>flo-cli</artifactId>
-      <version>0.0.6-SNAPSHOT</version>
-    </dependency>
-
-    <dependency>
       <groupId>org.trimou</groupId>
       <artifactId>trimou-core</artifactId>
     </dependency>

@@ -12,6 +12,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.rouz</groupId>
+            <artifactId>flo-api-generator</artifactId>
+            <version>0.0.6-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>net.sf.jopt-simple</groupId>
             <artifactId>jopt-simple</artifactId>
         </dependency>
