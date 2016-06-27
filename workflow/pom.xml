@@ -15,6 +15,7 @@
             <groupId>io.rouz</groupId>
             <artifactId>flo-api-generator</artifactId>
             <version>0.0.6-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>

@@ -27,6 +27,7 @@ public interface {{className}}<Z> {
   Task<Z> processWithContext(F1<TaskContext, TaskContext.Value<Z>> code);
 
   <A> {{className}}1<A, Z> in(F0<Task<A>> task);
+  <A> {{className}}1<List<A>, Z> ins(F0<List<Task<A>>> tasks);
 {{#genBuilder}}
 
   interface {{className}}{{arity}}<{{typeArgs}}Z> {
@@ -42,8 +43,7 @@ public interface {{className}}<Z> {
 {{#genFn}}
 
   @FunctionalInterface
-  interface F{{arity}}<{{typeArgs}}Z> extends
-      {{{jdkInterface}}}Serializable {
+  interface F{{arity}}<{{typeArgs}}Z> extends {{{jdkInterface}}}Serializable {
   {{#iter.isFirst}}
     Z get();
   {{/iter.isFirst}}

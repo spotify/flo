@@ -19,6 +19,7 @@ public interface GeneratedApi<Z> {
   Task<Z> processWithContext(F1<TaskContext, TaskContext.Value<Z>> code);
 
   <A> GeneratedApi1<A, Z> in(F0<Task<A>> task);
+  <A> GeneratedApi1<List<A>, Z> ins(F0<List<Task<A>>> tasks);
 
   interface GeneratedApi1<A, Z> {
     Task<Z> process(F1<A, Z> code);

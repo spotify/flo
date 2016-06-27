@@ -3,6 +3,8 @@ package io.rouz.flo.gen;
 import org.trimou.engine.MustacheEngine;
 import org.trimou.engine.MustacheEngineBuilder;
 import org.trimou.engine.locator.ClassPathTemplateLocator;
+import org.trimou.engine.resolver.MapResolver;
+import org.trimou.engine.resolver.ReflectionResolver;
 import org.trimou.util.ImmutableMap;
 
 import java.io.IOException;
@@ -58,7 +60,11 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
 
     engine = MustacheEngineBuilder
         .newBuilder()
-        .addTemplateLocator(ClassPathTemplateLocator.builder(1).setSuffix("mustache").build())
+        .addResolver(new MapResolver())
+        .addResolver(new ReflectionResolver())
+        .addTemplateLocator(ClassPathTemplateLocator.builder(1)
+                                .setClassLoader(this.getClass().getClassLoader())
+                                .setSuffix("mustache").build())
         .build();
 
     messager.printMessage(NOTE, ApiGeneratorProcessor.class.getSimpleName() + " loaded");
@@ -76,7 +82,7 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     for (TypeElement annotation : annotations) {
       for (Element element : roundEnv.getElementsAnnotatedWith(annotation)) {
         if (element.getKind() != ElementKind.INTERFACE) {
-          messager.printMessage(ERROR, "only interfaces can be annotated with " + ANNOTATION, element);
+          messager.printMessage(ERROR, "Only interfaces can be annotated with " + ANNOTATION, element);
           return true;
         }
 
