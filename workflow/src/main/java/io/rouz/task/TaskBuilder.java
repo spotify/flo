@@ -1,4 +1,4 @@
-package io.rouz.task.dsl;
+package io.rouz.task;
 
 import java.io.Serializable;
 import java.util.List;
@@ -6,8 +6,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import io.rouz.task.Task;
-import io.rouz.task.TaskContext;
 import io.rouz.task.TaskContext.Value;
 
 /**

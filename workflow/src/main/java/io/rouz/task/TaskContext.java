@@ -12,9 +12,9 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
+import io.rouz.task.TaskBuilder.F0;
 import io.rouz.task.context.AsyncContext;
 import io.rouz.task.context.InMemImmediateContext;
-import io.rouz.task.dsl.TaskBuilder.F0;
 
 /**
  * A context for controlling {@link Task} evaluation and {@link Value} computation.

@@ -13,9 +13,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import io.rouz.task.dsl.TaskBuilder;
-import io.rouz.task.dsl.TaskBuilder.F0;
-import io.rouz.task.dsl.TaskBuilder.F1;
+import io.rouz.task.TaskBuilder.F0;
+import io.rouz.task.TaskBuilder.F1;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;

@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import io.rouz.task.dsl.TaskBuilder.F0;
-import io.rouz.task.dsl.TaskBuilder.F1;
+import io.rouz.task.TaskBuilder.F0;
+import io.rouz.task.TaskBuilder.F1;
 
 import static org.junit.Assert.fail;
 

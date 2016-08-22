@@ -4,9 +4,9 @@ import com.google.auto.value.AutoValue;
 
 import java.util.Arrays;
 
-import io.rouz.task.dsl.TaskBuilder.F1;
-import io.rouz.task.dsl.TaskBuilder.F2;
-import io.rouz.task.dsl.TaskBuilder.F3;
+import io.rouz.task.TaskBuilder.F1;
+import io.rouz.task.TaskBuilder.F2;
+import io.rouz.task.TaskBuilder.F3;
 
 /**
  * TODO: document.

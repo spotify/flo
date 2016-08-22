@@ -1,4 +1,4 @@
-package io.rouz.task.dsl;
+package io.rouz.task;
 
 import io.rouz.flo.gen.GenerateTaskBuilder;
 

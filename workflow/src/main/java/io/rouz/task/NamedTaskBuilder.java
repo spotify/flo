@@ -1,6 +1,4 @@
-package io.rouz.task.dsl;
-
-import io.rouz.task.Task;
+package io.rouz.task;
 
 /**
  * The initial part of the {@link TaskBuilder} api which only holds the task name.

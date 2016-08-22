@@ -4,9 +4,6 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.stream.Stream;
 
-import io.rouz.task.dsl.TaskBuilder;
-
-import static io.rouz.task.TaskContextWithId.withId;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -42,7 +39,7 @@ class BuilderUtils {
   static <R> EvalClosure<R> gatedVal(
       TaskId taskId,
       TaskBuilder.F1<TaskContext, TaskContext.Value<R>> code) {
-    return tc -> tc.invokeProcessFn(taskId, () -> code.apply(withId(tc, taskId)));
+    return tc -> tc.invokeProcessFn(taskId, () -> code.apply(TaskContextWithId.withId(tc, taskId)));
   }
 
   /**

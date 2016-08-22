@@ -49,6 +49,7 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
   private Messager messager;
 
   private MustacheEngine engine;
+  private Element processingElement;
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -85,28 +86,17 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
           messager.printMessage(ERROR, "Only interfaces can be annotated with " + ANNOTATION, element);
           return true;
         }
+        processingElement = element;
 
         final GenerateTaskBuilder genTaskBuilder = element.getAnnotation(GenerateTaskBuilder.class);
         final TypeElement templateElement = (TypeElement) element;
 
         try {
           final Name packageName = elements.getPackageOf(templateElement).getQualifiedName();
-          final String className = templateElement.getSimpleName().toString().replaceAll("Template$", "");
+          final String interfaceName = templateElement.getSimpleName().toString().replaceAll("Template$", "");
 
-          final Map<String, Object> data = new HashMap<>();
-          data.put("packageName", packageName);
-          data.put("className", className);
-          data.put("genFn", IntStream.rangeClosed(0, genTaskBuilder.upTo())
-              .mapToObj(this::fn).toArray());
-          data.put("genBuilder", IntStream.range(1, genTaskBuilder.upTo())
-              .mapToObj(this::builder).toArray());
-          final String output = engine.getMustache("TaskBuilder").render(data);
-
-          final String fileName = packageName + "." + className;
-          final JavaFileObject filerSourceFile = filer.createSourceFile(fileName, element);
-          try (final Writer writer = filerSourceFile.openWriter()) {
-            writer.write(output);
-          }
+          writeApiInterface(genTaskBuilder, packageName, interfaceName);
+          writeApiImplementation(genTaskBuilder, packageName, interfaceName);
         } catch (IOException e) {
           messager.printMessage(ERROR, "Failed to write source for " + ANNOTATION + " bindings: " + e);
         } catch (RuntimeException e) {
@@ -117,6 +107,51 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     }
 
     return true;
+  }
+
+  private void writeApiInterface(
+      GenerateTaskBuilder genTaskBuilder,
+      Name packageName,
+      String interfaceName) throws IOException {
+
+    final Map<String, Object> data = new HashMap<>();
+    data.put("packageName", packageName);
+    data.put("interfaceName", interfaceName);
+    data.put("genFn", IntStream.rangeClosed(0, genTaskBuilder.upTo())
+        .mapToObj(this::fn).toArray());
+    data.put("genBuilder", IntStream.range(1, genTaskBuilder.upTo())
+        .mapToObj(this::builder).toArray());
+    final String output = engine.getMustache("TaskBuilder").render(data);
+
+    final String fileName = packageName + "." + interfaceName;
+    final JavaFileObject filerSourceFile = filer.createSourceFile(fileName, processingElement);
+    try (final Writer writer = filerSourceFile.openWriter()) {
+      writer.write(output);
+    }
+  }
+
+  private void writeApiImplementation(
+      GenerateTaskBuilder genTaskBuilder,
+      Name packageName,
+      String interfaceName) throws IOException {
+
+    final String implClassName = interfaceName + "Impl";
+
+    final Map<String, Object> data = new HashMap<>();
+    data.put("packageName", packageName);
+    data.put("interfaceName", interfaceName);
+    data.put("implClassName", implClassName);
+//    data.put("genFn", IntStream.rangeClosed(0, genTaskBuilder.upTo())
+//        .mapToObj(this::fn).toArray());
+//    data.put("genBuilder", IntStream.range(1, genTaskBuilder.upTo())
+//        .mapToObj(this::builder).toArray());
+    final String output = engine.getMustache("TaskBuilderImpl").render(data);
+
+    final String fileName = packageName + "." + implClassName;
+    final JavaFileObject filerSourceFile = filer.createSourceFile(fileName, processingElement);
+    try (final Writer writer = filerSourceFile.openWriter()) {
+      writer.write(output);
+    }
   }
 
   private Map<String, Object> builder(int n) {

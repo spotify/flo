@@ -2,7 +2,7 @@ package io.rouz.task;
 
 import java.util.Objects;
 
-import io.rouz.task.dsl.TaskBuilder.F0;
+import io.rouz.task.TaskBuilder.F0;
 
 /**
  * A singleton supplier decorator.

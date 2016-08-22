@@ -10,7 +10,7 @@ import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import io.rouz.task.dsl.TaskBuilder.F0;
+import io.rouz.task.TaskBuilder.F0;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;

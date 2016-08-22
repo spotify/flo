@@ -9,8 +9,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import io.rouz.task.Task;
+import io.rouz.task.TaskBuilder.F0;
 import io.rouz.task.TaskContext;
-import io.rouz.task.dsl.TaskBuilder.F0;
 
 /**
  * A {@link TaskContext} that executes evaluation and {@link Value} computations on a given

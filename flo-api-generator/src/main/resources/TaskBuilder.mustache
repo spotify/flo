@@ -21,22 +21,22 @@ import javax.annotation.Generated;
  * supposed to be used through fluent calls that eventually lead to a {@link Task} instance.
  */
 @Generated("io.rouz.flo.gen.ApiGeneratorProcessor")
-public interface {{className}}<Z> {
+public interface {{interfaceName}}<Z> {
 
   Task<Z> process(F0<Z> code);
   Task<Z> processWithContext(F1<TaskContext, TaskContext.Value<Z>> code);
 
-  <A> {{className}}1<A, Z> in(F0<Task<A>> task);
-  <A> {{className}}1<List<A>, Z> ins(F0<List<Task<A>>> tasks);
+  <A> {{interfaceName}}1<A, Z> in(F0<Task<A>> task);
+  <A> {{interfaceName}}1<List<A>, Z> ins(F0<List<Task<A>>> tasks);
 {{#genBuilder}}
 
-  interface {{className}}{{arity}}<{{typeArgs}}Z> {
+  interface {{interfaceName}}{{arity}}<{{typeArgs}}Z> {
     Task<Z> process(F{{arity}}<{{typeArgs}}Z> code);
     Task<Z> processWithContext(F{{arityPlus}}<TaskContext, {{typeArgs}}Value<Z>> code);
   {{^iter.isLast}}
 
-    <{{nextArg}}> {{className}}{{arityPlus}}<{{typeArgs}}{{nextArg}}, Z> in(F0<Task<{{nextArg}}>> task);
-    <{{nextArg}}> {{className}}{{arityPlus}}<{{typeArgs}}List<{{nextArg}}>, Z> ins(F0<List<Task<{{nextArg}}>>> tasks);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}{{nextArg}}, Z> in(F0<Task<{{nextArg}}>> task);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}List<{{nextArg}}>, Z> ins(F0<List<Task<{{nextArg}}>>> tasks);
   {{/iter.isLast}}
   }
 {{/genBuilder}}

@@ -12,9 +12,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import io.rouz.task.AwaitingConsumer;
 import io.rouz.task.Task;
+import io.rouz.task.TaskBuilder;
 import io.rouz.task.TaskContext.Promise;
 import io.rouz.task.TaskId;
-import io.rouz.task.dsl.TaskBuilder;
 
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;

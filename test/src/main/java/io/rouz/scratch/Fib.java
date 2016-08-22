@@ -2,7 +2,7 @@ package io.rouz.scratch;
 
 import io.rouz.task.Task;
 import io.rouz.task.TaskContext;
-import io.rouz.task.dsl.TaskBuilder;
+import io.rouz.task.TaskBuilder;
 
 /**
  * Simple fibonacci implementations

@@ -9,7 +9,6 @@ import io.rouz.task.TaskContext;
 import io.rouz.task.TaskContext.Promise;
 import io.rouz.task.TaskContext.Value;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;

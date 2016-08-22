@@ -5,8 +5,6 @@ import org.junit.Test;
 import java.util.Optional;
 import java.util.stream.Collector;
 
-import io.rouz.task.dsl.TaskBuilder;
-
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;

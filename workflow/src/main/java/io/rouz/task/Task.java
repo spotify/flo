@@ -9,9 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import io.rouz.task.dsl.NamedTaskBuilder;
-import io.rouz.task.dsl.TaskBuilder;
-import io.rouz.task.dsl.TaskBuilder.F0;
+import io.rouz.task.TaskBuilder.F0;
 
 /**
  * TODO:

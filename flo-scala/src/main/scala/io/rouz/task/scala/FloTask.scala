@@ -2,8 +2,7 @@ package io.rouz.task.scala
 
 import io.rouz.task._
 import io.rouz.task.TaskContext.Value
-import io.rouz.task.dsl.TaskBuilder._
-import io.rouz.task.dsl.{TaskBuilder => JTB}
+import TaskBuilder._
 
 import _root_.scala.collection.JavaConversions
 import _root_.scala.reflect.ClassTag
@@ -72,7 +71,7 @@ trait Builder1[A, Z] extends TaskBuilder1[A, Z] { self =>
 
   type JA
   val convA: JA => A
-  val builder: JTB.TaskBuilder1[JA, Z]
+  val builder: TaskBuilder.TaskBuilder1[JA, Z]
 
   override def process(code: (A) => Z): Task[Z] =
     builder.process(f1(a => code(convA(a))))
@@ -106,7 +105,7 @@ trait Builder2[A, B, Z] extends TaskBuilder2[A, B, Z] { self =>
   type JB
   val convA: JA => A
   val convB: JB => B
-  val builder: JTB.TaskBuilder2[JA, JB, Z]
+  val builder: TaskBuilder.TaskBuilder2[JA, JB, Z]
 
   override def process(code: (A, B) => Z): Task[Z] =
     builder.process(f2((a,b) => code(convA(a), convB(b))))
@@ -145,7 +144,7 @@ trait Builder3[A, B, C, Z] extends TaskBuilder3[A, B, C, Z] {
   val convA: JA => A
   val convB: JB => B
   val convC: JC => C
-  val builder: JTB.TaskBuilder3[JA, JB, JC, Z]
+  val builder: TaskBuilder.TaskBuilder3[JA, JB, JC, Z]
 
   override def process(code: (A, B, C) => Z): Task[Z] =
     builder.process(f3((a,b,c) => code(convA(a), convB(b), convC(c))))

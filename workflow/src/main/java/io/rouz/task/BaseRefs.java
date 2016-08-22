@@ -3,8 +3,6 @@ package io.rouz.task;
 import java.util.Collections;
 import java.util.List;
 
-import io.rouz.task.dsl.TaskBuilder;
-
 /**
  * A convenience class for holding some reference. This is only so that we don't have to repeat
  * these declaration in every class above.

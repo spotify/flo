@@ -1,0 +1,39 @@
+package {{packageName}};
+
+import io.rouz.task.BuilderUtils.ChainingEval;
+import io.rouz.task.Task;
+import io.rouz.task.TaskContext;
+import io.rouz.task.TaskContext.Value;
+
+import io.rouz.task.{{interfaceName}};
+import io.rouz.task.{{interfaceName}}.*;
+
+import static io.rouz.task.BuilderUtils.gated;
+import static io.rouz.task.BuilderUtils.gatedVal;
+import static io.rouz.task.BuilderUtils.lazyFlatten;
+import static io.rouz.task.BuilderUtils.lazyList;
+import static io.rouz.task.BuilderUtils.leafEvalFn;
+import static io.rouz.task.TaskContextWithId.withId;
+
+import javax.annotation.Generated;
+
+/**
+ * Package local implementation of the {@link TaskBuilder} tree.
+ *
+ * These classes tackle the exponential growth of paths that can be taken through the
+ * {@link {{interfaceName}}} interfaces by linearizing the implementation through composing functions.
+ *
+ * The linearization is implemented by letting the next builder in the chain take a
+ * {@link ChainingEval}. This evaluator allows the builder to chain onto the evaluation by
+ * including more input tasks. The evaluator will finally be used to terminate the builder by
+ * enclosing a function into an {@link EvalClosure} for a {@link Task}.
+ */
+@Generated("io.rouz.flo.gen.ApiGeneratorProcessor")
+final class {{implClassName}} {
+
+  static <Z> TaskBuilder<Z> rootBuilder(TaskId taskId, Class<Z> type) {
+    // return new Builder0<>(taskId, type);
+    return null;
+  }
+
+}
