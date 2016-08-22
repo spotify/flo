@@ -11,8 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.rouz.task.AwaitingConsumer;
+import io.rouz.task.Fn;
 import io.rouz.task.Task;
-import io.rouz.task.TaskBuilder;
 import io.rouz.task.TaskContext.Promise;
 import io.rouz.task.TaskId;
 
@@ -82,7 +82,7 @@ public class AsyncContextFailurePropagationTest {
     }
 
     @Override
-    public <T> Value<T> invokeProcessFn(TaskId taskId, TaskBuilder.F0<Value<T>> processFn) {
+    public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
       final Promise<T> promise = promise();
       final Value<T> tValue = processFn.get();
 

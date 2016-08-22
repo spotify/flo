@@ -136,15 +136,19 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
       String interfaceName) throws IOException {
 
     final String implClassName = interfaceName + "Impl";
+    final int n = genTaskBuilder.upTo() - 1;
 
     final Map<String, Object> data = new HashMap<>();
     data.put("packageName", packageName);
     data.put("interfaceName", interfaceName);
     data.put("implClassName", implClassName);
-//    data.put("genFn", IntStream.rangeClosed(0, genTaskBuilder.upTo())
-//        .mapToObj(this::fn).toArray());
-//    data.put("genBuilder", IntStream.range(1, genTaskBuilder.upTo())
-//        .mapToObj(this::builder).toArray());
+    data.put("genBuilder", IntStream.range(1, n)
+        .mapToObj(this::builderImpl).toArray());
+    data.put("lastArity", n);
+    data.put("lastArityPlus", n + 1);
+    data.put("lastTypeArgs", typeArgs(n));
+    data.put("lastTypeArg", letters(n + 1).skip(n).findFirst().get());
+    data.put("lastArguments", arguments(n));
     final String output = engine.getMustache("TaskBuilderImpl").render(data);
 
     final String fileName = packageName + "." + implClassName;
@@ -152,6 +156,16 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     try (final Writer writer = filerSourceFile.openWriter()) {
       writer.write(output);
     }
+  }
+
+  private Map<String, Object> builderImpl(int n) {
+    return ImmutableMap.of(
+        "arity", n,
+        "arityPlus", n + 1,
+        "nextArg", letters(n + 1).skip(n).findFirst().get(),
+        "typeArgs", typeArgs(n),
+        "arguments", arguments(n)
+    );
   }
 
   private Map<String, Object> builder(int n) {
@@ -187,6 +201,12 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
   private String parameters(int n) {
     return letters(n)
         .map(l -> l + " " + l.toLowerCase())
+        .collect(Collectors.joining(", "));
+  }
+
+  private String arguments(int n) {
+    return letters(n)
+        .map(String::toLowerCase)
         .collect(Collectors.joining(", "));
   }
 

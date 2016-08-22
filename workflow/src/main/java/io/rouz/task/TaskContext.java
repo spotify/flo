@@ -12,7 +12,6 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-import io.rouz.task.TaskBuilder.F0;
 import io.rouz.task.context.AsyncContext;
 import io.rouz.task.context.InMemImmediateContext;
 
@@ -60,7 +59,7 @@ public interface TaskContext {
    * @param <T>        The task value type
    * @return The value of the process function invocation
    */
-  default <T> Value<T> invokeProcessFn(TaskId taskId, F0<Value<T>> processFn) {
+  default <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
     return processFn.get();
   }
 
@@ -87,7 +86,7 @@ public interface TaskContext {
    * @param <T>    The type of the value
    * @return A value with added semantics
    */
-  <T> Value<T> value(F0<T> value);
+  <T> Value<T> value(Fn<T> value);
 
   /**
    * Create a {@link Value} with semantics defined by this {@link TaskContext}
@@ -128,7 +127,7 @@ public interface TaskContext {
    * how computations on that value are executed.
    *
    * Value is a Monad and the implementor should minimally need to implement
-   * {@link TaskContext#value(F0)}, {@link Value#flatMap(Function)} and
+   * {@link TaskContext#value(Fn)}, {@link Value#flatMap(Function)} and
    * {@link Value#consume(Consumer)} to get a working context with it's associated value type.
    *
    * @param <T>  The enclosed type

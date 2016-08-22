@@ -13,7 +13,7 @@ import static org.mockito.Mockito.when;
 public class TaskContextWithIdTest {
 
   static final Task<String> TASK = Task.create(() -> "", String.class, "foo");
-  static final TaskBuilder.F0<TaskContext.Value<Object>> FN = () -> null;
+  static final Fn<TaskContext.Value<Object>> FN = () -> null;
 
   TaskContext delegate = mock(TaskContext.class);
   TaskId taskId = TaskId.create("TestTAsk", "a", "b");
@@ -52,7 +52,7 @@ public class TaskContextWithIdTest {
   public void testValueDelegates() throws Exception {
     //noinspection unchecked
     TaskContext.Value<Object> value = mock(TaskContext.Value.class);
-    TaskBuilder.F0<Object> fn = Object::new;
+    Fn<Object> fn = Object::new;
     when(delegate.value(fn)).thenReturn(value);
 
     sut.value(fn);

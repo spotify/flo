@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import io.rouz.task.TaskBuilder.F0;
-
 /**
  * TODO:
  * d make inputs lazily instantiated to allow short circuiting graph generation
@@ -30,7 +28,7 @@ public abstract class Task<T> implements Serializable {
 
   abstract EvalClosure<T> code();
 
-  abstract F0<List<Task<?>>> lazyInputs();
+  abstract Fn<List<Task<?>>> lazyInputs();
 
   public List<Task<?>> inputs() {
     return lazyInputs().get();
@@ -56,12 +54,12 @@ public abstract class Task<T> implements Serializable {
     return new NTB(TaskId.create(taskName, args));
   }
 
-  public static <T> Task<T> create(F0<T> code, Class<T> type, String taskName, Object... args) {
+  public static <T> Task<T> create(Fn<T> code, Class<T> type, String taskName, Object... args) {
     return create(Collections::emptyList, type, tc -> tc.value(code), TaskId.create(taskName, args));
   }
 
   static <T> Task<T> create(
-      F0<List<Task<?>>> inputs, Class<T> type, EvalClosure<T> code, TaskId taskId) {
+      Fn<List<Task<?>>> inputs, Class<T> type, EvalClosure<T> code, TaskId taskId) {
     return new AutoValue_Task<>(taskId, type, code, inputs);
   }
 
@@ -79,7 +77,7 @@ public abstract class Task<T> implements Serializable {
 
     @Override
     public <Z> TaskBuilder<Z> ofType(Class<Z> type) {
-      return TaskBuilders.rootBuilder(taskId, type);
+      return TaskBuilderImpl.rootBuilder(taskId, type);
     }
   }
 }

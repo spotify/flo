@@ -14,64 +14,64 @@ class BuilderUtils {
   private BuilderUtils() {
   }
 
-  static <F> ChainingEval<F> leafEvalFn(TaskBuilder.F1<TaskContext, TaskBuilder.F1<F, TaskContext.Value<?>>> fClosure) {
+  static <F> ChainingEval<F> leafEvalFn(Fn1<TaskContext, Fn1<F, TaskContext.Value<?>>> fClosure) {
     return new ChainingEval<>(fClosure);
   }
 
-  static <A> TaskBuilder.F1<A, TaskContext.Value<?>> gated(
+  static <A> Fn1<A, TaskContext.Value<?>> gated(
       TaskId taskId,
       TaskContext tc,
-      TaskBuilder.F1<A, ?> f1) {
+      Fn1<A, ?> f1) {
     return (a) -> tc.invokeProcessFn(taskId, () -> tc.immediateValue(f1.apply(a)));
   }
 
-  static <A> TaskBuilder.F1<A, TaskContext.Value<?>> gatedVal(
+  static <A> Fn1<A, TaskContext.Value<?>> gatedVal(
       TaskId taskId,
       TaskContext tc,
-      TaskBuilder.F1<A, TaskContext.Value<?>> f1) {
+      Fn1<A, TaskContext.Value<?>> f1) {
     return (a) -> tc.invokeProcessFn(taskId, () -> f1.apply(a));
   }
 
-  static <R> EvalClosure<R> gated(TaskId taskId, TaskBuilder.F0<R> code) {
+  static <R> EvalClosure<R> gated(TaskId taskId, Fn<R> code) {
     return tc -> tc.invokeProcessFn(taskId, () -> tc.value(code));
   }
 
   static <R> EvalClosure<R> gatedVal(
       TaskId taskId,
-      TaskBuilder.F1<TaskContext, TaskContext.Value<R>> code) {
+      Fn1<TaskContext, TaskContext.Value<R>> code) {
     return tc -> tc.invokeProcessFn(taskId, () -> code.apply(TaskContextWithId.withId(tc, taskId)));
   }
 
   /**
-   * Converts an array of {@link TaskBuilder.F0}s of {@link Task}s to a {@link TaskBuilder.F0} of a list of
+   * Converts an array of {@link Fn}s of {@link Task}s to a {@link Fn} of a list of
    * those tasks {@link Task}s.
    *
-   * It will only evaluate the functions (through calling {@link TaskBuilder.F0#get()})
+   * It will only evaluate the functions (through calling {@link Fn#get()})
    * when the returned function is invoked. Thus it retains laziness.
    *
    * @param tasks  An array of lazy evaluated tasks
    * @return A function of a list of lazily evaluated tasks
    */
   @SafeVarargs
-  static TaskBuilder.F0<List<Task<?>>> lazyList(TaskBuilder.F0<? extends Task<?>>... tasks) {
+  static Fn<List<Task<?>>> lazyList(Fn<? extends Task<?>>... tasks) {
     return () -> Stream.of(tasks)
-        .map(TaskBuilder.F0::get)
+        .map(Fn::get)
         .collect(toList());
   }
 
   @SafeVarargs
-  static <T> TaskBuilder.F0<List<T>> lazyFlatten(TaskBuilder.F0<? extends List<? extends T>>... lists) {
+  static <T> Fn<List<T>> lazyFlatten(Fn<? extends List<? extends T>>... lists) {
     return () -> Stream.of(lists)
-        .map(TaskBuilder.F0::get)
+        .map(Fn::get)
         .flatMap(List::stream)
         .collect(toList());
   }
 
   static final class ChainingEval<F> implements Serializable {
 
-    private final TaskBuilder.F1<TaskContext, TaskBuilder.F1<F, TaskContext.Value<?>>> fClosure;
+    private final Fn1<TaskContext, Fn1<F, TaskContext.Value<?>>> fClosure;
 
-    ChainingEval(TaskBuilder.F1<TaskContext, TaskBuilder.F1<F, TaskContext.Value<?>>> fClosure) {
+    ChainingEval(Fn1<TaskContext, Fn1<F, TaskContext.Value<?>>> fClosure) {
       this.fClosure = fClosure;
     }
 
@@ -80,10 +80,10 @@ class BuilderUtils {
       return taskContext -> (TaskContext.Value<Z>) fClosure.apply(taskContext).apply(f);
     }
 
-    <G> ChainingEval<G> chain(TaskBuilder.F1<TaskContext, TaskBuilder.F1<G, TaskContext.Value<F>>> mapClosure) {
-      TaskBuilder.F1<TaskContext, TaskBuilder.F1<G, TaskContext.Value<?>>> continuation = tc -> {
-        TaskBuilder.F1<G, TaskContext.Value<F>> fng = mapClosure.apply(tc);
-        TaskBuilder.F1<F, TaskContext.Value<?>> fnf = fClosure.apply(tc);
+    <G> ChainingEval<G> chain(Fn1<TaskContext, Fn1<G, TaskContext.Value<F>>> mapClosure) {
+      Fn1<TaskContext, Fn1<G, TaskContext.Value<?>>> continuation = tc -> {
+        Fn1<G, TaskContext.Value<F>> fng = mapClosure.apply(tc);
+        Fn1<F, TaskContext.Value<?>> fnf = fClosure.apply(tc);
 
         return g -> fng.apply(g).flatMap(fnf::apply);
       };

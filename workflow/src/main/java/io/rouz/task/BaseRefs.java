@@ -9,7 +9,7 @@ import java.util.List;
  */
 class BaseRefs<Z> {
 
-  final TaskBuilder.F0<List<Task<?>>> inputs;
+  final Fn<List<Task<?>>> inputs;
   final TaskId taskId;
   protected final Class<Z> type;
 
@@ -17,7 +17,7 @@ class BaseRefs<Z> {
     this(Collections::emptyList, taskId, type);
   }
 
-  BaseRefs(TaskBuilder.F0<List<Task<?>>> inputs, TaskId taskId, Class<Z> type) {
+  BaseRefs(Fn<List<Task<?>>> inputs, TaskId taskId, Class<Z> type) {
     this.inputs = inputs;
     this.taskId = taskId;
     this.type = type;

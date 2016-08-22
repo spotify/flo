@@ -7,18 +7,18 @@ import io.rouz.task.TaskBuilder.F0;
 /**
  * A singleton supplier decorator.
  *
- * Ensures that the {@link #get()} method of the wrapped {@link F0} only is called once.
+ * Ensures that the {@link #get()} method of the wrapped {@link Fn} only is called once.
  */
-class Singleton<T> implements F0<T> {
+class Singleton<T> implements Fn<T> {
 
-  private final F0<T> supplier;
+  private final Fn<T> supplier;
   private volatile T value;
 
-  private Singleton(F0<T> supplier) {
+  private Singleton(Fn<T> supplier) {
     this.supplier = Objects.requireNonNull(supplier);
   }
 
-  static <T> F0<T> create(F0<T> fn) {
+  static <T> Fn<T> create(Fn<T> fn) {
     return new Singleton<>(fn);
   }
 

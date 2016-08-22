@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import io.rouz.task.Fn;
 import io.rouz.task.Task;
-import io.rouz.task.TaskBuilder.F0;
 import io.rouz.task.TaskContext;
 import io.rouz.task.TaskId;
 
@@ -49,7 +49,7 @@ public class InMemImmediateContext implements TaskContext {
   }
 
   @Override
-  public <T> Value<T> value(F0<T> value) {
+  public <T> Value<T> value(Fn<T> value) {
     return new DirectValue<>(value.get());
   }
 

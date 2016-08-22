@@ -68,7 +68,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldHandleStreamParameters() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
+    Fn<Task<Integer>> countSupplier = countConstructor();
 
     // 1,2,3,4,5
     List<Task<Integer>> fiveInts = Stream
@@ -86,7 +86,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldHandleMixedStreamAndPlainParameters() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
+    Fn<Task<Integer>> countSupplier = countConstructor();
 
     // 1,2,3,4,5
     List<Task<Integer>> fiveInts = Stream
@@ -106,9 +106,9 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldHandleMultipleStreamParameters() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
+    Fn<Task<Integer>> countSupplier = countConstructor();
 
-    F0<List<Task<Integer>>> fiveInts = () -> Stream
+    Fn<List<Task<Integer>>> fiveInts = () -> Stream
         .generate(countSupplier)
         .limit(5)
         .collect(toList());
@@ -124,7 +124,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldOnlyEvaluateInputsParameterOnce() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
+    Fn<Task<Integer>> countSupplier = countConstructor();
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
         .in(countSupplier::get)
@@ -141,7 +141,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldOnlyEvaluateCurriedInputsParameterOnce() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
+    Fn<Task<Integer>> countSupplier = countConstructor();
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class).curried()
         .in(countSupplier::get)
@@ -158,9 +158,9 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldOnlyEvaluateStreamParameterOnce() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
+    Fn<Task<Integer>> countSupplier = countConstructor();
 
-    F0<List<Task<Integer>>> fiveInts = () -> Stream
+    Fn<List<Task<Integer>>> fiveInts = () -> Stream
         .generate(countSupplier)
         .limit(5)
         .collect(toList());
@@ -180,9 +180,9 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldOnlyEvaluateCurriedStreamParameterOnce() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
+    Fn<Task<Integer>> countSupplier = countConstructor();
 
-    F0<List<Task<Integer>>> fiveInts = () -> Stream
+    Fn<List<Task<Integer>>> fiveInts = () -> Stream
         .generate(countSupplier)
         .limit(5)
         .collect(toList());
@@ -242,7 +242,7 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldListInputsLazily() throws Exception {
-    F0<Task<Integer>> countSupplier = countConstructor();
+    Fn<Task<Integer>> countSupplier = countConstructor();
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
         .in(countSupplier::get)
@@ -713,7 +713,7 @@ public class TaskEvalBehaviorTest {
     return Task.named("Leaf", s).ofType(String.class).process(() -> s);
   }
 
-  private F0<Task<Integer>> countConstructor() {
+  private Fn<Task<Integer>> countConstructor() {
     AtomicInteger counter = new AtomicInteger(0);
     return () -> {
       int n = counter.incrementAndGet();

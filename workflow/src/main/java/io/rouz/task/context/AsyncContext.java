@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import io.rouz.task.Fn;
 import io.rouz.task.Task;
 import io.rouz.task.TaskBuilder.F0;
 import io.rouz.task.TaskContext;
@@ -36,7 +37,7 @@ public class AsyncContext implements TaskContext {
   }
 
   @Override
-  public final <T> Value<T> value(F0<T> t) {
+  public final <T> Value<T> value(Fn<T> t) {
     return new FutureValue<>(CompletableFuture.supplyAsync(t, executor));
   }
 

@@ -10,8 +10,6 @@ import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import io.rouz.task.TaskBuilder.F0;
-
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -82,7 +80,7 @@ public class SerializationTest {
   public void shouldNotSerializeAnonymousClass() throws Exception {
     Task<String> task = Task.named("WithAnonClass").ofType(String.class)
         .process(
-            new F0<String>() {
+            new TaskBuilder.F0<String>() {
               @Override
               public String get() {
                 return "yes? no!";

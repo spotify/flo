@@ -141,7 +141,7 @@ class ControlledBlockingContext implements TaskContext {
   }
 
   @Override
-  public <T> Value<T> invokeProcessFn(TaskId taskId, F0<Value<T>> processFn) {
+  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
     //noinspection unchecked
     final Interceptor<T> interceptor = (Interceptor<T>) interceptors.get(taskId);
     if (interceptor != null) {
@@ -153,7 +153,7 @@ class ControlledBlockingContext implements TaskContext {
   }
 
   @Override
-  public <T> Value<T> value(F0<T> value) {
+  public <T> Value<T> value(Fn<T> value) {
     return new SettableValue<>(value.get());
   }
 
@@ -237,6 +237,6 @@ class ControlledBlockingContext implements TaskContext {
   }
 
   @FunctionalInterface
-  interface Interceptor<T> extends F1<F0<Value<T>>, Value<T>> {
+  interface Interceptor<T> extends F1<Fn<Value<T>>, Value<T>> {
   }
 }

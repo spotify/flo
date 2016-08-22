@@ -26,8 +26,11 @@ public interface {{interfaceName}}<Z> {
   Task<Z> process(F0<Z> code);
   Task<Z> processWithContext(F1<TaskContext, TaskContext.Value<Z>> code);
 
-  <A> {{interfaceName}}1<A, Z> in(F0<Task<A>> task);
-  <A> {{interfaceName}}1<List<A>, Z> ins(F0<List<Task<A>>> tasks);
+  <A> {{interfaceName}}1<A, Z> in(Fn<Task<A>> task);
+  <A> {{interfaceName}}1<List<A>, Z> ins(Fn<List<Task<A>>> tasks);
+
+  CurriedTaskBuilder.TaskBuilderC0<Z> curried();
+  CurriedTaskBuilder.TaskBuilderCV0<Z> curriedWithContext();
 {{#genBuilder}}
 
   interface {{interfaceName}}{{arity}}<{{typeArgs}}Z> {
@@ -35,8 +38,8 @@ public interface {{interfaceName}}<Z> {
     Task<Z> processWithContext(F{{arityPlus}}<TaskContext, {{typeArgs}}Value<Z>> code);
   {{^iter.isLast}}
 
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}{{nextArg}}, Z> in(F0<Task<{{nextArg}}>> task);
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}List<{{nextArg}}>, Z> ins(F0<List<Task<{{nextArg}}>>> tasks);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}{{nextArg}}, Z> in(Fn<Task<{{nextArg}}>> task);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}List<{{nextArg}}>, Z> ins(Fn<List<Task<{{nextArg}}>>> tasks);
   {{/iter.isLast}}
   }
 {{/genBuilder}}

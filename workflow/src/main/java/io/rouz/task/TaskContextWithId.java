@@ -36,12 +36,12 @@ class TaskContextWithId implements TaskContext {
   }
 
   @Override
-  public <T> Value<T> invokeProcessFn(TaskId taskId, TaskBuilder.F0<Value<T>> processFn) {
+  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
     return delegate.invokeProcessFn(taskId, processFn);
   }
 
   @Override
-  public <T> Value<T> value(TaskBuilder.F0<T> value) {
+  public <T> Value<T> value(Fn<T> value) {
     return delegate.value(value);
   }
 

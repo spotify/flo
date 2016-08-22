@@ -55,7 +55,7 @@ class TB[Z: ClassTag](val name: String, val args: AnyRef*) extends TaskBuilder0[
   override def in[A](task: => Task[A]): TaskBuilder1[A, Z] = new Builder1[A, Z] {
     type JA = A
     val convA: JA => A = identity
-    val builder = self.builder.in(f0[Task[A]](task))
+    val builder = self.builder.in(fn[Task[A]](task))
   }
 
   override def ins[A](tasks: => List[Task[A]]) = new Builder1[List[A], Z] {
@@ -84,7 +84,7 @@ trait Builder1[A, Z] extends TaskBuilder1[A, Z] { self =>
     type JB = B
     val convA = self.convA
     val convB: JB => B = identity
-    val builder = self.builder.in(f0[Task[B]](task))
+    val builder = self.builder.in(fn[Task[B]](task))
   }
 
   override def ins[B](tasks: => List[Task[B]]): TaskBuilder2[A, List[B], Z] =
@@ -120,7 +120,7 @@ trait Builder2[A, B, Z] extends TaskBuilder2[A, B, Z] { self =>
     val convA = self.convA
     val convB = self.convB
     val convC: JC => C = identity
-    val builder = self.builder.in(f0[Task[C]](task))
+    val builder = self.builder.in(fn[Task[C]](task))
   }
 
   override def ins[C](tasks: => List[Task[C]]): TaskBuilder3[A, B, List[C], Z] = new Builder3[A, B, List[C], Z] {
@@ -160,6 +160,10 @@ private object Util {
   def lazyFlatten[T](lazyLists: (() => List[T])*): () => List[T] =
     () => lazyLists.map(_()).flatMap(identity).toList
 
+  def fn[A](fn: => A): Fn[A] = new Fn[A] {
+    override def get(): A = fn
+  }
+
   def f0[A](fn: => A): F0[A] = new F0[A] {
     override def get(): A = fn
   }
@@ -188,6 +192,6 @@ private object Util {
     override def accept(a: A): Unit = fn(a)
   }
 
-  def javaList[A](in: => List[Task[A]]): F0[java.util.List[Task[A]]] =
-    Util.f0(JavaConversions.seqAsJavaList(in))
+  def javaList[A](in: => List[Task[A]]): Fn[java.util.List[Task[A]]] =
+    Util.fn(JavaConversions.seqAsJavaList(in))
 }
