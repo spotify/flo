@@ -1,0 +1,45 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.rouz</groupId>
+    <artifactId>flo</artifactId>
+    <version>0.0.6-SNAPSHOT</version>
+  </parent>
+
+  <name>Flo API Generator</name>
+  <artifactId>flo-api-generator</artifactId>
+  <description>
+    Internal module containing an annotation processor for generating the TaskBuilder API
+  </description>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.trimou</groupId>
+      <artifactId>trimou-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.testing.compile</groupId>
+      <artifactId>compile-testing</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.truth</groupId>
+      <artifactId>truth</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <!-- explicitly disable running annotation processing on this module -->
+          <compilerArgument>-proc:none</compilerArgument>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

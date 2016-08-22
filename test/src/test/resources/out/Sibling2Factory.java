@@ -1,6 +1,6 @@
 package common.pkg.sibling2;
 
-import io.rouz.task.Task;
+import io.rouz.flo.Task;
 
 import java.util.Map;
 
@@ -9,7 +9,7 @@ import javax.annotation.Generated;
 import joptsimple.OptionParser;
 import joptsimple.OptionSpecBuilder;
 
-@Generated("io.rouz.task.processor.TaskBindingProcessor")
+@Generated("io.rouz.flo.processor.TaskBindingProcessor")
 public final class FloRootTaskFactory {
 
   private FloRootTaskFactory() {

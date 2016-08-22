@@ -1,0 +1,56 @@
+package {{packageName}};
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import javax.annotation.Generated;
+
+import io.rouz.flo.TaskContext.Value;
+
+/**
+ * Types for the fluent task setup API
+ *
+ * The entry point for this api is {@link Task#named(String, Object...)}}.
+ *
+ * Note, the inner types should never have to explicitly be mentioned or imported. The API is
+ * supposed to be used through fluent calls that eventually lead to a {@link Task} instance.
+ */
+@Generated("io.rouz.flo.gen.ApiGeneratorProcessor")
+public interface {{interfaceName}}<Z> {
+
+  Task<Z> process(F0<Z> code);
+  Task<Z> processWithContext(F1<TaskContext, TaskContext.Value<Z>> code);
+
+  <A> {{interfaceName}}1<A, Z> in(Fn<Task<A>> task);
+  <A> {{interfaceName}}1<List<A>, Z> ins(Fn<List<Task<A>>> tasks);
+
+  CurriedTaskBuilder.TaskBuilderC0<Z> curried();
+  CurriedTaskBuilder.TaskBuilderCV0<Z> curriedWithContext();
+{{#genBuilder}}
+
+  interface {{interfaceName}}{{arity}}<{{typeArgs}}Z> {
+    Task<Z> process(F{{arity}}<{{typeArgs}}Z> code);
+    Task<Z> processWithContext(F{{arityPlus}}<TaskContext, {{typeArgs}}Value<Z>> code);
+  {{^iter.isLast}}
+
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}{{nextArg}}, Z> in(Fn<Task<{{nextArg}}>> task);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}List<{{nextArg}}>, Z> ins(Fn<List<Task<{{nextArg}}>>> tasks);
+  {{/iter.isLast}}
+  }
+{{/genBuilder}}
+{{#genFn}}
+
+  @FunctionalInterface
+  interface F{{arity}}<{{typeArgs}}Z> extends {{{jdkInterface}}}Serializable {
+  {{#iter.isFirst}}
+    Z get();
+  {{/iter.isFirst}}
+  {{^iter.isFirst}}
+    Z apply({{parameters}});
+  {{/iter.isFirst}}
+  }
+{{/genFn}}
+}
