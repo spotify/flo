@@ -1,8 +1,8 @@
 package io.rouz.scratch;
 
-import io.rouz.task.Task;
-import io.rouz.task.TaskContext;
-import io.rouz.task.TaskBuilder;
+import io.rouz.flo.Task;
+import io.rouz.flo.TaskContext;
+import io.rouz.flo.TaskBuilder;
 
 /**
  * Simple fibonacci implementations
