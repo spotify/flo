@@ -1,7 +1,6 @@
 package io.rouz.task;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -15,10 +14,6 @@ import io.rouz.task.dsl.TaskBuilder.F4;
 import io.rouz.task.dsl.TaskBuilder.TaskBuilder1;
 import io.rouz.task.dsl.TaskBuilder.TaskBuilder2;
 import io.rouz.task.dsl.TaskBuilder.TaskBuilder3;
-import io.rouz.task.dsl.TaskBuilder.TaskBuilderC;
-import io.rouz.task.dsl.TaskBuilder.TaskBuilderC0;
-import io.rouz.task.dsl.TaskBuilder.TaskBuilderCV;
-import io.rouz.task.dsl.TaskBuilder.TaskBuilderCV0;
 
 import static io.rouz.task.TaskContextWithId.withId;
 import static java.util.stream.Collectors.toList;
@@ -30,7 +25,7 @@ import static java.util.stream.Collectors.toList;
  * {@link TaskBuilder}X interfaces by linearizing the implementation through composing functions.
  *
  * The linearization is implemented by letting the next builder in the chain take either a
- * {@link RecursiveEval} or {@link ChainingEval}. This evaluator allows the builder to chain
+ * {@link BuilderCurried.RecursiveEval} or {@link ChainingEval}. This evaluator allows the builder to chain
  * onto the evaluation by including more input tasks. The evaluator will finally be used to
  * terminate the builder by enclosing a function into an {@link EvalClosure} for a {@link Task}.
  */
@@ -96,150 +91,12 @@ final class TaskBuilders {
 
     @Override
     public TaskBuilderC0<Z> curried() {
-      return new BuilderC0<>(taskId, type);
+      return new BuilderCurried.BuilderC0<>(taskId, type);
     }
 
     @Override
     public TaskBuilderCV0<Z> curriedWithContext() {
-      return new BuilderCV0<>(taskId, type);
-    }
-  }
-
-  private static class BuilderC0<Z> extends BaseRefs<Z> implements TaskBuilderC0<Z> {
-
-    BuilderC0(TaskId taskId, Class<Z> type) {
-      super(taskId, type);
-    }
-
-    @Override
-    public <A> TaskBuilderC<A, Z, Z> in(F0<Task<A>> aTask) {
-      F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
-      return new BuilderC<>(
-          lazyFlatten(inputs, lazyList(aTaskSingleton)),
-          taskId, type,
-          leafEval(
-              taskId,
-              tc -> tc.evaluate(aTaskSingleton.get())));
-    }
-
-    @Override
-    public <A> TaskBuilderC<List<A>, Z, Z> ins(F0<List<Task<A>>> aTasks) {
-      F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
-      return new BuilderC<>(
-          lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
-          taskId, type,
-          leafEval(
-              taskId,
-              tc -> aTasksSingleton.get()
-                  .stream().map(tc::evaluate).collect(tc.toValueList())));
-    }
-  }
-
-  private static class BuilderCV0<Z> extends BaseRefs<Z> implements TaskBuilderCV0<Z> {
-
-    BuilderCV0(TaskId taskId, Class<Z> type) {
-      super(taskId, type);
-    }
-
-    @Override
-    public <A> TaskBuilderCV<A, Value<Z>, Z> in(F0<Task<A>> aTask) {
-      F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
-      return new BuilderCV<>(
-          lazyFlatten(inputs, lazyList(aTaskSingleton)),
-          taskId, type,
-          leafValEval(
-              taskId,
-              tc -> tc.evaluate(aTaskSingleton.get())));
-    }
-
-    @Override
-    public <A> TaskBuilderCV<List<A>, Value<Z>, Z> ins(F0<List<Task<A>>> aTasks) {
-      F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
-      return new BuilderCV<>(
-          lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
-          taskId, type,
-          leafValEval(
-              taskId,
-              tc -> aTasksSingleton.get()
-                  .stream().map(tc::evaluate).collect(tc.toValueList())));
-    }
-  }
-
-  // #############################################################################################
-
-  private static class BuilderC<A, Y, Z> extends BaseRefs<Z> implements TaskBuilderC<A, Y, Z> {
-
-    private final RecursiveEval<A, Y, Z> evaluator;
-
-    private BuilderC(
-        F0<List<Task<?>>> inputs, TaskId taskId, Class<Z> type, RecursiveEval<A, Y, Z> evaluator) {
-      super(inputs, taskId, type);
-      this.evaluator = evaluator;
-    }
-
-    @Override
-    public Task<Z> process(F1<A, Y> fn) {
-      return Task.create(inputs, type, evaluator.enclose(fn), taskId);
-    }
-
-    @Override
-    public <B> TaskBuilderC<B, F1<A, Y>, Z> in(F0<Task<B>> bTask) {
-      F0<Task<B>> bTaskSingleton = Singleton.create(bTask);
-      return new BuilderC<>(
-          lazyFlatten(inputs, lazyList(bTaskSingleton)),
-          taskId, type,
-          evaluator.curry(
-              tc -> tc.evaluate(bTaskSingleton.get())));
-    }
-
-    @Override
-    public <B> TaskBuilderC<List<B>, F1<A, Y>, Z> ins(F0<List<Task<B>>> bTasks) {
-      F0<List<Task<B>>> bTasksSingleton = Singleton.create(bTasks);
-      return new BuilderC<>(
-          lazyFlatten(inputs, lazyFlatten(bTasksSingleton)),
-          taskId, type,
-          evaluator.curry(
-              tc -> bTasksSingleton.get()
-                  .stream().map(tc::evaluate).collect(tc.toValueList())));
-    }
-  }
-
-  private static class BuilderCV<A, Y, Z> extends BaseRefs<Z> implements TaskBuilderCV<A, Y, Z> {
-
-    private final RecursiveEval<A, Y, Z> evaluator;
-
-    private BuilderCV(
-        F0<List<Task<?>>> inputs, TaskId taskId, Class<Z> type, RecursiveEval<A, Y, Z> evaluator) {
-      super(inputs, taskId, type);
-      this.evaluator = evaluator;
-    }
-
-    @Override
-    public Task<Z> process(F1<TaskContext, F1<A, Y>> code) {
-      EvalClosure<Z> closure =
-          tc -> evaluator.<Z>enclose((a) -> code.apply(withId(tc, taskId)).apply(a)).eval(tc);
-      return Task.create(inputs, type, closure, taskId);
-    }
-
-    @Override
-    public <B> TaskBuilderCV<B, F1<A, Y>, Z> in(F0<Task<B>> bTask) {
-      F0<Task<B>> bTaskSingleton = Singleton.create(bTask);
-      return new BuilderCV<>(
-          lazyFlatten(inputs, lazyList(bTaskSingleton)),
-          taskId, type,
-          evaluator.curry(
-              tc -> tc.evaluate(bTaskSingleton.get())));
-    }
-
-    @Override
-    public <B> TaskBuilderCV<List<B>, F1<A, Y>, Z> ins(F0<List<Task<B>>> bTasks) {
-      F0<List<Task<B>>> bTasksSingleton = Singleton.create(bTasks);
-      return new BuilderCV<>(
-          lazyFlatten(inputs, lazyFlatten(bTasksSingleton)),
-          taskId, type,
-          evaluator.curry(
-              tc -> bTasksSingleton.get()
-                  .stream().map(tc::evaluate).collect(tc.toValueList())));
+      return new BuilderCurried.BuilderCV0<>(taskId, type);
     }
   }
 
@@ -406,79 +263,8 @@ final class TaskBuilders {
 
   // #############################################################################################
 
-  /**
-   * A convenience class for holding some reference. This is only so that we don't have to repeat
-   * these declaration in every class above.
-   */
-  private static class BaseRefs<Z> {
-
-    protected final F0<List<Task<?>>> inputs;
-    protected final TaskId taskId;
-    protected final Class<Z> type;
-
-    protected BaseRefs(TaskId taskId, Class<Z> type) {
-      this(Collections::emptyList, taskId, type);
-    }
-
-    protected BaseRefs(F0<List<Task<?>>> inputs, TaskId taskId, Class<Z> type) {
-      this.inputs = inputs;
-      this.taskId = taskId;
-      this.type = type;
-    }
-  }
-
-  // #############################################################################################
-
-  private static <A, B> RecursiveEval<A, B, B> leafEval(
-      TaskId taskId,
-      EvalClosure<A> aClosure) {
-    return new RecursiveEval<>(true, taskId, aClosure, taskContext -> taskContext::immediateValue);
-  }
-
-  private static <A, B> RecursiveEval<A, Value<B>, B> leafValEval(
-      TaskId taskId,
-      EvalClosure<A> aClosure) {
-    return new RecursiveEval<>(true, taskId, aClosure, taskContext -> val -> val);
-  }
-
   private static <F> ChainingEval<F> leafEvalFn(F1<TaskContext, F1<F, Value<?>>> fClosure) {
     return new ChainingEval<>(fClosure);
-  }
-
-  private static final class RecursiveEval<A, B, Z> implements Serializable {
-
-    private final boolean leaf;
-    private final TaskId taskId;
-    private final EvalClosure<A> aClosure;
-    private final F1<TaskContext, F1<B, Value<Z>>> contClosure;
-
-    RecursiveEval(
-        boolean leaf,
-        TaskId taskId,
-        EvalClosure<A> aClosure,
-        F1<TaskContext, F1<B, Value<Z>>> contClosure) {
-      this.leaf = leaf;
-      this.taskId = taskId;
-      this.aClosure = aClosure;
-      this.contClosure = contClosure;
-    }
-
-    public EvalClosure<Z> enclose(F1<A, B> fn) {
-      return taskContext -> continuation(taskContext).apply(fn);
-    }
-
-    public <T> RecursiveEval<T, F1<A, B>, Z> curry(EvalClosure<T> tClosure) {
-      return new RecursiveEval<>(false, taskId, tClosure, this::continuation);
-    }
-
-    private F1<F1<A, B>, Value<Z>> continuation(TaskContext taskContext) {
-      F1<B, Value<Z>> cont = contClosure.apply(taskContext);
-      Value<A> aVal = aClosure.eval(taskContext);
-
-      return fn -> aVal.flatMap((a) -> (leaf)
-          ? taskContext.invokeProcessFn(taskId, () -> cont.apply(fn.apply(a)))
-          : cont.apply(fn.apply(a)));
-    }
   }
 
   private static final class ChainingEval<F> implements Serializable {
@@ -489,12 +275,12 @@ final class TaskBuilders {
       this.fClosure = fClosure;
     }
 
-    public <Z> EvalClosure<Z> enclose(F f) {
+    <Z> EvalClosure<Z> enclose(F f) {
       //noinspection unchecked
       return taskContext -> (Value<Z>) fClosure.apply(taskContext).apply(f);
     }
 
-    public <G> ChainingEval<G> chain(F1<TaskContext, F1<G, Value<F>>> mapClosure) {
+    <G> ChainingEval<G> chain(F1<TaskContext, F1<G, Value<F>>> mapClosure) {
       F1<TaskContext, F1<G, Value<?>>> continuation = tc -> {
         F1<G, Value<F>> fng = mapClosure.apply(tc);
         F1<F, Value<?>> fnf = fClosure.apply(tc);
@@ -532,14 +318,14 @@ final class TaskBuilders {
    * @return A function of a list of lazily evaluated tasks
    */
   @SafeVarargs
-  private static F0<List<Task<?>>> lazyList(F0<? extends Task<?>>... tasks) {
+  static F0<List<Task<?>>> lazyList(F0<? extends Task<?>>... tasks) {
     return () -> Stream.of(tasks)
         .map(F0::get)
         .collect(toList());
   }
 
   @SafeVarargs
-  private static <T> F0<List<T>> lazyFlatten(F0<? extends List<? extends T>>... lists) {
+  static <T> F0<List<T>> lazyFlatten(F0<? extends List<? extends T>>... lists) {
     return () -> Stream.of(lists)
         .map(F0::get)
         .flatMap(List::stream)
