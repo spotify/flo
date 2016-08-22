@@ -1,9 +1,8 @@
 package io.rouz.task;
 
-import java.io.Serializable;
 import java.util.List;
-import java.util.stream.Stream;
 
+import io.rouz.task.BuilderUtils.ChainingEval;
 import io.rouz.task.TaskContext.Value;
 import io.rouz.task.dsl.TaskBuilder;
 import io.rouz.task.dsl.TaskBuilder.F0;
@@ -15,8 +14,12 @@ import io.rouz.task.dsl.TaskBuilder.TaskBuilder1;
 import io.rouz.task.dsl.TaskBuilder.TaskBuilder2;
 import io.rouz.task.dsl.TaskBuilder.TaskBuilder3;
 
+import static io.rouz.task.BuilderUtils.gated;
+import static io.rouz.task.BuilderUtils.gatedVal;
+import static io.rouz.task.BuilderUtils.lazyFlatten;
+import static io.rouz.task.BuilderUtils.lazyList;
+import static io.rouz.task.BuilderUtils.leafEvalFn;
 import static io.rouz.task.TaskContextWithId.withId;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Package local implementation of the {@link TaskBuilder} tree.
@@ -259,76 +262,5 @@ final class TaskBuilders {
           tc -> valEvaluator.<Z>enclose((a, b, c) -> code.apply(withId(tc, taskId), a, b, c)).eval(tc);
       return Task.create(inputs, type, closure, taskId);
     }
-  }
-
-  // #############################################################################################
-
-  private static <F> ChainingEval<F> leafEvalFn(F1<TaskContext, F1<F, Value<?>>> fClosure) {
-    return new ChainingEval<>(fClosure);
-  }
-
-  private static final class ChainingEval<F> implements Serializable {
-
-    private final F1<TaskContext, F1<F, Value<?>>> fClosure;
-
-    ChainingEval(F1<TaskContext, F1<F, Value<?>>> fClosure) {
-      this.fClosure = fClosure;
-    }
-
-    <Z> EvalClosure<Z> enclose(F f) {
-      //noinspection unchecked
-      return taskContext -> (Value<Z>) fClosure.apply(taskContext).apply(f);
-    }
-
-    <G> ChainingEval<G> chain(F1<TaskContext, F1<G, Value<F>>> mapClosure) {
-      F1<TaskContext, F1<G, Value<?>>> continuation = tc -> {
-        F1<G, Value<F>> fng = mapClosure.apply(tc);
-        F1<F, Value<?>> fnf = fClosure.apply(tc);
-
-        return g -> fng.apply(g).flatMap(fnf::apply);
-      };
-      return new ChainingEval<>(continuation);
-    }
-  }
-
-  private static <A> F1<A, Value<?>> gated(TaskId taskId, TaskContext tc, F1<A, ?> f1) {
-    return (a) -> tc.invokeProcessFn(taskId, () -> tc.immediateValue(f1.apply(a)));
-  }
-
-  private static <A> F1<A, Value<?>> gatedVal(TaskId taskId, TaskContext tc, F1<A, Value<?>> f1) {
-    return (a) -> tc.invokeProcessFn(taskId, () -> f1.apply(a));
-  }
-
-  private static <R> EvalClosure<R> gated(TaskId taskId, F0<R> code) {
-    return tc -> tc.invokeProcessFn(taskId, () -> tc.value(code));
-  }
-
-  private static <R> EvalClosure<R> gatedVal(TaskId taskId, F1<TaskContext, Value<R>> code) {
-    return tc -> tc.invokeProcessFn(taskId, () -> code.apply(withId(tc, taskId)));
-  }
-
-  /**
-   * Converts an array of {@link F0}s of {@link Task}s to a {@link F0} of a list of
-   * those tasks {@link Task}s.
-   *
-   * It will only evaluate the functions (through calling {@link F0#get()})
-   * when the returned function is invoked. Thus it retains laziness.
-   *
-   * @param tasks  An array of lazy evaluated tasks
-   * @return A function of a list of lazily evaluated tasks
-   */
-  @SafeVarargs
-  static F0<List<Task<?>>> lazyList(F0<? extends Task<?>>... tasks) {
-    return () -> Stream.of(tasks)
-        .map(F0::get)
-        .collect(toList());
-  }
-
-  @SafeVarargs
-  static <T> F0<List<T>> lazyFlatten(F0<? extends List<? extends T>>... lists) {
-    return () -> Stream.of(lists)
-        .map(F0::get)
-        .flatMap(List::stream)
-        .collect(toList());
   }
 }

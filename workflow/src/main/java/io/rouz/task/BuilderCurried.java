@@ -5,12 +5,17 @@ import java.util.List;
 
 import io.rouz.task.dsl.TaskBuilder;
 
+import static io.rouz.task.BuilderUtils.lazyFlatten;
+import static io.rouz.task.BuilderUtils.lazyList;
 import static io.rouz.task.TaskContextWithId.withId;
 
 /**
  * Implementation of the curried {@link TaskBuilder} api
  */
 class BuilderCurried {
+
+  private BuilderCurried() {
+  }
 
   private static <A, B> RecursiveEval<A, B, B> leafEval(
       TaskId taskId,
@@ -34,7 +39,7 @@ class BuilderCurried {
     public <A> TaskBuilder.TaskBuilderC<A, Z, Z> in(TaskBuilder.F0<Task<A>> aTask) {
       TaskBuilder.F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new BuilderC<>(
-          TaskBuilders.lazyFlatten(inputs, TaskBuilders.lazyList(aTaskSingleton)),
+          lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskId, type,
           leafEval(
               taskId,
@@ -45,7 +50,7 @@ class BuilderCurried {
     public <A> TaskBuilder.TaskBuilderC<List<A>, Z, Z> ins(TaskBuilder.F0<List<Task<A>>> aTasks) {
       TaskBuilder.F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new BuilderC<>(
-          TaskBuilders.lazyFlatten(inputs, TaskBuilders.lazyFlatten(aTasksSingleton)),
+          lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskId, type,
           leafEval(
               taskId,
@@ -64,7 +69,7 @@ class BuilderCurried {
     public <A> TaskBuilder.TaskBuilderCV<A, TaskContext.Value<Z>, Z> in(TaskBuilder.F0<Task<A>> aTask) {
       TaskBuilder.F0<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new BuilderCV<>(
-          TaskBuilders.lazyFlatten(inputs, TaskBuilders.lazyList(aTaskSingleton)),
+          lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskId, type,
           leafValEval(
               taskId,
@@ -75,7 +80,7 @@ class BuilderCurried {
     public <A> TaskBuilder.TaskBuilderCV<List<A>, TaskContext.Value<Z>, Z> ins(TaskBuilder.F0<List<Task<A>>> aTasks) {
       TaskBuilder.F0<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new BuilderCV<>(
-          TaskBuilders.lazyFlatten(inputs, TaskBuilders.lazyFlatten(aTasksSingleton)),
+          lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskId, type,
           leafValEval(
               taskId,
@@ -103,7 +108,7 @@ class BuilderCurried {
     public <B> TaskBuilder.TaskBuilderC<B, TaskBuilder.F1<A, Y>, Z> in(TaskBuilder.F0<Task<B>> bTask) {
       TaskBuilder.F0<Task<B>> bTaskSingleton = Singleton.create(bTask);
       return new BuilderC<>(
-          TaskBuilders.lazyFlatten(inputs, TaskBuilders.lazyList(bTaskSingleton)),
+          lazyFlatten(inputs, lazyList(bTaskSingleton)),
           taskId, type,
           evaluator.curry(
               tc -> tc.evaluate(bTaskSingleton.get())));
@@ -113,7 +118,7 @@ class BuilderCurried {
     public <B> TaskBuilder.TaskBuilderC<List<B>, TaskBuilder.F1<A, Y>, Z> ins(TaskBuilder.F0<List<Task<B>>> bTasks) {
       TaskBuilder.F0<List<Task<B>>> bTasksSingleton = Singleton.create(bTasks);
       return new BuilderC<>(
-          TaskBuilders.lazyFlatten(inputs, TaskBuilders.lazyFlatten(bTasksSingleton)),
+          lazyFlatten(inputs, lazyFlatten(bTasksSingleton)),
           taskId, type,
           evaluator.curry(
               tc -> bTasksSingleton.get()
@@ -142,7 +147,7 @@ class BuilderCurried {
     public <B> TaskBuilder.TaskBuilderCV<B, TaskBuilder.F1<A, Y>, Z> in(TaskBuilder.F0<Task<B>> bTask) {
       TaskBuilder.F0<Task<B>> bTaskSingleton = Singleton.create(bTask);
       return new BuilderCV<>(
-          TaskBuilders.lazyFlatten(inputs, TaskBuilders.lazyList(bTaskSingleton)),
+          lazyFlatten(inputs, lazyList(bTaskSingleton)),
           taskId, type,
           evaluator.curry(
               tc -> tc.evaluate(bTaskSingleton.get())));
@@ -152,7 +157,7 @@ class BuilderCurried {
     public <B> TaskBuilder.TaskBuilderCV<List<B>, TaskBuilder.F1<A, Y>, Z> ins(TaskBuilder.F0<List<Task<B>>> bTasks) {
       TaskBuilder.F0<List<Task<B>>> bTasksSingleton = Singleton.create(bTasks);
       return new BuilderCV<>(
-          TaskBuilders.lazyFlatten(inputs, TaskBuilders.lazyFlatten(bTasksSingleton)),
+          lazyFlatten(inputs, lazyFlatten(bTasksSingleton)),
           taskId, type,
           evaluator.curry(
               tc -> bTasksSingleton.get()
