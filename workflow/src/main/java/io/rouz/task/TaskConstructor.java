@@ -1,11 +1,7 @@
-package io.rouz.task.cli;
-
-import io.rouz.task.Task;
+package io.rouz.task;
 
 /**
  * Used to create a {@link Task} by parsing arguments from a String array.
- *
- * Use with {@link Cli}.
  */
 public interface TaskConstructor<T> {
 

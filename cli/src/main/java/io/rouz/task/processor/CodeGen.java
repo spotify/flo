@@ -17,7 +17,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-import io.rouz.task.cli.TaskConstructor;
+import io.rouz.task.TaskConstructor;
 import io.rouz.task.processor.Binding.Argument;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;

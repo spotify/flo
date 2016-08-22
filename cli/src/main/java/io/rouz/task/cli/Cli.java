@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.rouz.task.Task;
+import io.rouz.task.TaskConstructor;
 import io.rouz.task.TaskContext;
 import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionParser;

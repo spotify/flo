@@ -2,13 +2,11 @@ package {{packageName}};
 
 import java.util.List;
 
-import io.rouz.task.BuilderUtils.ChainingEval;
-import io.rouz.task.Task;
-import io.rouz.task.TaskContext;
-import io.rouz.task.TaskContext.Value;
+import javax.annotation.Generated;
 
-import io.rouz.task.{{interfaceName}};
-import io.rouz.task.{{interfaceName}}.*;
+import io.rouz.task.BuilderUtils.ChainingEval;
+import io.rouz.task.TaskContext.Value;
+import io.rouz.task.TaskBuilder.*;
 
 import static io.rouz.task.BuilderUtils.gated;
 import static io.rouz.task.BuilderUtils.gatedVal;
@@ -16,8 +14,6 @@ import static io.rouz.task.BuilderUtils.lazyFlatten;
 import static io.rouz.task.BuilderUtils.lazyList;
 import static io.rouz.task.BuilderUtils.leafEvalFn;
 import static io.rouz.task.TaskContextWithId.withId;
-
-import javax.annotation.Generated;
 
 /**
  * Package local implementation of the {@link TaskBuilder} tree.

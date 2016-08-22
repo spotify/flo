@@ -1,7 +1,7 @@
 package compiling;
 
 import io.rouz.task.Task;
-import io.rouz.task.cli.TaskConstructor;
+import io.rouz.task.TaskConstructor;
 
 import java.util.Arrays;
 import java.util.Objects;
