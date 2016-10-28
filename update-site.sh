@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 
-git checkout v$1
+set +ex
+
+V=$(git tag | tail -1)
+V=${V#v}
+
+git checkout v$V
 mvn clean site site:deploy
-g checkout gh-pages
-mv website/maven maven/$1
+git checkout gh-pages
+mv website/maven maven/$V
 rm -rf maven/latest
-cp -r maven/$1 maven/latest
+cp -r maven/$V maven/latest
 git add .
-git commit -m 'update maven site'
+git commit -m "update maven site for v$V"
 git push
 git checkout master
