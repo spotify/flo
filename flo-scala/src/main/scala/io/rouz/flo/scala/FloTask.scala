@@ -8,7 +8,7 @@ import _root_.scala.collection.JavaConversions
 import _root_.scala.reflect.ClassTag
 
 object FloTask {
-  def named[Z: ClassTag](name: String, args: AnyRef*): TaskBuilder0[Z] = new TB(name, args:_*)
+  def named[Z: ClassTag](name: String, args: Any*): TaskBuilder0[Z] = new TB(name, args:_*)
 }
 
 trait TaskBuilder0[Z] {
@@ -37,13 +37,13 @@ trait TaskBuilder3[A, B, C, Z] {
   def processWithContext(code: TaskContext => (A,B,C) => Value[Z]): Task[Z]
 }
 
-class TB[Z: ClassTag](val name: String, val args: AnyRef*) extends TaskBuilder0[Z] { self =>
+class TB[Z: ClassTag](val name: String, val args: Any*) extends TaskBuilder0[Z] { self =>
 
   import Util._
 
   private val cls = implicitly[ClassTag[Z]].runtimeClass.asInstanceOf[Class[Z]]
   private val builder = Task
-      .named(name, args:_*)
+      .named(name, args.asInstanceOf[Seq[AnyRef]]:_*)
       .ofType(cls)
 
   override def process(code: => Z): Task[Z] =
@@ -154,11 +154,6 @@ trait Builder3[A, B, C, Z] extends TaskBuilder3[A, B, C, Z] {
 }
 
 private object Util {
-  def lazyList(lazyTasks: (() => Task[_])*): () => List[Task[_]] =
-    () => lazyTasks.map(_()).toList
-
-  def lazyFlatten[T](lazyLists: (() => List[T])*): () => List[T] =
-    () => lazyLists.map(_()).flatMap(identity).toList
 
   def fn[A](fn: => A): Fn[A] = new Fn[A] {
     override def get(): A = fn
@@ -182,14 +177,6 @@ private object Util {
 
   def f4[A, B, C, D, E](fn: (A,B,C,D) => E): F4[A, B, C, D, E] = new F4[A, B, C, D, E] {
     override def apply(a: A, b: B, c: C, d: D): E = fn(a, b, c, d)
-  }
-
-  def fn1[A, B](fn: A => B): java.util.function.Function[A, B] = new java.util.function.Function[A, B] {
-    override def apply(a: A): B = fn(a)
-  }
-
-  def fn0[A](fn: A => Unit): java.util.function.Consumer[A] = new java.util.function.Consumer[A] {
-    override def accept(a: A): Unit = fn(a)
   }
 
   def javaList[A](in: => List[Task[A]]): Fn[java.util.List[Task[A]]] =
