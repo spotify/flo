@@ -45,26 +45,51 @@ Fibonacci serves as a good example even though it's not at all the kind of thing
 ```java
 class Fib {
 
-  static Task<Long> nth(long n) {
-    TaskBuilder<Long> fib = Task.named("Fib", n).ofType(Long.class);
+  static Task<Long> fib(long n) {
+    TaskBuilder<Long> builder = Task.named("fib", n).ofType(Long.class);
     if (n < 2) {
-      return fib
+      return builder
           .process(() -> n);
     } else {
-      return fib
-          .in(() -> Fib.nth(n - 1))
-          .in(() -> Fib.nth(n - 2))
+      return builder
+          .in(() -> fib(n - 1))
+          .in(() -> fib(n - 2))
           .process((a, b) -> a + b);
     }
   }
 
   public static void main(String[] args) {
-    Task<Long> fib92 = nth(92);
+    Task<Long> fib92 = fib(92);
     TaskContext taskContext = TaskContext.inmem();
     TaskContext.Value<Long> value = taskContext.evaluate(fib92);
 
     value.consume(f92 -> System.out.println("fib(92) = " + f92));
   }
+}
+```
+
+Scala equivalent
+
+```scala
+import io.rouz.flo._
+
+object Fib extends App {
+
+  def fib(n: Int): Task[Long] = if (n < 2) {
+    task[Long]("fib", n)
+        .process(n)
+  } else {
+    task[Long]("fib", n)
+        .in(fib(n - 1))
+        .in(fib(n - 2))
+        .process(_ + _)
+  }
+
+  val fib92 = fib(92)
+  val taskContext = TaskContext.inmem
+  val value = taskContext.evaluate(fib92)
+
+  value.consume((f92:Long) => println("fib(92) = " + f92))
 }
 ```
 
