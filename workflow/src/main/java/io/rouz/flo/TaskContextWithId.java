@@ -36,6 +36,11 @@ class TaskContextWithId implements TaskContext {
   }
 
   @Override
+  public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
+    return delegate.evaluateInternal(task, context);
+  }
+
+  @Override
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
     return delegate.invokeProcessFn(taskId, processFn);
   }

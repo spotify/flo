@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collector;
@@ -36,7 +36,23 @@ public interface TaskContext {
    * @return A value of the task result
    */
   default <T> Value<T> evaluate(Task<T> task) {
-    return task.code().eval(this);
+    return evaluateInternal(task, this);
+  }
+
+  /**
+   * A variant of {@link #evaluate(Task)} that allows the caller to specify the {@link TaskContext}
+   * that should be used within the graph during evaluation.
+   *
+   * This is intended to be called from {@link TaskContext} implementations that form a composition
+   * of other contexts.
+   *
+   * @param task     The task to evaluate
+   * @param context  The context to use in further evaluation
+   * @param <T>      The type of the task result
+   * @return A value of the task result
+   */
+  default <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
+    return task.code().eval(context);
   }
 
   /**
@@ -225,12 +241,12 @@ public interface TaskContext {
 
   /**
    * Create an asynchronous {@link TaskContext} that executes all evaluation on the given
-   * {@link ExecutorService}.
+   * {@link Executor}.
    *
-   * @param executorService  The executor service to run evaluations on
+   * @param executor  The executor to run evaluations on
    * @return The asynchronous context
    */
-  static TaskContext async(ExecutorService executorService) {
-    return AsyncContext.create(executorService);
+  static TaskContext async(Executor executor) {
+    return AsyncContext.create(executor);
   }
 }
