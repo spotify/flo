@@ -23,6 +23,16 @@
         </dependency>
 
         <dependency>
+            <groupId>com.spotify</groupId>
+            <artifactId>apollo-api</artifactId>
+            <version>1.2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okio</groupId>
+            <artifactId>okio</artifactId>
+            <version>1.6.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.7.0-rc1</version>

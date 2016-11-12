@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -21,19 +22,19 @@ import io.rouz.flo.TaskContext;
  */
 public class AsyncContext implements TaskContext {
 
-  private final ExecutorService executor;
+  private final Executor executor;
 
-  protected AsyncContext(ExecutorService executor) {
+  protected AsyncContext(Executor executor) {
     this.executor = Objects.requireNonNull(executor);
   }
 
-  public static TaskContext create(ExecutorService executor) {
+  public static TaskContext create(Executor executor) {
     return new AsyncContext(executor);
   }
 
   @Override
-  public <T> Value<T> evaluate(Task<T> task) {
-    return flatten(() -> TaskContext.super.evaluate(task));
+  public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
+    return flatten(() -> TaskContext.super.evaluateInternal(task, context));
   }
 
   @Override

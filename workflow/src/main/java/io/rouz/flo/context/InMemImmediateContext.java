@@ -33,7 +33,7 @@ public class InMemImmediateContext implements TaskContext {
   }
 
   @Override
-  public <T> Value<T> evaluate(Task<T> task) {
+  public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
     final TaskId taskId =  task.id();
 
     final Value<T> value;
@@ -41,7 +41,7 @@ public class InMemImmediateContext implements TaskContext {
       value = get(taskId);
       LOG.debug("Found calculated value for {} = {}", taskId, value);
     } else {
-      value = TaskContext.super.evaluate(task);
+      value = TaskContext.super.evaluateInternal(task, context);
       put(taskId, value);
     }
 
