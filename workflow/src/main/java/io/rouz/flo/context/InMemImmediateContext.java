@@ -50,7 +50,15 @@ public class InMemImmediateContext implements TaskContext {
 
   @Override
   public <T> Value<T> value(Fn<T> value) {
-    return new DirectValue<>(value.get());
+    final Promise<T> promise = promise();
+
+    try {
+      promise.set(value.get());
+    } catch (Throwable t) {
+      promise.fail(t);
+    }
+
+    return promise.value();
   }
 
   @Override

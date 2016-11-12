@@ -126,9 +126,9 @@ public class TaskEvalBehaviorTest {
     Fn<Task<Integer>> countSupplier = countConstructor();
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
-        .in(countSupplier::get)
-        .in(countSupplier::get)
-        .in(countSupplier::get)
+        .in(countSupplier)
+        .in(countSupplier)
+        .in(countSupplier)
         .process((a, b, c) -> a + b + c);
 
     // dummy run
@@ -143,9 +143,9 @@ public class TaskEvalBehaviorTest {
     Fn<Task<Integer>> countSupplier = countConstructor();
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class).curried()
-        .in(countSupplier::get)
-        .in(countSupplier::get)
-        .in(countSupplier::get)
+        .in(countSupplier)
+        .in(countSupplier)
+        .in(countSupplier)
         .process(a -> b -> c -> a + b + c);
 
     // dummy run
@@ -244,9 +244,9 @@ public class TaskEvalBehaviorTest {
     Fn<Task<Integer>> countSupplier = countConstructor();
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
-        .in(countSupplier::get)
-        .in(countSupplier::get)
-        .in(countSupplier::get)
+        .in(countSupplier)
+        .in(countSupplier)
+        .in(countSupplier)
         .process((a, b, c) -> a + b + c);
 
     // pre fetch one
