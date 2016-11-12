@@ -12,7 +12,7 @@ import io.rouz.flo.TaskContext.Value;
 /**
  * A function that folds a {@link List} of {@link Value}s into a {@link Value} of a {@link List}.
  *
- * It can be used with a {@link Collector} to fold a {@link Stream} of {@link Value}s.
+ * <p>It can be used with a {@link Collector} to fold a {@link Stream} of {@link Value}s.
  */
 final class ValueFold<T> implements Function<List<Value<T>>, Value<List<T>>> {
 

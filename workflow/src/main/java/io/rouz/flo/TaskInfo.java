@@ -12,7 +12,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * A materialized, recursive value representation of a {@link Task}.
  *
- * This is a behaviour-less representation of a materialized task graph.
+ * <p>This is a behaviour-less representation of a materialized task graph.
  */
 @AutoValue
 public abstract class TaskInfo {

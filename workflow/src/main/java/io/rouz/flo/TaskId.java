@@ -18,7 +18,7 @@ public interface TaskId {
   /**
    * Creates a {@link TaskId}.
    *
-   * The task name can not contain any parenthesis.
+   * <p>The task name can not contain any parenthesis.
    *
    * @throws IllegalArgumentException if the name contains any parenthesis
    * @param name  Task name
@@ -32,7 +32,7 @@ public interface TaskId {
   /**
    * Parses a {@link TaskId} based on a string representation.
    *
-   * A parsed id is equal to a task id that was created using {@link #create(String, Object...)}.
+   * <p>A parsed id is equal to a task id that was created using {@link #create(String, Object...)}.
    *
    * @throws IllegalArgumentException if the string does not conform to a task id
    * @param stringId  The id to parse

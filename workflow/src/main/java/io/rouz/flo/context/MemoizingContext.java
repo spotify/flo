@@ -26,7 +26,7 @@ import io.rouz.flo.TaskContext;
 import io.rouz.flo.TaskId;
 
 /**
- * <p>A flo {@link TaskContext} that allows task types to define custom memoization strategies.
+ * A flo {@link TaskContext} that allows task types to define custom memoization strategies.
  *
  * <p>This context can be used to extend the {@link TaskContext#evaluate(Task)} algorithm with
  * memoization behaviours specific to the {@link Task#type()}. This is specially useful when a
@@ -61,7 +61,7 @@ import io.rouz.flo.TaskId;
  *   aMemoizer.lookup(a) => empty()
  *   context.evaluate(b)
  *   bMemoizer.lookup(b) => 'foo'
- *   // no more expansion of upstreams to b
+ *   // no expansion of upstreams to b
  *   aValue = context.invokeProcessFn(a, a.fn)
  *   aMemoizer.store(a, aValue)
  * </pre>
@@ -80,7 +80,7 @@ public class MemoizingContext implements TaskContext {
     /**
      * Marks a method with signature {@code public static Memoizer<T> memoizer()}.
      *
-     * Can be called multiple times during an evaluation. The memoizer instance must not itself
+     * <p>Can be called multiple times during an evaluation. The memoizer instance must not itself
      * contain the memoizing context, but rather use an internal registry or store to keep track
      * of stored values.
      */
@@ -216,17 +216,17 @@ public class MemoizingContext implements TaskContext {
   /**
    * Lookup existing promise for a given {@link TaskId}.
    *
-   * Assumes that the promise either exist or will exist very shortly. The lookup will spin on
+   * <p>Assumes that the promise either exist or will exist very shortly. The lookup will spin on
    * the map until the promise shows up.
    *
-   * This method is needed to overcome a race between the events:
+   * <p>This method is needed to overcome a race between the events:
    * 1. task evaluation is asynchronously started
    * 2. the designated promise is put into the map
    * 3. the task process function being invoked
    *
-   * Step 2 and 3 can happen in any order.
+   * <p>Step 2 and 3 can happen in any order.
    *
-   * See {@link #createBundle(Task, TaskContext)} and {@link #invokeProcessFn(TaskId, Fn)}.
+   * <p>See {@link #createBundle(Task, TaskContext)} and {@link #invokeProcessFn(TaskId, Fn)}.
    *
    * @param taskId  Task id for which to lookup
    * @param <T>     The promise type

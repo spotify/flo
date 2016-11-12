@@ -25,11 +25,11 @@ public interface TaskContext {
   /**
    * The entry point for evaluating a {@link Value} from a {@link Task}.
    *
-   * All upstreams to the task will also be evaluated through this same method.
+   * <p>All upstreams to the task will also be evaluated through this same method.
    *
-   * The implementation should define how and where evaluation happens.
+   * <p>The implementation should define how and where evaluation happens.
    *
-   * This method is a good place to define how for instance value memoization happens.
+   * <p>This method is a good place to define how for instance value memoization happens.
    *
    * @param task  The task to evaluate
    * @param <T>   The type of the task result
@@ -43,8 +43,8 @@ public interface TaskContext {
    * A variant of {@link #evaluate(Task)} that allows the caller to specify the {@link TaskContext}
    * that should be used within the graph during evaluation.
    *
-   * This is intended to be called from {@link TaskContext} implementations that form a composition
-   * of other contexts.
+   * <p>This is intended to be called from {@link TaskContext} implementations that form a
+   * composition of other contexts.
    *
    * @param task     The task to evaluate
    * @param context  The context to use in further evaluation
@@ -58,14 +58,14 @@ public interface TaskContext {
   /**
    * Invoke the process function of a task.
    *
-   * This method will be called when the process function of a task is ready to be invoked. This
+   * <p>This method will be called when the process function of a task is ready to be invoked. This
    * gives this {@link TaskContext} the responsibility of invoking user code. By overriding this
    * method, one can intercept the evaluation flow just at the moment between inputs being ready
    * and when the user supplied function for task processing is being invoked.
    *
-   * The default implementation will simply invoke the function immediately.
+   * <p>The default implementation will simply invoke the function immediately.
    *
-   * Interception of curried process functions will gate the innermost function, while
+   * <p>Interception of curried process functions will gate the innermost function, while
    * for regular arity 1-3 process functions gating happens around the whole function.
    *
    * todo: reconsider difference between arity and curried function interception.
@@ -84,7 +84,7 @@ public interface TaskContext {
    * method will return the {@link TaskId} of the task being processed. Otherwise an empty value
    * will be returned.
    *
-   * The return value of this method is stable for each instance of {@link TaskContext} that is
+   * <p>The return value of this method is stable for each instance of {@link TaskContext} that is
    * passed into the process functions. Calls from multiple threads will see the same result as
    * longs as the calls are made to the same instance.
    *
@@ -127,7 +127,7 @@ public interface TaskContext {
    * A {@link Collector} that collects a {@link Stream} of {@link Value}s into a {@link Value}
    * of a {@link List}.
    *
-   * The semantics of joining {@link Value}s is decided by this {@link TaskContext}.
+   * <p>The semantics of joining {@link Value}s is decided by this {@link TaskContext}.
    *
    * @param <T>  The inner type of the values
    * @return A collector for a stream of values
@@ -185,8 +185,8 @@ public interface TaskContext {
     /**
      * Map the enclosed value through a function that return another {@link Value}.
      *
-     * The returned other value could be from a different {@link TaskContext} so the implementor of
-     * this context should take care of how to bridge the value semantics to the returned value.
+     * <p>The returned other value could be from a different {@link TaskContext} so the implementor
+     * of this context should take care of how to bridge the value semantics to the returned value.
      *
      * @param fn   The function to map the enclosed value through
      * @param <U>  The type of the new enclosed value
@@ -198,8 +198,8 @@ public interface TaskContext {
   /**
    * A promise for a {@link Value} that is supposed to be {@link #set(Object)}.
    *
-   * This is supposed to be used where the processing for producing a value happens in a different
-   * environment but is needed by values produced in this context.
+   * <p>This is supposed to be used where the processing for producing a value happens in a
+   * different environment but is needed by values produced in this context.
    *
    * @param <T>  The type of the promised value
    */

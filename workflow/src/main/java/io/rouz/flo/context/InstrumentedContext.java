@@ -75,7 +75,7 @@ public class InstrumentedContext implements TaskContext {
   private final TaskContext baseContext;
   private final Listener listener;
 
-  public InstrumentedContext(TaskContext baseContext, Listener listener) {
+  private InstrumentedContext(TaskContext baseContext, Listener listener) {
     this.baseContext = Objects.requireNonNull(baseContext);
     this.listener = Objects.requireNonNull(listener);
   }

@@ -17,9 +17,9 @@ import io.rouz.flo.TaskId;
 /**
  * A {@link TaskContext} that evaluates tasks immediately and memoizes results in memory.
  *
- * Memoized results are tied to the instance the evaluated the values.
+ * <p>Memoized results are tied to the instance the evaluated the values.
  *
- * This context is not thread safe.
+ * <p>This context is not thread safe.
  */
 public class InMemImmediateContext implements TaskContext {
 

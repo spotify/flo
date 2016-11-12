@@ -5,7 +5,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -16,9 +15,9 @@ import io.rouz.flo.TaskContext;
 
 /**
  * A {@link TaskContext} that executes evaluation and {@link Value} computations on a given
- * {@link ExecutorService}.
+ * {@link Executor}.
  *
- * Override {@link #evaluate(Task)} to implement {@link Value} memoization.
+ * <p>Override {@link #evaluate(Task)} to implement {@link Value} memoization.
  */
 public class AsyncContext implements TaskContext {
 
