@@ -38,7 +38,7 @@ import io.rouz.flo.TaskId;
  *
  * <p>Example
  *
- * <pre>
+ * <pre>{@code
  *   Tasks a, b and c depend on each other in a chain: a -> b -> c.
  *   // a depends on b, b depends on c
  *
@@ -64,7 +64,7 @@ import io.rouz.flo.TaskId;
  *   // no expansion of upstreams to b
  *   aValue = context.invokeProcessFn(a, a.fn)
  *   aMemoizer.store(a, aValue)
- * </pre>
+ * }</pre>
  *
  * <p>{@link Memoizer} implementations are discovered through the {@link Memoizer.Impl} annotations
  * on a static method on the task type that should have the signature
