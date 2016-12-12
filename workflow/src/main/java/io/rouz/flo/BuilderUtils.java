@@ -14,21 +14,21 @@ class BuilderUtils {
   private BuilderUtils() {
   }
 
-  static <F> ChainingEval<F> leafEvalFn(Fn1<TaskContext, Fn1<F, TaskContext.Value<?>>> fClosure) {
+  static <F, Z> ChainingEval<F, Z> leafEvalFn(Fn1<TaskContext, Fn1<F, TaskContext.Value<Z>>> fClosure) {
     return new ChainingEval<>(fClosure);
   }
 
-  static <A> Fn1<A, TaskContext.Value<?>> gated(
+  static <A, Z> Fn1<A, TaskContext.Value<Z>> gated(
       TaskId taskId,
       TaskContext tc,
-      Fn1<A, ?> f1) {
+      Fn1<A, Z> f1) {
     return (a) -> tc.invokeProcessFn(taskId, () -> tc.immediateValue(f1.apply(a)));
   }
 
-  static <A> Fn1<A, TaskContext.Value<?>> gatedVal(
+  static <A, Z> Fn1<A, TaskContext.Value<Z>> gatedVal(
       TaskId taskId,
       TaskContext tc,
-      Fn1<A, TaskContext.Value<?>> f1) {
+      Fn1<A, TaskContext.Value<Z>> f1) {
     return (a) -> tc.invokeProcessFn(taskId, () -> f1.apply(a));
   }
 
@@ -67,25 +67,24 @@ class BuilderUtils {
         .collect(toList());
   }
 
-  static final class ChainingEval<F> implements Serializable {
+  static final class ChainingEval<F, Z> implements Serializable {
 
-    private final Fn1<TaskContext, Fn1<F, TaskContext.Value<?>>> fClosure;
+    private final Fn1<TaskContext, Fn1<F, TaskContext.Value<Z>>> fClosure;
 
-    ChainingEval(Fn1<TaskContext, Fn1<F, TaskContext.Value<?>>> fClosure) {
+    ChainingEval(Fn1<TaskContext, Fn1<F, TaskContext.Value<Z>>> fClosure) {
       this.fClosure = fClosure;
     }
 
-    <Z> EvalClosure<Z> enclose(F f) {
-      //noinspection unchecked
-      return taskContext -> (TaskContext.Value<Z>) fClosure.apply(taskContext).apply(f);
+    EvalClosure<Z> enclose(F f) {
+      return taskContext -> fClosure.apply(taskContext).apply(f);
     }
 
-    <G> ChainingEval<G> chain(Fn1<TaskContext, Fn1<G, TaskContext.Value<F>>> mapClosure) {
-      Fn1<TaskContext, Fn1<G, TaskContext.Value<?>>> continuation = tc -> {
-        Fn1<G, TaskContext.Value<F>> fng = mapClosure.apply(tc);
-        Fn1<F, TaskContext.Value<?>> fnf = fClosure.apply(tc);
+    <G> ChainingEval<G, Z> chain(Fn1<TaskContext, Fn1<G, F>> mapClosure) {
+      Fn1<TaskContext, Fn1<G, TaskContext.Value<Z>>> continuation = tc -> {
+        Fn1<G, F> fng = mapClosure.apply(tc);
+        Fn1<F, TaskContext.Value<Z>> fnf = fClosure.apply(tc);
 
-        return g -> fng.apply(g).flatMap(fnf::apply);
+        return g -> fnf.apply(fng.apply(g));
       };
       return new ChainingEval<>(continuation);
     }

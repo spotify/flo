@@ -39,6 +39,23 @@ public class SerializationTest {
     assertEquals(val.awaitAndGet(), "[9999] hello 10004");
   }
 
+  @Test
+  public void shouldJavaUtilSerializeContextAwareTask() throws Exception {
+    Task<Long> task1 = Task.named("Foo", "Bar", 39).ofType(Long.class)
+        .process(() -> 9999L);
+    Task<String> task2 = Task.named("Baz", 40).ofType(String.class)
+        .in(() -> task1)
+        .ins(() -> singletonList(task1))
+        .processWithContext((tc, t1, t1l) -> tc.immediateValue(t1l + " hello " + (t1 + 5)));
+
+    serialize(task2);
+    Task<String> des = deserialize();
+    context.evaluate(des).consume(val);
+
+    assertEquals(des.id().name(), "Baz");
+    assertEquals(val.awaitAndGet(), "[9999] hello 10004");
+  }
+
   @Test(expected = NotSerializableException.class)
   public void shouldNotSerializeWithInstanceFieldReference() throws Exception {
     Task<String> task = Task.named("WithRef").ofType(String.class)
