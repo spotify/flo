@@ -71,7 +71,7 @@ import io.rouz.flo.TaskId;
  * {@code public static Memoizer<T> memoizer()}. The {@link Memoizer} type argument there should
  * match the memoized type itself.
  */
-public class MemoizingContext implements TaskContext {
+public class MemoizingContext extends ForwardingTaskContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(MemoizingContext.class);
 
@@ -125,12 +125,11 @@ public class MemoizingContext implements TaskContext {
     }
   };
 
-  private final TaskContext baseContext;
   private final ImmutableMap<Class<?>, Memoizer<?>> memoizers;
   private final ConcurrentMap<TaskId, EvalBundle<?>> ongoing = Maps.newConcurrentMap();
 
   private MemoizingContext(TaskContext baseContext, ImmutableMap<Class<?>, Memoizer<?>> memoizers) {
-    this.baseContext = Objects.requireNonNull(baseContext);
+    super(baseContext);
     this.memoizers = Objects.requireNonNull(memoizers);
   }
 
@@ -197,20 +196,10 @@ public class MemoizingContext implements TaskContext {
     final Task<T> task = evalBundle.task;
     final Memoizer<T> memoizer = evalBundle.memoizer;
 
-    final Value<T> tValue = baseContext.invokeProcessFn(taskId, processFn);
+    final Value<T> tValue = delegate.invokeProcessFn(taskId, processFn);
     tValue.consume(v -> memoizer.store(task, v));
 
     return tValue;
-  }
-
-  @Override
-  public <T> Value<T> value(Fn<T> value) {
-    return baseContext.value(value);
-  }
-
-  @Override
-  public <T> Promise<T> promise() {
-    return baseContext.promise();
   }
 
   /**
@@ -299,7 +288,7 @@ public class MemoizingContext implements TaskContext {
         promise.set(t);
       } else {
         LOG.debug("Expanding {}", task.id());
-        chain(baseContext.evaluateInternal(task, context), promise);
+        chain(delegate.evaluateInternal(task, context), promise);
       }
     }
   }

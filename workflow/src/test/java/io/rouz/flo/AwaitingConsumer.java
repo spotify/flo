@@ -26,8 +26,16 @@ public final class AwaitingConsumer<T> implements Consumer<T> {
     return latch.getCount() == 0;
   }
 
+  public boolean await() throws InterruptedException {
+    return await(1, TimeUnit.SECONDS);
+  }
+
+  public boolean await(long time, TimeUnit unit) throws InterruptedException {
+    return latch.await(time, unit);
+  }
+
   public T awaitAndGet() throws InterruptedException {
-    assertTrue("wait for value", latch.await(1, TimeUnit.SECONDS));
+    assertTrue("wait for value", await());
     return value;
   }
 

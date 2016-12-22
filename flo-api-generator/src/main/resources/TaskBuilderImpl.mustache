@@ -57,7 +57,7 @@ final class {{implClassName}} {
           taskId, type,
           leafEvalFn(tc -> {
             Value<A> aValue = tc.evaluate(aTaskSingleton.get());
-            return f1 -> aValue.flatMap(f1::apply);
+            return aValue.map(a -> f1 -> f1.apply(a));
           }));
     }
 
@@ -70,7 +70,7 @@ final class {{implClassName}} {
           leafEvalFn(tc -> {
             Value<List<A>> aListValue = aTasksSingleton.get()
                 .stream().map(tc::evaluate).collect(tc.toValueList());
-            return f1 -> aListValue.flatMap(f1::apply);
+            return aListValue.map(a -> f1 -> f1.apply(a));
           }));
     }
 
@@ -79,7 +79,7 @@ final class {{implClassName}} {
       return new BuilderCurried.BuilderC0<>(taskId, type);
     }
 
-    //@Override
+    @Override
     public CurriedTaskBuilder.TaskBuilderCV0<Z> curriedWithContext() {
       return new BuilderCurried.BuilderCV0<>(taskId, type);
     }
@@ -134,7 +134,7 @@ final class {{implClassName}} {
           taskId, type,
           evaluator.chain(tc -> {
             Value<{{nextArg}}> nextValue = tc.evaluate(nextTaskSingleton.get());
-            return f{{arityPlus}} -> ({{arguments}}) -> nextValue.flatMap(next -> f{{arityPlus}}.apply({{arguments}}, next));
+            return nextValue.map(next -> f{{arityPlus}} -> ({{arguments}}) -> f{{arityPlus}}.apply({{arguments}}, next));
           }));
     }
 
@@ -145,9 +145,9 @@ final class {{implClassName}} {
           lazyFlatten(inputs, lazyFlatten(nextTasksSingleton)),
           taskId, type,
           evaluator.chain(tc -> {
-            Value<List<{{nextArg}}>> nextListValue = nextTasksSingleton.get()
+            Value<List<{{nextArg}}>> nextValue = nextTasksSingleton.get()
                 .stream().map(tc::evaluate).collect(tc.toValueList());
-            return f{{arityPlus}} -> ({{arguments}}) -> nextListValue.flatMap(next -> f{{arityPlus}}.apply({{arguments}}, next));
+            return nextValue.map(next -> f{{arityPlus}} -> ({{arguments}}) -> f{{arityPlus}}.apply({{arguments}}, next));
           }));
     }
   }
