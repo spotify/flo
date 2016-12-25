@@ -2,7 +2,6 @@ package io.rouz.flo;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import io.rouz.flo.TaskContext.Value;
@@ -74,7 +73,7 @@ class BuilderUtils {
         Value<Fn1<G, F>> gv = mapClosure.eval(tc);
         Value<Fn1<F, Value<Z>>> fv = fClosure.eval(tc);
 
-        return tc.mapBoth(gv, fv, (gc, fc) -> g -> fc.apply(gc.apply(g)));
+        return Values.mapBoth(tc, gv, fv, (gc, fc) -> g -> fc.apply(gc.apply(g)));
       };
       return new ChainingEval<>(continuation);
     }

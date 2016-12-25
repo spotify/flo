@@ -30,7 +30,7 @@ final class ValueFold<T> implements Function<List<Value<T>>, Value<List<T>>> {
   public Value<List<T>> apply(List<Value<T>> list) {
     Value<List<T>> values = taskContext.immediateValue(new ArrayList<>());
     for (Value<T> tValue : list) {
-      values = taskContext.mapBoth(values, tValue, (l, t) -> {
+      values = Values.mapBoth(taskContext, values, tValue, (l, t) -> {
         l.add(t);
         return l;
       });

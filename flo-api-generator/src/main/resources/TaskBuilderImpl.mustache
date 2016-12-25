@@ -14,6 +14,7 @@ import static io.rouz.flo.BuilderUtils.lazyFlatten;
 import static io.rouz.flo.BuilderUtils.lazyList;
 import static io.rouz.flo.BuilderUtils.leafEvalFn;
 import static io.rouz.flo.TaskContextWithId.withId;
+import static io.rouz.flo.Values.toValueList;
 
 /**
  * Package local implementation of the {@link TaskBuilder} tree.
@@ -69,7 +70,7 @@ final class {{implClassName}} {
           taskId, type,
           leafEvalFn(tc -> {
             Value<List<A>> aListValue = aTasksSingleton.get()
-                .stream().map(tc::evaluate).collect(tc.toValueList());
+                .stream().map(tc::evaluate).collect(toValueList(tc));
             return aListValue.map(a -> f1 -> f1.apply(a));
           }));
     }
@@ -146,7 +147,7 @@ final class {{implClassName}} {
           taskId, type,
           evaluator.chain(tc -> {
             Value<List<{{nextArg}}>> nextValue = nextTasksSingleton.get()
-                .stream().map(tc::evaluate).collect(tc.toValueList());
+                .stream().map(tc::evaluate).collect(toValueList(tc));
             return nextValue.map(next -> f{{arityPlus}} -> ({{arguments}}) -> f{{arityPlus}}.apply({{arguments}}, next));
           }));
     }

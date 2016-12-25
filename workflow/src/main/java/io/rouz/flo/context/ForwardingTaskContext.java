@@ -1,9 +1,6 @@
 package io.rouz.flo.context;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.function.BiFunction;
-import java.util.stream.Collector;
 
 import io.rouz.flo.Fn;
 import io.rouz.flo.Task;
@@ -44,18 +41,5 @@ public abstract class ForwardingTaskContext implements TaskContext {
   @Override
   public <T> Promise<T> promise() {
     return delegate.promise();
-  }
-
-  @Override
-  public <T, U, V> Value<V> mapBoth(
-      Value<T> first,
-      Value<U> second,
-      BiFunction<? super T, ? super U, ? extends V> fn) {
-    return delegate.mapBoth(first, second, fn);
-  }
-
-  @Override
-  public <T> Collector<Value<T>, ?, Value<List<T>>> toValueList() {
-    return delegate.toValueList();
   }
 }
