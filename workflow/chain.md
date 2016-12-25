@@ -23,7 +23,8 @@ internally has the following structure.
 builder1 ─┐
           └ ┌                  ┐
 task<a> ───>│ a -> f1 -> f1(a) │
-            └                  ┘
+            └      ^           ┘
+                   └─── builder1.process(f1)
 ```
 
 A builder for a task of one input, has a reference to the evaluation "box" for `task<a>`'s value
@@ -37,7 +38,7 @@ finished evaluating. This will produce a `value<z>` which contains the value ret
 any exception thrown along the dependecy tree.
 
 If instead `builder1.in(task<b>)` is called, a `builder2` is returned, which chains onto the
-evaluation "box" from the first builder.
+evaluation box from the first builder.
 
 ```
 builder1 ─┐
@@ -47,10 +48,19 @@ task<a> ───>│ a -> f1 -> f1(a) │
 builder2 ─┤        └──────┐
           └ ┌             ╵             ┐
 task<b> ───>│ b -> f2 -> (a) -> f2(a,b) │
-            └                           ┘
+            └      ^                    ┘
+                   └─── builder2.process(f2)
 ```
 
-_describe chaining_
+The next builder will chain the two evaluation boxes together, and within them pass a reduced
+function to the previous box. The reduced function only takes one argument `a` and is within the
+evaluation box of the second task, so it can invoke the `f2` passed to `builder2.process(f2)` as 
+soon as both values `a` and `b` become available.
+
+The chaining is done using [Values.mapBoth], see the javadoc for more details.
+
+This process is repeated for each extension of the builder. In general, the builder will build up
+something like the following structure.
 
 ```
 builder1 ─┐
@@ -69,5 +79,8 @@ task<c> ───>│ c -> f3 -> (a,b) -> f3(a,b,c) │
 builderN ─┤        └──────┐
           └ ┌             ╵                             ┐
 task<n> ───>│ n -> fn -> (a,b,…,n-1) -> fn(a,b,…,n-1,n) │
-            └                                           ┘
+            └      ^                                    ┘
+                   └─── builderN.process(fn)
 ```
+
+[Values.mapBoth]: https://github.com/rouzwawi/flo/blob/master/workflow/src/main/java/io/rouz/flo/Values.java#L37
