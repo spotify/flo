@@ -187,9 +187,11 @@ class ControlledBlockingContext implements TaskContext {
       }
     }
 
+    /**
+     * Does nothing. Value can not fail, see {@link ValuePromise#fail(Throwable)}.
+     */
     @Override
     public void onFail(Consumer<Throwable> errorConsumer) {
-      throw new UnsupportedOperationException();
     }
 
     @Override

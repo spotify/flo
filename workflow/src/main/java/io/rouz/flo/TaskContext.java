@@ -3,14 +3,10 @@ package io.rouz.flo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collector;
-import java.util.stream.Stream;
 
 import io.rouz.flo.context.AsyncContext;
 import io.rouz.flo.context.InMemImmediateContext;
@@ -122,21 +118,6 @@ public interface TaskContext {
    * @return A promise
    */
   <T> Promise<T> promise();
-
-  /**
-   * A {@link Collector} that collects a {@link Stream} of {@link Value}s into a {@link Value}
-   * of a {@link List}.
-   *
-   * <p>The semantics of joining {@link Value}s is decided by this {@link TaskContext}.
-   *
-   * @param <T>  The inner type of the values
-   * @return A collector for a stream of values
-   */
-  default <T> Collector<Value<T>, ?, Value<List<T>>> toValueList() {
-    return Collector.of(
-        ArrayList::new, List::add, (a,b) -> { a.addAll(b); return a; },
-        ValueFold.inContext(this));
-  }
 
   /**
    * A wrapped value with additional semantics for how the enclosed value becomes available and

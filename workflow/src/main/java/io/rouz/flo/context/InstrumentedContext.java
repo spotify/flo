@@ -25,7 +25,7 @@ import io.rouz.flo.TaskId;
  * failure of the task {@link TaskContext.Value}.
  *
  */
-public class InstrumentedContext implements TaskContext {
+public class InstrumentedContext extends ForwardingTaskContext {
 
   /**
    * A listener for instrumented evaluation. See {@link InstrumentedContext} for more details.
@@ -72,11 +72,10 @@ public class InstrumentedContext implements TaskContext {
     }
   }
 
-  private final TaskContext baseContext;
   private final Listener listener;
 
   private InstrumentedContext(TaskContext baseContext, Listener listener) {
-    this.baseContext = Objects.requireNonNull(baseContext);
+    super(baseContext);
     this.listener = Objects.requireNonNull(listener);
   }
 
@@ -91,28 +90,18 @@ public class InstrumentedContext implements TaskContext {
         .distinct()
         .forEach(upstream -> listener.edge(upstream, task.id()));
 
-    return baseContext.evaluateInternal(task, context);
+    return delegate.evaluateInternal(task, context);
   }
 
   @Override
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
     listener.status(taskId, Listener.Phase.START);
 
-    final Value<T> tValue = baseContext.invokeProcessFn(taskId, processFn);
+    final Value<T> tValue = delegate.invokeProcessFn(taskId, processFn);
 
     tValue.consume(v -> listener.status(taskId, Listener.Phase.SUCCESS));
     tValue.onFail(t -> listener.status(taskId, Listener.Phase.FAILURE));
 
     return tValue;
-  }
-
-  @Override
-  public <T> Value<T> value(Fn<T> value) {
-    return baseContext.value(value);
-  }
-
-  @Override
-  public <T> Promise<T> promise() {
-    return baseContext.promise();
   }
 }

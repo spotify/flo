@@ -51,7 +51,7 @@ class BuilderCurried {
           leafEval(
               taskId,
               tc -> aTasksSingleton.get()
-                  .stream().map(tc::evaluate).collect(tc.toValueList())));
+                  .stream().map(tc::evaluate).collect(Values.toValueList(tc))));
     }
   }
 
@@ -81,7 +81,7 @@ class BuilderCurried {
           leafValEval(
               taskId,
               tc -> aTasksSingleton.get()
-                  .stream().map(tc::evaluate).collect(tc.toValueList())));
+                  .stream().map(tc::evaluate).collect(Values.toValueList(tc))));
     }
   }
 
@@ -117,7 +117,7 @@ class BuilderCurried {
           taskId, type,
           evaluator.curry(
               tc -> bTasksSingleton.get()
-                  .stream().map(tc::evaluate).collect(tc.toValueList())));
+                  .stream().map(tc::evaluate).collect(Values.toValueList(tc))));
     }
   }
 
@@ -155,7 +155,7 @@ class BuilderCurried {
           taskId, type,
           evaluator.curry(
               tc -> bTasksSingleton.get()
-                  .stream().map(tc::evaluate).collect(tc.toValueList())));
+                  .stream().map(tc::evaluate).collect(Values.toValueList(tc))));
     }
   }
 

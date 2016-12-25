@@ -93,12 +93,6 @@ public class InMemImmediateContext implements TaskContext {
       this.setLatch = new Semaphore(1);
     }
 
-    private DirectValue(T value) {
-      valueReceiver = new AtomicReference<>(c -> c.accept(value));
-      failureReceiver = new AtomicReference<>(c -> {});
-      this.setLatch = new Semaphore(0);
-    }
-
     @Override
     public TaskContext context() {
       return InMemImmediateContext.this;

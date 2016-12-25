@@ -319,8 +319,6 @@ public class TaskEvalBehaviorTest {
     TaskId evenify1Id = evenify(1).id();
     TaskId evenify3Id = evenify(3).id();
 
-    System.out.println("taskIds = " + taskIds);
-
     assertThat(taskIds.size(), is(10));
     assertThat(taskIds, containsInOrder(evenify5Id, evenify1Id));
     assertThat(taskIds, containsInOrder(evenify5Id, evenify3Id));
