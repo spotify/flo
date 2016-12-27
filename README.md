@@ -40,7 +40,9 @@ JavaDocs here: http://rouz.io/flo/maven/latest/apidocs/
 
 ## Quick Example: Fibonacci
 
-Fibonacci serves as a good example even though it's not at all the kind of thing that `flo` is meant to be used for. Nevertheless, it demonstrates how a task DAG can be recursively defined with arbitrary logic governing which inputs are chosen.
+Fibonacci serves as a good example even though it's not at all the kind of thing that `flo` is
+meant to be used for. Nevertheless, it demonstrates how a task DAG can be recursively defined with
+arbitrary logic governing which inputs are chosen.
 
 ```java
 class Fib {
@@ -95,11 +97,21 @@ object Fib extends App {
 
 # [`Task<T>`][Task]
 
-[`Task<T>`][Task] is one of the more central types in `flo`. It represents some task which will evaluate a value of type `T`. It has a parameterized name, zero or more input tasks and a processing function which will be executed when inputs are evaluated. Tasks come with a few key properties governing how they are defined, behave and are interacted with. We'll cover these in the following sections.
+[`Task<T>`][Task] is one of the more central types in `flo`. It represents some task which will
+evaluate a value of type `T`. It has a parameterized name, zero or more input tasks and a
+processing function which will be executed when inputs are evaluated. Tasks come with a few key
+properties governing how they are defined, behave and are interacted with. We'll cover these in the
+following sections.
 
 ## Tasks are defined by regular methods
 
-Your workflow tasks are not defined as classes that extend [`Task<T>`][Task], rather they are defined by using the [`TaskBuilder`][TaskBuilder] API as we've already seen in the fibonacci example. This is in many ways very similar to a very clean class with no mutable state, only final members and two overriden methods for inputs and evaluation function. But with a very important difference, we're handling the input tasks in a type-safe manner. Each input task you add will further construct the type for your evaluation function. This is how we can get a clean lambda such as `(a, b) -> a + b` as the evaluation function for our fibonacci example.
+Your workflow tasks are not defined as classes that extend [`Task<T>`][Task], rather they are
+defined by using the `TaskBuilder` API as we've already seen in the fibonacci example. This is in
+many ways very similar to a very clean class with no mutable state, only final members and two
+overriden methods for inputs and evaluation function. But with a very important difference, we're
+handling the input tasks in a type-safe manner. Each input task you add will further construct the
+type for your evaluation function. This is how we can get a clean lambda such as `(a, b) -> a + b`
+as the evaluation function for our fibonacci example.
 
 Here's a simple example of a `flo` task depending on two other tasks:
 
@@ -131,7 +143,7 @@ class MyTask extends Task<Integer> {
 
   @Override
   public Integer process(List<Object> inputs) {
-    // loose all type safety and guess your inputs
+    // lose all type safety and guess your inputs
     // ...
   }
 }
@@ -139,7 +151,9 @@ class MyTask extends Task<Integer> {
 
 ### Task embedding
 
-There's of course nothing stopping you from having the task defined in a regular class. It might even be useful if your evaluation function is part of an existing class. `flo` does not force anything on to your types, it just needs to know what to run.
+There's of course nothing stopping you from having the task defined in a regular class. It might
+even be useful if your evaluation function is part of an existing class. `flo` does not force
+anything on to your types, it just needs to know what to run.
 
 ```java
 class SomeExistingClass {
@@ -165,15 +179,21 @@ class SomeExistingClass {
 
 ## Tasks are lazy
 
-Creating instances of `Task<T>` is cheap. No matter how complex and deep the task DAG might be, creating the top level `Task<T>` will not cause the whole DAG to be created. This is because all inputs are declared using a `Supplier<T>`, utilizing their properties for deferred evaluation:
+Creating instances of `Task<T>` is cheap. No matter how complex and deep the task DAG might be,
+creating the top level `Task<T>` will not cause the whole DAG to be created. This is because all
+inputs are declared using a `Supplier<T>`, utilizing their properties for deferred evaluation:
 
 ```java
 someLibrary.maybeNeedsValue(() -> expensiveCalculation());
 ```
 
-This pattern is on its way to become an idiom for achieving lazyness in Java 8. A good example is the additions to the [Java 8 Logger] class which lets the logger decide if the log line for a certain log level should be computed or not.
+This pattern is on its way to become an idiom for achieving lazyness in Java 8. A good example is
+the additions to the [Java 8 Logger] class which lets the logger decide if the log line for a
+certain log level should be computed or not.
 
-So we can easily create an endlessly recursive task (useless, but illustrative) and still be able to construct instances of it without having to worry about how complex or resource consuming the construction might be.
+So we can easily create an endlessly recursive task (useless, but illustrative) and still be able
+to construct instances of it without having to worry about how complex or resource consuming the
+construction might be.
 
 ```java
 Task<String> endless() {
@@ -191,7 +211,8 @@ TaskId endlessTaskId = endless().id();
 
 ## Task DAGs as data structures
 
-A `Task<T>` can be transformed into a data structure where a materialized view of the task DAG is needed. In this example we have two simple tasks where one is used as the input to the other.
+A `Task<T>` can be transformed into a data structure where a materialized view of the task DAG is
+needed. In this example we have two simple tasks where one is used as the input to the other.
 
 ```java
 Task<String> first(String arg) {
@@ -228,9 +249,17 @@ taskInfo = TaskInfo {
 }
 ```
 
-The `id` and `inputs` fileds should be pretty self explanatory. `isReference` is a boolean which signals if some task has already been materialized eariler in the tree, given a depth first, post-order traversal.
+The `id` and `inputs` fields should be pretty self explanatory. `isReference` is a boolean which
+signals if some task has already been materialized eariler in the tree, given a depth first,
+post-order traversal.
 
-Recall that the DAG expansion can chose inputs artibrarily based on the arguments. In workflow libraries where expansion is coupled with evaluation, it's hard to know what will be evaluated beforehand. Evaluation planning and result caching/memoizing becomes integral parts of such libraries. `flo` aims to expose useful information together with flexible evaluation apis to make it a library for easily building workflow management systems, rather than trying to be the can-do-it-all workflow management system itself. More about how this is achieved in the [`TaskContext`][TaskContext] sections.
+Recall that the DAG expansion can chose inputs artibrarily based on the arguments. In workflow
+libraries where expansion is coupled with evaluation, it's hard to know what will be evaluated
+beforehand. Evaluation planning and result caching/memoizing becomes integral parts of such
+libraries. `flo` aims to expose useful information together with flexible evaluation apis to make
+it a library for easily building workflow management systems, rather than trying to be the
+can-do-it-all workflow management system itself. More about how this is achieved in the
+[`TaskContext`][TaskContext] sections.
 
 # [`TaskContext`][TaskContext]
 
@@ -252,10 +281,15 @@ Since multi worker, asynchronous evaluation is a very common pre-requisite for m
 implementations, flo comes with a base implementation of an [`AsyncContext`][AsyncContext] that
 can be extended with further behaviour.
 
-[Task]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/task/Task.html
-[TaskBuilder]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/task/dsl/TaskBuilder.html
-[TaskContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/task/TaskContext.html
-[AsyncContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/task/context/AsyncContext.html
+See also [`InMemImmediateContext`][InMemImmediateContext],
+[`InstrumentedContext`][InstrumentedContext] and [`MemoizingContext`][MemoizingContext].
+
+[Task]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/Task.html
+[TaskContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/TaskContext.html
+[AsyncContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/context/AsyncContext.html
+[InMemImmediateContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/context/InMemImmediateContext.html
+[InstrumentedContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/context/InstrumentedContext.html
+[MemoizingContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/context/MemoizingContext.html
 [Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-
 [DAG]: https://en.wikipedia.org/wiki/Directed_acyclic_graph
 
@@ -271,7 +305,8 @@ can be extended with further behaviour.
 </dependency>
 ```
 
-By adding the `@RootTask` annotation to the `nth(long)` constructor in the Fibonacci example, `flo` will generate a CLI:
+By adding the `@RootTask` annotation to the `nth(long)` constructor in the Fibonacci example, `flo`
+will generate a CLI:
 
 ```java
 class Fib {
