@@ -1,0 +1,57 @@
+package io.rouz.flo.dsl
+
+import io.rouz.flo.Task
+import io.rouz.flo.TaskBuilder._
+import io.rouz.flo.TaskContext.Value
+import io.rouz.flo._
+
+import _root_.scala.collection.JavaConversions
+import _root_.scala.reflect.ClassTag
+
+object FloTask {
+  def named[Z: ClassTag](name: String, args: Any*): TaskBuilder0[Z] = new Builder0(name, args:_*)
+}
+
+trait TaskBuilder0[Z] {
+  def process(fn: => Z): Task[Z]
+  def processWithContext(fn: TaskContext => Value[Z]): Task[Z]
+  def in[A](task: => Task[A]): TaskBuilder1[A, Z]
+  def ins[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z]
+
+  def ->(fn: => Z): Task[Z] = process(fn)
+  def └>(fn: => Z): Task[Z] = process(fn)
+  def ->>(fn: TaskContext => Value[Z]): Task[Z] = processWithContext(fn)
+  def └>>(fn: TaskContext => Value[Z]): Task[Z] = processWithContext(fn)
+
+  def <[A](task: => Task[A]): TaskBuilder1[A, Z] = in(task)
+  def <<[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z] = ins(tasks)
+
+  def ┌[A](task: => Task[A]): TaskBuilder1[A, Z] = in(task)
+  def ╒[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z] = ins(tasks)
+
+  def ┬[A](task: => Task[A]): TaskBuilder1[A, Z] = in(task)
+  def ╤[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z] = ins(tasks)
+
+  def ├[A](task: => Task[A]): TaskBuilder1[A, Z] = in(task)
+  def ╞[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z] = ins(tasks)
+}
+{{#genBuilder}}
+
+trait TaskBuilder{{arity}}[{{typeArgs}}, Z] {
+  def process(fn: ({{typeArgs}}) => Z): Task[Z]
+  def └>(fn: ({{typeArgs}}) => Z): Task[Z] = process(fn)
+
+  def processWithContext(fn: TaskContext => ({{typeArgs}}) => Value[Z]): Task[Z]
+  def └>>(fn: TaskContext => ({{typeArgs}}) => Value[Z]): Task[Z] = processWithContext(fn)
+  {{^iter.isLast}}
+
+  def in[{{nextArg}}](task: => Task[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
+  def < [{{nextArg}}](task: => Task[{{nextArg}}]) = in(task)
+  def ├ [{{nextArg}}](task: => Task[{{nextArg}}]) = in(task)
+
+  def ins[{{nextArg}}](tasks: => List[Task[{{nextArg}}]]): TaskBuilder{{arityPlus}}[{{typeArgs}}, List[{{nextArg}}], Z]
+  def << [{{nextArg}}](tasks: => List[Task[{{nextArg}}]]) = ins(tasks)
+  def ╞  [{{nextArg}}](tasks: => List[Task[{{nextArg}}]]) = ins(tasks)
+  {{/iter.isLast}}
+}
+{{/genBuilder}}

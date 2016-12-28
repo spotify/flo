@@ -31,26 +31,29 @@ public interface {{interfaceName}}<Z> {
   CurriedTaskBuilder.TaskBuilderCV0<Z> curriedWithContext();
 {{#genBuilder}}
 
-  interface {{interfaceName}}{{arity}}<{{typeArgs}}Z> {
-    Task<Z> process(F{{arity}}<{{typeArgs}}Z> code);
-    Task<Z> processWithContext(F{{arityPlus}}<TaskContext, {{typeArgs}}Value<Z>> code);
+  interface {{interfaceName}}{{arity}}<{{typeArgs}}, Z> {
+    Task<Z> process(F{{arity}}<{{typeArgs}}, Z> code);
+    Task<Z> processWithContext(F{{arityPlus}}<TaskContext, {{typeArgs}}, Value<Z>> code);
   {{^iter.isLast}}
 
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}{{nextArg}}, Z> in(Fn<Task<{{nextArg}}>> task);
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}List<{{nextArg}}>, Z> ins(Fn<List<Task<{{nextArg}}>>> tasks);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> in(Fn<Task<{{nextArg}}>> task);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Z> ins(Fn<List<Task<{{nextArg}}>>> tasks);
   {{/iter.isLast}}
   }
 {{/genBuilder}}
 {{#genFn}}
 
-  @FunctionalInterface
-  interface F{{arity}}<{{typeArgs}}Z> extends {{{jdkInterface}}}Serializable {
   {{#iter.isFirst}}
+  @FunctionalInterface
+  interface F{{arity}}<Z> extends {{{jdkInterface}}}Serializable {
     Z get();
+  }
   {{/iter.isFirst}}
   {{^iter.isFirst}}
+  @FunctionalInterface
+  interface F{{arity}}<{{typeArgs}}, Z> extends {{{jdkInterface}}}Serializable {
     Z apply({{parameters}});
-  {{/iter.isFirst}}
   }
+  {{/iter.isFirst}}
 {{/genFn}}
 }
