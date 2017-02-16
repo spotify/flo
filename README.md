@@ -77,15 +77,14 @@ import io.rouz.flo._
 
 object Fib extends App {
 
-  def fib(n: Int): Task[Long] = if (n < 2) {
-    task[Long]("fib", n)
-        .process(n)
-  } else {
-    task[Long]("fib", n)
-        .in(fib(n - 1))
-        .in(fib(n - 2))
-        .process(_ + _)
-  }
+  def fib(n: Long): Task[Long] = defTask(n) (
+    if (n < 2)
+      $ process n
+    else
+      $ in      fib(n - 1)
+        in      fib(n - 2)
+        process (_ + _)
+  )
 
   val fib92 = fib(92)
   val taskContext = TaskContext.inmem

@@ -88,26 +88,26 @@ final class {{implClassName}} {
 
 {{#genBuilder}}
   // #############################################################################################
-  // {{arity}}<{{typeArgs}}Z>
+  // {{arity}}<{{typeArgs}}, Z>
 
-  private static class Builder{{arity}}<{{typeArgs}}Z> extends BaseRefs<Z> implements {{interfaceName}}{{arity}}<{{typeArgs}}Z> {
+  private static class Builder{{arity}}<{{typeArgs}}, Z> extends BaseRefs<Z> implements {{interfaceName}}{{arity}}<{{typeArgs}}, Z> {
 
-    private final ChainingEval<F{{arity}}<{{typeArgs}}Value<Z>>, Z> evaluator;
+    private final ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator;
 
     Builder{{arity}}(
         Fn<List<Task<?>>> inputs,
         TaskId taskId,
         Class<Z> type,
-        ChainingEval<F{{arity}}<{{typeArgs}}Value<Z>>, Z> evaluator) {
+        ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator) {
       super(inputs, taskId, type);
       this.evaluator = evaluator;
     }
 
     @Override
-    public Task<Z> process(F{{arity}}<{{typeArgs}}Z> code) {
+    public Task<Z> process(F{{arity}}<{{typeArgs}}, Z> code) {
       // local ref to drop ref to Builder instance, b/c serialization
       TaskId taskId = this.taskId;
-      ChainingEval<F{{arity}}<{{typeArgs}}Value<Z>>, Z> evaluator = this.evaluator;
+      ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
 
       EvalClosure<Z> closure = tc -> evaluator.enclose(
           ({{arguments}}) -> tc.invokeProcessFn(taskId, () -> tc.immediateValue(code.apply({{arguments}})))
@@ -116,10 +116,10 @@ final class {{implClassName}} {
     }
 
     @Override
-    public Task<Z> processWithContext(F{{arityPlus}}<TaskContext, {{typeArgs}}Value<Z>> code) {
+    public Task<Z> processWithContext(F{{arityPlus}}<TaskContext, {{typeArgs}}, Value<Z>> code) {
       // local ref to drop ref to Builder instance, b/c serialization
       TaskId taskId = this.taskId;
-      ChainingEval<F{{arity}}<{{typeArgs}}Value<Z>>, Z> evaluator = this.evaluator;
+      ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
 
       EvalClosure<Z> closure = tc -> evaluator.enclose(
           ({{arguments}}) -> tc.invokeProcessFn(taskId, () -> code.apply(withId(tc, taskId), {{arguments}}))
@@ -128,7 +128,7 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}{{nextArg}}, Z> in(Fn<Task<{{nextArg}}>> nextTask) {
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> in(Fn<Task<{{nextArg}}>> nextTask) {
       Fn<Task<{{nextArg}}>> nextTaskSingleton = Singleton.create(nextTask);
       return new Builder{{arityPlus}}<>(
           lazyFlatten(inputs, lazyList(nextTaskSingleton)),
@@ -140,7 +140,7 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}List<{{nextArg}}>, Z> ins(Fn<List<Task<{{nextArg}}>>> nextTasks) {
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Z> ins(Fn<List<Task<{{nextArg}}>>> nextTasks) {
       Fn<List<Task<{{nextArg}}>>> nextTasksSingleton = Singleton.create(nextTasks);
       return new Builder{{arityPlus}}<>(
           lazyFlatten(inputs, lazyFlatten(nextTasksSingleton)),
@@ -154,24 +154,24 @@ final class {{implClassName}} {
   }
 {{/genBuilder}}
 
-  private static class Builder{{lastArity}}<{{lastTypeArgs}}Z> extends BaseRefs<Z> implements {{interfaceName}}{{lastArity}}<{{lastTypeArgs}}Z> {
+  private static class Builder{{lastArity}}<{{lastTypeArgs}}, Z> extends BaseRefs<Z> implements {{interfaceName}}{{lastArity}}<{{lastTypeArgs}}, Z> {
 
-    private final ChainingEval<F{{lastArity}}<{{lastTypeArgs}}Value<Z>>, Z> evaluator;
+    private final ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator;
 
     Builder{{lastArity}}(
         Fn<List<Task<?>>> inputs,
         TaskId taskId,
         Class<Z> type,
-        ChainingEval<F{{lastArity}}<{{lastTypeArgs}}Value<Z>>, Z> evaluator) {
+        ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator) {
       super(inputs, taskId, type);
       this.evaluator = evaluator;
     }
 
     @Override
-    public Task<Z> process(F{{lastArity}}<{{lastTypeArgs}}Z> code) {
+    public Task<Z> process(F{{lastArity}}<{{lastTypeArgs}}, Z> code) {
       // local ref to drop ref to Builder instance, b/c serialization
       TaskId taskId = this.taskId;
-      ChainingEval<F{{lastArity}}<{{lastTypeArgs}}Value<Z>>, Z> evaluator = this.evaluator;
+      ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
 
       EvalClosure<Z> closure = tc -> evaluator.enclose(
           ({{lastArguments}}) -> tc.invokeProcessFn(taskId, () -> tc.immediateValue(code.apply({{lastArguments}})))
@@ -180,10 +180,10 @@ final class {{implClassName}} {
     }
 
     @Override
-    public Task<Z> processWithContext(F{{lastArityPlus}}<TaskContext, {{lastTypeArgs}}Value<Z>> code) {
+    public Task<Z> processWithContext(F{{lastArityPlus}}<TaskContext, {{lastTypeArgs}}, Value<Z>> code) {
       // local ref to drop ref to Builder instance, b/c serialization
       TaskId taskId = this.taskId;
-      ChainingEval<F{{lastArity}}<{{lastTypeArgs}}Value<Z>>, Z> evaluator = this.evaluator;
+      ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
 
       EvalClosure<Z> closure = tc -> evaluator.enclose(
            ({{lastArguments}}) -> tc.invokeProcessFn(taskId, () -> code.apply(withId(tc, taskId), {{lastArguments}}))

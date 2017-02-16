@@ -191,7 +191,8 @@
                         <configuration>
                             <excludes>
                                 <exclude>**/io/rouz/scratch/**</exclude>
-                                <exclude>**/io/rouz/task/proc/**</exclude>
+                                <exclude>**/io/rouz/flo/proc/**</exclude>
+                                <exclude>**/io/rouz/flo/dsl/Util.scala</exclude>
                             </excludes>
                         </configuration>
                     </plugin>

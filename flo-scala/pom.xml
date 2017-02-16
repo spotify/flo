@@ -21,11 +21,24 @@
       <artifactId>flo-cli</artifactId>
       <version>0.0.8-SNAPSHOT</version>
     </dependency>
+    <dependency>
+      <groupId>io.rouz</groupId>
+      <artifactId>flo-api-generator</artifactId>
+      <version>0.0.8-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
       <version>${scala.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_${scala.baseVersion}</artifactId>
+      <version>3.0.1</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -36,6 +49,16 @@
         <artifactId>scala-maven-plugin</artifactId>
         <version>3.2.1</version>
         <executions>
+          <execution>
+            <id>add-generated-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sourceDir>${project.build.directory}/generated-sources/annotations</sourceDir>
+            </configuration>
+          </execution>
           <execution>
             <goals>
               <goal>compile</goal>
@@ -48,6 +71,26 @@
           <sendJavaToScalac>false</sendJavaToScalac>
           <addScalacArgs>-Xexperimental</addScalacArgs>
         </configuration>
+      </plugin>
+
+      <!-- enable scalatest -->
+      <plugin>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest-maven-plugin</artifactId>
+        <version>1.0</version>
+        <configuration>
+          <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+          <junitxml>.</junitxml>
+          <filereports>WDF TestSuite.txt</filereports>
+        </configuration>
+        <executions>
+          <execution>
+            <id>test</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

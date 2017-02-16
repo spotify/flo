@@ -30,7 +30,9 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
@@ -122,11 +124,20 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     data.put("genBuilder", IntStream.range(1, genTaskBuilder.upTo())
         .mapToObj(this::builder).toArray());
     final String output = engine.getMustache("TaskBuilder").render(data);
+    final String outputScala = engine.getMustache("ScalaApi").render(data);
 
-    final String fileName = packageName + "." + interfaceName;
-    final JavaFileObject filerSourceFile = filer.createSourceFile(fileName, processingElement);
-    try (final Writer writer = filerSourceFile.openWriter()) {
-      writer.write(output);
+    if (!genTaskBuilder.scala()) {
+      final String fileName = packageName + "." + interfaceName;
+      final JavaFileObject filerSourceFile = filer.createSourceFile(fileName, processingElement);
+      try (final Writer writer = filerSourceFile.openWriter()) {
+        writer.write(output);
+      }
+    } else {
+      final FileObject scalaFile = filer.createResource(
+          StandardLocation.SOURCE_OUTPUT, packageName, "ScalaApi.scala", processingElement);
+      try (final Writer writer = scalaFile.openWriter()) {
+        writer.write(outputScala);
+      }
     }
   }
 
@@ -136,7 +147,9 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
       String interfaceName) throws IOException {
 
     final String implClassName = interfaceName + "Impl";
-    final int n = genTaskBuilder.upTo() - 1;
+    final int n = genTaskBuilder.scala()
+      ? genTaskBuilder.upTo()
+      : genTaskBuilder.upTo() - 1;
 
     final Map<String, Object> data = new HashMap<>();
     data.put("packageName", packageName);
@@ -150,22 +163,42 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     data.put("lastTypeArg", letters(n + 1).skip(n).findFirst().get());
     data.put("lastArguments", arguments(n));
     final String output = engine.getMustache("TaskBuilderImpl").render(data);
+    final String outputScala = engine.getMustache("ScalaApiImpl").render(data);
 
-    final String fileName = packageName + "." + implClassName;
-    final JavaFileObject filerSourceFile = filer.createSourceFile(fileName, processingElement);
-    try (final Writer writer = filerSourceFile.openWriter()) {
-      writer.write(output);
+    if (!genTaskBuilder.scala()) {
+      final String fileName = packageName + "." + implClassName;
+      final JavaFileObject filerSourceFile = filer.createSourceFile(fileName, processingElement);
+      try (final Writer writer = filerSourceFile.openWriter()) {
+        writer.write(output);
+      }
+    } else {
+      final FileObject scalaFile = filer.createResource(
+          StandardLocation.SOURCE_OUTPUT, packageName, "ScalaApiImpl.scala", processingElement);
+      try (final Writer writer = scalaFile.openWriter()) {
+        writer.write(outputScala);
+      }
     }
   }
 
   private Map<String, Object> builderImpl(int n) {
-    return ImmutableMap.of(
-        "arity", n,
-        "arityPlus", n + 1,
-        "nextArg", letters(n + 1).skip(n).findFirst().get(),
-        "typeArgs", typeArgs(n),
-        "arguments", arguments(n)
-    );
+    Map<String, Object> map = new HashMap<>();
+
+    map.put("arity", n);
+    map.put("arityPlus", n + 1);
+    map.put("arityMinus", n - 1);
+    map.put("nextArg", letters(n + 1).skip(n).findFirst().get());
+    map.put("typeArgs", typeArgs(n));
+    map.put("typeArgsNumA", typeArgsNum(n, "A"));
+    map.put("typeArgsNumAMinus", typeArgsNum(n - 1, "A"));
+    map.put("arguments", arguments(n));
+    map.put("argumentsNum", arguments(n, "a"));
+
+    // p.p.p.J1, p.p.J2, p.J3, J4
+    map.put("typeArgsPsJ", pSquared(n, "%pJ%n"));
+    // p.p.p.c1(a1), p.p.c2(a2), p.c3(a3), c4(a4)
+    map.put("argumentsPsConv", pSquared(n, "%pc%n(a%n)"));
+
+    return map;
   }
 
   private Map<String, Object> builder(int n) {
@@ -192,10 +225,19 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
         .mapToObj(i -> Character.toString((char) ('A' + i)));
   }
 
+  private Stream<String> numbers(int n, String letter) {
+    return IntStream.range(1, n + 1)
+        .mapToObj(i -> letter + i);
+  }
+
   private String typeArgs(int n) {
     return letters(n)
-               .collect(Collectors.joining(", "))
-           + (n > 0 ? ", " : "");
+        .collect(Collectors.joining(", "));
+  }
+
+  private String typeArgsNum(int n, String letter) {
+    return numbers(n, letter)
+        .collect(Collectors.joining(", "));
   }
 
   private String parameters(int n) {
@@ -208,6 +250,26 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     return letters(n)
         .map(String::toLowerCase)
         .collect(Collectors.joining(", "));
+  }
+
+  private String arguments(int n, String letter) {
+    return numbers(n, letter)
+        .collect(Collectors.joining(", "));
+  }
+
+  private String pSquared(int n, String template) {
+    return IntStream.range(1, n + 1)
+        .mapToObj(i -> template
+            .replaceAll("%p", repeat("p.", (n - i)))
+            .replaceAll("%n", Integer.toString(i))
+        )
+        .collect(Collectors.joining(", "));
+  }
+
+  private String repeat(String str, int n) {
+    return IntStream.range(0, n)
+        .mapToObj(i -> str)
+        .collect(Collectors.joining());
   }
 
   private String jdkInterface(int n) {

@@ -12,4 +12,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface GenerateTaskBuilder {
   int upTo();
+  boolean scala() default false;
 }
