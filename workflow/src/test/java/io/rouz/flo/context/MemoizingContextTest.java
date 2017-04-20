@@ -9,6 +9,7 @@ import io.rouz.flo.AwaitValue;
 import io.rouz.flo.Task;
 import io.rouz.flo.TaskContext;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -73,6 +74,37 @@ public class MemoizingContextTest {
     assertThat(evaluatedValue, is(val("ups8", 8)));
     assertThat(countUpstreamRuns, is(0));
     assertThat(countExampleRuns, is(0));
+  }
+
+  @Test
+  public void deDuplicatesSameTasks() throws Exception {
+    AtomicInteger counter = new AtomicInteger(0);
+    Task<Integer> count = Task.named("Count").ofType(Integer.class)
+        .process(counter::incrementAndGet);
+
+    Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
+        .in(() -> count)
+        .in(() -> count)
+        .in(() -> count)
+        .process((a, b, c) -> a + b + c);
+
+    AwaitValue<Integer> await = new AwaitValue<>();
+    context.evaluate(sum).consume(await);
+
+    assertThat(evalAndGet(sum), is(3));
+    assertThat(counter.get(), is(1)); // only called once
+
+    // only memoized during each execution
+    context = MemoizingContext.composeWith(inmem());
+    assertThat(evalAndGet(count), is(2));
+    assertThat(evalAndGet(count), is(2));
+    assertThat(counter.get(), is(2)); // called once more
+  }
+
+  private <T> T evalAndGet(Task<T> task) throws InterruptedException {
+    AwaitValue<T> val = new AwaitValue<>();
+    context.evaluate(task).consume(val);
+    return val.awaitAndGet();
   }
 
   Task<String> upstream(int i) {

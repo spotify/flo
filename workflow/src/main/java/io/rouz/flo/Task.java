@@ -40,13 +40,11 @@ public abstract class Task<T> implements Serializable {
   private Stream<Task<?>> inputsInOrder(Set<TaskId> visits) {
     return inputs().stream()
         .filter(input -> !visits.contains(input.id()))
-        .flatMap(input -> {
-          visits.add(input.id());
-          return Stream.concat(
-              input.inputsInOrder(visits),
-              Stream.of(input)
-          );
-        });
+        .peek(input -> visits.add(input.id()))
+        .flatMap(input -> Stream.concat(
+            input.inputsInOrder(visits),
+            Stream.of(input)
+        ));
   }
 
   public static NamedTaskBuilder named(String taskName, Object... args) {

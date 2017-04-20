@@ -20,7 +20,7 @@ public final class AwaitValue<T> extends AwaitingConsumer<T> {
   @Override
   public T awaitAndGet() throws InterruptedException {
     assertTrue("wait for value", await());
-    return super.awaitAndGet();
+    return super.get();
   }
 
   public String acceptingThreadName() {

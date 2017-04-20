@@ -3,11 +3,8 @@ package io.rouz.flo.context;
 import io.rouz.flo.Fn;
 import io.rouz.flo.Task;
 import io.rouz.flo.TaskContext;
-import io.rouz.flo.TaskId;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -22,8 +19,6 @@ import java.util.function.Function;
  */
 public class InMemImmediateContext implements TaskContext {
 
-  private Map<TaskId, Object> cache =  new HashMap<>();
-
   private InMemImmediateContext() {
   }
 
@@ -33,18 +28,7 @@ public class InMemImmediateContext implements TaskContext {
 
   @Override
   public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
-    final TaskId taskId =  task.id();
-
-    final Value<T> value;
-    if (has(taskId)) {
-      value = get(taskId);
-      LOG.debug("Found calculated value for {} = {}", taskId, value);
-    } else {
-      value = TaskContext.super.evaluateInternal(task, context);
-      put(taskId, value);
-    }
-
-    return value;
+    return TaskContext.super.evaluateInternal(task, context);
   }
 
   @Override
@@ -63,19 +47,6 @@ public class InMemImmediateContext implements TaskContext {
   @Override
   public <T> Promise<T> promise() {
     return new ValuePromise<>();
-  }
-
-  private boolean has(TaskId taskId) {
-    return cache.containsKey(taskId);
-  }
-
-  private <V> void put(TaskId taskId, V value) {
-    cache.put(taskId, value);
-  }
-
-  private <V> V get(TaskId taskId) {
-    //noinspection unchecked
-    return (V) cache.get(taskId);
   }
 
   private final class DirectValue<T> implements Value<T> {

@@ -12,10 +12,22 @@ public class AwaitingConsumer<T> implements Consumer<T> {
   private final CountDownLatch latch = new CountDownLatch(1);
   private T value;
 
+  public static <T> AwaitingConsumer<T> create() {
+    return new AwaitingConsumer<>();
+  }
+
   @Override
   public void accept(T t) {
     value = t;
     latch.countDown();
+  }
+
+  public T get() {
+    if (!isAvailable()) {
+      throw new IllegalStateException("Value not available");
+    }
+
+    return value;
   }
 
   public boolean isAvailable() {
@@ -31,6 +43,7 @@ public class AwaitingConsumer<T> implements Consumer<T> {
   }
 
   public T awaitAndGet() throws InterruptedException {
+    await();
     return value;
   }
 }

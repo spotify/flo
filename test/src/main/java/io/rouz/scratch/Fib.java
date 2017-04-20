@@ -31,7 +31,7 @@ final class Fib {
   }
 
   static long fib(long a, long b) {
-    System.out.println("Fib.process(" + a + " + " + b + ")");
+    System.out.println("Fib.process(" + a + " + " + b + ") = " + (a + b));
     return a + b;
   }
 }

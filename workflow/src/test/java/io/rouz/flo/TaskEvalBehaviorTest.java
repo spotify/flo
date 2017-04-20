@@ -43,27 +43,6 @@ public class TaskEvalBehaviorTest {
   }
 
   @Test
-  public void shouldMemoizeTaskProcessing() throws Exception {
-    AtomicInteger counter = new AtomicInteger(0);
-    Task<Integer> count = Task.named("Count").ofType(Integer.class)
-        .process(counter::incrementAndGet);
-
-    Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
-        .in(() -> count)
-        .in(() -> count)
-        .in(() -> count)
-        .process((a, b, c) -> a + b + c);
-
-    assertThat(evalAndGet(sum), is(3));
-    assertThat(counter.get(), is(1)); // only called once
-
-    // only memoized during each execution
-    assertThat(evalAndGet(count), is(2));
-    assertThat(evalAndGet(count), is(3));
-    assertThat(counter.get(), is(3)); // called twice more
-  }
-
-  @Test
   public void shouldHandleStreamParameters() throws Exception {
     Fn<Task<Integer>> countSupplier = countConstructor();
 

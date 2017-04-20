@@ -3,10 +3,14 @@ package io.rouz.scratch;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.rouz.flo.Task;
+import io.rouz.flo.TaskContext;
+import io.rouz.flo.TaskId;
 import io.rouz.flo.TaskInfo;
+import io.rouz.flo.context.AwaitingConsumer;
+import io.rouz.flo.context.InstrumentedContext;
+import io.rouz.flo.context.MemoizingContext;
 import io.rouz.flo.proc.Exec;
 import io.rouz.flo.processor.RootTask;
-import java.io.IOException;
 
 /**
  * Task definitions have (TD)
@@ -35,7 +39,7 @@ import java.io.IOException;
  */
 public class Scratch {
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws Exception {
     Task<Exec.Result> foo = exec("foobar", 123);
     foo.inputsInOrder()
         .map(Task::id)
@@ -43,9 +47,29 @@ public class Scratch {
 
     TaskInfo taskInfo = TaskInfo.ofTask(foo);
     ObjectMapper objectMapper = new ObjectMapper()
-      .enable(SerializationFeature.INDENT_OUTPUT);
+        .enable(SerializationFeature.INDENT_OUTPUT);
     String json = objectMapper.writeValueAsString(taskInfo);
     System.out.println(json);
+
+    AwaitingConsumer<Exec.Result> result = AwaitingConsumer.create();
+    TaskContext ctx = MemoizingContext.composeWith(
+        InstrumentedContext.composeWith(
+            TaskContext.inmem(), new L()));
+    ctx.evaluate(foo).consume(result);
+    result.awaitAndGet();
+  }
+
+  static class L implements InstrumentedContext.Listener {
+
+    @Override
+    public void edge(TaskId upstream, TaskId downstream) {
+      System.out.println(upstream + " <- " + downstream);
+    }
+
+    @Override
+    public void status(TaskId task, Phase phase) {
+      System.out.println(task + " :: " + phase);
+    }
   }
 
   @RootTask
