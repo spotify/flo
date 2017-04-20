@@ -1,13 +1,12 @@
 package io.rouz.flo;
 
+import static io.rouz.flo.TaskContextWithId.withId;
+import static java.util.stream.Collectors.toList;
+
+import io.rouz.flo.TaskContext.Value;
 import java.io.Serializable;
 import java.util.List;
 import java.util.stream.Stream;
-
-import io.rouz.flo.TaskContext.Value;
-
-import static io.rouz.flo.TaskContextWithId.withId;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Internal utility functions for the {@link TaskBuilder} api implementation

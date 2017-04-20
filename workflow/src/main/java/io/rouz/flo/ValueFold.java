@@ -1,13 +1,12 @@
 package io.rouz.flo;
 
+import io.rouz.flo.TaskContext.Value;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
-
-import io.rouz.flo.TaskContext.Value;
 
 /**
  * A function that folds a {@link List} of {@link Value}s into a {@link Value} of a {@link List}.

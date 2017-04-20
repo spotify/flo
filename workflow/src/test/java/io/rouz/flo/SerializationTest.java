@@ -1,6 +1,8 @@
 package io.rouz.flo;
 
-import org.junit.Test;
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,10 +11,7 @@ import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
-import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import org.junit.Test;
 
 public class SerializationTest {
 
@@ -20,7 +19,7 @@ public class SerializationTest {
 
   final String instanceField = "from instance";
   final TaskContext context = TaskContext.inmem();
-  final AwaitingConsumer<String> val = new AwaitingConsumer<>();
+  final AwaitValue<String> val = new AwaitValue<>();
 
   @Test
   public void shouldJavaUtilSerialize() throws Exception {

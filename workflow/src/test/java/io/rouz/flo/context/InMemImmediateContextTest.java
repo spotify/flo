@@ -1,18 +1,16 @@
 package io.rouz.flo.context;
 
-import org.junit.Test;
-
-import java.util.concurrent.atomic.AtomicReference;
-
-import io.rouz.flo.AwaitingConsumer;
-import io.rouz.flo.TaskContext;
-import io.rouz.flo.TaskContext.Promise;
-import io.rouz.flo.TaskContext.Value;
-
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+
+import io.rouz.flo.AwaitValue;
+import io.rouz.flo.TaskContext;
+import io.rouz.flo.TaskContext.Promise;
+import io.rouz.flo.TaskContext.Value;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Test;
 
 public class InMemImmediateContextTest {
 
@@ -161,7 +159,7 @@ public class InMemImmediateContextTest {
   @Test
   public void consumedValueIsAcceptedOnSameThread() throws Exception {
     String outerThread = Thread.currentThread().getName();
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     context.immediateValue("hello").consume(val);
 
     assertThat(val.acceptingThreadName(), is(outerThread));
@@ -171,7 +169,7 @@ public class InMemImmediateContextTest {
   public void suppliedValueIsComputedOnSameThread() throws Exception {
     String outerThread = Thread.currentThread().getName();
     AtomicReference<String> evalThread = new AtomicReference<>();
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     context.value(() -> {
       evalThread.set(Thread.currentThread().getName());
       return "hello";
@@ -184,7 +182,7 @@ public class InMemImmediateContextTest {
   @Test
   public void settingPromiseShouldConsumeValueOnSameThread() throws Exception {
     String outerThread = Thread.currentThread().getName();
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     Promise<String> promise = context.promise();
     promise.value().consume(val);
 
@@ -198,7 +196,7 @@ public class InMemImmediateContextTest {
     String outerThread = Thread.currentThread().getName();
     AtomicReference<String> evalThread1 = new AtomicReference<>();
     AtomicReference<String> evalThread2 = new AtomicReference<>();
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     Promise<String> promise = context.promise();
 
     promise.value()

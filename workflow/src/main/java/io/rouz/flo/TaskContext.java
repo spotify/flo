@@ -1,15 +1,13 @@
 package io.rouz.flo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import io.rouz.flo.context.AsyncContext;
+import io.rouz.flo.context.InMemImmediateContext;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import io.rouz.flo.context.AsyncContext;
-import io.rouz.flo.context.InMemImmediateContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A context for controlling {@link Task} evaluation and {@link Value} computation.

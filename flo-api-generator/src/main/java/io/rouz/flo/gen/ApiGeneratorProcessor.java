@@ -1,11 +1,7 @@
 package io.rouz.flo.gen;
 
-import org.trimou.engine.MustacheEngine;
-import org.trimou.engine.MustacheEngineBuilder;
-import org.trimou.engine.locator.ClassPathTemplateLocator;
-import org.trimou.engine.resolver.MapResolver;
-import org.trimou.engine.resolver.ReflectionResolver;
-import org.trimou.util.ImmutableMap;
+import static javax.tools.Diagnostic.Kind.ERROR;
+import static javax.tools.Diagnostic.Kind.NOTE;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -16,7 +12,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -33,9 +28,12 @@ import javax.lang.model.util.Types;
 import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
-
-import static javax.tools.Diagnostic.Kind.ERROR;
-import static javax.tools.Diagnostic.Kind.NOTE;
+import org.trimou.engine.MustacheEngine;
+import org.trimou.engine.MustacheEngineBuilder;
+import org.trimou.engine.locator.ClassPathTemplateLocator;
+import org.trimou.engine.resolver.MapResolver;
+import org.trimou.engine.resolver.ReflectionResolver;
+import org.trimou.util.ImmutableMap;
 
 /**
  * TODO: document.

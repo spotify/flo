@@ -1,9 +1,9 @@
 package io.rouz.flo;
 
+import static io.rouz.flo.TaskContextWithId.withId;
+
 import java.io.Serializable;
 import java.util.List;
-
-import static io.rouz.flo.TaskContextWithId.withId;
 
 /**
  * Implementation of the curried {@link TaskBuilder} api

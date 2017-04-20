@@ -3,10 +3,10 @@ package io.rouz.flo.context;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import io.rouz.flo.Fn;
+import io.rouz.flo.Task;
+import io.rouz.flo.TaskContext;
+import io.rouz.flo.TaskId;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -19,11 +19,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-
-import io.rouz.flo.Fn;
-import io.rouz.flo.Task;
-import io.rouz.flo.TaskContext;
-import io.rouz.flo.TaskId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A flo {@link TaskContext} that allows task types to define custom memoization strategies.

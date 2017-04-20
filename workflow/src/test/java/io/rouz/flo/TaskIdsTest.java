@@ -1,12 +1,12 @@
 package io.rouz.flo;
 
-import org.junit.Test;
-
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
+
+import org.junit.Test;
 
 public class TaskIdsTest {
 

@@ -1,14 +1,13 @@
 package io.rouz.flo.context;
 
-import org.junit.Test;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import io.rouz.flo.Fn;
 import io.rouz.flo.Task;
 import io.rouz.flo.TaskContext;
 import io.rouz.flo.TaskContext.Value;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import org.junit.Test;
 
 public class ForwardingTaskContextTest {
 

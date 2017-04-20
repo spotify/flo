@@ -1,20 +1,5 @@
 package io.rouz.flo;
 
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
-
-import io.rouz.flo.TaskBuilder.F1;
-
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -25,6 +10,19 @@ import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+
+import io.rouz.flo.TaskBuilder.F1;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests that verify the interaction between {@link Task} instances and the {@link TaskContext}.
@@ -368,14 +366,14 @@ public class TaskEvalBehaviorTest {
   }
 
   private <T> T evalAndGet(Task<T> task) throws InterruptedException {
-    AwaitingConsumer<T> val = new AwaitingConsumer<>();
+    AwaitValue<T> val = new AwaitValue<>();
     TaskContext.inmem().evaluate(task).consume(val);
     return val.awaitAndGet();
   }
 
   @Test
   public void shouldInvokeCurriedTaskWhenInputsBecomeAvailable() throws Exception {
-    AwaitingConsumer<String> bValue = new AwaitingConsumer<>();
+    AwaitValue<String> bValue = new AwaitValue<>();
     Task<String> task = Task.named("WithInputs").ofType(String.class).curried()
         .in(() -> leaf("A"))
         .in(() -> leaf("B first"))
@@ -458,7 +456,7 @@ public class TaskEvalBehaviorTest {
   }
 
   private void validateReturnsOwnTaskId(Task<TaskId> task) throws InterruptedException {
-    AwaitingConsumer<TaskId> val = new AwaitingConsumer<>();
+    AwaitValue<TaskId> val = new AwaitValue<>();
     TaskContext.inmem()
         .evaluate(task)
         .consume(val);
@@ -685,7 +683,7 @@ public class TaskEvalBehaviorTest {
       return valueFn.get().map(done -> "!!" + done + "!!");
     });
 
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     context.evaluate(task).consume(val);
 
     context.waitFor(task);

@@ -2,13 +2,11 @@ package io.rouz.scratch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-
-import java.io.IOException;
-
 import io.rouz.flo.Task;
 import io.rouz.flo.TaskInfo;
 import io.rouz.flo.proc.Exec;
 import io.rouz.flo.processor.RootTask;
+import java.io.IOException;
 
 /**
  * Task definitions have (TD)

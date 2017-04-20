@@ -1,9 +1,12 @@
 package io.rouz.flo.processor;
 
+import static java.util.Arrays.asList;
+import static javax.tools.Diagnostic.Kind.NOTE;
+
+import io.rouz.flo.Task;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -13,11 +16,6 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-
-import io.rouz.flo.Task;
-
-import static java.util.Arrays.asList;
-import static javax.tools.Diagnostic.Kind.NOTE;
 
 /**
  * Some handy methods for dealing with elements and types

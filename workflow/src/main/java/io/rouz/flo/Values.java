@@ -1,13 +1,12 @@
 package io.rouz.flo;
 
+import io.rouz.flo.TaskContext.Value;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
-
-import io.rouz.flo.TaskContext.Value;
 
 /**
  * Utilities for manipulating instances of {@link Value}.

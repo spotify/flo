@@ -1,20 +1,19 @@
 package io.rouz.flo;
 
-import org.junit.Test;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import org.junit.Test;
 
 public class InputSyncCompletionTest {
 
   TaskContext context = TaskContext.async(Executors.newFixedThreadPool(2));
 
-  AwaitingConsumer<TaskContext.Promise<Integer>> blocked = new AwaitingConsumer<>();
+  AwaitValue<TaskContext.Promise<Integer>> blocked = new AwaitValue<>();
   Task<Integer> blocking = Task.named("blocking").ofType(Integer.class)
       .processWithContext((tc) -> {
         TaskContext.Promise<Integer> promise = tc.promise();
@@ -66,7 +65,7 @@ public class InputSyncCompletionTest {
   }
 
   private void awaitBlocked(Task<String> task) throws InterruptedException {
-    AwaitingConsumer<Throwable> eval = new AwaitingConsumer<>();
+    AwaitValue<Throwable> eval = new AwaitValue<>();
     context.evaluate(task).onFail(eval);
 
     // should not complete before we unblock the blocked promise

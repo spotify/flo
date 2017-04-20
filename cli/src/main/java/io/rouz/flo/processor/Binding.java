@@ -1,9 +1,7 @@
 package io.rouz.flo.processor;
 
 import com.google.auto.value.AutoValue;
-
 import java.util.List;
-
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;

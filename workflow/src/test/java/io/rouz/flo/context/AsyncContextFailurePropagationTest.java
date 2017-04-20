@@ -1,7 +1,14 @@
 package io.rouz.flo.context;
 
-import org.junit.Test;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
+import io.rouz.flo.AwaitValue;
+import io.rouz.flo.Fn;
+import io.rouz.flo.Task;
+import io.rouz.flo.TaskContext.Promise;
+import io.rouz.flo.TaskId;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -9,16 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import io.rouz.flo.AwaitingConsumer;
-import io.rouz.flo.Fn;
-import io.rouz.flo.Task;
-import io.rouz.flo.TaskContext.Promise;
-import io.rouz.flo.TaskId;
-
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import org.junit.Test;
 
 public class AsyncContextFailurePropagationTest {
 
@@ -48,7 +46,7 @@ public class AsyncContextFailurePropagationTest {
           return c + b + a;
         });
 
-    AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
+    AwaitValue<Throwable> val = new AwaitValue<>();
     new MyContext(Executors.newSingleThreadExecutor())
         .evaluate(task)
         .onFail(val);

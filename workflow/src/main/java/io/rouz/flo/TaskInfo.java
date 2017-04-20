@@ -1,13 +1,12 @@
 package io.rouz.flo;
 
-import com.google.auto.value.AutoValue;
+import static java.util.stream.Collectors.toList;
 
+import com.google.auto.value.AutoValue;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static java.util.stream.Collectors.toList;
 
 /**
  * A materialized, recursive value representation of a {@link Task}.

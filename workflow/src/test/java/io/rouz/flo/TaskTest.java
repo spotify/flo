@@ -1,17 +1,15 @@
 package io.rouz.flo;
 
-import org.junit.Test;
-
-import java.util.concurrent.atomic.AtomicReference;
-
-import io.rouz.flo.TaskContext.Promise;
-
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+
+import io.rouz.flo.TaskContext.Promise;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Test;
 
 /**
  * Naming convention for tests
@@ -33,7 +31,7 @@ public class TaskTest {
     Task<String> task = Task.named("InContext").ofType(String.class)
         .process(() -> "constant");
 
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     ControlledBlockingContext context = new ControlledBlockingContext();
     context.evaluate(task).consume(val);
 
@@ -375,7 +373,7 @@ public class TaskTest {
       Task... inputs)
       throws InterruptedException {
 
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     ControlledBlockingContext context = new ControlledBlockingContext();
     context.evaluate(task).consume(val);
 
@@ -401,7 +399,7 @@ public class TaskTest {
       Task... inputs)
       throws InterruptedException {
 
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     ControlledBlockingContext context = new ControlledBlockingContext();
     context.evaluate(task).consume(val);
 

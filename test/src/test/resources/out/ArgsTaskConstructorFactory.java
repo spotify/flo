@@ -2,12 +2,9 @@ package compiling;
 
 import io.rouz.flo.Task;
 import io.rouz.flo.TaskConstructor;
-
 import java.util.Arrays;
 import java.util.Objects;
-
 import javax.annotation.Generated;
-
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;

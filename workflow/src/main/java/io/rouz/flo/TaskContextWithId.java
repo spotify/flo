@@ -1,10 +1,9 @@
 package io.rouz.flo;
 
-import java.util.Optional;
+import static java.util.Objects.requireNonNull;
 
 import io.rouz.flo.context.ForwardingTaskContext;
-
-import static java.util.Objects.requireNonNull;
+import java.util.Optional;
 
 /**
  * A {@link TaskContext} that overrides {@link #currentTaskId()} to return a specific {@link TaskId}.

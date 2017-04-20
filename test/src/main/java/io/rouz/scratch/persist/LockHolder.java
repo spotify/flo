@@ -3,15 +3,13 @@ package io.rouz.scratch.persist;
 import com.spotify.apollo.Client;
 import com.spotify.apollo.Request;
 import com.spotify.apollo.Status;
-
+import io.rouz.flo.TaskId;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import io.rouz.flo.TaskId;
 import okio.ByteString;
 
 /**

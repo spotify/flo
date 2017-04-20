@@ -1,8 +1,7 @@
 package io.rouz.flo;
 
-import java.io.Serializable;
-
 import io.rouz.flo.TaskContext.Value;
+import java.io.Serializable;
 
 /**
  * A function that evaluates some {@link Value} in a given {@link TaskContext}

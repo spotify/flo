@@ -1,20 +1,18 @@
 package io.rouz.flo.context;
 
-import org.junit.Test;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
-
-import io.rouz.flo.AwaitingConsumer;
-import io.rouz.flo.TaskContext;
-import io.rouz.flo.TaskContext.Promise;
-import io.rouz.flo.TaskContext.Value;
-
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+
+import io.rouz.flo.AwaitValue;
+import io.rouz.flo.TaskContext;
+import io.rouz.flo.TaskContext.Promise;
+import io.rouz.flo.TaskContext.Value;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Test;
 
 public class AsyncContextTest {
 
@@ -29,7 +27,7 @@ public class AsyncContextTest {
 
   @Test
   public void immediateValueIsAvailable() throws Exception {
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     context.immediateValue("hello").consume(val);
 
     assertThat(val.awaitAndGet(), is("hello"));
@@ -37,7 +35,7 @@ public class AsyncContextTest {
 
   @Test
   public void promiseShouldCompleteValueWhenSet() throws Exception {
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     Promise<String> promise = context.promise();
     promise.value().consume(val);
     assertFalse(val.isAvailable());
@@ -48,8 +46,8 @@ public class AsyncContextTest {
 
   @Test
   public void mappedValueOfPromiseShouldCompleteWhenSet() throws Exception {
-    AwaitingConsumer<String> val1 = new AwaitingConsumer<>();
-    AwaitingConsumer<String> val2 = new AwaitingConsumer<>();
+    AwaitValue<String> val1 = new AwaitValue<>();
+    AwaitValue<String> val2 = new AwaitValue<>();
     Promise<String> promise = context.promise();
     Value<String> value1 = promise.value();
     Value<String> value2 = value1.map(hello -> hello + " world");
@@ -66,8 +64,8 @@ public class AsyncContextTest {
 
   @Test
   public void flatMappedValueOfPromiseShouldLatchAndComplete() throws Exception {
-    AwaitingConsumer<String> val1 = new AwaitingConsumer<>();
-    AwaitingConsumer<String> val2 = new AwaitingConsumer<>();
+    AwaitValue<String> val1 = new AwaitValue<>();
+    AwaitValue<String> val2 = new AwaitValue<>();
     Promise<String> promise1 = context.promise();
     Promise<String> promise2 = context.promise();
     Value<String> value1 = promise1.value();
@@ -89,7 +87,7 @@ public class AsyncContextTest {
 
   @Test
   public void propagateFailure() throws Exception {
-    AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
+    AwaitValue<Throwable> val = new AwaitValue<>();
     Promise<String> promise = context.promise();
 
     promise.value().onFail(val);
@@ -99,7 +97,7 @@ public class AsyncContextTest {
 
   @Test
   public void propagateFailureThroughMap() throws Exception {
-    AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
+    AwaitValue<Throwable> val = new AwaitValue<>();
     Promise<String> promise = context.promise();
 
     promise.value()
@@ -111,7 +109,7 @@ public class AsyncContextTest {
 
   @Test
   public void propagateFailureThroughFlatMap() throws Exception {
-    AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
+    AwaitValue<Throwable> val = new AwaitValue<>();
     Promise<String> promise = context.promise();
 
     promise.value()
@@ -123,7 +121,7 @@ public class AsyncContextTest {
 
   @Test
   public void propagateFailureFromInnerValueOnFlatMap() throws Exception {
-    AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
+    AwaitValue<Throwable> val = new AwaitValue<>();
     Promise<String> promise1 = context.promise();
     Promise<String> promise2 = context.promise();
 
@@ -137,7 +135,7 @@ public class AsyncContextTest {
 
   @Test
   public void propagateFailureThroughMapAndFlatMapMix() throws Exception {
-    AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
+    AwaitValue<Throwable> val = new AwaitValue<>();
     Promise<String> promise = context.promise();
 
     promise.value()
@@ -152,7 +150,7 @@ public class AsyncContextTest {
     assertThrown(val, promise);
   }
 
-  private void assertThrown(AwaitingConsumer<Throwable> val, Promise<String> promise) throws Exception {
+  private void assertThrown(AwaitValue<Throwable> val, Promise<String> promise) throws Exception {
     Throwable thrown = new Throwable();
     promise.fail(thrown);
     Throwable throwable = val.awaitAndGet();
@@ -163,7 +161,7 @@ public class AsyncContextTest {
   @Test
   public void consumedValueIsAcceptedOnExecutorThread() throws Exception {
     String outerThread = Thread.currentThread().getName();
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     context.immediateValue("hello").consume(val);
 
     assertThat(val.acceptingThreadName(), not(is(outerThread)));
@@ -173,7 +171,7 @@ public class AsyncContextTest {
   public void suppliedValueIsComputedOnExecutorThread() throws Exception {
     String outerThread = Thread.currentThread().getName();
     AtomicReference<String> evalThread = new AtomicReference<>();
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     context.value(() -> {
       evalThread.set(Thread.currentThread().getName());
       return "hello";
@@ -186,7 +184,7 @@ public class AsyncContextTest {
   @Test
   public void settingPromiseShouldConsumeValueOnExecutorThread() throws Exception {
     String outerThread = Thread.currentThread().getName();
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     Promise<String> promise = context.promise();
     promise.value().consume(val);
 
@@ -200,7 +198,7 @@ public class AsyncContextTest {
     String outerThread = Thread.currentThread().getName();
     AtomicReference<String> evalThread1 = new AtomicReference<>();
     AtomicReference<String> evalThread2 = new AtomicReference<>();
-    AwaitingConsumer<String> val = new AwaitingConsumer<>();
+    AwaitValue<String> val = new AwaitValue<>();
     Promise<String> promise = context.promise();
 
     promise.value()

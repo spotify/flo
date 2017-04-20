@@ -1,12 +1,10 @@
 package io.rouz.flo.proc;
 
 import com.google.auto.value.AutoValue;
-
-import java.util.Arrays;
-
 import io.rouz.flo.TaskBuilder.F1;
 import io.rouz.flo.TaskBuilder.F2;
 import io.rouz.flo.TaskBuilder.F3;
+import java.util.Arrays;
 
 /**
  * TODO: document.

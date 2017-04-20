@@ -1,12 +1,11 @@
 package io.rouz.flo.processor;
 
-import org.junit.Test;
-
-import javax.tools.JavaFileObject;
-
 import static com.google.common.truth.Truth.assert_;
 import static com.google.testing.compile.JavaFileObjects.forResource;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
+
+import javax.tools.JavaFileObject;
+import org.junit.Test;
 
 public class TaskBindingProcessorTest {
 

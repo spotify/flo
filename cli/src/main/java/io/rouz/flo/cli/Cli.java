@@ -1,19 +1,18 @@
 package io.rouz.flo.cli;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import static java.lang.System.out;
+import static java.util.Arrays.asList;
 
 import io.rouz.flo.Task;
 import io.rouz.flo.TaskConstructor;
 import io.rouz.flo.TaskContext;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
-
-import static java.lang.System.out;
-import static java.util.Arrays.asList;
 
 @Deprecated
 public final class Cli {

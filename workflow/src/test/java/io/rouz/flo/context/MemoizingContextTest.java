@@ -1,19 +1,16 @@
 package io.rouz.flo.context;
 
-import com.google.auto.value.AutoValue;
-
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Optional;
-
-import io.rouz.flo.AwaitingConsumer;
-import io.rouz.flo.Task;
-import io.rouz.flo.TaskContext;
-
 import static io.rouz.flo.TaskContext.inmem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+
+import com.google.auto.value.AutoValue;
+import io.rouz.flo.AwaitValue;
+import io.rouz.flo.Task;
+import io.rouz.flo.TaskContext;
+import java.util.Optional;
+import org.junit.Before;
+import org.junit.Test;
 
 public class MemoizingContextTest {
 
@@ -35,7 +32,7 @@ public class MemoizingContextTest {
   public void evaluatesAndStores() throws Exception {
     Task<ExampleValue> example = example(7);
 
-    AwaitingConsumer<ExampleValue> await = new AwaitingConsumer<>();
+    AwaitValue<ExampleValue> await = new AwaitValue<>();
     context.evaluate(example).consume(await);
 
     ExampleValue evaluatedValue = await.awaitAndGet();
@@ -53,7 +50,7 @@ public class MemoizingContextTest {
 
     Task<ExampleValue> example = example(7);
 
-    AwaitingConsumer<ExampleValue> await = new AwaitingConsumer<>();
+    AwaitValue<ExampleValue> await = new AwaitValue<>();
     context.evaluate(example).consume(await);
 
     ExampleValue evaluatedValue = await.awaitAndGet();
@@ -69,7 +66,7 @@ public class MemoizingContextTest {
 
     Task<ExampleValue> example = example(8);
 
-    AwaitingConsumer<ExampleValue> await = new AwaitingConsumer<>();
+    AwaitValue<ExampleValue> await = new AwaitValue<>();
     context.evaluate(example).consume(await);
 
     ExampleValue evaluatedValue = await.awaitAndGet();
@@ -78,7 +75,7 @@ public class MemoizingContextTest {
     assertThat(countExampleRuns, is(0));
   }
 
-  Task<String> upstream(int i ) {
+  Task<String> upstream(int i) {
     return Task.named("upstream", i).ofType(String.class)
         .process(() -> {
           countUpstreamRuns++;

@@ -1,21 +1,18 @@
 package io.rouz.flo.context;
 
-import com.google.common.collect.Lists;
-
-import org.junit.Test;
-
-import java.util.List;
-
-import io.rouz.flo.Task;
-import io.rouz.flo.TaskContext;
-import io.rouz.flo.TaskId;
-
 import static io.rouz.flo.TaskContext.inmem;
 import static io.rouz.flo.context.InstrumentedContext.Listener.Phase.FAILURE;
 import static io.rouz.flo.context.InstrumentedContext.Listener.Phase.START;
 import static io.rouz.flo.context.InstrumentedContext.Listener.Phase.SUCCESS;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
+
+import com.google.common.collect.Lists;
+import io.rouz.flo.Task;
+import io.rouz.flo.TaskContext;
+import io.rouz.flo.TaskId;
+import java.util.List;
+import org.junit.Test;
 
 public class InstrumentedContextTest {
 

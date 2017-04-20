@@ -1,14 +1,13 @@
 package io.rouz.flo.processor;
 
-import org.junit.Test;
-
-import io.rouz.flo.Task;
-import io.rouz.flo.cli.Cli;
-
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+
+import io.rouz.flo.Task;
+import io.rouz.flo.cli.Cli;
+import org.junit.Test;
 
 public class CliTest {
 

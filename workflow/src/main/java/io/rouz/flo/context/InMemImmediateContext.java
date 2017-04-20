@@ -1,5 +1,9 @@
 package io.rouz.flo.context;
 
+import io.rouz.flo.Fn;
+import io.rouz.flo.Task;
+import io.rouz.flo.TaskContext;
+import io.rouz.flo.TaskId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,11 +12,6 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import io.rouz.flo.Fn;
-import io.rouz.flo.Task;
-import io.rouz.flo.TaskContext;
-import io.rouz.flo.TaskId;
 
 /**
  * A {@link TaskContext} that evaluates tasks immediately and memoizes results in memory.

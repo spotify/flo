@@ -3,12 +3,15 @@ package io.rouz.scratch.persist;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-
 import com.spotify.apollo.Client;
 import com.spotify.apollo.Request;
 import com.spotify.apollo.Response;
 import com.spotify.apollo.Status;
-
+import io.rouz.flo.Fn;
+import io.rouz.flo.Task;
+import io.rouz.flo.TaskContext;
+import io.rouz.flo.TaskId;
+import io.rouz.flo.context.AsyncContext;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
@@ -22,12 +25,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import io.rouz.flo.Fn;
-import io.rouz.flo.Task;
-import io.rouz.flo.TaskContext;
-import io.rouz.flo.TaskId;
-import io.rouz.flo.context.AsyncContext;
 import okio.ByteString;
 
 /**

@@ -1,5 +1,8 @@
 package io.rouz.flo;
 
+import static org.junit.Assert.fail;
+
+import io.rouz.flo.TaskBuilder.F1;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,10 +14,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import io.rouz.flo.TaskBuilder.F1;
-
-import static org.junit.Assert.fail;
 
 /**
  * A {@link TaskContext} used for testing the concurrency behavior of task graphs.

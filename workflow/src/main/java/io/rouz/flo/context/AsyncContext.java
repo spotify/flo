@@ -1,5 +1,9 @@
 package io.rouz.flo.context;
 
+import io.rouz.flo.Fn;
+import io.rouz.flo.Task;
+import io.rouz.flo.TaskBuilder.F0;
+import io.rouz.flo.TaskContext;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -7,11 +11,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import io.rouz.flo.Fn;
-import io.rouz.flo.Task;
-import io.rouz.flo.TaskBuilder.F0;
-import io.rouz.flo.TaskContext;
 
 /**
  * A {@link TaskContext} that executes evaluation and {@link Value} computations on a given
