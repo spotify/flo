@@ -44,6 +44,8 @@
         <module>cli</module>
         <module>test</module>
         <module>flo-scala</module>
+        <module>flo-task-runner</module>
+        <module>flo-freezer</module>
     </modules>
 
     <dependencyManagement>
