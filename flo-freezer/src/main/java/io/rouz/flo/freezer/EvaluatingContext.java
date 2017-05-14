@@ -15,7 +15,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * TODO: document.
+ * A wrapper context that allows for evaluating specific tasks. This class is intended to be used
+ * in pairing with {@link PersistingContext}.
+ *
+ * <p>See {@link #evaluateTaskFrom(Path)}.
+ *
+ * <p>todo: support reading and writing from arbitrary {@link Path} types
  */
 public class EvaluatingContext {
 
@@ -29,6 +34,16 @@ public class EvaluatingContext {
     this.delegate = Objects.requireNonNull(delegate);
   }
 
+  /**
+   * Evaluate a persisted task, expecting it's input values to exist as "_out" files in the same
+   * directory.
+   *
+   * <p>The output of the evaluated task will be persisted in the same directory.
+   *
+   * @param persistedTask A path to the persisted task file that should be evaluated
+   * @param <T>           The task output type
+   * @return The task output value
+   */
   public <T> TaskContext.Value<T> evaluateTaskFrom(Path persistedTask) {
     Task<T> task = null;
     try {

@@ -25,7 +25,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * TODO: document.
+ * A {@link TaskContext} that serializes and persist tasks. Any call to {@link #evaluate(Task)}
+ * will persist the task and recurse to also do so for all input tasks. No task in the dependency
+ * tree will actually be invoked. Instead {@link #evaluate(Task)} will return a {@link Value} that
+ * always fails.
+ *
+ * <p>After the returned {@link Value} has failed, all persisted file paths can be received through
+ * {@link #getFiles()}.
  */
 public class PersistingContext extends ForwardingTaskContext {
 

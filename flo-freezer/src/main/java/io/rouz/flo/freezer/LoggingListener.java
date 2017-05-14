@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * TODO: document.
+ * A {@link InstrumentedContext.Listener} that prints to an slf4j Logger.
  */
 public class LoggingListener implements InstrumentedContext.Listener {
 

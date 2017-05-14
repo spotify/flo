@@ -11,7 +11,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * TODO: document.
+ * A main class that uses {@link EvaluatingContext} for evaluating a specific task which has
+ * been persisted by {@link PersistingContext}. It expects the inputs to the task to already
+ * have been evaluated using the same method.
+ *
+ * <p>After evaluation of the specified task has completed, the output value will be stored as a
+ * sibling file to the persisted task file, with an added "_out" suffix.
  */
 public class TaskRunnerEntrypoint {
 
@@ -31,7 +36,7 @@ public class TaskRunnerEntrypoint {
             InstrumentedContext.composeWith(
                 TaskContext.inmem(), new LoggingListener())));
 
-    final AwaitingConsumer < Object > res = AwaitingConsumer.create();
+    final AwaitingConsumer<Object> res = AwaitingConsumer.create();
     final TaskContext.Value<Object> value = evaluatingContext.evaluateTaskFrom(filePath);
     value.consume(res);
     value.onFail(Throwable::printStackTrace);
