@@ -1,16 +1,14 @@
 package io.rouz.flo;
 
-import static io.rouz.flo.TaskContext.inmem;
+import static io.rouz.flo.TaskContext.async;
 import static io.rouz.flo.freezer.LoggingListener.colored;
 import static java.lang.System.getProperty;
 import static java.lang.System.getenv;
-import static java.util.Optional.ofNullable;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.rouz.flo.TaskContext.Value;
 import io.rouz.flo.context.AwaitingConsumer;
-import io.rouz.flo.context.InstrumentedContext;
 import io.rouz.flo.context.MemoizingContext;
-import io.rouz.flo.freezer.LoggingListener;
 import io.rouz.flo.freezer.Persisted;
 import io.rouz.flo.freezer.PersistingContext;
 import java.io.IOException;
@@ -20,6 +18,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,16 +67,18 @@ public class TestWorkflow {
 
     LOG.info("Persisting tasks DAG to {}", basePath.toUri());
 
-    PersistingContext persistingContext = new PersistingContext(basePath, inmem());
-    TaskContext context = MemoizingContext.composeWith(
-        InstrumentedContext.composeWith(
-            persistingContext, new LoggingListener()));
+    ThreadFactory tf = new ThreadFactoryBuilder()
+        .setDaemon(true)
+        .build();
+    Executor executor = Executors.newCachedThreadPool(tf);
+    PersistingContext persistingContext = new PersistingContext(basePath, async(executor));
+    TaskContext context = MemoizingContext.composeWith(persistingContext);
 
     AwaitingConsumer<Throwable> await = AwaitingConsumer.create();
     Value<?> value = context.evaluate(task);
     value.onFail(await);
 
-    await.await(5, TimeUnit.SECONDS);
+    await.await(1, TimeUnit.MINUTES);
     if (!await.isAvailable()) {
       throw new RuntimeException("Failed to persist");
     }

@@ -1,13 +1,15 @@
 package io.rouz.flo.freezer;
 
 import io.rouz.flo.TaskContext;
-import io.rouz.flo.context.AwaitingConsumer;
 import io.rouz.flo.context.InstrumentedContext;
 import io.rouz.flo.context.MemoizingContext;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,14 +40,16 @@ public class TaskRunnerEntrypoint {
             InstrumentedContext.composeWith(
                 TaskContext.inmem(), new LoggingListener())));
 
-    final AwaitingConsumer<Object> res = AwaitingConsumer.create();
     final TaskContext.Value<Object> value = evaluatingContext.evaluateTaskFrom(filePath);
-    value.consume(res);
-    value.onFail(Throwable::printStackTrace);
+    final CompletableFuture<Object> future = new CompletableFuture<>();
+    value.consume(future::complete);
+    value.onFail(future::completeExceptionally);
 
-    res.await(5, TimeUnit.SECONDS);
-    final Object output = res.get();
-
-    LOG.info("res.get() = " + output);
+    try {
+      future.get(24, TimeUnit.HOURS);
+    } catch (ExecutionException | TimeoutException e) {
+      e.printStackTrace();
+      System.exit(1);
+    }
   }
 }
