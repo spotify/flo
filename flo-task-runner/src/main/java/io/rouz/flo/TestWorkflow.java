@@ -2,6 +2,9 @@ package io.rouz.flo;
 
 import static io.rouz.flo.TaskContext.inmem;
 import static io.rouz.flo.freezer.LoggingListener.colored;
+import static java.lang.System.getProperty;
+import static java.lang.System.getenv;
+import static java.util.Optional.ofNullable;
 
 import io.rouz.flo.TaskContext.Value;
 import io.rouz.flo.context.AwaitingConsumer;
@@ -16,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +27,7 @@ import org.slf4j.LoggerFactory;
 public class TestWorkflow {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestWorkflow.class);
+  private static final String FLO_STATE_LOCATION = "FLO_STATE_LOCATION";
 
   public static void main(String[] args) throws InterruptedException {
     Task<Long> fib9 = fib(9);
@@ -48,7 +53,8 @@ public class TestWorkflow {
   }
 
   private static void persist(Task<?> task) throws InterruptedException {
-    final String cwd = System.getProperty("user.dir");
+    final String cwd = Optional.ofNullable(getenv(FLO_STATE_LOCATION))
+        .orElseGet(() -> "file://" + getProperty("user.dir"));
     final URI basePathUri = URI.create(cwd);
     final Path basePath = Paths.get(basePathUri).resolve("run-" + randomAlphaNumeric(4));
 
@@ -58,7 +64,7 @@ public class TestWorkflow {
       throw new RuntimeException(e);
     }
 
-    LOG.info("Persisting tasks DAG to {}", basePath);
+    LOG.info("Persisting tasks DAG to {}", basePath.toUri());
 
     PersistingContext persistingContext = new PersistingContext(basePath, inmem());
     TaskContext context = MemoizingContext.composeWith(
@@ -80,7 +86,7 @@ public class TestWorkflow {
 
     Map<TaskId, Path> files = persistingContext.getFiles();
     files.forEach((taskId, file) ->
-        LOG.info("{} -> {}", colored(taskId), file)
+        LOG.info("{} -> {}", colored(taskId), file.toUri())
     );
   }
 
