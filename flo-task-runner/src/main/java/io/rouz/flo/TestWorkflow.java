@@ -8,8 +8,10 @@ import io.rouz.flo.context.AwaitingConsumer;
 import io.rouz.flo.context.InstrumentedContext;
 import io.rouz.flo.context.MemoizingContext;
 import io.rouz.flo.freezer.LoggingListener;
+import io.rouz.flo.freezer.Persisted;
 import io.rouz.flo.freezer.PersistingContext;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,13 +49,16 @@ public class TestWorkflow {
 
   private static void persist(Task<?> task) throws InterruptedException {
     final String cwd = System.getProperty("user.dir");
-    final Path basePath = Paths.get(cwd).resolve("run-" + randomAlphaNumeric(4));
+    final URI basePathUri = URI.create(cwd);
+    final Path basePath = Paths.get(basePathUri).resolve("run-" + randomAlphaNumeric(4));
 
     try {
       Files.createDirectories(basePath);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+
+    LOG.info("Persisting tasks DAG to {}", basePath);
 
     PersistingContext persistingContext = new PersistingContext(basePath, inmem());
     TaskContext context = MemoizingContext.composeWith(
@@ -65,6 +70,14 @@ public class TestWorkflow {
     value.onFail(await);
 
     await.await(5, TimeUnit.SECONDS);
+    if (!await.isAvailable()) {
+      throw new RuntimeException("Failed to persist");
+    }
+
+    if (!(await.get() instanceof Persisted)) {
+      throw new RuntimeException(await.get());
+    }
+
     Map<TaskId, Path> files = persistingContext.getFiles();
     files.forEach((taskId, file) ->
         LOG.info("{} -> {}", colored(taskId), file)

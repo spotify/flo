@@ -70,7 +70,7 @@ public class PersistingContext extends ForwardingTaskContext {
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
     final Promise<T> promise = promise();
     LOG.info("Will not invoke {}", colored(taskId));
-    promise.fail(new RuntimeException("will not invoke"));
+    promise.fail(new Persisted());
     return promise.value();
   }
 

@@ -4,6 +4,7 @@ import io.rouz.flo.TaskContext;
 import io.rouz.flo.context.AwaitingConsumer;
 import io.rouz.flo.context.InstrumentedContext;
 import io.rouz.flo.context.MemoizingContext;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +30,8 @@ public class TaskRunnerEntrypoint {
     }
 
     final String file = args[0];
-    final Path filePath = Paths.get(file);
+    final URI fileUri = URI.create(file);
+    final Path filePath = Paths.get(fileUri);
 
     final EvaluatingContext evaluatingContext = new EvaluatingContext(
         filePath.resolveSibling(""), MemoizingContext.composeWith(
