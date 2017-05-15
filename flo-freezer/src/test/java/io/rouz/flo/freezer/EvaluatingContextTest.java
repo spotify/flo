@@ -4,6 +4,7 @@ import static io.rouz.flo.TaskContext.inmem;
 import static io.rouz.flo.freezer.EvaluatingContext.OUTPUT_SUFFIX;
 import static io.rouz.flo.freezer.PersistingContext.cleanForFilename;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -28,6 +29,8 @@ public class EvaluatingContextTest {
   private PersistingContext persistingContext;
 
   private EvaluatingContext evaluatingContext;
+
+  private static boolean calledInputCode;
 
   @Before
   public void setUp() throws Exception {
@@ -85,11 +88,7 @@ public class EvaluatingContextTest {
     Task<String> task = downstreamTask("world");
     Map<TaskId, Path> persistedPaths = persist(task);
 
-    AwaitingConsumer<String> awaitUpstream = AwaitingConsumer.create();
-    Path upstreamPath = persistedPaths.get(singleTask("world").id());
-    evaluatingContext.<String>evaluateTaskFrom(upstreamPath)
-        .consume(awaitUpstream);
-    awaitUpstream.awaitAndGet();
+    evalUpstreamTask(persistedPaths);
 
     AwaitingConsumer<String> await = AwaitingConsumer.create();
     Path downstreamPath = persistedPaths.get(task.id());
@@ -101,6 +100,25 @@ public class EvaluatingContextTest {
     assertThat(await.awaitAndGet(), is("hello world!"));
   }
 
+  @Test
+  public void doesNotRunInputExpansionCode() throws Exception {
+    Task<String> task = downstreamTask("world");
+    Map<TaskId, Path> persistedPaths = persist(task);
+
+    evalUpstreamTask(persistedPaths);
+
+    calledInputCode = false;
+    AwaitingConsumer<String> await = AwaitingConsumer.create();
+    Path downstreamPath = persistedPaths.get(task.id());
+    final TaskContext.Value<String> stringValue =
+        evaluatingContext.evaluateTaskFrom(downstreamPath);
+    stringValue.consume(await);
+    stringValue.onFail(Throwable::printStackTrace);
+
+    await.awaitAndGet();
+    assertFalse(calledInputCode);
+  }
+
   private static Task<String> singleTask(String arg) {
     return Task.named("single", arg).ofType(String.class)
         .process(() -> "hello " + arg);
@@ -108,7 +126,10 @@ public class EvaluatingContextTest {
 
   private static Task<String> downstreamTask(String arg) {
     return Task.named("downstream", arg).ofType(String.class)
-        .in(() -> singleTask(arg))
+        .in(() -> {
+          calledInputCode = true;
+          return singleTask(arg);
+        })
         .process((in) -> in + "!");
   }
 
@@ -117,5 +138,13 @@ public class EvaluatingContextTest {
     persistingContext.evaluate(task).onFail(awaitPersist); // persistingContext fails all evals
 
     return persistingContext.getFiles();
+  }
+
+  private void evalUpstreamTask(Map<TaskId, Path> persistedPaths) throws InterruptedException {
+    AwaitingConsumer<String> awaitUpstream = AwaitingConsumer.create();
+    Path upstreamPath = persistedPaths.get(singleTask("world").id());
+    evaluatingContext.<String>evaluateTaskFrom(upstreamPath)
+        .consume(awaitUpstream);
+    awaitUpstream.awaitAndGet();
   }
 }

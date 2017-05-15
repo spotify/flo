@@ -51,7 +51,10 @@ public class PersistingContext extends ForwardingTaskContext {
 
   @Override
   public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
-    Path file = tempFile(task.id());
+    // materialize lazy inputs
+    task.inputs();
+
+    Path file = taskFile(task.id());
     files.put(task.id(), file);
     try {
       serialize(task, file);
@@ -109,7 +112,7 @@ public class PersistingContext extends ForwardingTaskContext {
     ;
   }
 
-  private Path tempFile(TaskId taskId) {
+  private Path taskFile(TaskId taskId) {
     return basePath.resolve(cleanForFilename(taskId));
   }
 }

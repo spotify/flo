@@ -18,9 +18,6 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * TODO: document.
- */
 public class TestWorkflow {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestWorkflow.class);
