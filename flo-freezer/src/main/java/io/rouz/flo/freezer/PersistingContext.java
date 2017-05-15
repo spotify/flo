@@ -1,6 +1,10 @@
 package io.rouz.flo.freezer;
 
 import static io.rouz.flo.freezer.LoggingListener.colored;
+import static java.nio.file.Files.newInputStream;
+import static java.nio.file.Files.newOutputStream;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -11,11 +15,8 @@ import io.rouz.flo.Task;
 import io.rouz.flo.TaskContext;
 import io.rouz.flo.TaskId;
 import io.rouz.flo.context.ForwardingTaskContext;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -78,13 +79,12 @@ public class PersistingContext extends ForwardingTaskContext {
     kryo.register(java.lang.invoke.SerializedLambda.class);
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
 
-    final File outputFil = file.toFile();
-    if (!outputFil.createNewFile()) {
+    if (Files.exists(file)) {
       throw new RuntimeException("File " + file + " already exists");
     }
 
     try {
-      try (Output output = new Output(new FileOutputStream(outputFil))) {
+      try (Output output = new Output(newOutputStream(file, WRITE, CREATE_NEW))) {
         kryo.writeClassAndObject(output, object);
       }
     } catch (IOException e) {
@@ -98,8 +98,7 @@ public class PersistingContext extends ForwardingTaskContext {
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
     kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
 
-    try (InputStream inputStream = new FileInputStream(filePath.toFile())) {
-      Input input = new Input(inputStream);
+    try (Input input = new Input(newInputStream(filePath))) {
       return (T) kryo.readClassAndObject(input);
     }
   }
