@@ -1,6 +1,6 @@
 package io.rouz.flo.freezer;
 
-import static io.rouz.flo.freezer.LoggingListener.colored;
+import static io.rouz.flo.Util.colored;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.newOutputStream;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;

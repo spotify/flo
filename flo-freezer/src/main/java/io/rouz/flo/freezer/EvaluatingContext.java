@@ -1,6 +1,6 @@
 package io.rouz.flo.freezer;
 
-import static io.rouz.flo.freezer.LoggingListener.colored;
+import static io.rouz.flo.Util.colored;
 import static io.rouz.flo.freezer.PersistingContext.cleanForFilename;
 
 import io.rouz.flo.Fn;

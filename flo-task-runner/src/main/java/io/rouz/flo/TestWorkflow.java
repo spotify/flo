@@ -1,7 +1,7 @@
 package io.rouz.flo;
 
 import static io.rouz.flo.TaskContext.async;
-import static io.rouz.flo.freezer.LoggingListener.colored;
+import static io.rouz.flo.Util.colored;
 import static java.lang.System.getProperty;
 import static java.lang.System.getenv;
 
