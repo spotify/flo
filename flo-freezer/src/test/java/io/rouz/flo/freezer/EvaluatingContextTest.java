@@ -25,9 +25,9 @@ public class EvaluatingContextTest {
   @Rule
   public ExpectedException expect = ExpectedException.none();
 
-  private Path basePath;
-  private PersistingContext persistingContext;
+  Path basePath;
 
+  private PersistingContext persistingContext;
   private EvaluatingContext evaluatingContext;
 
   private static boolean calledInputCode;
@@ -119,12 +119,12 @@ public class EvaluatingContextTest {
     assertFalse(calledInputCode);
   }
 
-  private static Task<String> singleTask(String arg) {
+  static Task<String> singleTask(String arg) {
     return Task.named("single", arg).ofType(String.class)
         .process(() -> "hello " + arg);
   }
 
-  private static Task<String> downstreamTask(String arg) {
+  static Task<String> downstreamTask(String arg) {
     return Task.named("downstream", arg).ofType(String.class)
         .in(() -> {
           calledInputCode = true;
@@ -133,7 +133,7 @@ public class EvaluatingContextTest {
         .process((in) -> in + "!");
   }
 
-  private Map<TaskId, Path> persist(Task<String> task) {
+  Map<TaskId, Path> persist(Task<String> task) {
     AwaitingConsumer<Throwable> awaitPersist = AwaitingConsumer.create();
     persistingContext.evaluate(task).onFail(awaitPersist); // persistingContext fails all evals
 
