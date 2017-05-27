@@ -43,7 +43,9 @@ public class AwaitingConsumer<T> implements Consumer<T> {
   }
 
   public T awaitAndGet() throws InterruptedException {
-    await();
+    if (!await()) {
+      throw new IllegalStateException("Value did not arrive");
+    }
     return value;
   }
 }

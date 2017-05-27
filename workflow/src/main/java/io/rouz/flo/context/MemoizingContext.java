@@ -1,5 +1,7 @@
 package io.rouz.flo.context;
 
+import static io.rouz.flo.Util.colored;
+
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -281,10 +283,10 @@ public class MemoizingContext extends ForwardingTaskContext {
       final Optional<T> lookup = memoizer.lookup(task);
       if (lookup.isPresent()) {
         final T t = lookup.get();
-        LOG.debug("Not expanding {}, lookup = {}", task.id(), t);
+        LOG.debug("Not expanding {}, lookup = {}", colored(task.id()), t);
         promise.set(t);
       } else {
-        LOG.debug("Expanding {}", task.id());
+        LOG.debug("Expanding {}", colored(task.id()));
         chain(delegate.evaluateInternal(task, context), promise);
       }
     }
