@@ -1,11 +1,10 @@
 package io.rouz.flo;
 
-import static io.rouz.flo.TaskContext.async;
+import static io.rouz.flo.TaskContext.inmem;
 import static io.rouz.flo.Util.colored;
 import static java.lang.System.getProperty;
 import static java.lang.System.getenv;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.rouz.flo.TaskContext.Value;
 import io.rouz.flo.context.AwaitingConsumer;
 import io.rouz.flo.context.MemoizingContext;
@@ -18,9 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,11 +63,7 @@ public class TestWorkflow {
 
     LOG.info("Persisting tasks DAG to {}", basePath.toUri());
 
-    ThreadFactory tf = new ThreadFactoryBuilder()
-        .setDaemon(true)
-        .build();
-    Executor executor = Executors.newCachedThreadPool(tf);
-    PersistingContext persistingContext = new PersistingContext(basePath, async(executor));
+    PersistingContext persistingContext = new PersistingContext(basePath, inmem());
     TaskContext context = MemoizingContext.composeWith(persistingContext);
 
     AwaitingConsumer<Throwable> await = AwaitingConsumer.create();
