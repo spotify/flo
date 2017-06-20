@@ -7,16 +7,33 @@ import java.util.function.Consumer
   */
 object Examples {
 
-  def world(arg: Int): Task[String] = defTask(arg)(
+  def greet(person: String): Task[String] = defTask(person) process {
+    s"hello $person"
+  }
+
+  def meet(person: String): Task[String] = defTask(person)
+    .in(greet(person))
+    .process { (greeting) =>
+      s"$greeting, nice to meet you"
+    }
+
+  def meetDsl(person: String): Task[String] = defTask[String](person) dsl ($
+    in      greet(person)
+    process ( greeting =>
+      s"$greeting, nice to meet you"
+    )
+  )
+
+  def world(arg: Int): Task[String] = defTask[String](arg) dsl (
     $ ┬ fib(arg)
       └> (a => s"world $arg:$a")
   )
 
-  def world2(arg: Int): Task[String] = defTask("custom-name", arg)(
-    $ -> s"world $arg"
-  )
+  def world2(arg: Int): Task[String] = defTaskNamed("custom-name", arg) process {
+    s"world $arg"
+  }
 
-  def hello: Task[String] = defTask(
+  def hello: Task[String] = defTask[String]() dsl (
     $ ┬ world(0)
       ╞ List(world(7), world(14))
       ├ world2(21)
@@ -24,7 +41,7 @@ object Examples {
       └> ((a, b, c, d) => s"hello $a $b $c $d")
   )
 
-  def hello2: Task[String] = defTask(>
+  def hello2: Task[String] = defTask[String]() dsl ($
     in      world(0)
     ins     List(world(7), world(14))
     in      world2(21)
@@ -32,13 +49,22 @@ object Examples {
     process ((a, b, c, d) => s"hello $a $b $c $d")
   )
 
-  def fib(n: Int): Task[Int] = defTask(n)(
+  def fib(n: Int): Task[Int] = defTask[Int](n) dsl (
     if (n < 2)
       $ -> n
     else
       $ ┬ fib(n - 1)
         ├ fib(n - 2)
         └> (_ + _)
+  )
+
+  def fib2(n: Int): Task[Int] = defTask[Int](n) dsl (
+    if (n < 2)
+      $ process n
+    else
+      $ in fib2(n - 1)
+        in fib2(n - 2)
+        process (_ + _)
   )
 
 
