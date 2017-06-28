@@ -25,6 +25,12 @@ __Some key features__
 </dependency>
 ```
 
+```sbt
+"io.rouz" %% "flo-scala" % floVersion
+```
+
+_Only Scala 2.11 artifacts available at the moment_
+
 JavaDocs here: http://rouz.io/flo/maven/latest/apidocs/
 
 ## Table of contents
@@ -77,7 +83,7 @@ import io.rouz.flo._
 
 object Fib extends App {
 
-  def fib(n: Long): Task[Long] = defTask(n) (
+  def fib(n: Long): Task[Long] = defTask[Long](n) dsl (
     if (n < 2)
       $ process n
     else
@@ -93,6 +99,8 @@ object Fib extends App {
   value.consume((f92:Long) => println("fib(92) = " + f92))
 }
 ```
+
+For more details on a high-level runner implementation, see [`flo-runner`][flo-runner].
 
 # [`Task<T>`][Task]
 
@@ -291,6 +299,7 @@ See also [`InMemImmediateContext`][InMemImmediateContext],
 [MemoizingContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/context/MemoizingContext.html
 [Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-
 [DAG]: https://en.wikipedia.org/wiki/Directed_acyclic_graph
+[flo-runner]: https://github.com/spotify/flo-runner
 
 # CLI generator
 

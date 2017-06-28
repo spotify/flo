@@ -4,8 +4,8 @@ import org.scalatest._
 
 class DslTest extends FlatSpec with Matchers {
 
-  "A defTask `$` builder" can "be accessed in defTask scope to create a task" in {
-    defTask($ -> "hello") shouldBe a [Task[_]]
+  "A defTask `$` builder" can "be accessed in dsl scope to create a task" in {
+    defTask[String]() dsl ($ -> "hello") shouldBe a [Task[_]]
   }
 
   it should "create a task using the name of the enclosing class method" in {
@@ -13,19 +13,19 @@ class DslTest extends FlatSpec with Matchers {
   }
 
   it should "create a task using the name of the enclosing inner method" in {
-    def innerMethod = defTask($ -> "hello")
+    def innerMethod = defTask().process("hello")
 
     innerMethod.id.name shouldBe "innerMethod"
   }
 
   it should "create a task with a specific name" in {
-    def task = defTask("specific-name")($ -> "hello")
+    def task = defTaskNamed("specific-name").process("hello")
 
     task.id.name shouldBe "specific-name"
   }
 
   it should "create a task with arguments" in {
-    def task = defTask(1, 2, 3)($ -> "hello")
+    def task = defTask(1, 2, 3).process("hello")
 
     task.id.toString shouldBe "task(1,2,3)#2ac733ae"
   }
@@ -36,5 +36,5 @@ class DslTest extends FlatSpec with Matchers {
     exception should have message "Builder accessor used outside a defTask scope"
   }
 
-  def classMethod: Task[String] = defTask($ -> "hello")
+  def classMethod: Task[String] = defTask().process("hello")
 }

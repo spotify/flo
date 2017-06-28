@@ -16,37 +16,21 @@ import scala.util.DynamicVariable
   */
 package object flo {
 
-  def task[T: ClassTag](name: String, args: Any*): TaskBuilder0[T] =
+  def defTask[T: ClassTag](args: Any*): TaskBuilder0[T] =
+    named[T](currentMethodName(), args: _*)
+
+  def defTaskNamed[T: ClassTag](name: String, args: Any*): TaskBuilder0[T] =
     named[T](name, args: _*)
 
-  def defTask[T: ClassTag](name: String, args: Any*)(f: => Task[T]): Task[T] =
-    dynamicBuilder.withValue(named[T](name, args: _*))(f)
+  implicit def toTask[T](t: => T): Task[T] = currentBuilder.process(t)
 
-  def defTask[T: ClassTag](args: Any*)(f: => Task[T]): Task[T] =
-    dynamicBuilder.withValue(named[T](currentMethodName(), args: _*))(f)
+  implicit class TB0Dsl[T](val tb0: TaskBuilder0[T]) extends AnyVal {
+    def dsl(f: => Task[T]): Task[T] =
+      dynamicBuilder.withValue(tb0)(f)
+  }
 
-  def defTask[T: ClassTag](f: => Task[T]): Task[T] =
-    dynamicBuilder.withValue(named[T](currentMethodName()))(f)
-
-  // requires parens on call
-  def ->[T](code: => T): Task[T] = currentBuilder.process(code)
-  def ┌[A, T](task: => Task[A]): TaskBuilder1[A, T] = currentBuilder.in(task)
-
-  def ▫  [T]: TaskBuilder0[T] = currentBuilder
-  def ▫─┐[T]: TaskBuilder0[T] = currentBuilder
-  def └─┐[T]: TaskBuilder0[T] = currentBuilder
-  def ─  [T]: TaskBuilder0[T] = currentBuilder
-  def ┬  [T]: TaskBuilder0[T] = currentBuilder
-  def ├  [T]: TaskBuilder0[T] = currentBuilder
-  def └  [T]: TaskBuilder0[T] = currentBuilder
-  def >  [T]: TaskBuilder0[T] = currentBuilder
-  def $  [T]: TaskBuilder0[T] = currentBuilder
-
-  def T  [T]: TaskBuilder0[T] = currentBuilder
-  def F  [T]: TaskBuilder0[T] = currentBuilder
-
-  def branch[Z](condition: Boolean)(t: => Task[Z])(f: => Task[Z]): Task[Z] =
-    if (condition) t else f
+  def $[T]: TaskBuilder0[T] = currentBuilder
+  def ▫[T]: TaskBuilder0[T] = currentBuilder
 
   private def currentBuilder[T]: TaskBuilder0[T] = {
     val builder = dynamicBuilder.value
