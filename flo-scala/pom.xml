@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.rouz</groupId>
     <artifactId>flo</artifactId>
-    <version>0.0.11-SNAPSHOT</version>
+    <version>0.0.11</version>
   </parent>
 
   <name>Flo Scala API</name>
@@ -19,12 +19,12 @@
     <dependency>
       <groupId>io.rouz</groupId>
       <artifactId>flo-workflow</artifactId>
-      <version>0.0.11-SNAPSHOT</version>
+      <version>0.0.11</version>
     </dependency>
     <dependency>
       <groupId>io.rouz</groupId>
       <artifactId>flo-api-generator</artifactId>
-      <version>0.0.11-SNAPSHOT</version>
+      <version>0.0.11</version>
       <scope>provided</scope>
     </dependency>
 
