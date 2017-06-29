@@ -18,8 +18,8 @@ public class InstrumentedContextTest {
 
   InstrumentedContext.Listener listener = new InstrumentedContext.Listener() {
     @Override
-    public void edge(TaskId upstream, TaskId downstream) {
-      calls.add("edge:" + upstream + ":" + downstream);
+    public void task(Task<?> task) {
+      calls.add("task:" + task.id());
     }
 
     @Override
@@ -32,7 +32,7 @@ public class InstrumentedContextTest {
   TaskContext context = InstrumentedContext.composeWith(inmem(), listener);
 
   @Test
-  public void callsListenerWithEdgesAndStatuses() throws Exception {
+  public void callsListenerWithTasksAndStatuses() throws Exception {
     Task<Integer> task = example(7);
     context.evaluate(task);
 
@@ -41,10 +41,11 @@ public class InstrumentedContextTest {
     TaskId upstream8 = upstream(8).id();
 
     assertThat(calls, contains(
-        "edge:" + upstream7 + ":" + example7,
-        "edge:" + upstream8 + ":" + example7,
+        "task:" + example7,
+        "task:" + upstream8,
         "status:" + upstream8 + ":" + START,
         "status:" + upstream8 + ":" + SUCCESS,
+        "task:" + upstream7,
         "status:" + upstream7 + ":" + START,
         "status:" + upstream7 + ":" + SUCCESS,
         "status:" + example7 + ":" + START,
@@ -58,6 +59,7 @@ public class InstrumentedContextTest {
     context.evaluate(failing);
 
     assertThat(calls, contains(
+        "task:" + failing.id(),
         "status:" + failing.id() + ":" + START,
         "status:" + failing.id() + ":" + FAILURE
     ));

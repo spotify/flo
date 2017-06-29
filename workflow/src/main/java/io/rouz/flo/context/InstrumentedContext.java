@@ -12,9 +12,9 @@ import java.util.Objects;
  * <p>This context will invoke methods on a {@link Listener} when tasks are evaluated through the
  * {@link #evaluate(Task)} method.
  *
- * <p>The {@link Listener#edge(TaskId, TaskId)} method is called for each discovered
- * upstream-downstream relation between two tasks that are about to be evaluated. This call is
- * always made before the upstream is evaluated.
+ * <p>The {@link Listener#task(Task)} method is called for each discovered task in the evaluating
+ * task tree. The inputs of a task are all also announced to this method before a task starts
+ * processing.
  *
  * <p>The {@link Listener#status(TaskId, Listener.Phase)} method is called when a task is actually
  * being processed, i.e. when the {@link #invokeProcessFn(TaskId, Fn)} of that task in called in
@@ -32,14 +32,11 @@ public class InstrumentedContext extends ForwardingTaskContext {
   public interface Listener {
 
     /**
-     * Called when an edge (dependency) between two tasks are discovered. The relation is that
-     * the downstream task depends on the upstream task. Also that the upstream task has to be
-     * evaluated first, before the downstream task can be evaluated.
+     * Called when a {@link Task} is discovered.
      *
-     * @param upstream    The id of the upstream task
-     * @param downstream  The id of the downstream task
+     * @param task The discovered task object
      */
-    void edge(TaskId upstream, TaskId downstream);
+    void task(Task<?> task);
 
     /**
      * Called when a task starts and finished it's evaluation. This will be called exactly twice
@@ -84,11 +81,7 @@ public class InstrumentedContext extends ForwardingTaskContext {
 
   @Override
   public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
-    task.inputs().stream()
-        .map(Task::id)
-        .distinct()
-        .forEach(upstream -> listener.edge(upstream, task.id()));
-
+    listener.task(task);
     return delegate.evaluateInternal(task, context);
   }
 
