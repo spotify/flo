@@ -1,5 +1,7 @@
 package io.rouz.flo;
 
+import static io.rouz.flo.TaskContextWithTask.withTask;
+
 import io.rouz.flo.context.AsyncContext;
 import io.rouz.flo.context.InMemImmediateContext;
 import java.util.Optional;
@@ -30,7 +32,7 @@ public interface TaskContext {
    * @return A value of the task result
    */
   default <T> Value<T> evaluate(Task<T> task) {
-    return evaluateInternal(task, this);
+    return evaluateInternal(task, withTask(this, task));
   }
 
   /**
@@ -75,17 +77,16 @@ public interface TaskContext {
 
   /**
    * When called from within any of the functions passed to {@code processWithContext}, this
-   * method will return the {@link TaskId} of the task being processed. Otherwise an empty value
+   * method will return the {@link Task} currently being processed. Otherwise an empty value
    * will be returned.
    *
    * <p>The return value of this method is stable for each instance of {@link TaskContext} that is
    * passed into the process functions. Calls from multiple threads will see the same result as
    * longs as the calls are made to the same instance.
    *
-   * @return The id of the task that is being evaluated or empty if called from outside of a
-   * process function
+   * @return The task that is being evaluated or empty if called from outside of a process function
    */
-  default Optional<TaskId> currentTaskId() {
+  default Optional<Task<?>> currentTask() {
     return Optional.empty();
   }
 

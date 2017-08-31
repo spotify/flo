@@ -21,15 +21,11 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Tests that verify the interaction between {@link Task} instances and the {@link TaskContext}.
  */
 public class TaskEvalBehaviorTest {
-
-  private static final Logger LOG = LoggerFactory.getLogger(TaskEvalBehaviorTest.class);
 
   @Test
   public void shouldRunAsExpected() throws Exception {
@@ -116,23 +112,6 @@ public class TaskEvalBehaviorTest {
   }
 
   @Test
-  public void shouldOnlyEvaluateCurriedInputsParameterOnce() throws Exception {
-    Fn<Task<Integer>> countSupplier = countConstructor();
-
-    Task<Integer> sum = Task.named("Sum").ofType(Integer.class).curried()
-        .in(countSupplier)
-        .in(countSupplier)
-        .in(countSupplier)
-        .process(a -> b -> c -> a + b + c);
-
-    // dummy run
-    evalAndGet(sum);
-
-    // 1+2+3 = 6
-    assertThat(evalAndGet(sum), is(6));
-  }
-
-  @Test
   public void shouldOnlyEvaluateStreamParameterOnce() throws Exception {
     Fn<Task<Integer>> countSupplier = countConstructor();
 
@@ -155,55 +134,12 @@ public class TaskEvalBehaviorTest {
   }
 
   @Test
-  public void shouldOnlyEvaluateCurriedStreamParameterOnce() throws Exception {
-    Fn<Task<Integer>> countSupplier = countConstructor();
-
-    Fn<List<Task<Integer>>> fiveInts = () -> Stream
-        .generate(countSupplier)
-        .limit(5)
-        .collect(toList());
-
-    Task<Integer> sum = Task.named("Sum").ofType(Integer.class).curried()
-        .ins(fiveInts)
-        .ins(fiveInts)
-        .ins(fiveInts)
-        .process(
-            first5 -> second5 -> third5 ->
-                sumInts(first5) + sumInts(second5) + sumInts(third5));
-
-    // dummy run
-    evalAndGet(sum);
-
-    // (1+2+3+4+5) + (6+7+8+9+10) + (11+12+13+14+15) = 120
-    assertThat(evalAndGet(sum), is(120));
-  }
-
-  @Test
   public void shouldListInputIds() throws Exception {
     Task<String> top = Task.named("Top").ofType(String.class)
         .in(() -> isEven(0))
         .in(() -> isEven(1))
         .in(() -> isEven(3))
         .process((a, b, c) -> "done");
-
-    List<TaskId> inputs = top.inputs().stream().map(Task::id).collect(toList());
-
-    TaskId isEven0Id = isEven(0).id();
-    TaskId isEven1Id = isEven(1).id();
-    TaskId isEven3Id = isEven(3).id();
-
-    assertThat(inputs, containsInOrder(isEven0Id, isEven1Id));
-    assertThat(inputs, containsInOrder(isEven0Id, isEven3Id));
-    assertThat(inputs, containsInOrder(isEven1Id, isEven3Id));
-  }
-
-  @Test
-  public void shouldListCurriedInputIds() throws Exception {
-    Task<String> top = Task.named("Top").ofType(String.class).curried()
-        .in(() -> isEven(0))
-        .in(() -> isEven(1))
-        .in(() -> isEven(3))
-        .process(a -> b -> c -> "done");
 
     List<TaskId> inputs = top.inputs().stream().map(Task::id).collect(toList());
 
@@ -302,48 +238,6 @@ public class TaskEvalBehaviorTest {
     assertThat(taskIds, containsInOrder(evenify1Id, evenify3Id));
   }
 
-  @Test
-  public void shouldBuildArbitraryDeepCurriedLambda() throws Exception {
-    final Task<Integer> curried = Task.named("Curried").ofType(Integer.class)
-        .curried()
-        .in(() -> isEven(0)) // 0
-        .in(() -> isEven(1)) // 2
-        .in(() -> isEven(2)) // 2
-        .in(() -> isEven(3)) // 6
-        .in(() -> isEven(4)) // 4
-        .in(() -> isEven(5)) // 10
-        .process(
-            a -> b -> c -> d -> e -> f ->
-                a.result +
-                b.result +
-                c.result +
-                d.result +
-                e.result +
-                f.result
-        );
-
-    assertThat(evalAndGet(curried), is(24));
-  }
-
-  @Test
-  public void shouldBuildCurriedLambdaWithLists() throws Exception {
-    final Task<Integer> curried = Task.named("Curried").ofType(Integer.class)
-        .curried()
-        .ins(() -> asList(isEven(11), isEven(20))) // [22, 20]
-        .in(() -> isEven(0)) // 0
-        .ins(() -> asList(isEven(1), isEven(2))) // [2, 2]
-        .in(() -> isEven(5)) // 10
-        .process(
-            a -> b -> c -> d ->
-                a.result +
-                b.stream().mapToInt(EvenResult::result).sum() +
-                c.result +
-                d.stream().mapToInt(EvenResult::result).sum()
-        );
-
-    assertThat(evalAndGet(curried), is(56));
-  }
-
   private <T> T evalAndGet(Task<T> task) throws InterruptedException {
     AwaitValue<T> val = new AwaitValue<>();
     TaskContext.inmem().evaluate(task).consume(val);
@@ -351,111 +245,68 @@ public class TaskEvalBehaviorTest {
   }
 
   @Test
-  public void shouldInvokeCurriedTaskWhenInputsBecomeAvailable() throws Exception {
-    AwaitValue<String> bValue = new AwaitValue<>();
-    Task<String> task = Task.named("WithInputs").ofType(String.class).curried()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B first"))
-        .process(b -> {
-          bValue.accept(b);
-          return a -> "done: " + a + b;
-        });
-
-    ControlledBlockingContext context = new ControlledBlockingContext();
-    context.evaluate(task);
-
-    // first wait for the main task to be in progress then release it
-    // to trigger upstreams to start evaluating
-    context.waitFor(task);
-    context.release(task);
-
-    context.waitUntilNumConcurrent(3); // {WithInputs, A, B}
-    assertFalse(bValue.isAvailable());
-
-    context.release(leaf("B first"));
-    context.waitUntilNumConcurrent(2); // {WithInputs, A}
-    assertThat(bValue.awaitAndGet(), is("B first"));
-  }
-
-  @Test
   public void shouldGetTaskIdFromContext0() throws Exception {
-    Task<TaskId> task = Task.named("MyOwnId").ofType(TaskId.class)
-        .processWithContext(tc -> tc.immediateValue(tc.currentTaskId().get()));
+    Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
+        .processWithContext(tc -> tc.immediateValue(tc.currentTask().get()));
 
-    validateReturnsOwnTaskId(task);
+    validateReturnsOwnTask(task);
   }
 
   @Test
   public void shouldGetTaskIdFromContext1() throws Exception {
-    Task<TaskId> task = Task.named("MyOwnId").ofType(TaskId.class)
+    Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
         .in(() -> leaf("A"))
-        .processWithContext((tc, a) -> tc.immediateValue(tc.currentTaskId().get()));
+        .processWithContext((tc, a) -> tc.immediateValue(tc.currentTask().get()));
 
-    validateReturnsOwnTaskId(task);
+    validateReturnsOwnTask(task);
   }
 
   @Test
   public void shouldGetTaskIdFromContext2() throws Exception {
-    Task<TaskId> task = Task.named("MyOwnId").ofType(TaskId.class)
+    Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
-        .processWithContext((tc, a, b) -> tc.immediateValue(tc.currentTaskId().get()));
+        .processWithContext((tc, a, b) -> tc.immediateValue(tc.currentTask().get()));
 
-    validateReturnsOwnTaskId(task);
+    validateReturnsOwnTask(task);
   }
 
   @Test
   public void shouldGetTaskIdFromContext3() throws Exception {
-    Task<TaskId> task = Task.named("MyOwnId").ofType(TaskId.class)
+    Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .in(() -> leaf("C"))
-        .processWithContext((tc, a, b, c) -> tc.immediateValue(tc.currentTaskId().get()));
+        .processWithContext((tc, a, b, c) -> tc.immediateValue(tc.currentTask().get()));
 
-    validateReturnsOwnTaskId(task);
+    validateReturnsOwnTask(task);
   }
 
   @Test
-  public void shouldGetTaskIdFromContextC1() throws Exception {
-    Task<TaskId> task = Task.named("MyOwnId").ofType(TaskId.class).curriedWithContext()
+  public void shouldGetTaskIdFromContextNested() throws Exception {
+    AwaitValue<Task> inner = new AwaitValue<>();
+    Task<String> innerTask = Task.named("Inner").ofType(String.class)
+        .processWithContext(tc -> {
+          inner.accept(tc.currentTask().get());
+          return tc.immediateValue("");
+        });
+    Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
         .in(() -> leaf("A"))
-        .process(tc -> a -> tc.immediateValue(tc.currentTaskId().get()));
+        .in(() -> innerTask)
+        .in(() -> leaf("C"))
+        .processWithContext((tc, a, b, c) -> tc.immediateValue(tc.currentTask().get()));
 
-    validateReturnsOwnTaskId(task);
+    validateReturnsOwnTask(task);
+    assertThat(inner.awaitAndGet(), is(innerTask));
   }
 
-  @Test
-  public void shouldGetTaskIdFromContextC2() throws Exception {
-    Task<TaskId> task = Task.named("MyOwnId").ofType(TaskId.class).curriedWithContext()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("b"))
-        .process(tc -> a -> b -> tc.immediateValue(tc.currentTaskId().get()));
-
-    validateReturnsOwnTaskId(task);
-  }
-
-  private void validateReturnsOwnTaskId(Task<TaskId> task) throws InterruptedException {
-    AwaitValue<TaskId> val = new AwaitValue<>();
+  private void validateReturnsOwnTask(Task<Task> task) throws InterruptedException {
+    AwaitValue<Task> val = new AwaitValue<>();
     TaskContext.inmem()
         .evaluate(task)
         .consume(val);
 
-    assertThat(val.awaitAndGet(), is(task.id()));
-  }
-
-  @Test
-  public void shouldEvaluateInputsInParallelForCurriedTask() throws Exception {
-    AtomicBoolean processed = new AtomicBoolean(false);
-    Task<String> task = Task.named("WithInputs").ofType(String.class).curried()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .in(() -> leaf("C"))
-        .process(c -> b -> a -> {
-          processed.set(true);
-          return "done: " + a + b + c;
-        });
-
-    validateParallelEvaluation(task, processed);
+    assertThat(val.awaitAndGet(), is(task));
   }
 
   @Test
@@ -583,70 +434,6 @@ public class TaskEvalBehaviorTest {
         .ins(() -> singletonList(leaf("A")))
         .ins(() -> singletonList(leaf("B")))
         .processWithContext((tc, a, b) -> tc.immediateValue("done"));
-
-    validateInterception(top, "done", leaf("A"), leaf("B"));
-  }
-
-  @Test
-  public void shouldInterceptCurriedProcessFunctionInContext() throws Exception {
-    Task<String> top = Task.named("Top").ofType(String.class).curried()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .process(b -> {
-          LOG.info("b = {}", b);
-          return a -> {
-            LOG.info("a = {}", a);
-            return "done";
-          };
-        });
-
-    validateInterception(top, "done", leaf("A"), leaf("B"));
-  }
-
-  @Test
-  public void shouldInterceptCurriedProcessFunctionInContextL() throws Exception {
-    Task<String> top = Task.named("Top").ofType(String.class).curried()
-        .ins(() -> singletonList(leaf("A")))
-        .ins(() -> singletonList(leaf("B")))
-        .process(b -> {
-          LOG.info("b = {}", b);
-          return a -> {
-            LOG.info("a = {}", a);
-            return "done";
-          };
-        });
-
-    validateInterception(top, "done", leaf("A"), leaf("B"));
-  }
-
-  @Test
-  public void shouldInterceptCurriedProcessFunctionInContextC() throws Exception {
-    Task<String> top = Task.named("Top").ofType(String.class).curriedWithContext()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .process(tc -> b -> {
-          LOG.info("b = {}", b);
-          return a -> {
-            LOG.info("a = {}", a);
-            return tc.immediateValue("done");
-          };
-        });
-
-    validateInterception(top, "done", leaf("A"), leaf("B"));
-  }
-
-  @Test
-  public void shouldInterceptCurriedProcessFunctionInContextCL() throws Exception {
-    Task<String> top = Task.named("Top").ofType(String.class).curriedWithContext()
-        .ins(() -> singletonList(leaf("A")))
-        .ins(() -> singletonList(leaf("B")))
-        .process(tc -> b -> {
-          LOG.info("b = {}", b);
-          return a -> {
-            LOG.info("a = {}", a);
-            return tc.immediateValue("done");
-          };
-        });
 
     validateInterception(top, "done", leaf("A"), leaf("B"));
   }

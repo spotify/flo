@@ -26,9 +26,6 @@ public interface {{interfaceName}}<Z> {
 
   <A> {{interfaceName}}1<A, Z> in(Fn<Task<A>> task);
   <A> {{interfaceName}}1<List<A>, Z> ins(Fn<List<Task<A>>> tasks);
-
-  CurriedTaskBuilder.TaskBuilderC0<Z> curried();
-  CurriedTaskBuilder.TaskBuilderCV0<Z> curriedWithContext();
 {{#genBuilder}}
 
   interface {{interfaceName}}{{arity}}<{{typeArgs}}, Z> {

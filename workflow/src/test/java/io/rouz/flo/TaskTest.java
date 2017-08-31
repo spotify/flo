@@ -13,9 +13,9 @@ import org.junit.Test;
 
 /**
  * Naming convention for tests
- * XXX_X
- * ^^^ ^
- * ||| `--> N,R = normal, curried
+ * XXX
+ * ^^^
+ * |||
  * ||`----> D,C = direct, context
  * |`-----> I,L = in, ins
  * `------> arity
@@ -210,106 +210,6 @@ public class TaskTest {
                               leaf("C"), leaf("D"));
   }
 
-  // Curried ======================================================================================
-
-  @Test
-  public void shouldEvaluate1RN_I() throws Exception {
-    Task<String> task = Task.named("InContext").ofType(String.class).curried()
-        .in(() -> leaf("A"))
-        .process(a -> "done: " + a);
-
-    validateEvaluation(task, "done: A", leaf("A"));
-  }
-
-  @Test
-  public void shouldEvaluate1RN_L() throws Exception {
-    Task<String> task = Task.named("InContext").ofType(String.class).curried()
-        .ins(() -> asList(leaf("A"), leaf("B")))
-        .process(ab -> "done: " + ab);
-
-    validateEvaluation(task, "done: [A, B]", leaf("A"), leaf("B"));
-  }
-
-  @Test
-  public void shouldEvaluate1RC_I() throws Exception {
-    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").ofType(String.class).curriedWithContext()
-        .in(() -> leaf("A"))
-        .process(tc -> a -> {
-          Promise<String> promise = tc.promise();
-          promiseRef.set(promise);
-          return promise.value().map(v -> v + " - " + a);
-        });
-
-    validatePromiseEvaluation(task, promiseRef, " - A", leaf("A"));
-  }
-
-  @Test
-  public void shouldEvaluate1RC_L() throws Exception {
-    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").ofType(String.class).curriedWithContext()
-        .ins(() -> asList(leaf("A"), leaf("B")))
-        .process(tc -> ab -> {
-          Promise<String> promise = tc.promise();
-          promiseRef.set(promise);
-          return promise.value().map(v -> v + " - " + ab);
-        });
-
-    validatePromiseEvaluation(task, promiseRef, " - [A, B]", leaf("A"), leaf("B"));
-  }
-
-  // 2. (higher arities tested inductively)
-
-  @Test
-  public void shouldEvaluate2RN_II() throws Exception {
-    Task<String> task = Task.named("InContext").ofType(String.class).curried()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .process(b -> a -> "done: " + a  + " - " + b);
-
-    validateEvaluation(task, "done: A - B", leaf("A"), leaf("B"));
-  }
-
-  @Test
-  public void shouldEvaluate2RN_IL() throws Exception {
-    Task<String> task = Task.named("InContext").ofType(String.class).curried()
-        .in(() -> leaf("A"))
-        .ins(() -> asList(leaf("B"), leaf("C")))
-        .process(bc -> a -> "done: " + a + " - " + bc);
-
-    validateEvaluation(task, "done: A - [B, C]", leaf("A"), leaf("B"), leaf("C"));
-  }
-
-  @Test
-  public void shouldEvaluate2RC_II() throws Exception {
-    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").ofType(String.class).curriedWithContext()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .process(tc -> b -> a -> {
-          Promise<String> promise = tc.promise();
-          promiseRef.set(promise);
-          return promise.value().map(v -> v + " - " + a + " - " + b);
-        });
-
-    validatePromiseEvaluation(task, promiseRef, " - A - B", leaf("A"), leaf("B"));
-  }
-
-  @Test
-  public void shouldEvaluate2RC_IL() throws Exception {
-    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").ofType(String.class).curriedWithContext()
-        .in(() -> leaf("A"))
-        .ins(() -> asList(leaf("B"), leaf("C")))
-        .process(tc -> bc -> a -> {
-          Promise<String> promise = tc.promise();
-          promiseRef.set(promise);
-          return promise.value().map(v -> v + " - " + a + " - " + bc);
-        });
-
-    validatePromiseEvaluation(task, promiseRef, " - A - [B, C]", leaf("A"), leaf("B"), leaf("C"));
-  }
-
   // ==============================================================================================
 
   @Test
@@ -319,50 +219,20 @@ public class TaskTest {
     Task<String> task1 = Task.named("WithType").ofType(String.class)
         .in(() -> leaf("A"))
         .process((a) -> a);
-    Task<String> task1c = Task.named("WithType").ofType(String.class).curried()
-        .in(() -> leaf("A"))
-        .process(a -> a);
-    Task<String> task1cc = Task.named("WithType").ofType(String.class).curriedWithContext()
-        .in(() -> leaf("A"))
-        .process(tc -> tc::immediateValue);
     Task<String> task2 = Task.named("WithType").ofType(String.class)
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .process((a, b) -> a + " - " + b);
-    Task<String> task2c = Task.named("WithType").ofType(String.class).curried()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .process(a -> b -> a + " - " + b);
-    Task<String> task2cc = Task.named("WithType").ofType(String.class).curriedWithContext()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .process(tc -> a -> b -> tc.immediateValue(a + " - " + b));
     Task<String> task3 = Task.named("WithType").ofType(String.class)
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .in(() -> leaf("C"))
         .process((a, b, c) -> a + " - " + b +" - " + c);
-    Task<String> task3c = Task.named("WithType").ofType(String.class).curried()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .in(() -> leaf("C"))
-        .process(a -> b -> c -> a + " - " + b +" - " + c);
-    Task<String> task3cc = Task.named("WithType").ofType(String.class).curriedWithContext()
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .in(() -> leaf("C"))
-        .process(tc -> a -> b -> c -> tc.immediateValue(a + " - " + b +" - " + c));
 
     assertThat(task0.type(), equalTo(String.class));
     assertThat(task1.type(), equalTo(String.class));
-    assertThat(task1c.type(), equalTo(String.class));
-    assertThat(task1cc.type(), equalTo(String.class));
     assertThat(task2.type(), equalTo(String.class));
-    assertThat(task2c.type(), equalTo(String.class));
-    assertThat(task2cc.type(), equalTo(String.class));
     assertThat(task3.type(), equalTo(String.class));
-    assertThat(task3c.type(), equalTo(String.class));
-    assertThat(task3cc.type(), equalTo(String.class));
   }
 
   // Validators ===================================================================================

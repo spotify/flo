@@ -13,7 +13,6 @@ import static io.rouz.flo.BuilderUtils.gatedVal;
 import static io.rouz.flo.BuilderUtils.lazyFlatten;
 import static io.rouz.flo.BuilderUtils.lazyList;
 import static io.rouz.flo.BuilderUtils.leafEvalFn;
-import static io.rouz.flo.TaskContextWithId.withId;
 import static io.rouz.flo.Values.toValueList;
 
 /**
@@ -76,16 +75,6 @@ final class {{implClassName}} {
             return aListValue.map(a -> f1 -> f1.apply(a));
           }));
     }
-
-    @Override
-    public CurriedTaskBuilder.TaskBuilderC0<Z> curried() {
-      return new BuilderCurried.BuilderC0<>(taskId, type);
-    }
-
-    @Override
-    public CurriedTaskBuilder.TaskBuilderCV0<Z> curriedWithContext() {
-      return new BuilderCurried.BuilderCV0<>(taskId, type);
-    }
   }
 
 {{#genBuilder}}
@@ -124,7 +113,7 @@ final class {{implClassName}} {
       ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
 
       EvalClosure<Z> closure = tc -> evaluator.enclose(
-          ({{arguments}}) -> tc.invokeProcessFn(taskId, () -> code.apply(withId(tc, taskId), {{arguments}}))
+          ({{arguments}}) -> tc.invokeProcessFn(taskId, () -> code.apply(tc, {{arguments}}))
       ).eval(tc);
       return Task.create(inputs, type, closure, taskId);
     }
@@ -188,7 +177,7 @@ final class {{implClassName}} {
       ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
 
       EvalClosure<Z> closure = tc -> evaluator.enclose(
-           ({{lastArguments}}) -> tc.invokeProcessFn(taskId, () -> code.apply(withId(tc, taskId), {{lastArguments}}))
+           ({{lastArguments}}) -> tc.invokeProcessFn(taskId, () -> code.apply(tc, {{lastArguments}}))
       ).eval(tc);
       return Task.create(inputs, type, closure, taskId);
     }
