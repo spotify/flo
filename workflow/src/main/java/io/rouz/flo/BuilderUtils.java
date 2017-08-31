@@ -1,6 +1,5 @@
 package io.rouz.flo;
 
-import static io.rouz.flo.TaskContextWithId.withId;
 import static java.util.stream.Collectors.toList;
 
 import io.rouz.flo.TaskContext.Value;
@@ -27,7 +26,7 @@ class BuilderUtils {
   static <R> EvalClosure<R> gatedVal(
       TaskId taskId,
       Fn1<TaskContext, Value<R>> code) {
-    return tc -> tc.invokeProcessFn(taskId, () -> code.apply(withId(tc, taskId)));
+    return tc -> tc.invokeProcessFn(taskId, () -> code.apply(tc));
   }
 
   /**

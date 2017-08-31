@@ -105,7 +105,7 @@ class ControlledBlockingContext implements TaskContext {
   }
 
   @Override
-  public <T> Value<T> evaluate(Task<T> task) {
+  public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
     TaskId taskId = task.id();
     CountDownLatch latch = new CountDownLatch(1);
     SettableValue<T> value = new SettableValue<>();
@@ -123,7 +123,7 @@ class ControlledBlockingContext implements TaskContext {
         fail("interrupted");
       }
 
-      TaskContext.super.evaluate(task).consume(v -> {
+      TaskContext.super.evaluateInternal(task, context).consume(v -> {
         value.setValue(v);
         synchronized (activeCount) {
           awaiting.remove(taskId);

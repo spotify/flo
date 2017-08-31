@@ -7,20 +7,20 @@ import static org.mockito.Mockito.mock;
 import java.util.Optional;
 import org.junit.Test;
 
-public class TaskContextWithIdTest {
+public class TaskContextWithTaskTest {
 
   TaskContext delegate = mock(TaskContext.class);
-  TaskId taskId = TaskId.create("TestTAsk", "a", "b");
+  Task<?> task = Task.named("TestTAsk", "a", "b").ofType(String.class).process(() -> "");
 
-  TaskContext sut = TaskContextWithId.withId(delegate, taskId);
+  TaskContext sut = TaskContextWithTask.withTask(delegate, task);
 
   @Test
   public void testEmptyDefault() throws Exception {
-    assertThat(TaskContext.inmem().currentTaskId(), is(Optional.empty()));
+    assertThat(TaskContext.inmem().currentTask(), is(Optional.empty()));
   }
 
   @Test
   public void testCurrentTaskId() throws Exception {
-    assertThat(sut.currentTaskId(), is(Optional.of(taskId)));
+    assertThat(sut.currentTask(), is(Optional.of(task)));
   }
 }

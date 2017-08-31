@@ -5,15 +5,10 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 import io.rouz.flo.AwaitValue;
-import io.rouz.flo.Fn;
 import io.rouz.flo.Task;
+import io.rouz.flo.TaskContext;
 import io.rouz.flo.TaskContext.Promise;
-import io.rouz.flo.TaskId;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
@@ -47,7 +42,7 @@ public class AsyncContextFailurePropagationTest {
         });
 
     AwaitValue<Throwable> val = new AwaitValue<>();
-    new MyContext(Executors.newSingleThreadExecutor())
+    MemoizingContext.composeWith(TaskContext.inmem())
         .evaluate(task)
         .onFail(val);
 
@@ -55,39 +50,5 @@ public class AsyncContextFailurePropagationTest {
     assertThat(val.awaitAndGet().getMessage(), is("failed"));
     assertThat(ran.get(), is(false));
     assertThat(count.get(), is(1));
-  }
-
-  private static class MyContext extends AsyncContext {
-
-    ConcurrentMap<TaskId, Promise<?>> promises = new ConcurrentHashMap<>();
-
-    protected MyContext(ExecutorService executor) {
-      super(executor);
-    }
-
-    @Override
-    public <T> Value<T> evaluate(Task<T> task) {
-      //noinspection unchecked
-      return (Value<T>) promises.computeIfAbsent(task.id(), (ˍ) -> {
-        final Promise<T> promise = promise();
-        final Value<T> evaluate = super.evaluate(task);
-
-        evaluate.consume(promise::set);
-        evaluate.onFail(promise::fail);
-
-        return promise;
-      }).value();
-    }
-
-    @Override
-    public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
-      final Promise<T> promise = promise();
-      final Value<T> tValue = processFn.get();
-
-      tValue.consume(promise::set);
-      tValue.onFail(promise::fail);
-
-      return promise.value();
-    }
   }
 }

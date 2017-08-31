@@ -1,5 +1,9 @@
 package io.rouz.flo.context;
 
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.typeCompatibleWith;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -7,7 +11,9 @@ import io.rouz.flo.Fn;
 import io.rouz.flo.Task;
 import io.rouz.flo.TaskContext;
 import io.rouz.flo.TaskContext.Value;
+import io.rouz.flo.TaskContextWithTask;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 public class ForwardingTaskContextTest {
 
@@ -20,7 +26,14 @@ public class ForwardingTaskContextTest {
   public void evaluate() throws Exception {
     sut.evaluate(TASK);
 
-    verify(delegate).evaluateInternal(TASK, sut);
+    ArgumentCaptor<TaskContext> contextArgumentCaptor = ArgumentCaptor.forClass(TaskContext.class);
+    verify(delegate).evaluateInternal(eq(TASK), contextArgumentCaptor.capture());
+
+    TaskContext capturedContext = contextArgumentCaptor.getValue();
+    assertThat(capturedContext.getClass(), typeCompatibleWith(TaskContextWithTask.class));
+
+    TaskContextWithTask wrapperContext = (TaskContextWithTask) capturedContext;
+    assertThat(wrapperContext.delegate, is(sut));
   }
 
   @Test
