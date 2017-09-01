@@ -23,6 +23,12 @@ private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) exten
   override def processWithContext(fn: (TaskContext) => Value[Z]): Task[Z] =
     builder.processWithContext(f1(fn))
 
+  override def op[A1](opProvider: OpProvider[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
+    type J1 = A1
+    val c1: J1 => A1 = identity
+    val builder = self.builder.op(opProvider)
+  }
+
   override def in[A1](task: => Task[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
     type J1 = A1
     val c1: J1 => A1 = identity
@@ -59,6 +65,14 @@ private[dsl] trait Builder{{arity}}[{{typeArgsNumA}}, Z] extends TaskBuilder{{ar
       (tc, {{argumentsNum}}) => fn(tc)({{argumentsPsConv}})
     ))
   {{^iter.isLast}}
+
+  override def op[A{{arityPlus}}](opProvider: OpProvider[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
+    new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] {
+      type J{{arityPlus}} = A{{arityPlus}}
+      val c{{arityPlus}}: J{{arityPlus}} => A{{arityPlus}} = identity
+      val p: self.type = self
+      val builder = self.builder.op(opProvider)
+    }
 
   override def in[A{{arityPlus}}](task: => Task[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
     new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] {

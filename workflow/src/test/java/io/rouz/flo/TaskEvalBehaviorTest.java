@@ -1,5 +1,6 @@
 package io.rouz.flo;
 
+import static io.rouz.flo.TestUtils.evalAndGet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -236,12 +237,6 @@ public class TaskEvalBehaviorTest {
     assertThat(taskIds, containsInOrder(evenify5Id, evenify1Id));
     assertThat(taskIds, containsInOrder(evenify5Id, evenify3Id));
     assertThat(taskIds, containsInOrder(evenify1Id, evenify3Id));
-  }
-
-  private <T> T evalAndGet(Task<T> task) throws InterruptedException {
-    AwaitValue<T> val = new AwaitValue<>();
-    TaskContext.inmem().evaluate(task).consume(val);
-    return val.awaitAndGet();
   }
 
   @Test

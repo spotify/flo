@@ -35,7 +35,7 @@ finalizes the builder and produces a `task<z>`.
 
 When `task<z>` is evaluated, `f1` is called with `a` from the input task as soon as it has
 finished evaluating. This will produce a `value<z>` which contains the value returned by `f1`, or
-any exception thrown along the dependecy tree.
+any exception thrown along the dependency tree.
 
 If instead `builder1.in(task<b>)` is called, a `builder2` is returned, which chains onto the
 evaluation box from the first builder.

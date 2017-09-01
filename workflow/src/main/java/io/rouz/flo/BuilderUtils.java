@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 
 import io.rouz.flo.TaskContext.Value;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -52,6 +53,12 @@ class BuilderUtils {
         .map(Fn::get)
         .flatMap(List::stream)
         .collect(toList());
+  }
+
+  static <T> List<T> appendToList(List<T> list, T t) {
+    final List<T> newList = new ArrayList<>(list);
+    newList.add(t);
+    return newList;
   }
 
   static final class ChainingEval<F, Z> implements Serializable {

@@ -1,5 +1,6 @@
 package io.rouz.flo
 
+import java.util
 import java.util.function.Consumer
 
 /**
@@ -41,6 +42,26 @@ object Examples {
       └> ((a, b, c, d) => s"hello $a $b $c $d")
   )
 
+  def readableDsl: Task[String] = defTask[String]() dsl ($
+    // upstream dependencies
+    in hello
+    in world(7)
+
+    // we'll publish this endpoint when the task is done
+    op Publisher("MyEndpoint")
+
+    // run function
+    process daFoo
+  )
+
+  def daFoo(world: String, wo: String, pub1: Pub): String = {
+
+    // todo: how to complete?
+    pub1.pub("gs://foo/bar")
+
+    "ok"
+  }
+
   def hello2: Task[String] = defTask[String]() dsl ($
     in      world(0)
     ins     List(world(7), world(14))
@@ -69,9 +90,7 @@ object Examples {
 
 
   def main(args: Array[String]): Unit = {
-    print(TaskInfo.ofTask(hello))
-
-    TaskContext.inmem.evaluate(hello)
+    TaskContext.inmem.evaluate(readableDsl)
       .consume(new Consumer[String] {
         override def accept(t: String) = println(t)
       })
@@ -82,5 +101,19 @@ object Examples {
     for (i <- 0 until info.inputs.size()) {
       print(info.inputs.get(i))
     }
+  }
+}
+
+trait Pub {
+  def pub(uri: String): Unit
+}
+
+object Publisher {
+  def apply(endpointId: String) = new Publisher(endpointId)
+}
+
+class Publisher(val endpointId: String) extends OpProvider[Pub] {
+  def provide(tc: TaskContext): Pub = new Pub {
+    def pub(uri: String): Unit = println(s"Publishing $uri to $endpointId")
   }
 }

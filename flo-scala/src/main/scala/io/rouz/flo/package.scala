@@ -4,9 +4,7 @@ import java.lang.Thread.currentThread
 
 import io.rouz.flo.dsl.FloTask.named
 import io.rouz.flo.dsl.TaskBuilder0
-import io.rouz.flo.dsl.TaskBuilder1
 
-import scala.language.dynamics
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.util.DynamicVariable

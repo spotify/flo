@@ -8,6 +8,7 @@ import io.rouz.flo.BuilderUtils.ChainingEval;
 import io.rouz.flo.TaskContext.Value;
 import io.rouz.flo.TaskBuilder.*;
 
+import static io.rouz.flo.BuilderUtils.appendToList;
 import static io.rouz.flo.BuilderUtils.gated;
 import static io.rouz.flo.BuilderUtils.gatedVal;
 import static io.rouz.flo.BuilderUtils.lazyFlatten;
@@ -43,12 +44,31 @@ final class {{implClassName}} {
 
     @Override
     public Task<Z> process(F0<Z> code) {
-      return Task.create(inputs, type, gated(taskId, code::get), taskId);
+      return Task.create(inputs, ops, type, gated(taskId, code::get), taskId);
     }
 
     @Override
     public Task<Z> processWithContext(F1<TaskContext, Value<Z>> code) {
-      return Task.create(inputs, type, gatedVal(taskId, code::apply), taskId);
+      return Task.create(inputs, ops, type, gatedVal(taskId, code::apply), taskId);
+    }
+
+    @Override
+    public <A> TaskBuilder1<A, Z> op(OpProvider<A> opProvider) {
+      return new Builder1<>(
+          inputs, appendToList(ops, opProvider), taskId, type,
+          leafEvalFn(tc -> {
+            Value<A> aValue = opProvider.provideAsync(tc);
+            return aValue.map(a -> f1 -> {
+              // call lifecycle methods on op
+              Task<?> task = tc.currentTask().get();
+              opProvider.preRun(task);
+              final Value<Z> zValue = f1.apply(a);
+              zValue.consume(z -> opProvider.onComplete(task, z));
+              zValue.onFail(throwable -> opProvider.onFail(task, throwable));
+
+              return zValue;
+            });
+          }));
     }
 
     @Override
@@ -56,7 +76,7 @@ final class {{implClassName}} {
       Fn<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new Builder1<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
-          taskId, type,
+          ops, taskId, type,
           leafEvalFn(tc -> {
             Value<A> aValue = tc.evaluate(aTaskSingleton.get());
             return aValue.map(a -> f1 -> f1.apply(a));
@@ -68,7 +88,7 @@ final class {{implClassName}} {
       Fn<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new Builder1<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
-          taskId, type,
+          ops, taskId, type,
           leafEvalFn(tc -> {
             Value<List<A>> aListValue = aTasksSingleton.get()
                 .stream().map(tc::evaluate).collect(toValueList(tc));
@@ -87,10 +107,11 @@ final class {{implClassName}} {
 
     Builder{{arity}}(
         Fn<List<Task<?>>> inputs,
+        List<OpProvider<?>> ops,
         TaskId taskId,
         Class<Z> type,
         ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator) {
-      super(inputs, taskId, type);
+      super(inputs, ops, taskId, type);
       this.evaluator = evaluator;
     }
 
@@ -101,9 +122,9 @@ final class {{implClassName}} {
       ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
 
       EvalClosure<Z> closure = tc -> evaluator.enclose(
-          ({{arguments}}) -> tc.invokeProcessFn(taskId, () -> tc.immediateValue(code.apply({{arguments}})))
+          ({{arguments}}) -> tc.invokeProcessFn(taskId, () -> tc.value(() -> code.apply({{arguments}})))
       ).eval(tc);
-      return Task.create(inputs, type, closure, taskId);
+      return Task.create(inputs, ops, type, closure, taskId);
     }
 
     @Override
@@ -115,7 +136,26 @@ final class {{implClassName}} {
       EvalClosure<Z> closure = tc -> evaluator.enclose(
           ({{arguments}}) -> tc.invokeProcessFn(taskId, () -> code.apply(tc, {{arguments}}))
       ).eval(tc);
-      return Task.create(inputs, type, closure, taskId);
+      return Task.create(inputs, ops, type, closure, taskId);
+    }
+
+    @Override
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProvider<{{nextArg}}> opProvider) {
+      return new Builder{{arityPlus}}<>(
+          inputs, appendToList(ops, opProvider), taskId, type,
+          evaluator.chain(tc -> {
+            Value<{{nextArg}}> nextValue = opProvider.provideAsync(tc);
+            return nextValue.map(next -> f{{arityPlus}} -> ({{arguments}}) -> {
+              // call lifecycle methods on op
+              Task<?> task = tc.currentTask().get();
+              opProvider.preRun(task);
+              final Value<Z> zValue = f{{arityPlus}}.apply({{arguments}}, next);
+              zValue.consume(z -> opProvider.onComplete(task, z));
+              zValue.onFail(throwable -> opProvider.onFail(task, throwable));
+
+              return zValue;
+            });
+          }));
     }
 
     @Override
@@ -123,7 +163,7 @@ final class {{implClassName}} {
       Fn<Task<{{nextArg}}>> nextTaskSingleton = Singleton.create(nextTask);
       return new Builder{{arityPlus}}<>(
           lazyFlatten(inputs, lazyList(nextTaskSingleton)),
-          taskId, type,
+          ops, taskId, type,
           evaluator.chain(tc -> {
             Value<{{nextArg}}> nextValue = tc.evaluate(nextTaskSingleton.get());
             return nextValue.map(next -> f{{arityPlus}} -> ({{arguments}}) -> f{{arityPlus}}.apply({{arguments}}, next));
@@ -135,7 +175,7 @@ final class {{implClassName}} {
       Fn<List<Task<{{nextArg}}>>> nextTasksSingleton = Singleton.create(nextTasks);
       return new Builder{{arityPlus}}<>(
           lazyFlatten(inputs, lazyFlatten(nextTasksSingleton)),
-          taskId, type,
+          ops, taskId, type,
           evaluator.chain(tc -> {
             Value<List<{{nextArg}}>> nextValue = nextTasksSingleton.get()
                 .stream().map(tc::evaluate).collect(toValueList(tc));
@@ -151,10 +191,11 @@ final class {{implClassName}} {
 
     Builder{{lastArity}}(
         Fn<List<Task<?>>> inputs,
+        List<OpProvider<?>> ops,
         TaskId taskId,
         Class<Z> type,
         ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator) {
-      super(inputs, taskId, type);
+      super(inputs, ops, taskId, type);
       this.evaluator = evaluator;
     }
 
@@ -167,7 +208,7 @@ final class {{implClassName}} {
       EvalClosure<Z> closure = tc -> evaluator.enclose(
           ({{lastArguments}}) -> tc.invokeProcessFn(taskId, () -> tc.immediateValue(code.apply({{lastArguments}})))
       ).eval(tc);
-      return Task.create(inputs, type, closure, taskId);
+      return Task.create(inputs, ops, type, closure, taskId);
     }
 
     @Override
@@ -179,7 +220,7 @@ final class {{implClassName}} {
       EvalClosure<Z> closure = tc -> evaluator.enclose(
            ({{lastArguments}}) -> tc.invokeProcessFn(taskId, () -> code.apply(tc, {{lastArguments}}))
       ).eval(tc);
-      return Task.create(inputs, type, closure, taskId);
+      return Task.create(inputs, ops, type, closure, taskId);
     }
   }
 }
