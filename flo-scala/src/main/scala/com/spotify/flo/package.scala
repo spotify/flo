@@ -17,6 +17,9 @@ package object flo {
   def defTask[T: ClassTag](args: Any*): TaskBuilder0[T] =
     named[T](currentMethodName(), args: _*)
 
+  trait Comment
+  case object ╎ extends Comment
+
   def defTaskNamed[T: ClassTag](name: String, args: Any*): TaskBuilder0[T] =
     named[T](name, args: _*)
 
@@ -27,6 +30,18 @@ package object flo {
 
   def $[T]: TaskBuilder0[T] = currentBuilder
   def ▫[T]: TaskBuilder0[T] = currentBuilder
+  def ▫─╮[T]: TaskBuilder0[T] = currentBuilder
+
+  //  def ▫  [T]: TaskBuilder0[T] = currentBuilder
+  //  def ▫─┐[T]: TaskBuilder0[T] = currentBuilder
+  //  def └─┐[T]: TaskBuilder0[T] = currentBuilder
+  //  def ╰─╮[T]: TaskBuilder0[T] = currentBuilder
+  //  def ─  [T]: TaskBuilder0[T] = currentBuilder
+  //  def ┬  [T]: TaskBuilder0[T] = currentBuilder
+  //  def ├  [T]: TaskBuilder0[T] = currentBuilder
+  //  def └  [T]: TaskBuilder0[T] = currentBuilder
+  //  def >  [T]: TaskBuilder0[T] = currentBuilder
+  //  def $  [T]: TaskBuilder0[T] = currentBuilder
 
   private def currentBuilder[T]: TaskBuilder0[T] = {
     val builder = dynamicBuilder.value

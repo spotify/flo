@@ -10,22 +10,28 @@ object FloTask {
   def named[Z: ClassTag](name: String, args: Any*): TaskBuilder0[Z] = new Builder0(name, args:_*)
 }
 
-trait TaskBuilder0[Z] {
+trait TaskBuilder {
+  def ╎(ign: Comment): this.type = this
+}
+
+trait TaskBuilder0[Z] extends TaskBuilder {
   def process(fn: => Z): Task[Z]
   def processWithContext(fn: EvalContext => Value[Z]): Task[Z]
   def in[A](task: => Task[A]): TaskBuilder1[A, Z]
   def ins[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z]
 
   def ->(fn: => Z): Task[Z] = process(fn)
-  def └>(fn: => Z): Task[Z] = process(fn)
+  def ╰>(fn: => Z): Task[Z] = process(fn)
   def ->>(fn: EvalContext => Value[Z]): Task[Z] = processWithContext(fn)
-  def └>>(fn: EvalContext => Value[Z]): Task[Z] = processWithContext(fn)
+  def ╰>>(fn: EvalContext => Value[Z]): Task[Z] = processWithContext(fn)
 
   def op[A](opProvider: OpProvider[A]): TaskBuilder1[A, Z]
+  def ╎[A](opProvider: OpProvider[A]): TaskBuilder1[A, Z] = op(opProvider)
 
   def <[A](task: => Task[A]): TaskBuilder1[A, Z] = in(task)
   def <<[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z] = ins(tasks)
 
+  def ╭[A](task: => Task[A]): TaskBuilder1[A, Z] = in(task)
   def ┌[A](task: => Task[A]): TaskBuilder1[A, Z] = in(task)
   def ╒[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z] = ins(tasks)
 
@@ -37,15 +43,16 @@ trait TaskBuilder0[Z] {
 }
 {{#genBuilder}}
 
-trait TaskBuilder{{arity}}[{{typeArgs}}, Z] {
+trait TaskBuilder{{arity}}[{{typeArgs}}, Z] extends TaskBuilder {
   def process(fn: ({{typeArgs}}) => Z): Task[Z]
-  def └>(fn: ({{typeArgs}}) => Z): Task[Z] = process(fn)
+  def ╰>(fn: ({{typeArgs}}) => Z): Task[Z] = process(fn)
 
   def processWithContext(fn: EvalContext => ({{typeArgs}}) => Value[Z]): Task[Z]
-  def └>>(fn: EvalContext => ({{typeArgs}}) => Value[Z]): Task[Z] = processWithContext(fn)
+  def ╰>>(fn: EvalContext => ({{typeArgs}}) => Value[Z]): Task[Z] = processWithContext(fn)
   {{^iter.isLast}}
 
   def op[{{nextArg}}](opProvider: OpProvider[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
+  def ╎[{{nextArg}}](opProvider: OpProvider[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z] = op(opProvider)
 
   def in[{{nextArg}}](task: => Task[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
   def < [{{nextArg}}](task: => Task[{{nextArg}}]) = in(task)

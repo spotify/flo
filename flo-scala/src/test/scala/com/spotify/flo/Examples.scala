@@ -26,19 +26,23 @@ object Examples {
 
   def world(arg: Int): Task[String] = defTask[String](arg) dsl (
     $ ┬ fib(arg)
-      └> (a => s"world $arg:$a")
+      ╰> (a => s"world $arg:$a")
   )
 
   def world2(arg: Int): Task[String] = defTaskNamed("custom-name", arg) process {
     s"world $arg"
   }
 
-  def hello: Task[String] = defTask[String]() dsl (
-    $ ┬ world(0)
-      ╞ List(world(7), world(14))
-      ├ world2(21)
-      ╞ List(world2(22))
-      └> ((a, b, c, d) => s"hello $a $b $c $d")
+  def prettyWire: Task[String] = defTask[String]() dsl (
+    ▫─╮
+      ├ world(7)
+      ╎ ╎
+      ├ world(7)
+      ╎ ╎
+      ╎ ╎ // this is a publisher operator
+      ╎ Publisher("MyEndpoint")
+      ╎ ╎
+      ╰> daFoo // invoke daFoo when inputs are available
   )
 
   def readableDsl: Task[String] = defTask[String]() dsl ($
@@ -61,6 +65,14 @@ object Examples {
     "ok"
   }
 
+  def hello: Task[String] = defTask[String]() dsl ($
+    ├ world(0)
+    ╞ List(world(7), world(14))
+    ├ world2(21)
+    ╞ List(world2(22))
+    ╰> ((a, b, c, d) => s"hello $a $b $c $d" )
+  )
+
   def hello2: Task[String] = defTask[String]() dsl ($
     in      world(0)
     ins     List(world(7), world(14))
@@ -75,7 +87,7 @@ object Examples {
     else
       $ ┬ fib(n - 1)
         ├ fib(n - 2)
-        └> (_ + _)
+        ╰> (_ + _)
   )
 
   def fib2(n: Int): Task[Int] = defTask[Int](n) dsl (
