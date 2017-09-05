@@ -29,7 +29,7 @@ public abstract class Task<T> implements Serializable {
 
   abstract Fn<List<Task<?>>> lazyInputs();
 
-  abstract List<OpProvider<?>> ops();
+  public abstract List<OpProvider<?>> ops();
 
   public List<Task<?>> inputs() {
     return lazyInputs().get();
