@@ -58,8 +58,8 @@ public class OpProviderTest {
     inOrder.verify(op1).preRun(task);
     inOrder.verify(op2).preRun(task);
     inOrder.verify(op1).mark();
-    inOrder.verify(op2).onComplete(task, "foobar");
-    inOrder.verify(op1).onComplete(task, "foobar");
+    inOrder.verify(op2).onSuccess(task, "foobar");
+    inOrder.verify(op1).onSuccess(task, "foobar");
   }
 
   @Test

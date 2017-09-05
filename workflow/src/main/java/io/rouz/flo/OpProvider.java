@@ -10,7 +10,7 @@ public interface OpProvider<T> {
   default void preRun(Task<?> task) {
   }
 
-  default void onComplete(Task<?> task, Object z) {
+  default void onSuccess(Task<?> task, Object z) {
   }
 
   default void onFail(Task<?> task, Throwable throwable) {

@@ -116,4 +116,7 @@ class Publisher(val endpointId: String) extends OpProvider[Pub] {
   def provide(tc: TaskContext): Pub = new Pub {
     def pub(uri: String): Unit = println(s"Publishing $uri to $endpointId")
   }
+
+  override def onSuccess(task: Task[_], z: Any): Unit =
+    println(s"${task.id} completed with $z")
 }

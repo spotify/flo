@@ -63,7 +63,7 @@ final class {{implClassName}} {
               Task<?> task = tc.currentTask().get();
               opProvider.preRun(task);
               final Value<Z> zValue = f1.apply(a);
-              zValue.consume(z -> opProvider.onComplete(task, z));
+              zValue.consume(z -> opProvider.onSuccess(task, z));
               zValue.onFail(throwable -> opProvider.onFail(task, throwable));
 
               return zValue;
@@ -150,7 +150,7 @@ final class {{implClassName}} {
               Task<?> task = tc.currentTask().get();
               opProvider.preRun(task);
               final Value<Z> zValue = f{{arityPlus}}.apply({{arguments}}, next);
-              zValue.consume(z -> opProvider.onComplete(task, z));
+              zValue.consume(z -> opProvider.onSuccess(task, z));
               zValue.onFail(throwable -> opProvider.onFail(task, throwable));
 
               return zValue;
