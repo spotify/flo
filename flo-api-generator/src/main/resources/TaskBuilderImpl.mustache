@@ -1,6 +1,7 @@
 package {{packageName}};
 
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Generated;
 
@@ -44,18 +45,25 @@ final class {{implClassName}} {
 
     @Override
     public Task<Z> process(F0<Z> code) {
-      return Task.create(inputs, ops, type, gated(taskId, code::get), taskId);
+      return Task.create(meta, inputs, ops, type, gated(taskId, code::get), taskId);
     }
 
     @Override
     public Task<Z> processWithContext(F1<EvalContext, Value<Z>> code) {
-      return Task.create(inputs, ops, type, gatedVal(taskId, code::apply), taskId);
+      return Task.create(meta, inputs, ops, type, gatedVal(taskId, code::apply), taskId);
+    }
+
+    @Override
+    public <ET> TaskBuilder<Z> meta(MetaKey<ET> key, ET value) {
+      meta.put(key, value);
+      return this;
     }
 
     @Override
     public <A> TaskBuilder1<A, Z> op(OpProvider<A> opProvider) {
+      opProvider.provideMeta().forEach(entry -> meta.put(entry.key(), entry.value()));
       return new Builder1<>(
-          inputs, appendToList(ops, opProvider), taskId, type,
+          meta, inputs, appendToList(ops, opProvider), taskId, type,
           leafEvalFn(ec -> {
             A aOp = opProvider.provide(ec);
             return ec.immediateValue(f1 -> {
@@ -75,7 +83,7 @@ final class {{implClassName}} {
     public <A> {{interfaceName}}1<A, Z> in(Fn<Task<A>> aTask) {
       Fn<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new Builder1<>(
-          lazyFlatten(inputs, lazyList(aTaskSingleton)),
+          meta, lazyFlatten(inputs, lazyList(aTaskSingleton)),
           ops, taskId, type,
           leafEvalFn(ec -> {
             Value<A> aValue = ec.evaluate(aTaskSingleton.get());
@@ -87,7 +95,7 @@ final class {{implClassName}} {
     public <A> {{interfaceName}}1<List<A>, Z> ins(Fn<List<Task<A>>> aTasks) {
       Fn<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new Builder1<>(
-          lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
+          meta, lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           ops, taskId, type,
           leafEvalFn(ec -> {
             Value<List<A>> aListValue = aTasksSingleton.get()
@@ -106,12 +114,13 @@ final class {{implClassName}} {
     private final ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator;
 
     Builder{{arity}}(
+        Map<MetaKey<?>, Object> meta,
         Fn<List<Task<?>>> inputs,
         List<OpProvider<?>> ops,
         TaskId taskId,
         Class<Z> type,
         ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator) {
-      super(inputs, ops, taskId, type);
+      super(meta, inputs, ops, taskId, type);
       this.evaluator = evaluator;
     }
 
@@ -124,7 +133,7 @@ final class {{implClassName}} {
       EvalClosure<Z> closure = ec -> evaluator.enclose(
           ({{arguments}}) -> ec.invokeProcessFn(taskId, () -> ec.value(() -> code.apply({{arguments}})))
       ).eval(ec);
-      return Task.create(inputs, ops, type, closure, taskId);
+      return Task.create(meta, inputs, ops, type, closure, taskId);
     }
 
     @Override
@@ -136,13 +145,20 @@ final class {{implClassName}} {
       EvalClosure<Z> closure = ec -> evaluator.enclose(
           ({{arguments}}) -> ec.invokeProcessFn(taskId, () -> code.apply(ec, {{arguments}}))
       ).eval(ec);
-      return Task.create(inputs, ops, type, closure, taskId);
+      return Task.create(meta, inputs, ops, type, closure, taskId);
+    }
+
+    @Override
+    public <ET> {{interfaceName}}{{arity}}<{{typeArgs}}, Z> meta(MetaKey<ET> key, ET value) {
+      meta.put(key, value);
+      return this;
     }
 
     @Override
     public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProvider<{{nextArg}}> opProvider) {
+      opProvider.provideMeta().forEach(entry -> meta.put(entry.key(), entry.value()));
       return new Builder{{arityPlus}}<>(
-          inputs, appendToList(ops, opProvider), taskId, type,
+          meta, inputs, appendToList(ops, opProvider), taskId, type,
           evaluator.chain(ec -> {
             {{nextArg}} {{nextArgLow}}Op = opProvider.provide(ec);
             return ec.immediateValue(f{{arityPlus}} -> ({{arguments}}) -> {
@@ -162,7 +178,7 @@ final class {{implClassName}} {
     public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> in(Fn<Task<{{nextArg}}>> nextTask) {
       Fn<Task<{{nextArg}}>> nextTaskSingleton = Singleton.create(nextTask);
       return new Builder{{arityPlus}}<>(
-          lazyFlatten(inputs, lazyList(nextTaskSingleton)),
+          meta, lazyFlatten(inputs, lazyList(nextTaskSingleton)),
           ops, taskId, type,
           evaluator.chain(ec -> {
             Value<{{nextArg}}> nextValue = ec.evaluate(nextTaskSingleton.get());
@@ -174,7 +190,7 @@ final class {{implClassName}} {
     public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Z> ins(Fn<List<Task<{{nextArg}}>>> nextTasks) {
       Fn<List<Task<{{nextArg}}>>> nextTasksSingleton = Singleton.create(nextTasks);
       return new Builder{{arityPlus}}<>(
-          lazyFlatten(inputs, lazyFlatten(nextTasksSingleton)),
+          meta, lazyFlatten(inputs, lazyFlatten(nextTasksSingleton)),
           ops, taskId, type,
           evaluator.chain(ec -> {
             Value<List<{{nextArg}}>> nextValue = nextTasksSingleton.get()
@@ -190,12 +206,13 @@ final class {{implClassName}} {
     private final ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator;
 
     Builder{{lastArity}}(
+        Map<MetaKey<?>, Object> meta,
         Fn<List<Task<?>>> inputs,
         List<OpProvider<?>> ops,
         TaskId taskId,
         Class<Z> type,
         ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator) {
-      super(inputs, ops, taskId, type);
+      super(meta, inputs, ops, taskId, type);
       this.evaluator = evaluator;
     }
 
@@ -208,7 +225,7 @@ final class {{implClassName}} {
       EvalClosure<Z> closure = ec -> evaluator.enclose(
           ({{lastArguments}}) -> ec.invokeProcessFn(taskId, () -> ec.immediateValue(code.apply({{lastArguments}})))
       ).eval(ec);
-      return Task.create(inputs, ops, type, closure, taskId);
+      return Task.create(meta, inputs, ops, type, closure, taskId);
     }
 
     @Override
@@ -220,7 +237,7 @@ final class {{implClassName}} {
       EvalClosure<Z> closure = ec -> evaluator.enclose(
            ({{lastArguments}}) -> ec.invokeProcessFn(taskId, () -> code.apply(ec, {{lastArguments}}))
       ).eval(ec);
-      return Task.create(inputs, ops, type, closure, taskId);
+      return Task.create(meta, inputs, ops, type, closure, taskId);
     }
   }
 }

@@ -4,6 +4,8 @@ import org.scalatest._
 
 class DslTest extends FlatSpec with Matchers {
 
+  private val metaKey = MetaKey.create[Int]("foo")
+
   "A defTask `$` builder" can "be accessed in dsl scope to create a task" in {
     defTask[String]() dsl ($ -> "hello") shouldBe a [Task[_]]
   }
@@ -28,6 +30,23 @@ class DslTest extends FlatSpec with Matchers {
     def task = defTask(1, 2, 3).process("hello")
 
     task.id.toString shouldBe "task(1,2,3)#2ac733ae"
+  }
+
+  it should "store metadata key-values" in {
+    def task = defTaskNamed("with-meta")
+      .meta(metaKey, 42)
+      .process("hello")
+
+    task.getMeta(metaKey) shouldBe 42
+  }
+
+  it should "store metadata key-values 2" in {
+    def task = defTaskNamed("with-meta")
+      .in(defTaskNamed("inner").process("bla"))
+      .meta(metaKey, 42)
+      .process(_ => "hello")
+
+    task.getMeta(metaKey) shouldBe 42
   }
 
   it must "throw a RuntimeException if accessed outside of defTask" in {

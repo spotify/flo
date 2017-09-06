@@ -25,6 +25,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -47,12 +48,19 @@ public abstract class Task<T> implements Serializable {
 
   abstract EvalClosure<T> code();
 
+  abstract Map<MetaKey<?>, Object> meta();
+
   abstract Fn<List<Task<?>>> lazyInputs();
 
   public abstract List<OpProvider<?>> ops();
 
   public List<Task<?>> inputs() {
     return lazyInputs().get();
+  }
+
+  public <E> E getMeta(MetaKey<E> key) {
+    //noinspection unchecked
+    return (E) meta().get(key);
   }
 
   public Stream<Task<?>> inputsInOrder() {
@@ -75,19 +83,20 @@ public abstract class Task<T> implements Serializable {
 
   public static <T> Task<T> create(Fn<T> code, Class<T> type, String taskName, Object... args) {
     return create(
-        Collections::emptyList, Collections.emptyList(),
+        Collections.emptyMap(), Collections::emptyList, Collections.emptyList(),
         type,
         ec -> ec.value(code),
         TaskId.create(taskName, args));
   }
 
   static <T> Task<T> create(
+      Map<MetaKey<?>, Object> meta,
       Fn<List<Task<?>>> inputs,
       List<OpProvider<?>> ops,
       Class<T> type,
       EvalClosure<T> code,
       TaskId taskId) {
-    return new AutoValue_Task<>(taskId, type, code, inputs, ops);
+    return new AutoValue_Task<>(taskId, type, code, meta, inputs, ops);
   }
 
   /**

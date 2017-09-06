@@ -9,18 +9,27 @@ import com.spotify.flo.dsl.Util._
 import _root_.scala.collection.JavaConversions
 import _root_.scala.reflect.ClassTag
 
-private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) extends TaskBuilder0[Z] { self =>
+private[dsl] object Builder0 {
+  def apply[Z: ClassTag](name: String, args: Any*): TaskBuilder0[Z] =
+    new Builder0(
+      Task.named(name, args.asInstanceOf[Seq[AnyRef]]:_*)
+        .ofType(implicitly[ClassTag[Z]].runtimeClass.asInstanceOf[Class[Z]]))
 
-  private val cls = implicitly[ClassTag[Z]].runtimeClass.asInstanceOf[Class[Z]]
-  private val builder = Task
-      .named(name, args.asInstanceOf[Seq[AnyRef]]:_*)
-      .ofType(cls)
+  def apply[Z](builder: TaskBuilder[Z]): TaskBuilder0[Z] =
+    new Builder0(builder)
+}
+
+private[dsl] class Builder0[Z](val builder: TaskBuilder[Z]) extends TaskBuilder0[Z] {
+  self =>
 
   override def process(fn: => Z): Task[Z] =
     builder.process(f0(fn))
 
   override def processWithContext(fn: (EvalContext) => Value[Z]): Task[Z] =
     builder.processWithContext(f1(fn))
+
+  override def meta[ET](key: MetaKey[ET], value: ET): TaskBuilder0[Z] =
+    Builder0(self.builder.meta(key, value))
 
   override def op[A1](opProvider: OpProvider[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
     type J1 = A1
@@ -64,6 +73,16 @@ private[dsl] trait Builder{{arity}}[{{typeArgsNumA}}, Z] extends TaskBuilder{{ar
       (ec, {{argumentsNum}}) => fn(ec)({{argumentsPsConv}})
     ))
   {{^iter.isLast}}
+
+  override def meta[ET](key: MetaKey[ET], value: ET): TaskBuilder{{arity}}[{{typeArgsNumA}}, Z] =
+    new Builder{{arity}}[{{typeArgsNumA}}, Z] {
+      type J{{arity}} = self.J{{arity}}
+      val c{{arity}}: J{{arity}} => A{{arity}} = self.c{{arity}}
+      {{^iter.isFirst}}
+      val p: self.p.type = self.p
+      {{/iter.isFirst}}
+      val builder = self.builder.meta(key, value)
+    }
 
   override def op[A{{arityPlus}}](opProvider: OpProvider[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
     new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] {

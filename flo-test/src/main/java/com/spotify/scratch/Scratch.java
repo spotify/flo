@@ -20,7 +20,9 @@
 
 package com.spotify.scratch;
 
+import com.spotify.flo.MetaKey;
 import com.spotify.flo.Task;
+import com.spotify.flo.TaskBuilder;
 import com.spotify.flo.proc.Exec;
 import com.spotify.flo.processor.RootTask;
 
@@ -51,6 +53,9 @@ import com.spotify.flo.processor.RootTask;
  */
 public class Scratch {
 
+  static final MetaKey<String> STRING_VAL = MetaKey.create("String val");
+  static final MetaKey<Integer> INT_VAL = MetaKey.create("Integer val");
+
   public static void main(String[] args) throws Exception {
     Task<Exec.Result> foo = exec("foobar", 123);
     foo.inputsInOrder()
@@ -63,7 +68,9 @@ public class Scratch {
     Task<String> task1 = MyTask.create(parameter);
     Task<Integer> task2 = Adder.create(number, number + 2);
 
-    return Task.named("exec", "/bin/sh").ofType(Exec.Result.class)
+    final TaskBuilder<Exec.Result> exec = Task.named("exec", "/bin/sh").ofType(Exec.Result.class);
+    return exec
+        .meta(STRING_VAL, "hello world")
         .in(() -> task1)
         .in(() -> task2)
         .process(Exec.exec((str, i) -> args("/bin/sh", "-c", "\"echo " + i + "\"")));

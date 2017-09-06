@@ -24,6 +24,7 @@ public interface {{interfaceName}}<Z> {
   Task<Z> process(F0<Z> code);
   Task<Z> processWithContext(F1<EvalContext, EvalContext.Value<Z>> code);
 
+  <ET> {{interfaceName}}<Z> meta(MetaKey<ET> key, ET value);
   <A> {{interfaceName}}1<A, Z> op(OpProvider<A> opProvider);
 
   <A> {{interfaceName}}1<A, Z> in(Fn<Task<A>> task);
@@ -35,6 +36,7 @@ public interface {{interfaceName}}<Z> {
     Task<Z> processWithContext(F{{arityPlus}}<EvalContext, {{typeArgs}}, Value<Z>> code);
   {{^iter.isLast}}
 
+    <ET> {{interfaceName}}{{arity}}<{{typeArgs}}, Z> meta(MetaKey<ET> key, ET value);
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProvider<{{nextArg}}> opProvider);
 
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> in(Fn<Task<{{nextArg}}>> task);

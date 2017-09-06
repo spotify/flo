@@ -30,10 +30,15 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import com.spotify.flo.EvalContext.Promise;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
 
 public class TaskTest {
+
+  private static final MetaKey<String> TEST_KEY_1 = MetaKey.create("key1");
+  private static final MetaKey<Integer> TEST_KEY_2 = MetaKey.create("key2");
 
   @Test
   public void shouldHaveListOfInputs() throws Exception {
@@ -59,6 +64,54 @@ public class TaskTest {
         .process((a, b) -> "constant");
 
     assertThat(task.ops(), contains(op1, op2));
+  }
+
+  @Test
+  public void shouldStoreMetadata() throws Exception {
+    Task<String> task = Task.named("Meta").ofType(String.class)
+        .meta(TEST_KEY_1, "hello")
+        .in(() -> leaf("A"))
+        .meta(TEST_KEY_2, 42)
+        .process(a -> a);
+
+    assertThat(task.getMeta(TEST_KEY_1), is("hello"));
+    assertThat(task.getMeta(TEST_KEY_2), is(42));
+  }
+
+  @Test
+  public void shouldOverwriteMetadata() throws Exception {
+    Task<String> task = Task.named("Meta").ofType(String.class)
+        .meta(TEST_KEY_1, "hello")
+        .meta(TEST_KEY_1, "world")
+        .process(() -> "");
+
+    assertThat(task.getMeta(TEST_KEY_1), is("world"));
+  }
+
+  @Test
+  public void shouldReceiveMetadataFromOperator() throws Exception {
+    Task<String> task = Task.named("Meta").ofType(String.class)
+        .op(new TestOperator())
+        .process(a -> a);
+
+    assertThat(task.getMeta(TEST_KEY_1), is("hello"));
+    assertThat(task.getMeta(TEST_KEY_2), is(42));
+  }
+
+  static class TestOperator implements OpProvider<String> {
+
+    @Override
+    public List<MetaKey.Entry<?>> provideMeta() {
+      return Arrays.asList(
+          TEST_KEY_1.value("hello"),
+          TEST_KEY_2.value(42)
+      );
+    }
+
+    @Override
+    public String provide(EvalContext evalContext) {
+      return "";
+    }
   }
 
   //  Naming convention for tests

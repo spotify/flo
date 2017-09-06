@@ -7,7 +7,7 @@ import com.spotify.flo._
 import scala.reflect.ClassTag
 
 object FloTask {
-  def named[Z: ClassTag](name: String, args: Any*): TaskBuilder0[Z] = new Builder0(name, args:_*)
+  def named[Z: ClassTag](name: String, args: Any*): TaskBuilder0[Z] = Builder0(name, args:_*)
 }
 
 trait TaskBuilder0[Z] {
@@ -21,6 +21,7 @@ trait TaskBuilder0[Z] {
   def ->>(fn: EvalContext => Value[Z]): Task[Z] = processWithContext(fn)
   def └>>(fn: EvalContext => Value[Z]): Task[Z] = processWithContext(fn)
 
+  def meta[ET](key: MetaKey[ET], value: ET): TaskBuilder0[Z]
   def op[A](opProvider: OpProvider[A]): TaskBuilder1[A, Z]
 
   def <[A](task: => Task[A]): TaskBuilder1[A, Z] = in(task)
@@ -45,6 +46,7 @@ trait TaskBuilder{{arity}}[{{typeArgs}}, Z] {
   def └>>(fn: EvalContext => ({{typeArgs}}) => Value[Z]): Task[Z] = processWithContext(fn)
   {{^iter.isLast}}
 
+  def meta[ET](key: MetaKey[ET], value: ET): TaskBuilder{{arity}}[{{typeArgs}}, Z]
   def op[{{nextArg}}](opProvider: OpProvider[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
 
   def in[{{nextArg}}](task: => Task[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
