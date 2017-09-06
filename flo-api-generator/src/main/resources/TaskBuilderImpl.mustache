@@ -57,12 +57,12 @@ final class {{implClassName}} {
       return new Builder1<>(
           inputs, appendToList(ops, opProvider), taskId, type,
           leafEvalFn(tc -> {
-            Value<A> aValue = opProvider.provideAsync(tc);
-            return aValue.map(a -> f1 -> {
+            A aOp = opProvider.provide(tc);
+            return tc.immediateValue(f1 -> {
               // call lifecycle methods on op
               Task<?> task = tc.currentTask().get();
               opProvider.preRun(task);
-              final Value<Z> zValue = f1.apply(a);
+              Value<Z> zValue = f1.apply(aOp);
               zValue.consume(z -> opProvider.onSuccess(task, z));
               zValue.onFail(throwable -> opProvider.onFail(task, throwable));
 
@@ -144,12 +144,12 @@ final class {{implClassName}} {
       return new Builder{{arityPlus}}<>(
           inputs, appendToList(ops, opProvider), taskId, type,
           evaluator.chain(tc -> {
-            Value<{{nextArg}}> nextValue = opProvider.provideAsync(tc);
-            return nextValue.map(next -> f{{arityPlus}} -> ({{arguments}}) -> {
+            {{nextArg}} {{nextArgLow}}Op = opProvider.provide(tc);
+            return tc.immediateValue(f{{arityPlus}} -> ({{arguments}}) -> {
               // call lifecycle methods on op
               Task<?> task = tc.currentTask().get();
               opProvider.preRun(task);
-              final Value<Z> zValue = f{{arityPlus}}.apply({{arguments}}, next);
+              Value<Z> zValue = f{{arityPlus}}.apply({{arguments}}, {{nextArgLow}}Op);
               zValue.consume(z -> opProvider.onSuccess(task, z));
               zValue.onFail(throwable -> opProvider.onFail(task, throwable));
 

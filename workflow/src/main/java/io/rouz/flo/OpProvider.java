@@ -44,11 +44,4 @@ public interface OpProvider<T> {
    */
   default void onFail(Task<?> task, Throwable throwable) {
   }
-
-  /**
-   * Async version of {@link #provide(TaskContext)}
-   */
-  default TaskContext.Value<T> provideAsync(TaskContext taskContext) {
-    return taskContext.value(() -> provide(taskContext));
-  }
 }

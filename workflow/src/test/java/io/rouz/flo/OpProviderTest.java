@@ -4,8 +4,11 @@ import static io.rouz.flo.TestUtils.evalAndGet;
 import static io.rouz.flo.TestUtils.evalAndGetException;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -84,6 +87,58 @@ public class OpProviderTest {
     inOrder.verify(op2).onFail(task, throwable);
     inOrder.verify(op1).onFail(task, throwable);
     assertThat(throwable.getMessage(), is("force fail"));
+  }
+
+  @Test
+  public void lifecycleMethodsCalledAfterInputsHaveEvaluated() throws Exception {
+    //noinspection unchecked
+    TaskBuilder.F0<String> t1Fn = mock(TaskBuilder.F0.class);
+    //noinspection unchecked
+    TaskBuilder.F0<String> t2Fn = mock(TaskBuilder.F0.class);
+    when(t1Fn.get()).thenReturn("hej");
+    when(t2Fn.get()).thenReturn("hej");
+    BasicProvider op1 = spy(new BasicProvider("foo"));
+
+    Task<String> task = Task.named("inject").ofType(String.class)
+        .in(() -> Task.named("foo").ofType(String.class).process(t1Fn))
+        .op(op1)
+        .in(() -> Task.named("bar").ofType(String.class).process(t2Fn))
+        .process((t1, i1, t2) -> {
+          op1.mark();
+          return t1 + i1 + t2;
+        });
+
+    evalAndGet(task);
+    InOrder inOrder = inOrder(t1Fn, t2Fn, op1);
+    inOrder.verify(t2Fn).get();
+    inOrder.verify(op1).provide(any());
+    inOrder.verify(t1Fn).get();
+    inOrder.verify(op1).preRun(task);
+    inOrder.verify(op1).mark();
+    inOrder.verify(op1).onSuccess(task, "hejfoohej");
+  }
+
+  @Test
+  public void lifecycleMethodsNotCalledIfInputsFail() throws Exception {
+    //noinspection unchecked
+    TaskBuilder.F0<String> t1Fn = mock(TaskBuilder.F0.class);
+    when(t1Fn.get()).thenThrow(new RuntimeException("Fail"));
+    BasicProvider op1 = spy(new BasicProvider("foo"));
+
+    Task<String> task = Task.named("inject").ofType(String.class)
+        .op(op1)
+        .in(() -> Task.named("foo").ofType(String.class).process(t1Fn))
+        .process((i1, t1) -> {
+          op1.mark();
+          return t1 + i1;
+        });
+
+    Throwable throwable = evalAndGetException(task);
+    assertThat(throwable.getMessage(), is("Fail"));
+    InOrder inOrder = inOrder(t1Fn, op1);
+    inOrder.verify(t1Fn).get();
+    inOrder.verify(op1).provide(any());
+    inOrder.verifyNoMoreInteractions();
   }
 
   private class Injected {

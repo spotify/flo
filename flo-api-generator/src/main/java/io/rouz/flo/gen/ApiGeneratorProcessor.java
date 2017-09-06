@@ -185,6 +185,7 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     map.put("arityPlus", n + 1);
     map.put("arityMinus", n - 1);
     map.put("nextArg", letters(n + 1).skip(n).findFirst().get());
+    map.put("nextArgLow", letters(n + 1).skip(n).findFirst().get().toLowerCase());
     map.put("typeArgs", typeArgs(n));
     map.put("typeArgsNumA", typeArgsNum(n, "A"));
     map.put("typeArgsNumAMinus", typeArgsNum(n - 1, "A"));
