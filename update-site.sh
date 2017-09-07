@@ -2,7 +2,7 @@
 
 set +ex
 
-V=$(git tag | tail -1)
+V=$(git tag --sort v:refname | tail -1)
 V=${V#v}
 
 git checkout v$V
