@@ -24,6 +24,8 @@ public interface {{interfaceName}}<Z> {
   Task<Z> process(F0<Z> code);
   Task<Z> processWithContext(F1<TaskContext, TaskContext.Value<Z>> code);
 
+  <A> {{interfaceName}}1<A, Z> op(OpProvider<A> opProvider);
+
   <A> {{interfaceName}}1<A, Z> in(Fn<Task<A>> task);
   <A> {{interfaceName}}1<List<A>, Z> ins(Fn<List<Task<A>>> tasks);
 {{#genBuilder}}
@@ -32,6 +34,8 @@ public interface {{interfaceName}}<Z> {
     Task<Z> process(F{{arity}}<{{typeArgs}}, Z> code);
     Task<Z> processWithContext(F{{arityPlus}}<TaskContext, {{typeArgs}}, Value<Z>> code);
   {{^iter.isLast}}
+
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProvider<{{nextArg}}> opProvider);
 
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> in(Fn<Task<{{nextArg}}>> task);
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Z> ins(Fn<List<Task<{{nextArg}}>>> tasks);

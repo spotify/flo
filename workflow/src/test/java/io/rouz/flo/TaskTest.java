@@ -1,6 +1,8 @@
 package io.rouz.flo;
 
+import static io.rouz.flo.TestUtils.taskId;
 import static java.util.Arrays.asList;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
@@ -11,19 +13,42 @@ import io.rouz.flo.TaskContext.Promise;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
 
-/**
- * Naming convention for tests
- * XXX
- * ^^^
- * |||
- * ||`----> D,C = direct, context
- * |`-----> I,L = in, ins
- * `------> arity
- *
- * eg 2RD_IL = arity 2 curried direct processed task with single input and list input
- */
 public class TaskTest {
 
+  @Test
+  public void shouldHaveListOfInputs() throws Exception {
+    Task<String> task = Task.named("Inputs").ofType(String.class)
+        .in(() -> leaf("A"))
+        .ins(() -> asList(leaf("B"), leaf("C")))
+        .process((a, bc) -> "constant");
+
+    assertThat(task.inputs(), contains(
+        taskId(is(leaf("A").id())),
+        taskId(is(leaf("B").id())),
+        taskId(is(leaf("C").id()))
+    ));
+  }
+
+  @Test
+  public void shouldHaveListOfOperators() throws Exception {
+    OpProvider<Object> op1 = tc -> new Object();
+    OpProvider<Object> op2 = tc -> new Object();
+    Task<String> task = Task.named("Inputs").ofType(String.class)
+        .op(op1)
+        .op(op2)
+        .process((a, b) -> "constant");
+
+    assertThat(task.ops(), contains(op1, op2));
+  }
+
+  //  Naming convention for tests
+  //  XXX
+  //  ^^^
+  //  |||
+  //  ||`----> D,C = direct, context
+  //  |`-----> I,L = in, ins
+  //  `------> arity
+  //    eg 2RD_IL = arity 2 curried direct processed task with single input and list input
   // 0. ===========================================================================================
 
   @Test
