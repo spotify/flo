@@ -31,16 +31,18 @@ class BaseRefs<Z> {
 
   final Fn<List<Task<?>>> inputs;
   final List<OpProvider<?>> ops;
+  final List<OpProviderStrict<?, Z>> strictOps;
   final TaskId taskId;
   protected final Class<Z> type;
 
   BaseRefs(TaskId taskId, Class<Z> type) {
-    this(Collections::emptyList, Collections.emptyList(), taskId, type);
+    this(Collections::emptyList, Collections.emptyList(), Collections.emptyList(), taskId, type);
   }
 
-  BaseRefs(Fn<List<Task<?>>> inputs, List<OpProvider<?>> ops, TaskId taskId, Class<Z> type) {
+  BaseRefs(Fn<List<Task<?>>> inputs, List<OpProvider<?>> ops, List<OpProviderStrict<?, Z>> strictOps, TaskId taskId, Class<Z> type) {
     this.inputs = inputs;
     this.ops = ops;
+    this.strictOps = strictOps;
     this.taskId = taskId;
     this.type = type;
   }
