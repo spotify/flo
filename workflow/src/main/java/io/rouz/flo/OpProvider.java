@@ -7,7 +7,7 @@ package io.rouz.flo;
  * operations before and after the task evaluates. A common use case for operators is to be able
  * to integrate 3rd party libraries into Flo in a way that makes them easily accessible to tasks.
  */
-public interface OpProvider<T> {
+public interface OpProvider<T, S> {
 
   /**
    * Creates a new operator instance of type {@link T}. The given {@link TaskContext} will be
@@ -33,7 +33,7 @@ public interface OpProvider<T> {
    * @param task The task that evaluated
    * @param z    The return value of the evaluated task
    */
-  default void onSuccess(Task<?> task, Object z) {
+  default void onSuccess(Task<?> task, S z) {
   }
 
   /**
