@@ -1,5 +1,9 @@
 package io.rouz.flo;
 
+import static java.util.Optional.empty;
+
+import java.util.Optional;
+
 /**
  * Provider interface for operation objects that will be injected into tasks.
  *
@@ -18,6 +22,17 @@ public interface OpProvider<T, S> {
    * @return An instance of the provided operator type
    */
   T provide(TaskContext taskContext);
+
+  /**
+   * When a non empty value is returned, the {@link TaskContext} will not evaluate the task or its
+   * upstreams but the returned value is used as task's result.
+   *
+   * @param taskContext The task context in which the current task is being evaluated
+   * @return The optional result to be returned
+   */
+  default Optional<S> overrideResult(TaskContext taskContext) {
+    return empty();
+  }
 
   /**
    * Will be called just before a task that is using this operator starts evaluating.

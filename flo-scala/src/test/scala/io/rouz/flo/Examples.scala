@@ -1,6 +1,5 @@
 package io.rouz.flo
 
-import java.util
 import java.util.function.Consumer
 
 /**
