@@ -5,6 +5,7 @@ import static javax.tools.Diagnostic.Kind.NOTE;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -30,6 +31,7 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 import org.trimou.engine.MustacheEngine;
 import org.trimou.engine.MustacheEngineBuilder;
+import org.trimou.engine.config.EngineConfigurationKey;
 import org.trimou.engine.locator.ClassPathTemplateLocator;
 import org.trimou.engine.resolver.MapResolver;
 import org.trimou.engine.resolver.ReflectionResolver;
@@ -63,6 +65,7 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
         .newBuilder()
         .addResolver(new MapResolver())
         .addResolver(new ReflectionResolver())
+        .setProperty(EngineConfigurationKey.DEFAULT_FILE_ENCODING, StandardCharsets.UTF_8.name())
         .addTemplateLocator(ClassPathTemplateLocator.builder(1)
                                 .setClassLoader(this.getClass().getClassLoader())
                                 .setSuffix("mustache").build())
