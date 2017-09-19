@@ -20,8 +20,6 @@ package object flo {
   def defTaskNamed[T: ClassTag](name: String, args: Any*): TaskBuilder0[T] =
     named[T](name, args: _*)
 
-  implicit def toTask[T](t: => T): Task[T] = currentBuilder.process(t)
-
   implicit class TB0Dsl[T](val tb0: TaskBuilder0[T]) extends AnyVal {
     def dsl(f: => Task[T]): Task[T] =
       dynamicBuilder.withValue(tb0)(f)
