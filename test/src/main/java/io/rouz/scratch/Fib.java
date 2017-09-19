@@ -3,6 +3,7 @@ package io.rouz.scratch;
 import io.rouz.flo.Task;
 import io.rouz.flo.TaskBuilder;
 import io.rouz.flo.TaskContext;
+import io.rouz.flo.context.MemoizingContext;
 
 /**
  * Simple fibonacci implementations
@@ -11,7 +12,7 @@ final class Fib {
 
   public static void main(String[] args) {
     Task<Long> fib92 = create(92);
-    TaskContext taskContext = TaskContext.inmem();
+    TaskContext taskContext = MemoizingContext.composeWith(TaskContext.inmem());
     TaskContext.Value<Long> value = taskContext.evaluate(fib92);
 
     value.consume(f92 -> System.out.println("fib(92) = " + f92));

@@ -68,7 +68,7 @@ class Fib {
 
   public static void main(String[] args) {
     Task<Long> fib92 = fib(92);
-    TaskContext taskContext = TaskContext.inmem();
+    TaskContext taskContext = MemoizingContext.composeWith(TaskContext.inmem());
     TaskContext.Value<Long> value = taskContext.evaluate(fib92);
 
     value.consume(f92 -> System.out.println("fib(92) = " + f92));
@@ -93,7 +93,7 @@ object Fib extends App {
   )
 
   val fib92 = fib(92)
-  val taskContext = TaskContext.inmem
+  val taskContext = MemoizingContext.composeWith(TaskContext.inmem)
   val value = taskContext.evaluate(fib92)
 
   value.consume((f92:Long) => println("fib(92) = " + f92))
