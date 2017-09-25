@@ -143,13 +143,13 @@ public class MemoizingContextTest {
   static class ExampleValueMemoizer implements MemoizingContext.Memoizer<ExampleValue> {
 
     @Override
-    public Optional<ExampleValue> lookup(Task task) {
+    public Optional<ExampleValue> lookup(Task<ExampleValue> task) {
       System.out.println("lookup task " + task.id());
       return Optional.ofNullable(MemoizingContextTest.value);
     }
 
     @Override
-    public void store(Task task, ExampleValue value) {
+    public void store(Task<ExampleValue> task, ExampleValue value) {
       System.out.println("store task " + task.id() + " value = " + value);
       MemoizingContextTest.value = value;
     }

@@ -93,7 +93,7 @@ public class MemoizingContext extends ForwardingTaskContext {
      * @param task  The task for which the lookup is made
      * @return An optional memoized value for the task
      */
-    Optional<T> lookup(Task task);
+    Optional<T> lookup(Task<T> task);
 
     /**
      * Store an evaluated value for a given task.
@@ -101,7 +101,7 @@ public class MemoizingContext extends ForwardingTaskContext {
      * @param task   The task for which the value was produced
      * @param value  The value that was produced
      */
-    void store(Task task, T value);
+    void store(Task<T> task, T value);
 
     /**
      * A memoizer that does nothing and always returns empty {@link #lookup} values
@@ -115,12 +115,12 @@ public class MemoizingContext extends ForwardingTaskContext {
   private static final Memoizer<Object> NOOP = new Memoizer<Object>() {
 
     @Override
-    public Optional<Object> lookup(Task task) {
+    public Optional<Object> lookup(Task<Object> task) {
       return Optional.empty();
     }
 
     @Override
-    public void store(Task task, Object value) {
+    public void store(Task<Object> task, Object value) {
     }
   };
 
