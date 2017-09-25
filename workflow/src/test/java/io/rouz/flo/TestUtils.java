@@ -1,10 +1,8 @@
 package io.rouz.flo;
 
 import io.rouz.flo.context.AwaitingConsumer;
-import org.hamcrest.Description;
 import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 
 public class TestUtils {
 

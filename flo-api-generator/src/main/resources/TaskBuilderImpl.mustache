@@ -53,7 +53,7 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <A> TaskBuilder1<A, Z> op(OpProvider<A> opProvider) {
+    public <A> TaskBuilder1<A, Z> op(OpProvider<A, Z> opProvider) {
       return new Builder1<>(
           inputs, appendToList(ops, opProvider), taskId, type,
           leafEvalFn(tc -> {
@@ -107,7 +107,7 @@ final class {{implClassName}} {
 
     Builder{{arity}}(
         Fn<List<Task<?>>> inputs,
-        List<OpProvider<?>> ops,
+        List<OpProvider<?, Z>> ops,
         TaskId taskId,
         Class<Z> type,
         ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator) {
@@ -140,7 +140,7 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProvider<{{nextArg}}> opProvider) {
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProvider<{{nextArg}}, Z> opProvider) {
       return new Builder{{arityPlus}}<>(
           inputs, appendToList(ops, opProvider), taskId, type,
           evaluator.chain(tc -> {
@@ -191,7 +191,7 @@ final class {{implClassName}} {
 
     Builder{{lastArity}}(
         Fn<List<Task<?>>> inputs,
-        List<OpProvider<?>> ops,
+        List<OpProvider<?, Z>> ops,
         TaskId taskId,
         Class<Z> type,
         ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator) {
