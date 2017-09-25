@@ -21,7 +21,7 @@ trait TaskBuilder0[Z] {
   def ->>(fn: TaskContext => Value[Z]): Task[Z] = processWithContext(fn)
   def └>>(fn: TaskContext => Value[Z]): Task[Z] = processWithContext(fn)
 
-  def op[A](opProvider: OpProvider[A]): TaskBuilder1[A, Z]
+  def op[A](opProvider: OpProvider[A, Z]): TaskBuilder1[A, Z]
 
   def <[A](task: => Task[A]): TaskBuilder1[A, Z] = in(task)
   def <<[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z] = ins(tasks)
@@ -45,7 +45,7 @@ trait TaskBuilder{{arity}}[{{typeArgs}}, Z] {
   def └>>(fn: TaskContext => ({{typeArgs}}) => Value[Z]): Task[Z] = processWithContext(fn)
   {{^iter.isLast}}
 
-  def op[{{nextArg}}](opProvider: OpProvider[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
+  def op[{{nextArg}}](opProvider: OpProvider[{{nextArg}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
 
   def in[{{nextArg}}](task: => Task[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
   def < [{{nextArg}}](task: => Task[{{nextArg}}]) = in(task)

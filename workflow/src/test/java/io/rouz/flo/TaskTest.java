@@ -31,8 +31,8 @@ public class TaskTest {
 
   @Test
   public void shouldHaveListOfOperators() throws Exception {
-    OpProvider<Object> op1 = tc -> new Object();
-    OpProvider<Object> op2 = tc -> new Object();
+    OpProvider<Object, String> op1 = tc -> new Object();
+    OpProvider<Object, String> op2 = tc -> new Object();
     Task<String> task = Task.named("Inputs").ofType(String.class)
         .op(op1)
         .op(op2)
