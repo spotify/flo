@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>flo</artifactId>
-    <groupId>io.rouz</groupId>
+    <groupId>com.spotify</groupId>
     <version>0.0.14-SNAPSHOT</version>
   </parent>
 
@@ -11,12 +11,12 @@
 
   <dependencies>
     <dependency>
-      <groupId>io.rouz</groupId>
+      <groupId>com.spotify</groupId>
       <artifactId>flo-workflow</artifactId>
       <version>0.0.14-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>io.rouz</groupId>
+      <groupId>com.spotify</groupId>
       <artifactId>flo-freezer</artifactId>
       <version>0.0.14-SNAPSHOT</version>
     </dependency>
@@ -43,7 +43,7 @@
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>io.rouz.flo.TestWorkflow</mainClass>
+                  <mainClass>com.spotify.flo.TestWorkflow</mainClass>
                 </transformer>
               </transformers>
               <filters>

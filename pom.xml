@@ -2,14 +2,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.rouz</groupId>
-        <artifactId>root</artifactId>
-        <version>1</version>
+        <groupId>com.spotify</groupId>
+        <artifactId>foss-root</artifactId>
+        <version>6</version>
     </parent>
 
     <name>Flo</name>
     <description>A lightweight workflow definition library</description>
-    <url>https://github.com/rouzwawi/flo</url>
+    <url>https://github.com/spotify/flo</url>
 
     <artifactId>flo</artifactId>
     <version>0.0.14-SNAPSHOT</version>
@@ -24,9 +24,9 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/rouzwawi/flo</url>
-        <connection>scm:git:git@github.com:rouzwawi/flo.git</connection>
-        <developerConnection>scm:git:git@github.com:rouzwawi/flo.git</developerConnection>
+        <url>https://github.com/spotify/flo</url>
+        <connection>scm:git:git@github.com:spotify/flo.git</connection>
+        <developerConnection>scm:git:git@github.com:spotify/flo.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
@@ -197,9 +197,9 @@
                         </executions>
                         <configuration>
                             <excludes>
-                                <exclude>**/io/rouz/scratch/**</exclude>
-                                <exclude>**/io/rouz/flo/proc/**</exclude>
-                                <exclude>**/io/rouz/flo/dsl/Util.scala</exclude>
+                                <exclude>**/com.spotify/scratch/**</exclude>
+                                <exclude>**/com.spotify/flo/proc/**</exclude>
+                                <exclude>**/com.spotify/flo/dsl/Util.scala</exclude>
                             </excludes>
                         </configuration>
                     </plugin>

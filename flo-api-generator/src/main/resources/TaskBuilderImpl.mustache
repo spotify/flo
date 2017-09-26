@@ -4,17 +4,17 @@ import java.util.List;
 
 import javax.annotation.Generated;
 
-import io.rouz.flo.BuilderUtils.ChainingEval;
-import io.rouz.flo.TaskContext.Value;
-import io.rouz.flo.TaskBuilder.*;
+import com.spotify.flo.BuilderUtils.ChainingEval;
+import com.spotify.flo.TaskContext.Value;
+import com.spotify.flo.TaskBuilder.*;
 
-import static io.rouz.flo.BuilderUtils.appendToList;
-import static io.rouz.flo.BuilderUtils.gated;
-import static io.rouz.flo.BuilderUtils.gatedVal;
-import static io.rouz.flo.BuilderUtils.lazyFlatten;
-import static io.rouz.flo.BuilderUtils.lazyList;
-import static io.rouz.flo.BuilderUtils.leafEvalFn;
-import static io.rouz.flo.Values.toValueList;
+import static com.spotify.flo.BuilderUtils.appendToList;
+import static com.spotify.flo.BuilderUtils.gated;
+import static com.spotify.flo.BuilderUtils.gatedVal;
+import static com.spotify.flo.BuilderUtils.lazyFlatten;
+import static com.spotify.flo.BuilderUtils.lazyList;
+import static com.spotify.flo.BuilderUtils.leafEvalFn;
+import static com.spotify.flo.Values.toValueList;
 
 /**
  * Package local implementation of the {@link TaskBuilder} tree.
@@ -27,9 +27,9 @@ import static io.rouz.flo.Values.toValueList;
  * including more input tasks. The evaluator will finally be used to terminate the builder by
  * enclosing a function into an {@link EvalClosure} for a {@link Task}.
  *
- * See https://github.com/rouzwawi/flo/blob/master/doc/chain.md
+ * See https://github.com/spotify/flo/blob/master/doc/chain.md
  */
-@Generated("io.rouz.flo.gen.ApiGeneratorProcessor")
+@Generated("com.spotify.flo.gen.ApiGeneratorProcessor")
 final class {{implClassName}} {
 
   static <Z> {{interfaceName}}<Z> rootBuilder(TaskId taskId, Class<Z> type) {

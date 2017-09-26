@@ -1,12 +1,12 @@
 package common.pkg.sibling1;
 
-import io.rouz.flo.Task;
+import com.spotify.flo.Task;
 import java.util.Map;
 import javax.annotation.Generated;
 import joptsimple.OptionParser;
 import joptsimple.OptionSpecBuilder;
 
-@Generated("io.rouz.flo.processor.TaskBindingProcessor")
+@Generated("com.spotify.flo.processor.TaskBindingProcessor")
 public final class FloRootTaskFactory {
 
   private FloRootTaskFactory() {

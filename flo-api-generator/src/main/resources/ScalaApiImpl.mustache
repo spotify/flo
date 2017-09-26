@@ -1,14 +1,14 @@
-package io.rouz.flo.dsl
+package com.spotify.flo.dsl
 
-import io.rouz.flo.Task
-import io.rouz.flo.TaskBuilder
-import io.rouz.flo.TaskContext.Value
-import io.rouz.flo._
+import com.spotify.flo.Task
+import com.spotify.flo.TaskBuilder
+import com.spotify.flo.TaskContext.Value
+import com.spotify.flo._
 
 import _root_.scala.collection.JavaConversions
 import _root_.scala.reflect.ClassTag
 
-import io.rouz.flo.dsl.Util._
+import com.spotify.flo.dsl.Util._
 
 private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) extends TaskBuilder0[Z] { self =>
 

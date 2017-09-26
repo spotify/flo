@@ -1,4 +1,4 @@
-# ![flo](http://spotify.github.io/flo/doc/flo-logo.svg) &nbsp;&nbsp; [![CircleCI](https://img.shields.io/circleci/project/spotify/flo/master.svg)](https://circleci.com/gh/spotify/flo) [![Codecov](https://img.shields.io/codecov/c/github/spotify/flo/master.svg?maxAge=2592000)](https://codecov.io/github/spotify/flo) [![Maven Central](https://img.shields.io/maven-central/v/io.rouz/flo.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22io.rouz%22%20flo*) [![License](https://img.shields.io/github/license/spotify/flo.svg)](LICENSE.txt)
+# ![flo](http://spotify.github.io/flo/doc/flo-logo.svg) &nbsp;&nbsp; [![CircleCI](https://img.shields.io/circleci/project/spotify/flo/master.svg)](https://circleci.com/gh/spotify/flo) [![Codecov](https://img.shields.io/codecov/c/github/spotify/flo/master.svg?maxAge=2592000)](https://codecov.io/github/spotify/flo) [![Maven Central](https://img.shields.io/maven-central/v/com.spotify/flo.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.spotify%22%20flo*) [![License](https://img.shields.io/github/license/spotify/flo.svg)](LICENSE.txt)
 
 ![flo](http://spotify.github.io/flo/doc/flo-logo-small.svg) is a lightweight workflow definition library
 
@@ -19,14 +19,14 @@ __Some key features__
 
 ```xml
 <dependency>
-  <groupId>io.rouz</groupId>
+  <groupId>com.spotify</groupId>
   <artifactId>flo-workflow</artifactId>
   <version>${flo.version}</version>
 </dependency>
 ```
 
 ```sbt
-"io.rouz" %% "flo-scala" % floVersion
+"com.spotify" %% "flo-scala" % floVersion
 ```
 
 _Only Scala 2.11 artifacts available at the moment_
@@ -79,7 +79,7 @@ class Fib {
 Scala equivalent
 
 ```scala
-import io.rouz.flo._
+import com.spotify.flo._
 
 object Fib extends App {
 
@@ -291,12 +291,12 @@ can be extended with further behaviour.
 See also [`InMemImmediateContext`][InMemImmediateContext],
 [`InstrumentedContext`][InstrumentedContext] and [`MemoizingContext`][MemoizingContext].
 
-[Task]: http://spotify.github.io/flo/maven/latest/apidocs/io/rouz/flo/Task.html
-[TaskContext]: http://spotify.github.io/flo/maven/latest/apidocs/io/rouz/flo/TaskContext.html
-[AsyncContext]: http://spotify.github.io/flo/maven/latest/apidocs/io/rouz/flo/context/AsyncContext.html
-[InMemImmediateContext]: http://spotify.github.io/flo/maven/latest/apidocs/io/rouz/flo/context/InMemImmediateContext.html
-[InstrumentedContext]: http://spotify.github.io/flo/maven/latest/apidocs/io/rouz/flo/context/InstrumentedContext.html
-[MemoizingContext]: http://spotify.github.io/flo/maven/latest/apidocs/io/rouz/flo/context/MemoizingContext.html
+[Task]: http://spotify.github.io/flo/maven/latest/apidocs/com.spotify/flo/Task.html
+[TaskContext]: http://spotify.github.io/flo/maven/latest/apidocs/com.spotify/flo/TaskContext.html
+[AsyncContext]: http://spotify.github.io/flo/maven/latest/apidocs/com.spotify/flo/context/AsyncContext.html
+[InMemImmediateContext]: http://spotify.github.io/flo/maven/latest/apidocs/com.spotify/flo/context/InMemImmediateContext.html
+[InstrumentedContext]: http://spotify.github.io/flo/maven/latest/apidocs/com.spotify/flo/context/InstrumentedContext.html
+[MemoizingContext]: http://spotify.github.io/flo/maven/latest/apidocs/com.spotify/flo/context/MemoizingContext.html
 [Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-
 [DAG]: https://en.wikipedia.org/wiki/Directed_acyclic_graph
 [flo-runner]: https://github.com/spotify/flo-runner
@@ -307,7 +307,7 @@ See also [`InMemImmediateContext`][InMemImmediateContext],
 
 ```xml
 <dependency>
-  <groupId>io.rouz</groupId>
+  <groupId>com.spotify</groupId>
   <artifactId>flo-cli</artifactId>
   <version>${flo.version}</version>
 </dependency>

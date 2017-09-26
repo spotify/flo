@@ -83,4 +83,4 @@ task<n> ───>│ n -> fn -> (a,b,…,n-1) -> fn(a,b,…,n-1,n) │
                    └─── builderN.process(fn)
 ```
 
-[Values.mapBoth]: https://github.com/rouzwawi/flo/blob/master/workflow/src/main/java/io/rouz/flo/Values.java#L37
+[Values.mapBoth]: https://github.com/spotify/flo/blob/master/workflow/src/main/java/com/spotify/flo/Values.java#L37
