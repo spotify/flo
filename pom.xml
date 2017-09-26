@@ -235,9 +235,9 @@
             </executions>
             <configuration>
               <excludes>
-                <exclude>**/com.spotify/scratch/**</exclude>
-                <exclude>**/com.spotify/flo/proc/**</exclude>
-                <exclude>**/com.spotify/flo/dsl/Util.scala</exclude>
+                <exclude>**/com/spotify/scratch/**</exclude>
+                <exclude>**/com/spotify/flo/proc/**</exclude>
+                <exclude>**/com/spotify/flo/dsl/Util.scala</exclude>
               </excludes>
             </configuration>
           </plugin>
