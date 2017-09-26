@@ -291,12 +291,12 @@ can be extended with further behaviour.
 See also [`InMemImmediateContext`][InMemImmediateContext],
 [`InstrumentedContext`][InstrumentedContext] and [`MemoizingContext`][MemoizingContext].
 
-[Task]: http://spotify.github.io/flo/maven/latest/apidocs/com.spotify/flo/Task.html
-[TaskContext]: http://spotify.github.io/flo/maven/latest/apidocs/com.spotify/flo/TaskContext.html
-[AsyncContext]: http://spotify.github.io/flo/maven/latest/apidocs/com.spotify/flo/context/AsyncContext.html
-[InMemImmediateContext]: http://spotify.github.io/flo/maven/latest/apidocs/com.spotify/flo/context/InMemImmediateContext.html
-[InstrumentedContext]: http://spotify.github.io/flo/maven/latest/apidocs/com.spotify/flo/context/InstrumentedContext.html
-[MemoizingContext]: http://spotify.github.io/flo/maven/latest/apidocs/com.spotify/flo/context/MemoizingContext.html
+[Task]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/Task.html
+[TaskContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/TaskContext.html
+[AsyncContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/AsyncContext.html
+[InMemImmediateContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/InMemImmediateContext.html
+[InstrumentedContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/InstrumentedContext.html
+[MemoizingContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/MemoizingContext.html
 [Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-
 [DAG]: https://en.wikipedia.org/wiki/Directed_acyclic_graph
 [flo-runner]: https://github.com/spotify/flo-runner
