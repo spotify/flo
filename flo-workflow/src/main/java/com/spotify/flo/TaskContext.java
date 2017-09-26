@@ -52,7 +52,25 @@ public interface TaskContext {
    * @return A value of the task result
    */
   default <T> Value<T> evaluate(Task<T> task) {
-    return evaluateInternal(task, withTask(this, task));
+    return evaluateIfOperatorsDontOverride(task, withTask(this, task));
+  }
+
+  /**
+   * The operators assigned to the tasks are inspected for overriding results. The first overriding
+   * result found is returned without any evaluation of the task or its upstreams.
+   *
+   * @param task     The task to evaluate
+   * @param context  The context to use in further evaluation
+   * @param <T>      The type of the task result
+   * @return A value of the task result
+   */
+  default <T> Value<T> evaluateIfOperatorsDontOverride(Task<T> task, TaskContext context) {
+    return task.strictOps()
+        .stream()
+        .filter(op -> op.overrideResult(context).isPresent())
+        .map(op -> context.immediateValue(op.overrideResult(context).get()))
+        .findFirst()
+        .orElseGet(() -> evaluateInternal(task, context));
   }
 
   /**

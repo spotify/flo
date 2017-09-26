@@ -51,9 +51,8 @@ public interface OpProvider<T> {
    * Will be called just after a task that is using this operator has successfully evaluated.
    *
    * @param task The task that evaluated
-   * @param z    The return value of the evaluated task
    */
-  default void onSuccess(Task<?> task, Object z) {
+  default void onSuccess(Task<?> task) {
   }
 
   /**

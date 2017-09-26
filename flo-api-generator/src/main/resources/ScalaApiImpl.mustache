@@ -29,6 +29,12 @@ private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) exten
     val builder = self.builder.op(opProvider)
   }
 
+  override def op[A1](opProviderStrict: OpProviderStrict[A1, Z]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
+    type J1 = A1
+    val c1: J1 => A1 = identity
+    val builder = self.builder.op(opProviderStrict)
+  }
+
   override def in[A1](task: => Task[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
     type J1 = A1
     val c1: J1 => A1 = identity
@@ -73,6 +79,14 @@ private[dsl] trait Builder{{arity}}[{{typeArgsNumA}}, Z] extends TaskBuilder{{ar
       val p: self.type = self
       val builder = self.builder.op(opProvider)
     }
+
+  override def op[A{{arityPlus}}](opProviderStrict: OpProviderStrict[A{{arityPlus}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
+    new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] {
+      type J{{arityPlus}} = A{{arityPlus}}
+      val c{{arityPlus}}: J{{arityPlus}} => A{{arityPlus}} = identity
+      val p: self.type = self
+      val builder = self.builder.op(opProviderStrict)
+  }
 
   override def in[A{{arityPlus}}](task: => Task[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
     new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] {
