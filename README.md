@@ -299,7 +299,7 @@ See also [`InMemImmediateContext`][InMemImmediateContext],
 [MemoizingContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/MemoizingContext.html
 [Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-
 [DAG]: https://en.wikipedia.org/wiki/Directed_acyclic_graph
-[flo-runner]: https://github.com/spotify/flo-runner
+[flo-runner]: https://github.com/spotify/flo/tree/master/flo-runner
 
 # CLI generator
 
