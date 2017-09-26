@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.spotify</groupId>
         <artifactId>foss-root</artifactId>
-        <version>6</version>
+        <version>7</version>
     </parent>
 
     <name>Flo</name>
