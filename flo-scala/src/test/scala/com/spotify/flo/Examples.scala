@@ -1,6 +1,5 @@
 package com.spotify.flo
 
-import java.util
 import java.util.function.Consumer
 
 /**
