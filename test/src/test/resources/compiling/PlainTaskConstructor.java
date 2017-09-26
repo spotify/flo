@@ -1,7 +1,7 @@
 package compiling;
 
-import io.rouz.flo.Task;
-import io.rouz.flo.processor.RootTask;
+import com.spotify.flo.Task;
+import com.spotify.flo.processor.RootTask;
 
 class PlainTaskConstructor {
 

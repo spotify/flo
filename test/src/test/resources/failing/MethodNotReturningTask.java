@@ -1,6 +1,6 @@
 package failing;
 
-import io.rouz.flo.processor.RootTask;
+import com.spotify.flo.processor.RootTask;
 
 class MethodNotReturningTask {
 

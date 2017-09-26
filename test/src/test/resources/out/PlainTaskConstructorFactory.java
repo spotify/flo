@@ -1,14 +1,14 @@
 package compiling;
 
-import io.rouz.flo.Task;
-import io.rouz.flo.TaskConstructor;
+import com.spotify.flo.Task;
+import com.spotify.flo.TaskConstructor;
 import java.util.Arrays;
 import javax.annotation.Generated;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
 
-@Generated("io.rouz.flo.processor.TaskBindingProcessor")
+@Generated("com.spotify.flo.processor.TaskBindingProcessor")
 public final class FloRootTaskFactory {
 
   private FloRootTaskFactory() {

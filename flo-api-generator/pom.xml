@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>io.rouz</groupId>
+    <groupId>com.spotify</groupId>
     <artifactId>flo</artifactId>
     <version>0.0.14-SNAPSHOT</version>
   </parent>
