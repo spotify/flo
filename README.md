@@ -1,6 +1,6 @@
-# ![flo](http://rouz.io/flo/doc/flo-logo.svg) &nbsp;&nbsp; [![CircleCI](https://img.shields.io/circleci/project/rouzwawi/flo/master.svg)](https://circleci.com/gh/rouzwawi/flo) [![Codecov](https://img.shields.io/codecov/c/github/rouzwawi/flo/master.svg?maxAge=2592000)](https://codecov.io/github/rouzwawi/flo) [![Maven Central](https://img.shields.io/maven-central/v/io.rouz/flo.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22io.rouz%22%20flo*) [![License](https://img.shields.io/github/license/rouzwawi/flo.svg)](LICENSE.txt)
+# ![flo](http://spotify.github.io/flo/doc/flo-logo.svg) &nbsp;&nbsp; [![CircleCI](https://img.shields.io/circleci/project/rouzwawi/flo/master.svg)](https://circleci.com/gh/rouzwawi/flo) [![Codecov](https://img.shields.io/codecov/c/github/rouzwawi/flo/master.svg?maxAge=2592000)](https://codecov.io/github/rouzwawi/flo) [![Maven Central](https://img.shields.io/maven-central/v/io.rouz/flo.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22io.rouz%22%20flo*) [![License](https://img.shields.io/github/license/rouzwawi/flo.svg)](LICENSE.txt)
 
-![flo](http://rouz.io/flo/doc/flo-logo-small.svg) is a lightweight workflow definition library
+![flo](http://spotify.github.io/flo/doc/flo-logo-small.svg) is a lightweight workflow definition library
 
 * It's not a workflow management system
 * It's not a workflow scheduler
@@ -31,7 +31,7 @@ __Some key features__
 
 _Only Scala 2.11 artifacts available at the moment_
 
-JavaDocs here: http://rouz.io/flo/maven/latest/apidocs/
+JavaDocs here: http://spotify.github.io/flo/maven/latest/apidocs/
 
 ## Table of contents
 
@@ -291,12 +291,12 @@ can be extended with further behaviour.
 See also [`InMemImmediateContext`][InMemImmediateContext],
 [`InstrumentedContext`][InstrumentedContext] and [`MemoizingContext`][MemoizingContext].
 
-[Task]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/Task.html
-[TaskContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/TaskContext.html
-[AsyncContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/context/AsyncContext.html
-[InMemImmediateContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/context/InMemImmediateContext.html
-[InstrumentedContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/context/InstrumentedContext.html
-[MemoizingContext]: http://rouz.io/flo/maven/latest/apidocs/io/rouz/flo/context/MemoizingContext.html
+[Task]: http://spotify.github.io/flo/maven/latest/apidocs/io/rouz/flo/Task.html
+[TaskContext]: http://spotify.github.io/flo/maven/latest/apidocs/io/rouz/flo/TaskContext.html
+[AsyncContext]: http://spotify.github.io/flo/maven/latest/apidocs/io/rouz/flo/context/AsyncContext.html
+[InMemImmediateContext]: http://spotify.github.io/flo/maven/latest/apidocs/io/rouz/flo/context/InMemImmediateContext.html
+[InstrumentedContext]: http://spotify.github.io/flo/maven/latest/apidocs/io/rouz/flo/context/InstrumentedContext.html
+[MemoizingContext]: http://spotify.github.io/flo/maven/latest/apidocs/io/rouz/flo/context/MemoizingContext.html
 [Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-
 [DAG]: https://en.wikipedia.org/wiki/Directed_acyclic_graph
 [flo-runner]: https://github.com/spotify/flo-runner
