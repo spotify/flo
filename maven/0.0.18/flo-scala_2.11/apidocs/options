@@ -1,0 +1,29 @@
+-classpath
+'/var/lib/jenkins/jobs/datainfra_flo-release-1/workspace-8_8/flo/workflow/target/classes:/var/lib/jenkins/.m2/repository/com/google/auto/value/auto-value/1.2/auto-value-1.2.jar:/var/lib/jenkins/.m2/repository/net/sf/jopt-simple/jopt-simple/4.9/jopt-simple-4.9.jar:/var/lib/jenkins/.m2/repository/org/trimou/trimou-core/2.0.1.Final/trimou-core-2.0.1.Final.jar:/var/lib/jenkins/.m2/repository/org/scala-lang/scala-library/2.11.8/scala-library-2.11.8.jar:/var/lib/jenkins/.m2/repository/org/fusesource/jansi/jansi/1.11/jansi-1.11.jar:/var/lib/jenkins/.m2/repository/org/slf4j/slf4j-api/1.7.16/slf4j-api-1.7.16.jar:/var/lib/jenkins/jobs/datainfra_flo-release-1/workspace-8_8/flo/flo-api-generator/target/classes:/var/lib/jenkins/.m2/repository/com/google/guava/guava/19.0/guava-19.0.jar'
+-encoding
+'UTF-8'
+-protected
+-sourcepath
+'/var/lib/jenkins/jobs/datainfra_flo-release-1/workspace-8_8/flo/flo-scala/src/main/java:/var/lib/jenkins/jobs/datainfra_flo-release-1/workspace-8_8/flo/flo-scala/target/generated-sources/annotations'
+-Xdoclint:none
+-author
+-bottom
+'Copyright &#169; 2017. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'/var/lib/jenkins/jobs/datainfra_flo-release-1/workspace-8_8/flo/flo-scala/target/site/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Flo Scala API 0.0.18 API'
+-linkoffline
+'http://docs.oracle.com/javase/8/docs/api' '/var/lib/jenkins/jobs/datainfra_flo-release-1/workspace-8_8/flo/flo-scala/target/javadoc-bundle-options'
+-linkoffline
+'https://github.com/spotify/flo/flo-api-generator/apidocs' '/var/lib/jenkins/jobs/datainfra_flo-release-1/workspace-8_8/flo/flo-api-generator/target/site/apidocs'
+-linkoffline
+'https://github.com/spotify/flo/flo-workflow/apidocs' '/var/lib/jenkins/jobs/datainfra_flo-release-1/workspace-8_8/flo/workflow/target/site/apidocs'
+-use
+-version
+-windowtitle
+'Flo Scala API 0.0.18 API'
