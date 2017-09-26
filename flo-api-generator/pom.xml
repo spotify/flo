@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.spotify</groupId>
     <artifactId>flo</artifactId>
-    <version>0.0.19-SNAPSHOT</version>
+    <version>0.1.3-SNAPSHOT</version>
   </parent>
 
   <name>Flo API Generator</name>

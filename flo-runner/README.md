@@ -14,22 +14,22 @@ Add the Maven, SBT or Gradle dependency
 <dependency>
   <groupId>com.spotify</groupId>
   <artifactId>flo-runner</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.3</version>
 </dependency>
 ```
 
 ```
-libraryDependencies += "com.spotify" % "flo-runner" % "0.1.1"
+libraryDependencies += "com.spotify" % "flo-runner" % "0.1.3"
 ```
 
 ```
-compile 'com.spotify:flo-runner:0.1.1"'
+compile 'com.spotify:flo-runner:0.1.3"'
 ```
 
 If you're using the Scala API for [flo], also add
 
 ```
-libraryDependencies += "com.spotify" %% "flo-scala" % "0.0.8"
+libraryDependencies += "com.spotify" %% "flo-scala" % "0.1.3"
 ```
 
 Note: currently only supports scala version `2.11`.
