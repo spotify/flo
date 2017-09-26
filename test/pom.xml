@@ -1,66 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.spotify</groupId>
-        <artifactId>flo</artifactId>
-        <version>0.0.19-SNAPSHOT</version>
-    </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.spotify</groupId>
+    <artifactId>flo</artifactId>
+    <version>0.0.19-SNAPSHOT</version>
+  </parent>
 
-    <name>Flo Integration Tests</name>
-    <artifactId>flo-test</artifactId>
+  <name>Test - Flo Integration Tests</name>
+  <artifactId>flo-test</artifactId>
+  <description>
+    Internal module with integration tests
+  </description>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.spotify</groupId>
-            <artifactId>flo-workflow</artifactId>
-            <version>0.0.19-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.spotify</groupId>
-            <artifactId>flo-cli</artifactId>
-            <version>0.0.19-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.spotify</groupId>
-            <artifactId>flo-api-generator</artifactId>
-            <version>0.0.19-SNAPSHOT</version>
-        </dependency>
+  <dependencies>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>flo-workflow</artifactId>
+      <version>0.0.19-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>flo-cli</artifactId>
+      <version>0.0.19-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>flo-api-generator</artifactId>
+      <version>0.0.19-SNAPSHOT</version>
+    </dependency>
 
-        <dependency>
-            <groupId>com.spotify</groupId>
-            <artifactId>apollo-api</artifactId>
-            <version>1.2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup.okio</groupId>
-            <artifactId>okio</artifactId>
-            <version>1.6.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.7.0-rc1</version>
-        </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>apollo-api</artifactId>
+      <version>1.2.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okio</groupId>
+      <artifactId>okio</artifactId>
+      <version>1.6.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.7.0-rc1</version>
+    </dependency>
 
-        <dependency>
-            <groupId>com.google.testing.compile</groupId>
-            <artifactId>compile-testing</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.truth</groupId>
-            <artifactId>truth</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    <dependency>
+      <groupId>com.google.testing.compile</groupId>
+      <artifactId>compile-testing</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.truth</groupId>
+      <artifactId>truth</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
-    <build>
-        <finalName>${project.artifactId}</finalName>
-    </build>
+  <build>
+    <finalName>${project.artifactId}</finalName>
+  </build>
 </project>
