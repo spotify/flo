@@ -62,7 +62,7 @@ public class AsyncContextFailurePropagationTest {
         });
 
     AwaitValue<Throwable> val = new AwaitValue<>();
-    MemoizingContext.composeWith(EvalContext.inmem())
+    MemoizingContext.composeWith(EvalContext.sync())
         .evaluate(task)
         .onFail(val);
 

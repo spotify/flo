@@ -32,7 +32,7 @@ final class Fib {
 
   public static void main(String[] args) {
     Task<Long> fib92 = create(92);
-    EvalContext evalContext = MemoizingContext.composeWith(EvalContext.inmem());
+    EvalContext evalContext = MemoizingContext.composeWith(EvalContext.sync());
     EvalContext.Value<Long> value = evalContext.evaluate(fib92);
 
     value.consume(f92 -> System.out.println("fib(92) = " + f92));

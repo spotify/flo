@@ -32,9 +32,9 @@ import com.spotify.flo.EvalContext.Value;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
 
-public class InMemImmediateContextTest {
+public class SyncContextTest {
 
-  EvalContext context = InMemImmediateContext.create();
+  EvalContext context = SyncContext.create();
 
   @Test
   public void valueContextIsCreatingContext() throws Exception {

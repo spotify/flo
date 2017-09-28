@@ -317,7 +317,7 @@ public class TaskEvalBehaviorTest {
 
   private void validateReturnsOwnTask(Task<Task> task) throws InterruptedException {
     AwaitValue<Task> val = new AwaitValue<>();
-    EvalContext.inmem()
+    EvalContext.sync()
         .evaluate(task)
         .consume(val);
 

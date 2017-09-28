@@ -38,7 +38,7 @@ public class SerializationTest {
   transient File tempFile = tempFile();
 
   final String instanceField = "from instance";
-  final EvalContext context = EvalContext.inmem();
+  final EvalContext context = EvalContext.sync();
   final AwaitValue<String> val = new AwaitValue<>();
 
   @Test

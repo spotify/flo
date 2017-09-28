@@ -58,7 +58,7 @@ public class TaskRunnerEntrypoint {
     final EvaluatingContext evaluatingContext = new EvaluatingContext(
         filePath.resolveSibling(""), MemoizingContext.composeWith(
             InstrumentedContext.composeWith(
-                EvalContext.inmem(), new LoggingListener())));
+                EvalContext.sync(), new LoggingListener())));
 
     final EvalContext.Value<Object> value = evaluatingContext.evaluateTaskFrom(filePath);
     final CompletableFuture<Object> future = new CompletableFuture<>();

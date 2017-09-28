@@ -20,7 +20,7 @@
 
 package com.spotify.flo.context;
 
-import static com.spotify.flo.EvalContext.inmem;
+import static com.spotify.flo.EvalContext.sync;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -38,7 +38,7 @@ public class MemoizingContextTest {
   static ExampleValue value;
   static MemoizingContext.Memoizer<ExampleValue> memoizer;
 
-  EvalContext context = MemoizingContext.composeWith(inmem());
+  EvalContext context = MemoizingContext.composeWith(sync());
 
   int countUpstreamRuns = 0;
   int countExampleRuns = 0;
@@ -65,7 +65,7 @@ public class MemoizingContextTest {
 
   @Test
   public void evaluatesAndStoresWithExplicitMemoizer() throws Exception {
-    context = MemoizingContext.builder(inmem())
+    context = MemoizingContext.builder(sync())
         .memoizer(memoizer)
         .build();
 
@@ -115,7 +115,7 @@ public class MemoizingContextTest {
     assertThat(counter.get(), is(1)); // only called once
 
     // only memoized during each execution
-    context = MemoizingContext.composeWith(inmem());
+    context = MemoizingContext.composeWith(sync());
     assertThat(evalAndGet(count), is(2));
     assertThat(evalAndGet(count), is(2));
     assertThat(counter.get(), is(2)); // called once more

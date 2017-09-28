@@ -68,7 +68,7 @@ class Fib {
 
   public static void main(String[] args) {
     Task<Long> fib92 = fib(92);
-    EvalContext evalContext = MemoizingContext.composeWith(EvalContext.inmem());
+    EvalContext evalContext = MemoizingContext.composeWith(EvalContext.sync());
     EvalContext.Value<Long> value = evalContext.evaluate(fib92);
 
     value.consume(f92 -> System.out.println("fib(92) = " + f92));
@@ -93,7 +93,7 @@ object Fib extends App {
   )
 
   val fib92 = fib(92)
-  val evalContext = MemoizingContext.composeWith(EvalContext.inmem)
+  val evalContext = MemoizingContext.composeWith(EvalContext.sync)
   val value = evalContext.evaluate(fib92)
 
   value.consume((f92:Long) => println("fib(92) = " + f92))
@@ -288,13 +288,13 @@ Since multi worker, asynchronous evaluation is a very common pre-requisite for m
 implementations, flo comes with a base implementation of an [`AsyncContext`][AsyncContext] that
 can be extended with further behaviour.
 
-See also [`InMemImmediateContext`][InMemImmediateContext],
-[`InstrumentedContext`][InstrumentedContext] and [`MemoizingContext`][MemoizingContext].
+See also [`SyncContext`][SyncContext], [`InstrumentedContext`][InstrumentedContext] and
+[`MemoizingContext`][MemoizingContext].
 
 [Task]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/Task.html
 [EvalContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/EvalContext.html
 [AsyncContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/AsyncContext.html
-[InMemImmediateContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/InMemImmediateContext.html
+[SyncContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/SyncContext.html
 [InstrumentedContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/InstrumentedContext.html
 [MemoizingContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/MemoizingContext.html
 [Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-

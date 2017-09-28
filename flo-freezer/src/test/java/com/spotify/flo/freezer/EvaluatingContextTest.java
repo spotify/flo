@@ -20,7 +20,7 @@
 
 package com.spotify.flo.freezer;
 
-import static com.spotify.flo.EvalContext.inmem;
+import static com.spotify.flo.EvalContext.sync;
 import static com.spotify.flo.freezer.EvaluatingContext.OUTPUT_SUFFIX;
 import static com.spotify.flo.freezer.PersistingContext.cleanForFilename;
 import static org.hamcrest.Matchers.is;
@@ -55,8 +55,8 @@ public class EvaluatingContextTest {
   @Before
   public void setUp() throws Exception {
     basePath = Files.createTempDirectory("SpecificEvalTest");
-    persistingContext = new PersistingContext(basePath, inmem());
-    evaluatingContext = new EvaluatingContext(basePath, inmem());
+    persistingContext = new PersistingContext(basePath, sync());
+    evaluatingContext = new EvaluatingContext(basePath, sync());
   }
 
   @Test

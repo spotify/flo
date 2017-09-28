@@ -23,7 +23,7 @@ package com.spotify.flo;
 import static com.spotify.flo.EvalContextWithTask.withTask;
 
 import com.spotify.flo.context.AsyncContext;
-import com.spotify.flo.context.InMemImmediateContext;
+import com.spotify.flo.context.SyncContext;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -229,14 +229,13 @@ public interface EvalContext {
   }
 
   /**
-   * Create a default, in-memory, immediate {@link EvalContext}. The values produced by this
-   * context should behave like synchronously created values. All graph memoization is done
-   * completely in memory.
+   * Create a default, synchronous {@link EvalContext}. The values produced by this
+   * context should behave like synchronously created values.
    *
-   * @return The context
+   * @return A new synchronous evaluation context
    */
-  static EvalContext inmem() {
-    return InMemImmediateContext.create();
+  static EvalContext sync() {
+    return SyncContext.create();
   }
 
   /**
@@ -244,7 +243,7 @@ public interface EvalContext {
    * {@link Executor}.
    *
    * @param executor  The executor to run evaluations on
-   * @return The asynchronous context
+   * @return A new asynchronous evaluation context
    */
   static EvalContext async(Executor executor) {
     return AsyncContext.create(executor);

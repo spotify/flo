@@ -36,7 +36,7 @@ public class EvalContextWithTaskTest {
 
   @Test
   public void testEmptyDefault() throws Exception {
-    assertThat(EvalContext.inmem().currentTask(), is(Optional.empty()));
+    assertThat(EvalContext.sync().currentTask(), is(Optional.empty()));
   }
 
   @Test

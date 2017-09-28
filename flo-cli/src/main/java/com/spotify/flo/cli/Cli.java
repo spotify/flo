@@ -108,7 +108,7 @@ public final class Cli {
 //          return;
 //        }
 
-        final EvalContext context = EvalContext.inmem();
+        final EvalContext context = EvalContext.sync();
         final Task<?> createdTask = factory.create(args);
         context.evaluate(createdTask).consume((value) -> {
           out.println("task.id() = " + createdTask.id());

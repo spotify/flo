@@ -20,9 +20,9 @@
 
 package com.spotify.flo.context;
 
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
-import com.spotify.flo.EvalContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -31,19 +31,17 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * A {@link EvalContext} that evaluates tasks immediately and memoizes results in memory.
- *
- * <p>Memoized results are tied to the instance the evaluated the values.
+ * A {@link EvalContext} that evaluates tasks immediately.
  *
  * <p>This context is not thread safe.
  */
-public class InMemImmediateContext implements EvalContext {
+public class SyncContext implements EvalContext {
 
-  private InMemImmediateContext() {
+  private SyncContext() {
   }
 
   public static EvalContext create() {
-    return new InMemImmediateContext();
+    return new SyncContext();
   }
 
   @Override
@@ -85,7 +83,7 @@ public class InMemImmediateContext implements EvalContext {
 
     @Override
     public EvalContext context() {
-      return InMemImmediateContext.this;
+      return SyncContext.this;
     }
 
     @Override

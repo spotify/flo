@@ -20,7 +20,7 @@
 
 package com.spotify.flo.context;
 
-import static com.spotify.flo.EvalContext.inmem;
+import static com.spotify.flo.EvalContext.sync;
 import static com.spotify.flo.context.InstrumentedContext.Listener.Phase.FAILURE;
 import static com.spotify.flo.context.InstrumentedContext.Listener.Phase.START;
 import static com.spotify.flo.context.InstrumentedContext.Listener.Phase.SUCCESS;
@@ -49,7 +49,7 @@ public class InstrumentedContextTest {
   };
 
   List<String> calls = Lists.newArrayList();
-  EvalContext context = InstrumentedContext.composeWith(inmem(), listener);
+  EvalContext context = InstrumentedContext.composeWith(sync(), listener);
 
   @Test
   public void callsListenerWithTasksAndStatuses() throws Exception {

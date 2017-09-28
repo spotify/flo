@@ -89,7 +89,7 @@ object Examples {
 
 
   def main(args: Array[String]): Unit = {
-    EvalContext.inmem.evaluate(readableDsl)
+    EvalContext.sync.evaluate(readableDsl)
       .consume(new Consumer[String] {
         override def accept(t: String) = println(t)
       })
