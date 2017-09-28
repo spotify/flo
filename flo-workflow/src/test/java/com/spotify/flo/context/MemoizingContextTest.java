@@ -20,14 +20,14 @@
 
 package com.spotify.flo.context;
 
-import static com.spotify.flo.TaskContext.inmem;
+import static com.spotify.flo.EvalContext.inmem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 import com.google.auto.value.AutoValue;
 import com.spotify.flo.AwaitValue;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContext;
+import com.spotify.flo.EvalContext;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Before;
@@ -38,7 +38,7 @@ public class MemoizingContextTest {
   static ExampleValue value;
   static MemoizingContext.Memoizer<ExampleValue> memoizer;
 
-  TaskContext context = MemoizingContext.composeWith(inmem());
+  EvalContext context = MemoizingContext.composeWith(inmem());
 
   int countUpstreamRuns = 0;
   int countExampleRuns = 0;

@@ -20,7 +20,7 @@
 
 package com.spotify.flo;
 
-import com.spotify.flo.TaskContext.Value;
+import com.spotify.flo.EvalContext.Value;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -54,11 +54,11 @@ public final class Values {
    * @return A value that completes only when both inputs have completed
    */
   public static <T, U, V> Value<V> mapBoth(
-      TaskContext context,
+      EvalContext context,
       Value<T> first,
       Value<U> second,
       BiFunction<? super T, ? super U, ? extends V> fn) {
-    TaskContext.Promise<V> promise = context.promise();
+    EvalContext.Promise<V> promise = context.promise();
 
     BiConsumer<T, Throwable> firstComplete = (t, firstThrowable) -> {
       BiConsumer<U, Throwable> secondComplete = (v, secondThrowable) -> {
@@ -85,13 +85,13 @@ public final class Values {
    * A {@link Collector} that collects a {@link Stream} of {@link Value}s into a {@link Value}
    * of a {@link List}.
    *
-   * <p>The semantics of joining {@link Value}s is decided by this {@link TaskContext}.
+   * <p>The semantics of joining {@link Value}s is decided by this {@link EvalContext}.
    *
    * @param context The context which values are processed in
    * @param <T>     The inner type of the values
    * @return A collector for a stream of values
    */
-  public static <T> Collector<Value<T>, ?, Value<List<T>>> toValueList(TaskContext context) {
+  public static <T> Collector<Value<T>, ?, Value<List<T>>> toValueList(EvalContext context) {
     return Collector.of(
         ArrayList::new, List::add, (a, b) -> { a.addAll(b); return a; },
         ValueFold.inContext(context));

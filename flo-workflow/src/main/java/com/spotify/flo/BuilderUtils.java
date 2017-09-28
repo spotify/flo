@@ -22,7 +22,7 @@ package com.spotify.flo;
 
 import static java.util.stream.Collectors.toList;
 
-import com.spotify.flo.TaskContext.Value;
+import com.spotify.flo.EvalContext.Value;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,13 +41,13 @@ class BuilderUtils {
   }
 
   static <R> EvalClosure<R> gated(TaskId taskId, Fn<R> code) {
-    return tc -> tc.invokeProcessFn(taskId, () -> tc.value(code));
+    return ec -> ec.invokeProcessFn(taskId, () -> ec.value(code));
   }
 
   static <R> EvalClosure<R> gatedVal(
       TaskId taskId,
-      Fn1<TaskContext, Value<R>> code) {
-    return tc -> tc.invokeProcessFn(taskId, () -> code.apply(tc));
+      Fn1<EvalContext, Value<R>> code) {
+    return ec -> ec.invokeProcessFn(taskId, () -> code.apply(ec));
   }
 
   /**
@@ -94,11 +94,11 @@ class BuilderUtils {
     }
 
     <G> ChainingEval<G, Z> chain(EvalClosure<Fn1<G, F>> mapClosure) {
-      EvalClosure<Fn1<G, Value<Z>>> continuation = tc -> {
-        Value<Fn1<G, F>> gv = mapClosure.eval(tc);
-        Value<Fn1<F, Value<Z>>> fv = fClosure.eval(tc);
+      EvalClosure<Fn1<G, Value<Z>>> continuation = ec -> {
+        Value<Fn1<G, F>> gv = mapClosure.eval(ec);
+        Value<Fn1<F, Value<Z>>> fv = fClosure.eval(ec);
 
-        return Values.mapBoth(tc, gv, fv, (gc, fc) -> g -> fc.apply(gc.apply(g)));
+        return Values.mapBoth(ec, gv, fv, (gc, fc) -> g -> fc.apply(gc.apply(g)));
       };
       return new ChainingEval<>(continuation);
     }

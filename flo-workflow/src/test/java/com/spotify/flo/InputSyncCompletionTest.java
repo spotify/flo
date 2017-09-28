@@ -31,12 +31,12 @@ import org.junit.Test;
 
 public class InputSyncCompletionTest {
 
-  TaskContext context = TaskContext.async(Executors.newFixedThreadPool(2));
+  EvalContext context = EvalContext.async(Executors.newFixedThreadPool(2));
 
-  AwaitValue<TaskContext.Promise<Integer>> blocked = new AwaitValue<>();
+  AwaitValue<EvalContext.Promise<Integer>> blocked = new AwaitValue<>();
   Task<Integer> blocking = Task.named("blocking").ofType(Integer.class)
-      .processWithContext((tc) -> {
-        TaskContext.Promise<Integer> promise = tc.promise();
+      .processWithContext((ec) -> {
+        EvalContext.Promise<Integer> promise = ec.promise();
         blocked.accept(promise);
         return promise.value();
       });

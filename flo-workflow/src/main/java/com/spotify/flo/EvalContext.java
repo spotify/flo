@@ -20,7 +20,7 @@
 
 package com.spotify.flo;
 
-import static com.spotify.flo.TaskContextWithTask.withTask;
+import static com.spotify.flo.EvalContextWithTask.withTask;
 
 import com.spotify.flo.context.AsyncContext;
 import com.spotify.flo.context.InMemImmediateContext;
@@ -34,9 +34,9 @@ import org.slf4j.LoggerFactory;
 /**
  * A context for controlling {@link Task} evaluation and {@link Value} computation.
  */
-public interface TaskContext {
+public interface EvalContext {
 
-  Logger LOG = LoggerFactory.getLogger(TaskContext.class);
+  Logger LOG = LoggerFactory.getLogger(EvalContext.class);
 
   /**
    * The entry point for evaluating a {@link Value} from a {@link Task}.
@@ -56,10 +56,10 @@ public interface TaskContext {
   }
 
   /**
-   * A variant of {@link #evaluate(Task)} that allows the caller to specify the {@link TaskContext}
+   * A variant of {@link #evaluate(Task)} that allows the caller to specify the {@link EvalContext}
    * that should be used within the graph during evaluation.
    *
-   * <p>This is intended to be called from {@link TaskContext} implementations that form a
+   * <p>This is intended to be called from {@link EvalContext} implementations that form a
    * composition of other contexts.
    *
    * @param task     The task to evaluate
@@ -67,7 +67,7 @@ public interface TaskContext {
    * @param <T>      The type of the task result
    * @return A value of the task result
    */
-  default <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
+  default <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
     return task.code().eval(context);
   }
 
@@ -75,7 +75,7 @@ public interface TaskContext {
    * Invoke the process function of a task.
    *
    * <p>This method will be called when the process function of a task is ready to be invoked. This
-   * gives this {@link TaskContext} the responsibility of invoking user code. By overriding this
+   * gives this {@link EvalContext} the responsibility of invoking user code. By overriding this
    * method, one can intercept the evaluation flow just at the moment between inputs being ready
    * and when the user supplied function for task processing is being invoked.
    *
@@ -100,7 +100,7 @@ public interface TaskContext {
    * method will return the {@link Task} currently being processed. Otherwise an empty value
    * will be returned.
    *
-   * <p>The return value of this method is stable for each instance of {@link TaskContext} that is
+   * <p>The return value of this method is stable for each instance of {@link EvalContext} that is
    * passed into the process functions. Calls from multiple threads will see the same result as
    * longs as the calls are made to the same instance.
    *
@@ -111,7 +111,7 @@ public interface TaskContext {
   }
 
   /**
-   * Create a {@link Value} with semantics defined by this {@link TaskContext}
+   * Create a {@link Value} with semantics defined by this {@link EvalContext}
    *
    * @param value  A value value supplier
    * @param <T>    The type of the value
@@ -120,7 +120,7 @@ public interface TaskContext {
   <T> Value<T> value(Fn<T> value);
 
   /**
-   * Create a {@link Value} with semantics defined by this {@link TaskContext}
+   * Create a {@link Value} with semantics defined by this {@link EvalContext}
    *
    * @param value  An actual value to wrap
    * @param <T>    The type of the value
@@ -143,7 +143,7 @@ public interface TaskContext {
    * how computations on that value are executed.
    *
    * Value is a Monad and the implementor should minimally need to implement
-   * {@link TaskContext#value(Fn)}, {@link Value#flatMap(Function)} and
+   * {@link EvalContext#value(Fn)}, {@link Value#flatMap(Function)} and
    * {@link Value#consume(Consumer)} to get a working context with it's associated value type.
    *
    * @param <T>  The enclosed type
@@ -151,11 +151,11 @@ public interface TaskContext {
   interface Value<T> {
 
     /**
-     * The {@link TaskContext} that created this value.
+     * The {@link EvalContext} that created this value.
      *
      * @return The context
      */
-    TaskContext context();
+    EvalContext context();
 
     /**
      * Consume the enclosed value.
@@ -185,7 +185,7 @@ public interface TaskContext {
     /**
      * Map the enclosed value through a function that return another {@link Value}.
      *
-     * <p>The returned other value could be from a different {@link TaskContext} so the implementor
+     * <p>The returned other value could be from a different {@link EvalContext} so the implementor
      * of this context should take care of how to bridge the value semantics to the returned value.
      *
      * @param fn   The function to map the enclosed value through
@@ -229,24 +229,24 @@ public interface TaskContext {
   }
 
   /**
-   * Create a default, in-memory, immediate {@link TaskContext}. The values produced by this
+   * Create a default, in-memory, immediate {@link EvalContext}. The values produced by this
    * context should behave like synchronously created values. All graph memoization is done
    * completely in memory.
    *
    * @return The context
    */
-  static TaskContext inmem() {
+  static EvalContext inmem() {
     return InMemImmediateContext.create();
   }
 
   /**
-   * Create an asynchronous {@link TaskContext} that executes all evaluation on the given
+   * Create an asynchronous {@link EvalContext} that executes all evaluation on the given
    * {@link Executor}.
    *
    * @param executor  The executor to run evaluations on
    * @return The asynchronous context
    */
-  static TaskContext async(Executor executor) {
+  static EvalContext async(Executor executor) {
     return AsyncContext.create(executor);
   }
 }

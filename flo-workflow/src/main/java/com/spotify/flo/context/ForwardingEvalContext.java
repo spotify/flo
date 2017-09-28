@@ -20,25 +20,25 @@
 
 package com.spotify.flo.context;
 
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContext;
 import com.spotify.flo.TaskId;
 import java.util.Objects;
 
 /**
- * A {@link TaskContext} that forwards calls.
+ * A {@link EvalContext} that forwards calls.
  */
-public abstract class ForwardingTaskContext implements TaskContext {
+public abstract class ForwardingEvalContext implements EvalContext {
 
-  protected final TaskContext delegate;
+  protected final EvalContext delegate;
 
-  protected ForwardingTaskContext(TaskContext delegate) {
+  protected ForwardingEvalContext(EvalContext delegate) {
     this.delegate = Objects.requireNonNull(delegate);
   }
 
   @Override
-  public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
+  public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
     return delegate.evaluateInternal(task, context);
   }
 

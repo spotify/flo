@@ -89,7 +89,7 @@ object Examples {
 
 
   def main(args: Array[String]): Unit = {
-    TaskContext.inmem.evaluate(readableDsl)
+    EvalContext.inmem.evaluate(readableDsl)
       .consume(new Consumer[String] {
         override def accept(t: String) = println(t)
       })
@@ -112,7 +112,7 @@ object Publisher {
 }
 
 class Publisher(val endpointId: String) extends OpProvider[Pub] {
-  def provide(tc: TaskContext): Pub = new Pub {
+  def provide(ec: EvalContext): Pub = new Pub {
     def pub(uri: String): Unit = println(s"Publishing $uri to $endpointId")
   }
 

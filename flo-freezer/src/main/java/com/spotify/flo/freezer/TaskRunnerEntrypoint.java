@@ -20,7 +20,7 @@
 
 package com.spotify.flo.freezer;
 
-import com.spotify.flo.TaskContext;
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.context.InstrumentedContext;
 import com.spotify.flo.context.MemoizingContext;
 import java.net.URI;
@@ -58,9 +58,9 @@ public class TaskRunnerEntrypoint {
     final EvaluatingContext evaluatingContext = new EvaluatingContext(
         filePath.resolveSibling(""), MemoizingContext.composeWith(
             InstrumentedContext.composeWith(
-                TaskContext.inmem(), new LoggingListener())));
+                EvalContext.inmem(), new LoggingListener())));
 
-    final TaskContext.Value<Object> value = evaluatingContext.evaluateTaskFrom(filePath);
+    final EvalContext.Value<Object> value = evaluatingContext.evaluateTaskFrom(filePath);
     final CompletableFuture<Object> future = new CompletableFuture<>();
     value.consume(future::complete);
     value.onFail(future::completeExceptionally);

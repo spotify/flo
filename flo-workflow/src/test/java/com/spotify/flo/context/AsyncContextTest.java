@@ -27,16 +27,16 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import com.spotify.flo.AwaitValue;
-import com.spotify.flo.TaskContext;
-import com.spotify.flo.TaskContext.Promise;
-import com.spotify.flo.TaskContext.Value;
+import com.spotify.flo.EvalContext;
+import com.spotify.flo.EvalContext.Promise;
+import com.spotify.flo.EvalContext.Value;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
 
 public class AsyncContextTest {
 
-  TaskContext context = AsyncContext.create(Executors.newSingleThreadExecutor());
+  EvalContext context = AsyncContext.create(Executors.newSingleThreadExecutor());
 
   @Test
   public void valueContextIsCreatingContext() throws Exception {

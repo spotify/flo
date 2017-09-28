@@ -77,7 +77,7 @@ public abstract class Task<T> implements Serializable {
     return create(
         Collections::emptyList, Collections.emptyList(),
         type,
-        tc -> tc.value(code),
+        ec -> ec.value(code),
         TaskId.create(taskName, args));
   }
 

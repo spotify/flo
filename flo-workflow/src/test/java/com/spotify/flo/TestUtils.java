@@ -28,13 +28,13 @@ public class TestUtils {
 
   public static <T> T evalAndGet(Task<T> task) throws InterruptedException {
     AwaitingConsumer<T> val = new AwaitingConsumer<>();
-    TaskContext.inmem().evaluate(task).consume(val);
+    EvalContext.inmem().evaluate(task).consume(val);
     return val.awaitAndGet();
   }
 
   public static Throwable evalAndGetException(Task<?> task) throws InterruptedException {
     AwaitingConsumer<Throwable> val = new AwaitingConsumer<>();
-    TaskContext.inmem().evaluate(task).onFail(val);
+    EvalContext.inmem().evaluate(task).onFail(val);
     return val.awaitAndGet();
   }
 

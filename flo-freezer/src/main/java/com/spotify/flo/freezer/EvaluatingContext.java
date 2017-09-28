@@ -25,9 +25,9 @@ import static com.spotify.flo.freezer.PersistingContext.cleanForFilename;
 
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContext;
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskId;
-import com.spotify.flo.context.ForwardingTaskContext;
+import com.spotify.flo.context.ForwardingEvalContext;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -47,9 +47,9 @@ public class EvaluatingContext {
   static final String OUTPUT_SUFFIX = "_out";
 
   private final Path basePath;
-  private final TaskContext delegate;
+  private final EvalContext delegate;
 
-  public EvaluatingContext(Path basePath, TaskContext delegate) {
+  public EvaluatingContext(Path basePath, EvalContext delegate) {
     this.basePath = Objects.requireNonNull(basePath);
     this.delegate = Objects.requireNonNull(delegate);
   }
@@ -64,7 +64,7 @@ public class EvaluatingContext {
    * @param <T>           The task output type
    * @return The task output value
    */
-  public <T> TaskContext.Value<T> evaluateTaskFrom(Path persistedTask) {
+  public <T> EvalContext.Value<T> evaluateTaskFrom(Path persistedTask) {
     Task<T> task = null;
     try {
       task = PersistingContext.deserialize(persistedTask);
@@ -90,17 +90,17 @@ public class EvaluatingContext {
     }
   }
 
-  private class SpecificEval extends ForwardingTaskContext {
+  private class SpecificEval extends ForwardingEvalContext {
 
     private final Task<?> evalTask;
 
-    protected SpecificEval(Task<?> evalTask, TaskContext delegate) {
+    protected SpecificEval(Task<?> evalTask, EvalContext delegate) {
       super(delegate);
       this.evalTask = evalTask;
     }
 
     @Override
-    public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
+    public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
       final Promise<T> promise = promise();
       final TaskId id = task.id();
       final Set<TaskId> inputTaskIds = evalTask.inputs().stream()

@@ -20,7 +20,7 @@
 
 package com.spotify.flo.context;
 
-import static com.spotify.flo.TaskContext.inmem;
+import static com.spotify.flo.EvalContext.inmem;
 import static com.spotify.flo.context.InstrumentedContext.Listener.Phase.FAILURE;
 import static com.spotify.flo.context.InstrumentedContext.Listener.Phase.START;
 import static com.spotify.flo.context.InstrumentedContext.Listener.Phase.SUCCESS;
@@ -29,7 +29,7 @@ import static org.junit.Assert.assertThat;
 
 import com.google.common.collect.Lists;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContext;
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskId;
 import java.util.List;
 import org.junit.Test;
@@ -49,7 +49,7 @@ public class InstrumentedContextTest {
   };
 
   List<String> calls = Lists.newArrayList();
-  TaskContext context = InstrumentedContext.composeWith(inmem(), listener);
+  EvalContext context = InstrumentedContext.composeWith(inmem(), listener);
 
   @Test
   public void callsListenerWithTasksAndStatuses() throws Exception {

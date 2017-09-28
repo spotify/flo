@@ -30,14 +30,14 @@ package com.spotify.flo;
 public interface OpProvider<T> {
 
   /**
-   * Creates a new operator instance of type {@link T}. The given {@link TaskContext} will be
+   * Creates a new operator instance of type {@link T}. The given {@link EvalContext} will be
    * the context which was used to evaluate the task which this operator is being injected into.
-   * The task itself can be accessed through {@link TaskContext#currentTask()}.
+   * The task itself can be accessed through {@link EvalContext#currentTask()}.
    *
-   * @param taskContext The task context in which the current task is being evaluated
+   * @param evalContext The evaluation context in which the current task is being evaluated
    * @return An instance of the provided operator type
    */
-  T provide(TaskContext taskContext);
+  T provide(EvalContext evalContext);
 
   /**
    * Will be called just before a task that is using this operator starts evaluating.

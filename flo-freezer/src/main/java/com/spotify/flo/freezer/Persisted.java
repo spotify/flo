@@ -20,8 +20,10 @@
 
 package com.spotify.flo.freezer;
 
+import com.spotify.flo.EvalContext;
+
 /**
- * This exception is thrown in the {@link com.spotify.flo.TaskContext.Value} that is created by
+ * This exception is thrown in the {@link EvalContext.Value} that is created by
  * {@link PersistingContext}.
  */
 public class Persisted extends RuntimeException {

@@ -30,11 +30,11 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.serializers.ClosureSerializer;
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContext;
 import com.spotify.flo.TaskId;
-import com.spotify.flo.context.ForwardingTaskContext;
+import com.spotify.flo.context.ForwardingEvalContext;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,7 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link TaskContext} that serializes and persist tasks. Any call to {@link #evaluate(Task)}
+ * A {@link EvalContext} that serializes and persist tasks. Any call to {@link #evaluate(Task)}
  * will persist the task and recurse to also do so for all input tasks. No task in the dependency
  * tree will actually be invoked. Instead {@link #evaluate(Task)} will return a {@link Value} that
  * always fails.
@@ -54,14 +54,14 @@ import org.slf4j.LoggerFactory;
  * <p>After the returned {@link Value} has failed, all persisted file paths can be received through
  * {@link #getFiles()}.
  */
-public class PersistingContext extends ForwardingTaskContext {
+public class PersistingContext extends ForwardingEvalContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(PersistingContext.class);
 
   private final Path basePath;
   private final Map<TaskId, Path> files = new LinkedHashMap<>();
 
-  public PersistingContext(Path basePath, TaskContext delegate) {
+  public PersistingContext(Path basePath, EvalContext delegate) {
     super(delegate);
     this.basePath = Objects.requireNonNull(basePath);
   }
@@ -71,7 +71,7 @@ public class PersistingContext extends ForwardingTaskContext {
   }
 
   @Override
-  public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
+  public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
     // materialize lazy inputs
     task.inputs();
 

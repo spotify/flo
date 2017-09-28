@@ -27,16 +27,16 @@ import static org.mockito.Mockito.mock;
 import java.util.Optional;
 import org.junit.Test;
 
-public class TaskContextWithTaskTest {
+public class EvalContextWithTaskTest {
 
-  TaskContext delegate = mock(TaskContext.class);
+  EvalContext delegate = mock(EvalContext.class);
   Task<?> task = Task.named("TestTAsk", "a", "b").ofType(String.class).process(() -> "");
 
-  TaskContext sut = TaskContextWithTask.withTask(delegate, task);
+  EvalContext sut = EvalContextWithTask.withTask(delegate, task);
 
   @Test
   public void testEmptyDefault() throws Exception {
-    assertThat(TaskContext.inmem().currentTask(), is(Optional.empty()));
+    assertThat(EvalContext.inmem().currentTask(), is(Optional.empty()));
   }
 
   @Test

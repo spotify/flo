@@ -22,7 +22,7 @@ package com.spotify.scratch;
 
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder;
-import com.spotify.flo.TaskContext;
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.context.MemoizingContext;
 
 /**
@@ -32,8 +32,8 @@ final class Fib {
 
   public static void main(String[] args) {
     Task<Long> fib92 = create(92);
-    TaskContext taskContext = MemoizingContext.composeWith(TaskContext.inmem());
-    TaskContext.Value<Long> value = taskContext.evaluate(fib92);
+    EvalContext evalContext = MemoizingContext.composeWith(EvalContext.inmem());
+    EvalContext.Value<Long> value = evalContext.evaluate(fib92);
 
     value.consume(f92 -> System.out.println("fib(92) = " + f92));
   }

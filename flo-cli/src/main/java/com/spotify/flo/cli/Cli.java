@@ -23,9 +23,9 @@ package com.spotify.flo.cli;
 import static java.lang.System.out;
 import static java.util.Arrays.asList;
 
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskConstructor;
-import com.spotify.flo.TaskContext;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -108,7 +108,7 @@ public final class Cli {
 //          return;
 //        }
 
-        final TaskContext context = TaskContext.inmem();
+        final EvalContext context = EvalContext.inmem();
         final Task<?> createdTask = factory.create(args);
         context.evaluate(createdTask).consume((value) -> {
           out.println("task.id() = " + createdTask.id());

@@ -58,7 +58,8 @@ import org.trimou.engine.resolver.ReflectionResolver;
 import org.trimou.util.ImmutableMap;
 
 /**
- * TODO: document.
+ * Annotation processor for generating the Java and Scala TaskBuilder interfaces and
+ * implementations.
  */
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ApiGeneratorProcessor extends AbstractProcessor {
