@@ -20,7 +20,7 @@
 
 package com.spotify.flo;
 
-import com.spotify.flo.TaskContext.Value;
+import com.spotify.flo.EvalContext.Value;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -35,21 +35,21 @@ import java.util.stream.Stream;
  */
 final class ValueFold<T> implements Function<List<Value<T>>, Value<List<T>>> {
 
-  private final TaskContext taskContext;
+  private final EvalContext evalContext;
 
-  ValueFold(TaskContext taskContext) {
-    this.taskContext = Objects.requireNonNull(taskContext);
+  ValueFold(EvalContext evalContext) {
+    this.evalContext = Objects.requireNonNull(evalContext);
   }
 
-  static <T> ValueFold<T> inContext(TaskContext taskContext) {
-    return new ValueFold<>(taskContext);
+  static <T> ValueFold<T> inContext(EvalContext evalContext) {
+    return new ValueFold<>(evalContext);
   }
 
   @Override
   public Value<List<T>> apply(List<Value<T>> list) {
-    Value<List<T>> values = taskContext.immediateValue(new ArrayList<>());
+    Value<List<T>> values = evalContext.immediateValue(new ArrayList<>());
     for (Value<T> tValue : list) {
-      values = Values.mapBoth(taskContext, values, tValue, (l, t) -> {
+      values = Values.mapBoth(evalContext, values, tValue, (l, t) -> {
         l.add(t);
         return l;
       });

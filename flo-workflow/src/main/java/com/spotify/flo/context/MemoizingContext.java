@@ -25,9 +25,9 @@ import static com.spotify.flo.Util.colored;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContext;
 import com.spotify.flo.TaskId;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -45,9 +45,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A flo {@link TaskContext} that allows task types to define custom memoization strategies.
+ * A flo {@link EvalContext} that allows task types to define custom memoization strategies.
  *
- * <p>This context can be used to extend the {@link TaskContext#evaluate(Task)} algorithm with
+ * <p>This context can be used to extend the {@link EvalContext#evaluate(Task)} algorithm with
  * memoization behaviours specific to the {@link Task#type()}. This is specially useful when a
  * type is backed by a an out-of-process store of some sort (database, service, etc).
  *
@@ -90,7 +90,7 @@ import org.slf4j.LoggerFactory;
  * {@code public static Memoizer<T> memoizer()}. The {@link Memoizer} type argument there should
  * match the memoized type itself.
  */
-public class MemoizingContext extends ForwardingTaskContext {
+public class MemoizingContext extends ForwardingEvalContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(MemoizingContext.class);
 
@@ -147,25 +147,25 @@ public class MemoizingContext extends ForwardingTaskContext {
   private final ImmutableMap<Class<?>, Memoizer<?>> memoizers;
   private final ConcurrentMap<TaskId, EvalBundle<?>> ongoing = Maps.newConcurrentMap();
 
-  private MemoizingContext(TaskContext baseContext, ImmutableMap<Class<?>, Memoizer<?>> memoizers) {
+  private MemoizingContext(EvalContext baseContext, ImmutableMap<Class<?>, Memoizer<?>> memoizers) {
     super(baseContext);
     this.memoizers = Objects.requireNonNull(memoizers);
   }
 
-  public static TaskContext composeWith(TaskContext baseContext) {
+  public static EvalContext composeWith(EvalContext baseContext) {
     return builder(baseContext).build();
   }
 
-  public static Builder builder(TaskContext baseContext) {
+  public static Builder builder(EvalContext baseContext) {
     return new Builder(baseContext);
   }
 
   public static class Builder {
 
-    private final TaskContext baseContext;
+    private final EvalContext baseContext;
     private final ImmutableMap.Builder<Class<?>, Memoizer<?>> memoizers = ImmutableMap.builder();
 
-    public Builder(TaskContext baseContext) {
+    public Builder(EvalContext baseContext) {
       this.baseContext = Objects.requireNonNull(baseContext);
     }
 
@@ -177,7 +177,7 @@ public class MemoizingContext extends ForwardingTaskContext {
       return this;
     }
 
-    public TaskContext build() {
+    public EvalContext build() {
       return new MemoizingContext(baseContext, memoizers.build());
     }
 
@@ -193,7 +193,7 @@ public class MemoizingContext extends ForwardingTaskContext {
   }
 
   @Override
-  public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
+  public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
     final EvalBundle<?> bundle = ongoing.computeIfAbsent(task.id(), createBundle(task, context));
 
     bundle.evaluate();
@@ -202,7 +202,7 @@ public class MemoizingContext extends ForwardingTaskContext {
     return (Value<T>) bundle.promise.value();
   }
 
-  private <T> Function<TaskId, EvalBundle<T>> createBundle(Task<T> task, TaskContext context) {
+  private <T> Function<TaskId, EvalBundle<T>> createBundle(Task<T> task, EvalContext context) {
     return (ˍ) -> {
       final Memoizer<T> memoizer = findMemoizer(task.type()).orElse(Memoizer.noop());
       return new EvalBundle<>(task, context, memoizer);
@@ -234,7 +234,7 @@ public class MemoizingContext extends ForwardingTaskContext {
    *
    * <p>Step 2 and 3 can happen in any order.
    *
-   * <p>See {@link #createBundle(Task, TaskContext)} and {@link #invokeProcessFn(TaskId, Fn)}.
+   * <p>See {@link #createBundle(Task, EvalContext)} and {@link #invokeProcessFn(TaskId, Fn)}.
    *
    * @param taskId  Task id for which to lookup
    * @param <T>     The promise type
@@ -281,12 +281,12 @@ public class MemoizingContext extends ForwardingTaskContext {
 
     private final Task<T> task;
     private final Promise<T> promise;
-    private final TaskContext context;
+    private final EvalContext context;
     private final Memoizer<T> memoizer;
 
     private volatile boolean evaluated = false;
 
-    private EvalBundle(Task<T> task, TaskContext context, Memoizer<T> memoizer) {
+    private EvalBundle(Task<T> task, EvalContext context, Memoizer<T> memoizer) {
       this.task = task;
       this.context = context;
       this.memoizer = memoizer;

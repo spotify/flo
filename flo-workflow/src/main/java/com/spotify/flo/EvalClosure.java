@@ -20,22 +20,22 @@
 
 package com.spotify.flo;
 
-import com.spotify.flo.TaskContext.Value;
+import com.spotify.flo.EvalContext.Value;
 import java.io.Serializable;
 
 /**
- * A function that evaluates some {@link Value} in a given {@link TaskContext}
+ * A function that evaluates some {@link Value} in a given {@link EvalContext}
  */
 @FunctionalInterface
 interface EvalClosure<T> extends Serializable {
 
   /**
-   * Produces a {@link Value} in a given {@link TaskContext}.
+   * Produces a {@link Value} in a given {@link EvalContext}.
    *
-   * The produced {@link Value} should follow the semantics defined by the used {@link TaskContext}.
+   * The produced {@link Value} should follow the semantics defined by the used {@link EvalContext}.
    *
-   * @param taskContext  The context to evaluate in
+   * @param evalContext  The context to evaluate in
    * @return a value
    */
-  Value<T> eval(TaskContext taskContext);
+  Value<T> eval(EvalContext evalContext);
 }

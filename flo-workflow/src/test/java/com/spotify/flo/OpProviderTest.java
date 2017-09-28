@@ -171,7 +171,7 @@ public class OpProviderTest {
   private class TestProvider implements OpProvider<Injected> {
 
     @Override
-    public Injected provide(TaskContext taskContext) {
+    public Injected provide(EvalContext evalContext) {
       return new Injected();
     }
   }
@@ -185,7 +185,7 @@ public class OpProviderTest {
     }
 
     @Override
-    public String provide(TaskContext taskContext) {
+    public String provide(EvalContext evalContext) {
       return inject;
     }
 

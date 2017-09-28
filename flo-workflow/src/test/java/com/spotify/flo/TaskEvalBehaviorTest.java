@@ -44,7 +44,7 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
 
 /**
- * Tests that verify the interaction between {@link Task} instances and the {@link TaskContext}.
+ * Tests that verify the interaction between {@link Task} instances and the {@link EvalContext}.
  */
 public class TaskEvalBehaviorTest {
 
@@ -262,7 +262,7 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldGetTaskIdFromContext0() throws Exception {
     Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
-        .processWithContext(tc -> tc.immediateValue(tc.currentTask().get()));
+        .processWithContext(ec -> ec.immediateValue(ec.currentTask().get()));
 
     validateReturnsOwnTask(task);
   }
@@ -271,7 +271,7 @@ public class TaskEvalBehaviorTest {
   public void shouldGetTaskIdFromContext1() throws Exception {
     Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
         .in(() -> leaf("A"))
-        .processWithContext((tc, a) -> tc.immediateValue(tc.currentTask().get()));
+        .processWithContext((ec, a) -> ec.immediateValue(ec.currentTask().get()));
 
     validateReturnsOwnTask(task);
   }
@@ -281,7 +281,7 @@ public class TaskEvalBehaviorTest {
     Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
-        .processWithContext((tc, a, b) -> tc.immediateValue(tc.currentTask().get()));
+        .processWithContext((ec, a, b) -> ec.immediateValue(ec.currentTask().get()));
 
     validateReturnsOwnTask(task);
   }
@@ -292,7 +292,7 @@ public class TaskEvalBehaviorTest {
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .in(() -> leaf("C"))
-        .processWithContext((tc, a, b, c) -> tc.immediateValue(tc.currentTask().get()));
+        .processWithContext((ec, a, b, c) -> ec.immediateValue(ec.currentTask().get()));
 
     validateReturnsOwnTask(task);
   }
@@ -301,15 +301,15 @@ public class TaskEvalBehaviorTest {
   public void shouldGetTaskIdFromContextNested() throws Exception {
     AwaitValue<Task> inner = new AwaitValue<>();
     Task<String> innerTask = Task.named("Inner").ofType(String.class)
-        .processWithContext(tc -> {
-          inner.accept(tc.currentTask().get());
-          return tc.immediateValue("");
+        .processWithContext(ec -> {
+          inner.accept(ec.currentTask().get());
+          return ec.immediateValue("");
         });
     Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
         .in(() -> leaf("A"))
         .in(() -> innerTask)
         .in(() -> leaf("C"))
-        .processWithContext((tc, a, b, c) -> tc.immediateValue(tc.currentTask().get()));
+        .processWithContext((ec, a, b, c) -> ec.immediateValue(ec.currentTask().get()));
 
     validateReturnsOwnTask(task);
     assertThat(inner.awaitAndGet(), is(innerTask));
@@ -317,7 +317,7 @@ public class TaskEvalBehaviorTest {
 
   private void validateReturnsOwnTask(Task<Task> task) throws InterruptedException {
     AwaitValue<Task> val = new AwaitValue<>();
-    TaskContext.inmem()
+    EvalContext.sync()
         .evaluate(task)
         .consume(val);
 
@@ -428,7 +428,7 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldInterceptProcessFunctionInContext0C() throws Exception {
     Task<String> top = Task.named("Top").ofType(String.class)
-        .processWithContext((tc) -> tc.immediateValue("done"));
+        .processWithContext((ec) -> ec.immediateValue("done"));
 
     validateInterception(top, "done");
   }
@@ -438,7 +438,7 @@ public class TaskEvalBehaviorTest {
     Task<String> top = Task.named("Top").ofType(String.class)
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
-        .processWithContext((tc, a, b) -> tc.immediateValue("done"));
+        .processWithContext((ec, a, b) -> ec.immediateValue("done"));
 
     validateInterception(top, "done", leaf("A"), leaf("B"));
   }
@@ -448,7 +448,7 @@ public class TaskEvalBehaviorTest {
     Task<String> top = Task.named("Top").ofType(String.class)
         .ins(() -> singletonList(leaf("A")))
         .ins(() -> singletonList(leaf("B")))
-        .processWithContext((tc, a, b) -> tc.immediateValue("done"));
+        .processWithContext((ec, a, b) -> ec.immediateValue("done"));
 
     validateInterception(top, "done", leaf("A"), leaf("B"));
   }

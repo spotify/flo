@@ -27,9 +27,9 @@ import com.spotify.apollo.Client;
 import com.spotify.apollo.Request;
 import com.spotify.apollo.Response;
 import com.spotify.apollo.Status;
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContext;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.AsyncContext;
 import java.lang.reflect.InvocationTargetException;
@@ -70,9 +70,9 @@ public class Dump extends AsyncContext {
   }
 
   @Override
-  public <T> TaskContext.Value<T> invokeProcessFn(TaskId taskId, Fn<TaskContext.Value<T>> processFn) {
+  public <T> EvalContext.Value<T> invokeProcessFn(TaskId taskId, Fn<EvalContext.Value<T>> processFn) {
     final EvalBundle<T> evalBundle = lookupBundle(taskId);
-    final TaskContext.Promise<T> promise = promise();
+    final EvalContext.Promise<T> promise = promise();
     final LockHolder lockHolder = new LockHolder(taskId, "/", scheduler);
     final ProcessBundle<T> processBundle =
         new ProcessBundle<>(evalBundle, lockHolder, processFn, promise);
@@ -90,7 +90,7 @@ public class Dump extends AsyncContext {
     return (t) -> executor.submit(() -> consumer.accept(t));
   }
 
-  private <T> void chain(TaskContext.Value<T> value, TaskContext.Promise<T> promise) {
+  private <T> void chain(EvalContext.Value<T> value, EvalContext.Promise<T> promise) {
     value.consume(promise::set);
     value.onFail(promise::fail);
   }
@@ -141,16 +141,16 @@ public class Dump extends AsyncContext {
   private final class EvalBundle<T> {
 
     private final Task<T> task;
-    private final TaskContext.Promise<T> promise;
+    private final EvalContext.Promise<T> promise;
     private final Optional<Function<ByteString, T>> decoder;
 
-    private EvalBundle(Task<T> task, TaskContext.Promise<T> promise, Optional<Function<ByteString, T>> decoder) {
+    private EvalBundle(Task<T> task, EvalContext.Promise<T> promise, Optional<Function<ByteString, T>> decoder) {
       this.task = task;
       this.promise = promise;
       this.decoder = decoder;
     }
 
-    private void fetchOrElse(TaskContext.Promise<T> promise, Runnable orElse) {
+    private void fetchOrElse(EvalContext.Promise<T> promise, Runnable orElse) {
       Preconditions.checkState(decoder.isPresent(), "Must have decoder when fetching existing");
 
       final Request getRequest = request("GET")
@@ -161,7 +161,7 @@ public class Dump extends AsyncContext {
           .thenAcceptAsync(consumer(promise, orElse), executor);
     }
 
-    private Consumer<TaskContext.Value<T>> consumer(TaskContext.Promise<T> promise, Runnable orElse) {
+    private Consumer<EvalContext.Value<T>> consumer(EvalContext.Promise<T> promise, Runnable orElse) {
       return (lookupValue) -> {
         lookupValue.consume((value) -> {
 //          logging.foundValue(task.id(), value);
@@ -171,10 +171,10 @@ public class Dump extends AsyncContext {
       };
     }
 
-    private BiFunction<Response<ByteString>, Throwable, TaskContext.Value<T>> parseExisting(
+    private BiFunction<Response<ByteString>, Throwable, EvalContext.Value<T>> parseExisting(
         Function<ByteString, T> decoder) {
       return (response, throwable) -> {
-        final TaskContext.Promise<T> promise = promise();
+        final EvalContext.Promise<T> promise = promise();
 
         if (throwable != null) {
           promise.fail(throwable);
@@ -197,16 +197,16 @@ public class Dump extends AsyncContext {
 
     private final EvalBundle<T> evalBundle;
     private final LockHolder lockHolder;
-    private final Fn<TaskContext.Value<T>> processFn;
-    private final TaskContext.Promise<T> promise;
+    private final Fn<EvalContext.Value<T>> processFn;
+    private final EvalContext.Promise<T> promise;
 
     private final Semaphore notified = new Semaphore(1);
 
     public ProcessBundle(
         EvalBundle<T> evalBundle,
         LockHolder lockHolder,
-        Fn<TaskContext.Value<T>> processFn,
-        TaskContext.Promise<T> promise) {
+        Fn<EvalContext.Value<T>> processFn,
+        EvalContext.Promise<T> promise) {
       this.evalBundle = evalBundle;
       this.lockHolder = lockHolder;
       this.processFn = processFn;
@@ -246,7 +246,7 @@ public class Dump extends AsyncContext {
 
     private void invoke() {
       TaskId taskId = evalBundle.task.id();
-      final TaskContext.Value<T> value = processFn.get();
+      final EvalContext.Value<T> value = processFn.get();
 
       value.consume((v) -> {
         complete(

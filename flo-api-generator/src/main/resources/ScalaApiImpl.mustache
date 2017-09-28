@@ -1,14 +1,13 @@
 package com.spotify.flo.dsl
 
+import com.spotify.flo.EvalContext.Value
 import com.spotify.flo.Task
 import com.spotify.flo.TaskBuilder
-import com.spotify.flo.TaskContext.Value
 import com.spotify.flo._
+import com.spotify.flo.dsl.Util._
 
 import _root_.scala.collection.JavaConversions
 import _root_.scala.reflect.ClassTag
-
-import com.spotify.flo.dsl.Util._
 
 private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) extends TaskBuilder0[Z] { self =>
 
@@ -20,7 +19,7 @@ private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) exten
   override def process(fn: => Z): Task[Z] =
     builder.process(f0(fn))
 
-  override def processWithContext(fn: (TaskContext) => Value[Z]): Task[Z] =
+  override def processWithContext(fn: (EvalContext) => Value[Z]): Task[Z] =
     builder.processWithContext(f1(fn))
 
   override def op[A1](opProvider: OpProvider[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
@@ -60,9 +59,9 @@ private[dsl] trait Builder{{arity}}[{{typeArgsNumA}}, Z] extends TaskBuilder{{ar
       ({{argumentsNum}}) => fn({{argumentsPsConv}})
     ))
 
-  override def processWithContext(fn: (TaskContext) => ({{typeArgsNumA}}) => Value[Z]): Task[Z] =
+  override def processWithContext(fn: (EvalContext) => ({{typeArgsNumA}}) => Value[Z]): Task[Z] =
     builder.processWithContext(f{{arityPlus}}(
-      (tc, {{argumentsNum}}) => fn(tc)({{argumentsPsConv}})
+      (ec, {{argumentsNum}}) => fn(ec)({{argumentsPsConv}})
     ))
   {{^iter.isLast}}
 

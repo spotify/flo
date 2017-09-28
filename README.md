@@ -41,7 +41,7 @@ JavaDocs here: http://spotify.github.io/flo/maven/latest/apidocs/
     - [Task embedding](#task-embedding)
   - [Tasks are lazy](#tasks-are-lazy)
   - [Task DAGs as data structures](#task-dags-as-data-structures)
-- [`TaskContext`](#taskcontext)
+- [`EvalContext`](#evalcontext)
 - [CLI generator](#cli-generator)
 
 ## Quick Example: Fibonacci
@@ -68,8 +68,8 @@ class Fib {
 
   public static void main(String[] args) {
     Task<Long> fib92 = fib(92);
-    TaskContext taskContext = MemoizingContext.composeWith(TaskContext.inmem());
-    TaskContext.Value<Long> value = taskContext.evaluate(fib92);
+    EvalContext evalContext = MemoizingContext.composeWith(EvalContext.sync());
+    EvalContext.Value<Long> value = evalContext.evaluate(fib92);
 
     value.consume(f92 -> System.out.println("fib(92) = " + f92));
   }
@@ -93,8 +93,8 @@ object Fib extends App {
   )
 
   val fib92 = fib(92)
-  val taskContext = MemoizingContext.composeWith(TaskContext.inmem)
-  val value = taskContext.evaluate(fib92)
+  val evalContext = MemoizingContext.composeWith(EvalContext.sync)
+  val value = evalContext.evaluate(fib92)
 
   value.consume((f92:Long) => println("fib(92) = " + f92))
 }
@@ -266,18 +266,18 @@ beforehand. Evaluation planning and result caching/memoizing becomes integral pa
 libraries. `flo` aims to expose useful information together with flexible evaluation apis to make
 it a library for easily building workflow management systems, rather than trying to be the
 can-do-it-all workflow management system itself. More about how this is achieved in the
-[`TaskContext`][TaskContext] sections.
+[`EvalContext`][EvalContext] sections.
 
-# [`TaskContext`][TaskContext]
+# [`EvalContext`][EvalContext]
 
-[`TaskContext`][TaskContext] defines an interface to a context in which `Task<T>` instances are
+[`EvalContext`][EvalContext] defines an interface to a context in which `Task<T>` instances are
 evaluated. The context is responsible for expanding the task DAG and invoking the task
 process-functions. It gives library authors a powerful abstraction to use when implementing
 the specific details of evaluating a task DAG. All details around setting up wiring of dependencies
 between tasks, interaction with user code for DAG expansion, invoking task functions with upstream
 arguments, and other mundane plumbing is dealt with by flo.
 
-These are just a few aspects of evaluation that can be implemented in a `TaskContext`:
+These are just a few aspects of evaluation that can be implemented in a `EvalContext`:
 
 * Evaluation concurrency and thread pool management
 * Persisted memoization of previous task evaluations
@@ -288,13 +288,13 @@ Since multi worker, asynchronous evaluation is a very common pre-requisite for m
 implementations, flo comes with a base implementation of an [`AsyncContext`][AsyncContext] that
 can be extended with further behaviour.
 
-See also [`InMemImmediateContext`][InMemImmediateContext],
-[`InstrumentedContext`][InstrumentedContext] and [`MemoizingContext`][MemoizingContext].
+See also [`SyncContext`][SyncContext], [`InstrumentedContext`][InstrumentedContext] and
+[`MemoizingContext`][MemoizingContext].
 
 [Task]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/Task.html
-[TaskContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/TaskContext.html
+[EvalContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/EvalContext.html
 [AsyncContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/AsyncContext.html
-[InMemImmediateContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/InMemImmediateContext.html
+[SyncContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/SyncContext.html
 [InstrumentedContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/InstrumentedContext.html
 [MemoizingContext]: http://spotify.github.io/flo/maven/latest/apidocs/com/spotify/flo/context/MemoizingContext.html
 [Java 8 Logger]: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html#finest-java.util.function.Supplier-

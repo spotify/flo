@@ -29,7 +29,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import com.spotify.flo.TaskContext.Promise;
+import com.spotify.flo.EvalContext.Promise;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
 
@@ -51,8 +51,8 @@ public class TaskTest {
 
   @Test
   public void shouldHaveListOfOperators() throws Exception {
-    OpProvider<Object> op1 = tc -> new Object();
-    OpProvider<Object> op2 = tc -> new Object();
+    OpProvider<Object> op1 = ec -> new Object();
+    OpProvider<Object> op2 = ec -> new Object();
     Task<String> task = Task.named("Inputs").ofType(String.class)
         .op(op1)
         .op(op2)
@@ -89,8 +89,8 @@ public class TaskTest {
   @Test
   public void shouldEvaluate0NC() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").ofType(String.class).processWithContext(tc -> {
-      Promise<String> promise = tc.promise();
+    Task<String> task = Task.named("InContext").ofType(String.class).processWithContext(ec -> {
+      Promise<String> promise = ec.promise();
       promiseRef.set(promise);
       return promise.value();
     });
@@ -123,8 +123,8 @@ public class TaskTest {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
     Task<String> task = Task.named("InContext").ofType(String.class)
         .in(() -> leaf("A"))
-        .processWithContext((tc, a) -> {
-          Promise<String> promise = tc.promise();
+        .processWithContext((ec, a) -> {
+          Promise<String> promise = ec.promise();
           promiseRef.set(promise);
           return promise.value().map(v -> v + " - " + a);
         });
@@ -137,8 +137,8 @@ public class TaskTest {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
     Task<String> task = Task.named("InContext").ofType(String.class)
         .ins(() -> asList(leaf("A"), leaf("B")))
-        .processWithContext((tc, ab) -> {
-          Promise<String> promise = tc.promise();
+        .processWithContext((ec, ab) -> {
+          Promise<String> promise = ec.promise();
           promiseRef.set(promise);
           return promise.value().map(v -> v + " - " + ab);
         });
@@ -174,8 +174,8 @@ public class TaskTest {
     Task<String> task = Task.named("InContext").ofType(String.class)
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
-        .processWithContext((tc, a, b) -> {
-          Promise<String> promise = tc.promise();
+        .processWithContext((ec, a, b) -> {
+          Promise<String> promise = ec.promise();
           promiseRef.set(promise);
           return promise.value().map(v -> v + " - " + a + " - " + b);
         });
@@ -189,8 +189,8 @@ public class TaskTest {
     Task<String> task = Task.named("InContext").ofType(String.class)
         .in(() -> leaf("A"))
         .ins(() -> asList(leaf("B"), leaf("C")))
-        .processWithContext((tc, a, bc) -> {
-          Promise<String> promise = tc.promise();
+        .processWithContext((ec, a, bc) -> {
+          Promise<String> promise = ec.promise();
           promiseRef.set(promise);
           return promise.value().map(v -> v + " - " + a + " - " + bc);
         });
@@ -229,8 +229,8 @@ public class TaskTest {
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .in(() -> leaf("C"))
-        .processWithContext((tc, a, b, c) -> {
-          Promise<String> promise = tc.promise();
+        .processWithContext((ec, a, b, c) -> {
+          Promise<String> promise = ec.promise();
           promiseRef.set(promise);
           return promise.value().map(v -> v + " - " + a + " - " + b +" - " + c);
         });
@@ -245,8 +245,8 @@ public class TaskTest {
         .in(() -> leaf("A"))
         .in(() -> leaf("B"))
         .ins(() -> asList(leaf("C"), leaf("D")))
-        .processWithContext((tc, a, b, cd) -> {
-          Promise<String> promise = tc.promise();
+        .processWithContext((ec, a, b, cd) -> {
+          Promise<String> promise = ec.promise();
           promiseRef.set(promise);
           return promise.value().map(v -> v + " - " + a + " - " + b +" - " + cd);
         });

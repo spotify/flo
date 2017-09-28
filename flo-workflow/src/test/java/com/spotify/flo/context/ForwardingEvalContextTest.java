@@ -27,32 +27,32 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import com.spotify.flo.EvalContext;
+import com.spotify.flo.EvalContextWithTask;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContext;
-import com.spotify.flo.TaskContext.Value;
-import com.spotify.flo.TaskContextWithTask;
+import com.spotify.flo.EvalContext.Value;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-public class ForwardingTaskContextTest {
+public class ForwardingEvalContextTest {
 
   static final Task<String> TASK = Task.create(() -> "", String.class, "test");
 
-  TaskContext delegate = mock(TaskContext.class);
-  TaskContext sut = new TestContext(delegate);
+  EvalContext delegate = mock(EvalContext.class);
+  EvalContext sut = new TestContext(delegate);
 
   @Test
   public void evaluate() throws Exception {
     sut.evaluate(TASK);
 
-    ArgumentCaptor<TaskContext> contextArgumentCaptor = ArgumentCaptor.forClass(TaskContext.class);
+    ArgumentCaptor<EvalContext> contextArgumentCaptor = ArgumentCaptor.forClass(EvalContext.class);
     verify(delegate).evaluateInternal(eq(TASK), contextArgumentCaptor.capture());
 
-    TaskContext capturedContext = contextArgumentCaptor.getValue();
-    assertThat(capturedContext.getClass(), typeCompatibleWith(TaskContextWithTask.class));
+    EvalContext capturedContext = contextArgumentCaptor.getValue();
+    assertThat(capturedContext.getClass(), typeCompatibleWith(EvalContextWithTask.class));
 
-    TaskContextWithTask wrapperContext = (TaskContextWithTask) capturedContext;
+    EvalContextWithTask wrapperContext = (EvalContextWithTask) capturedContext;
     assertThat(wrapperContext.delegate, is(sut));
   }
 
@@ -94,9 +94,9 @@ public class ForwardingTaskContextTest {
     verify(delegate).promise();
   }
 
-  private static class TestContext extends ForwardingTaskContext {
+  private static class TestContext extends ForwardingEvalContext {
 
-    TestContext(TaskContext delegate) {
+    TestContext(EvalContext delegate) {
       super(delegate);
     }
   }

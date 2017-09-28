@@ -38,7 +38,7 @@ public class SerializationTest {
   transient File tempFile = tempFile();
 
   final String instanceField = "from instance";
-  final TaskContext context = TaskContext.inmem();
+  final EvalContext context = EvalContext.sync();
   final AwaitValue<String> val = new AwaitValue<>();
 
   @Test
@@ -65,7 +65,7 @@ public class SerializationTest {
     Task<String> task2 = Task.named("Baz", 40).ofType(String.class)
         .in(() -> task1)
         .ins(() -> singletonList(task1))
-        .processWithContext((tc, t1, t1l) -> tc.immediateValue(t1l + " hello " + (t1 + 5)));
+        .processWithContext((ec, t1, t1l) -> ec.immediateValue(t1l + " hello " + (t1 + 5)));
 
     serialize(task2);
     Task<String> des = deserialize();

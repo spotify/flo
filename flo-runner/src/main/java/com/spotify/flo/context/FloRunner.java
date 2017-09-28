@@ -20,7 +20,7 @@
 
 package com.spotify.flo.context;
 
-import static com.spotify.flo.TaskContext.async;
+import static com.spotify.flo.EvalContext.async;
 import static java.lang.System.getProperty;
 import static java.util.Objects.requireNonNull;
 
@@ -30,9 +30,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.apollo.core.ApolloHelpException;
 import com.spotify.apollo.core.Service;
 import com.spotify.apollo.core.Services;
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskConstructor;
-import com.spotify.flo.TaskContext;
 import com.spotify.flo.TaskInfo;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.freezer.PersistingContext;
@@ -124,9 +124,9 @@ public final class FloRunner {
       logging.tree(TaskInfo.ofTask(task));
       exit(0);
     } else {
-      final TaskContext taskContext = createContext();
+      final EvalContext evalContext = createContext();
       logging.printPlan(TaskInfo.ofTask(task));
-      final TaskContext.Value<?> value = taskContext.evaluate(task);
+      final EvalContext.Value<?> value = evalContext.evaluate(task);
       value.consume((ˍ) -> exit(0));
       value.onFail(this::exit);
     }
@@ -134,7 +134,7 @@ public final class FloRunner {
     return task;
   }
 
-  private TaskContext createContext() {
+  private EvalContext createContext() {
     final ExecutorService executor = Executors.newFixedThreadPool(
         workers(),
         new ThreadFactoryBuilder()
@@ -143,15 +143,15 @@ public final class FloRunner {
             .build());
     closer.register(executorCloser(executor));
 
-    final TaskContext instrumentedContext = instrument(async(executor));
-    final TaskContext baseContext = isMode("persist")
+    final EvalContext instrumentedContext = instrument(async(executor));
+    final EvalContext baseContext = isMode("persist")
         ? persist(instrumentedContext)
         : instrumentedContext;
 
     return MemoizingContext.composeWith(LoggingContext.composeWith(baseContext, logging));
   }
 
-  private TaskContext instrument(TaskContext delegate) {
+  private EvalContext instrument(EvalContext delegate) {
     final ServiceLoader<FloListenerFactory> factories =
         ServiceLoader.load(FloListenerFactory.class);
 
@@ -165,7 +165,7 @@ public final class FloRunner {
     return InstrumentedContext.composeWith(delegate, listener);
   }
 
-  private TaskContext persist(TaskContext delegate) {
+  private EvalContext persist(EvalContext delegate) {
     final String stateLocation = config.hasPath("flo.state.location")
                                  ? config.getString("flo.state.location")
                                  : "file://" + getProperty("user.dir");

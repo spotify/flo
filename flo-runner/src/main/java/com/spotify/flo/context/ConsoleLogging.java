@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * 0         1         2         3         4         5         6         7
  * 012345678901234567890123456789012345678901234567890123456789012345678901234
  * 16:47:42.258 flo-worker-1                 | DEBUG| LockHolder           |> | 74
- * 16:48:18.805 | INFO | FloTaskContext       |> | 45
+ * 16:48:18.805 | INFO | EvalContext         |> | 45
  * }
  */
 class ConsoleLogging implements Logging {

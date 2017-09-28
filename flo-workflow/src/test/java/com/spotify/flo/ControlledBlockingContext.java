@@ -36,12 +36,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * A {@link TaskContext} used for testing the concurrency behavior of task graphs.
+ * A {@link EvalContext} used for testing the concurrency behavior of task graphs.
  *
- * This context is not thread safe. The control methods (those not part of the {@link TaskContext}
+ * This context is not thread safe. The control methods (those not part of the {@link EvalContext}
  * interface) should not be used from multiple threads at the same time.
  */
-class ControlledBlockingContext implements TaskContext {
+class ControlledBlockingContext implements EvalContext {
 
   private static final int MAX_WAIT_MILLIS = 5000;
 
@@ -125,7 +125,7 @@ class ControlledBlockingContext implements TaskContext {
   }
 
   @Override
-  public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
+  public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
     TaskId taskId = task.id();
     CountDownLatch latch = new CountDownLatch(1);
     SettableValue<T> value = new SettableValue<>();
@@ -143,7 +143,7 @@ class ControlledBlockingContext implements TaskContext {
         fail("interrupted");
       }
 
-      TaskContext.super.evaluateInternal(task, context).consume(v -> {
+      EvalContext.super.evaluateInternal(task, context).consume(v -> {
         value.setValue(v);
         synchronized (activeCount) {
           awaiting.remove(taskId);
@@ -193,7 +193,7 @@ class ControlledBlockingContext implements TaskContext {
     }
 
     @Override
-    public TaskContext context() {
+    public EvalContext context() {
       return ControlledBlockingContext.this;
     }
 

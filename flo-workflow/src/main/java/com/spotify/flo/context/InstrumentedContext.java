@@ -20,14 +20,14 @@
 
 package com.spotify.flo.context;
 
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContext;
 import com.spotify.flo.TaskId;
 import java.util.Objects;
 
 /**
- * A {@link TaskContext} that instruments the task expansion and invocation process.
+ * A {@link EvalContext} that instruments the task expansion and invocation process.
  *
  * <p>This context will invoke methods on a {@link Listener} when tasks are evaluated through the
  * {@link #evaluate(Task)} method.
@@ -38,13 +38,13 @@ import java.util.Objects;
  *
  * <p>The {@link Listener#status(TaskId, Listener.Phase)} method is called when a task is actually
  * being processed, i.e. when the {@link #invokeProcessFn(TaskId, Fn)} of that task in called in
- * the {@link TaskContext}. There will be at most two calls made for
+ * the {@link EvalContext}. There will be at most two calls made for
  * each task. First with {@link Listener.Phase#START}, when evaluation starts. Then with either
  * {@link Listener.Phase#SUCCESS} or {@link Listener.Phase#FAILURE} depending on the success or
- * failure of the task {@link TaskContext.Value}.
+ * failure of the task {@link EvalContext.Value}.
  *
  */
-public class InstrumentedContext extends ForwardingTaskContext {
+public class InstrumentedContext extends ForwardingEvalContext {
 
   /**
    * A listener for instrumented evaluation. See {@link InstrumentedContext} for more details.
@@ -90,17 +90,17 @@ public class InstrumentedContext extends ForwardingTaskContext {
 
   private final Listener listener;
 
-  private InstrumentedContext(TaskContext baseContext, Listener listener) {
+  private InstrumentedContext(EvalContext baseContext, Listener listener) {
     super(baseContext);
     this.listener = Objects.requireNonNull(listener);
   }
 
-  public static TaskContext composeWith(TaskContext baseContext, Listener listener) {
+  public static EvalContext composeWith(EvalContext baseContext, Listener listener) {
     return new InstrumentedContext(baseContext, listener);
   }
 
   @Override
-  public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
+  public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
     listener.task(task);
     return delegate.evaluateInternal(task, context);
   }

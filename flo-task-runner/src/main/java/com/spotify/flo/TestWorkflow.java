@@ -20,12 +20,12 @@
 
 package com.spotify.flo;
 
-import static com.spotify.flo.TaskContext.inmem;
+import static com.spotify.flo.EvalContext.sync;
 import static com.spotify.flo.Util.colored;
 import static java.lang.System.getProperty;
 import static java.lang.System.getenv;
 
-import com.spotify.flo.TaskContext.Value;
+import com.spotify.flo.EvalContext.Value;
 import com.spotify.flo.context.AwaitingConsumer;
 import com.spotify.flo.context.MemoizingContext;
 import com.spotify.flo.freezer.Persisted;
@@ -83,8 +83,8 @@ public class TestWorkflow {
 
     LOG.info("Persisting tasks DAG to {}", basePath.toUri());
 
-    PersistingContext persistingContext = new PersistingContext(basePath, inmem());
-    TaskContext context = MemoizingContext.composeWith(persistingContext);
+    PersistingContext persistingContext = new PersistingContext(basePath, sync());
+    EvalContext context = MemoizingContext.composeWith(persistingContext);
 
     AwaitingConsumer<Throwable> await = AwaitingConsumer.create();
     Value<?> value = context.evaluate(task);

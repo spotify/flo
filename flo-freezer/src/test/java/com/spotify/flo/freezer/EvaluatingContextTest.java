@@ -20,7 +20,7 @@
 
 package com.spotify.flo.freezer;
 
-import static com.spotify.flo.TaskContext.inmem;
+import static com.spotify.flo.EvalContext.sync;
 import static com.spotify.flo.freezer.EvaluatingContext.OUTPUT_SUFFIX;
 import static com.spotify.flo.freezer.PersistingContext.cleanForFilename;
 import static org.hamcrest.Matchers.is;
@@ -28,8 +28,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContext;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.AwaitingConsumer;
 import java.nio.file.Files;
@@ -55,8 +55,8 @@ public class EvaluatingContextTest {
   @Before
   public void setUp() throws Exception {
     basePath = Files.createTempDirectory("SpecificEvalTest");
-    persistingContext = new PersistingContext(basePath, inmem());
-    evaluatingContext = new EvaluatingContext(basePath, inmem());
+    persistingContext = new PersistingContext(basePath, sync());
+    evaluatingContext = new EvaluatingContext(basePath, sync());
   }
 
   @Test
@@ -77,7 +77,7 @@ public class EvaluatingContextTest {
     Path persistedPath = persist(task).get(task.id());
 
     AwaitingConsumer<String> await = AwaitingConsumer.create();
-    final TaskContext.Value<String> stringValue =
+    final EvalContext.Value<String> stringValue =
         evaluatingContext.evaluateTaskFrom(persistedPath);
     stringValue.consume(await);
     stringValue.onFail(Throwable::printStackTrace);
@@ -93,7 +93,7 @@ public class EvaluatingContextTest {
 
     AwaitingConsumer<Throwable> awaitFailure = AwaitingConsumer.create();
     Path downstreamPath = persistedPaths.get(task.id());
-    final TaskContext.Value<String> stringValue =
+    final EvalContext.Value<String> stringValue =
         evaluatingContext.evaluateTaskFrom(downstreamPath);
     stringValue.onFail(awaitFailure);
 
@@ -112,7 +112,7 @@ public class EvaluatingContextTest {
 
     AwaitingConsumer<String> await = AwaitingConsumer.create();
     Path downstreamPath = persistedPaths.get(task.id());
-    final TaskContext.Value<String> stringValue =
+    final EvalContext.Value<String> stringValue =
         evaluatingContext.evaluateTaskFrom(downstreamPath);
     stringValue.consume(await);
     stringValue.onFail(Throwable::printStackTrace);
@@ -130,7 +130,7 @@ public class EvaluatingContextTest {
     calledInputCode = false;
     AwaitingConsumer<String> await = AwaitingConsumer.create();
     Path downstreamPath = persistedPaths.get(task.id());
-    final TaskContext.Value<String> stringValue =
+    final EvalContext.Value<String> stringValue =
         evaluatingContext.evaluateTaskFrom(downstreamPath);
     stringValue.consume(await);
     stringValue.onFail(Throwable::printStackTrace);

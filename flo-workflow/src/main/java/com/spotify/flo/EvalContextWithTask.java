@@ -22,23 +22,23 @@ package com.spotify.flo;
 
 import static java.util.Objects.requireNonNull;
 
-import com.spotify.flo.context.ForwardingTaskContext;
+import com.spotify.flo.context.ForwardingEvalContext;
 import java.util.Optional;
 
 /**
- * A {@link TaskContext} that overrides {@link TaskContext#currentTask()} to return a specific {@link TaskId}.
+ * A {@link EvalContext} that overrides {@link EvalContext#currentTask()} to return a specific {@link TaskId}.
  */
-public class TaskContextWithTask extends ForwardingTaskContext {
+public class EvalContextWithTask extends ForwardingEvalContext {
 
   private final Task<?> task;
 
-  private TaskContextWithTask(TaskContext delegate, Task<?> task) {
+  private EvalContextWithTask(EvalContext delegate, Task<?> task) {
     super(delegate);
     this.task = requireNonNull(task);
   }
 
-  static TaskContext withTask(TaskContext delegate, Task<?> task) {
-    return new TaskContextWithTask(delegate, task);
+  static EvalContext withTask(EvalContext delegate, Task<?> task) {
+    return new EvalContextWithTask(delegate, task);
   }
 
   @Override

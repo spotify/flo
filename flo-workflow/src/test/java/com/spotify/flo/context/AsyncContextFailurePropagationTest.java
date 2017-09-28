@@ -25,9 +25,9 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 import com.spotify.flo.AwaitValue;
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContext;
-import com.spotify.flo.TaskContext.Promise;
+import com.spotify.flo.EvalContext.Promise;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,8 +38,8 @@ public class AsyncContextFailurePropagationTest {
   @Test
   public void shouldFailTaskIfUpstreamsFail() throws Exception {
     Task<String> failingUpstream = Task.named("Failing").ofType(String.class)
-        .processWithContext(tc -> {
-          final Promise<String> promise = tc.promise();
+        .processWithContext(ec -> {
+          final Promise<String> promise = ec.promise();
           promise.fail(new RuntimeException("failed"));
           return promise.value();
         });
@@ -62,7 +62,7 @@ public class AsyncContextFailurePropagationTest {
         });
 
     AwaitValue<Throwable> val = new AwaitValue<>();
-    MemoizingContext.composeWith(TaskContext.inmem())
+    MemoizingContext.composeWith(EvalContext.sync())
         .evaluate(task)
         .onFail(val);
 

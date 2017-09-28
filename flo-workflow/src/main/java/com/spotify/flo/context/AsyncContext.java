@@ -20,10 +20,10 @@
 
 package com.spotify.flo.context;
 
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F0;
-import com.spotify.flo.TaskContext;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -33,12 +33,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * A {@link TaskContext} that executes evaluation and {@link Value} computations on a given
+ * A {@link EvalContext} that executes evaluation and {@link Value} computations on a given
  * {@link Executor}.
  *
  * <p>Override {@link #evaluate(Task)} to implement {@link Value} memoization.
  */
-public class AsyncContext implements TaskContext {
+public class AsyncContext implements EvalContext {
 
   private final Executor executor;
 
@@ -46,13 +46,13 @@ public class AsyncContext implements TaskContext {
     this.executor = Objects.requireNonNull(executor);
   }
 
-  public static TaskContext create(Executor executor) {
+  public static EvalContext create(Executor executor) {
     return new AsyncContext(executor);
   }
 
   @Override
-  public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
-    return flatten(() -> TaskContext.super.evaluateInternal(task, context));
+  public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
+    return flatten(() -> EvalContext.super.evaluateInternal(task, context));
   }
 
   @Override
@@ -104,7 +104,7 @@ public class AsyncContext implements TaskContext {
     }
 
     @Override
-    public TaskContext context() {
+    public EvalContext context() {
       return AsyncContext.this;
     }
 

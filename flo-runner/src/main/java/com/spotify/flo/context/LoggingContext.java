@@ -20,31 +20,31 @@
 
 package com.spotify.flo.context;
 
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContext;
 import com.spotify.flo.TaskId;
 import java.util.Objects;
 
 /**
- * A {@link TaskContext} that integrates evaluation with the {@link Logging} interface
+ * A {@link EvalContext} that integrates evaluation with the {@link Logging} interface
  */
-class LoggingContext implements TaskContext {
+class LoggingContext implements EvalContext {
 
-  private final TaskContext baseContext;
+  private final EvalContext baseContext;
   private final Logging logging;
 
-  private LoggingContext(TaskContext baseContext, Logging logging) {
+  private LoggingContext(EvalContext baseContext, Logging logging) {
     this.baseContext = Objects.requireNonNull(baseContext);
     this.logging = Objects.requireNonNull(logging);
   }
 
-  static TaskContext composeWith(TaskContext baseContext, Logging logging) {
+  static EvalContext composeWith(EvalContext baseContext, Logging logging) {
     return new LoggingContext(baseContext, logging);
   }
 
   @Override
-  public <T> Value<T> evaluateInternal(Task<T> task, TaskContext context) {
+  public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
     logging.willEval(task.id());
     return baseContext.evaluateInternal(task, context);
   }
