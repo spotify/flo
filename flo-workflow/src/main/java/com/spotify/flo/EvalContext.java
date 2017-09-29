@@ -81,11 +81,6 @@ public interface EvalContext {
    *
    * <p>The default implementation will simply invoke the function immediately.
    *
-   * <p>Interception of curried process functions will gate the innermost function, while
-   * for regular arity 1-3 process functions gating happens around the whole function.
-   *
-   * todo: reconsider difference between arity and curried function interception.
-   *
    * @param taskId     The id of the task being invoked
    * @param processFn  A lazily evaluated handle to the process function
    * @param <T>        The task value type

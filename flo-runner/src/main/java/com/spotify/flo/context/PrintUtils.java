@@ -20,6 +20,7 @@
 
 package com.spotify.flo.context;
 
+import static com.spotify.flo.Util.colored;
 import static java.util.stream.Collectors.joining;
 import static org.fusesource.jansi.Ansi.Color.CYAN;
 import static org.fusesource.jansi.Ansi.Color.WHITE;
@@ -40,24 +41,6 @@ import org.fusesource.jansi.Ansi;
 final class PrintUtils {
 
   private PrintUtils() {
-  }
-
-  static Ansi colored(Ansi.Color color, String string) {
-    return ansi().fg(color).a(string).reset();
-  }
-
-  static Ansi colored(TaskId taskId) {
-    final String id = taskId.toString();
-    final int openParen = id.indexOf('(');
-    final int closeParen = id.lastIndexOf(')');
-    final int hashPos = id.lastIndexOf('#');
-
-    return ansi()
-        .fg(CYAN).a(id.substring(0, openParen + 1))
-        .reset().a(id.substring(openParen + 1, closeParen))
-        .fg(CYAN).a(id.substring(closeParen, hashPos))
-        .fg(WHITE).a(id.substring(hashPos))
-        .reset();
   }
 
   static List<String> tree(TaskInfo taskInfo) {

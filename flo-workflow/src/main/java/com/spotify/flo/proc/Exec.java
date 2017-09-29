@@ -27,7 +27,7 @@ import com.spotify.flo.TaskBuilder.F3;
 import java.util.Arrays;
 
 /**
- * TODO: document.
+ * Experimental
  */
 public final class Exec {
 

@@ -25,29 +25,7 @@ import com.spotify.flo.proc.Exec;
 import com.spotify.flo.processor.RootTask;
 
 /**
- * Task definitions have (TD)
- *  - todo: namespace
- *  - a unique name
- *  - a list of parameters
- *  - type safe input task results
- *  - an output type
- *
- * Task instances have (TI)
- *  - a TD
- *  - specific values for all TD parameters
- *  - a list of lazy input TI
- *  - code for producing the output
- *
- * Notes
- *  - creating task instances should only yield a full dependency tree based on the task parameters
- *  - inputs to tasks are instantiated lazily so a partial graph could be examined
- *  - execution of tasks is subject to execution control and memoization
- *
- *
- * other ideas (todo)
- *  - reader-monad-like 'ask' dependencies
- *    - input tasks that are pushed down to the bottom of the execution graph (before everything)
- *  - facts matching as basis for dependency satisfaction
+ * This class only serves as a scratchpad for new ideas.
  */
 public class Scratch {
 

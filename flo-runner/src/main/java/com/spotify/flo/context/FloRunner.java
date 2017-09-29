@@ -50,7 +50,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * TODO: document.
+ * This class implements a top-level runner for {@link Task}s.
  */
 public final class FloRunner {
 

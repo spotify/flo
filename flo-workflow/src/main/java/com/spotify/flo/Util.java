@@ -44,4 +44,8 @@ public final class Util {
         .fg(WHITE).a(id.substring(hashPos))
         .reset();
   }
+
+  public static Ansi colored(Ansi.Color color, String string) {
+    return ansi().fg(color).a(string).reset();
+  }
 }
