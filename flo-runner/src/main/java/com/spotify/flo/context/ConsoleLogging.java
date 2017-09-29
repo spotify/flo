@@ -20,7 +20,7 @@
 
 package com.spotify.flo.context;
 
-import static com.spotify.flo.context.PrintUtils.colored;
+import static com.spotify.flo.Util.colored;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.ansi;
 
