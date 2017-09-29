@@ -29,12 +29,13 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 /**
- * TODO:
- * d make inputs lazily instantiated to allow short circuiting graph generation
- * d output task graph
- * . external outputs - outputs that might already be available (ie a file on disk)
- *   - can be implemented with a regular task, but better support can be added
- * . identity task
+ * A task is some work that has to be done, once a list of input tasks have completed. Tasks are
+ * constructed using a {@link TaskBuilder}, use {@link Task#named(String, Object...)} as the
+ * starting point.
+ *
+ * <p>Tasks can not be directly evaluated. Instead, a {@link EvalContext} has to be used. The
+ * context will determine further details about the evaluation (threading, memoization,
+ * instrumentation, etc.). See {@link EvalContext#evaluate(Task)}.
  *
  * @param <T>  A type carrying the execution metadata of this task
  */

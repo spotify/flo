@@ -54,10 +54,7 @@ object Examples {
   )
 
   def daFoo(world: String, wo: String, pub1: Pub): String = {
-
-    // todo: how to complete?
     pub1.pub("gs://foo/bar")
-
     "ok"
   }
 
