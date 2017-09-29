@@ -53,7 +53,16 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <A> TaskBuilder1<A, Z> op(OpProvider<A> opProvider) {
+    public <A> TaskBuilder1<A, Z> op(OpProviderGeneric<A> opProvider) {
+      return op_(opProvider);
+    }
+
+    @Override
+    public <A> TaskBuilder1<A, Z> op(OpProviderStrict<A, Z> opProvider) {
+      return op_(opProvider);
+    }
+
+    private <A> TaskBuilder1<A, Z> op_(OpProvider<A> opProvider) {
       return new Builder1<>(
           inputs, appendToList(ops, opProvider), taskId, type,
           leafEvalFn(ec -> {
@@ -140,7 +149,16 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProvider<{{nextArg}}> opProvider) {
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProviderGeneric<{{nextArg}}> opProvider) {
+      return op_(opProvider);
+    }
+
+    @Override
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProviderStrict<{{nextArg}}, Z> opProvider) {
+      return op_(opProvider);
+    }
+
+    private <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op_(OpProvider<{{nextArg}}> opProvider) {
       return new Builder{{arityPlus}}<>(
           inputs, appendToList(ops, opProvider), taskId, type,
           evaluator.chain(ec -> {

@@ -108,7 +108,7 @@ object Publisher {
   def apply(endpointId: String) = new Publisher(endpointId)
 }
 
-class Publisher(val endpointId: String) extends OpProvider[Pub] {
+class Publisher(val endpointId: String) extends OpProviderGeneric[Pub] {
   def provide(ec: EvalContext): Pub = new Pub {
     def pub(uri: String): Unit = println(s"Publishing $uri to $endpointId")
   }
