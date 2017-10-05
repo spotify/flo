@@ -24,7 +24,8 @@ public interface {{interfaceName}}<Z> {
   Task<Z> process(F0<Z> code);
   Task<Z> processWithContext(F1<EvalContext, EvalContext.Value<Z>> code);
 
-  <A> {{interfaceName}}1<A, Z> op(OpProvider<A> opProvider);
+  <A> {{interfaceName}}1<A, Z> op(OpProviderGeneric<A> opProviderGeneric);
+  <A> {{interfaceName}}1<A, Z> op(OpProviderStrict<A, Z> opProviderStrict);
 
   <A> {{interfaceName}}1<A, Z> in(Fn<Task<A>> task);
   <A> {{interfaceName}}1<List<A>, Z> ins(Fn<List<Task<A>>> tasks);
@@ -35,7 +36,8 @@ public interface {{interfaceName}}<Z> {
     Task<Z> processWithContext(F{{arityPlus}}<EvalContext, {{typeArgs}}, Value<Z>> code);
   {{^iter.isLast}}
 
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProvider<{{nextArg}}> opProvider);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProviderGeneric<{{nextArg}}> opProviderGeneric);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProviderStrict<{{nextArg}}, Z> opProviderStrict);
 
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> in(Fn<Task<{{nextArg}}>> task);
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Z> ins(Fn<List<Task<{{nextArg}}>>> tasks);

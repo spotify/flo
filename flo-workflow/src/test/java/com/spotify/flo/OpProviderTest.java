@@ -65,7 +65,8 @@ public class OpProviderTest {
   @Test
   public void lifecycleMethodsCalledInOrder() throws Exception {
     BasicProvider op1 = spy(new BasicProvider("foo"));
-    BasicProvider op2 = spy(new BasicProvider("bar"));
+    Injected injected = spy(new Injected());
+    StrictProvider op2 = spy(new StrictProvider(injected, "bar"));
     Task<String> task = Task.named("inject").ofType(String.class)
         .op(op1)
         .op(op2)
@@ -77,11 +78,12 @@ public class OpProviderTest {
         });
 
     evalAndGet(task);
-    InOrder inOrder = inOrder(op1, op2);
+    InOrder inOrder = inOrder(op1, op2, injected);
     inOrder.verify(op1).preRun(task);
     inOrder.verify(op2).preRun(task);
     inOrder.verify(op1).mark();
     inOrder.verify(op2).onSuccess(task, "foobar");
+    inOrder.verify(injected).doSomething("foobar");
     inOrder.verify(op1).onSuccess(task, "foobar");
   }
 
@@ -168,7 +170,7 @@ public class OpProviderTest {
     }
   }
 
-  private class TestProvider implements OpProvider<Injected> {
+  private class TestProvider extends OpProviderGeneric<Injected> {
 
     @Override
     public Injected provide(EvalContext evalContext) {
@@ -176,7 +178,7 @@ public class OpProviderTest {
     }
   }
 
-  private class BasicProvider implements OpProvider<String> {
+  private class BasicProvider extends OpProviderGeneric<String> {
 
     private final String inject;
 
@@ -191,6 +193,27 @@ public class OpProviderTest {
 
     public void mark() {
       // noop, used to verify call order
+    }
+  }
+
+  private class StrictProvider extends OpProviderStrict<String, String> {
+
+    private final Injected injected;
+    private final String value;
+
+    private StrictProvider(Injected injected, String value) {
+      this.injected = injected;
+      this.value = value;
+    }
+
+    @Override
+    public String provide(EvalContext evalContext) {
+      return value;
+    }
+
+    @Override
+    public void onSuccessStrict(Task<?> task, String result) {
+      injected.doSomething(result);
     }
   }
 }

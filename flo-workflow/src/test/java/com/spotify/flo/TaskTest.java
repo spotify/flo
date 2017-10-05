@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import com.spotify.flo.EvalContext.Promise;
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,8 +52,8 @@ public class TaskTest {
 
   @Test
   public void shouldHaveListOfOperators() throws Exception {
-    OpProvider<Object> op1 = ec -> new Object();
-    OpProvider<Object> op2 = ec -> new Object();
+    final OpProviderGeneric<Object> op1 = mock(OpProviderGeneric.class);
+    final OpProviderGeneric<Object> op2 = mock(OpProviderGeneric.class);
     Task<String> task = Task.named("Inputs").ofType(String.class)
         .op(op1)
         .op(op2)
