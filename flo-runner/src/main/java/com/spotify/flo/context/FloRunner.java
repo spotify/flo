@@ -21,6 +21,7 @@
 package com.spotify.flo.context;
 
 import static com.spotify.flo.EvalContext.async;
+import static com.spotify.flo.EvalContext.sync;
 import static java.lang.System.getProperty;
 import static java.util.Objects.requireNonNull;
 
@@ -135,20 +136,27 @@ public final class FloRunner {
   }
 
   private EvalContext createContext() {
-    final ExecutorService executor = Executors.newFixedThreadPool(
-        workers(),
-        new ThreadFactoryBuilder()
-            .setNameFormat("flo-worker-%d")
-            .setDaemon(true)
-            .build());
-    closer.register(executorCloser(executor));
-
-    final EvalContext instrumentedContext = instrument(async(executor));
+    final EvalContext instrumentedContext = instrument(createRootContext());
     final EvalContext baseContext = isMode("persist")
         ? persist(instrumentedContext)
         : instrumentedContext;
 
     return MemoizingContext.composeWith(LoggingContext.composeWith(baseContext, logging));
+  }
+
+  private EvalContext createRootContext() {
+    if (config.getBoolean("flo.async")) {
+      final ExecutorService executor = Executors.newFixedThreadPool(
+          workers(),
+          new ThreadFactoryBuilder()
+              .setNameFormat("flo-worker-%d")
+              .setDaemon(true)
+              .build());
+      closer.register(executorCloser(executor));
+      return async(executor);
+    } else {
+      return sync();
+    }
   }
 
   private EvalContext instrument(EvalContext delegate) {
