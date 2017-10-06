@@ -1,0 +1,12 @@
+com.spotify.flo
+com.spotify.flo.cli
+com.spotify.flo.context
+com.spotify.flo.dsl
+com.spotify.flo.freezer
+com.spotify.flo.gcs
+com.spotify.flo.gen
+com.spotify.flo.proc
+com.spotify.flo.processor
+com.spotify.flo.status
+com.spotify.flo.util
+com.spotify.scratch
