@@ -37,6 +37,7 @@ import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.status.TaskStatusException;
 import com.typesafe.config.Config;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 import org.apache.commons.lang.time.DurationFormatUtils;
 import org.fusesource.jansi.AnsiConsole;
@@ -160,6 +161,7 @@ class ConsoleLogging implements Logging {
       final PatternLayoutEncoder layout = new PatternLayoutEncoder();
       layout.setPattern("%gray(%d{HH:mm:ss.SSS} %-28thread) %highlight(| %-5level| %-10logger{0}) "
                         + "%green(|>) %msg%n");
+      layout.setCharset(StandardCharsets.UTF_8);
       layout.setContext(lc);
       layout.start();
 
