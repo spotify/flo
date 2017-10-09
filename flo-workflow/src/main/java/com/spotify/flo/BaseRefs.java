@@ -30,7 +30,7 @@ import java.util.List;
 class BaseRefs<Z> {
 
   final Fn<List<Task<?>>> inputs;
-  final List<OpProvider<?>> ops;
+  final List<TaskContext<?>> taskContexts;
   final TaskId taskId;
   protected final Class<Z> type;
 
@@ -38,9 +38,9 @@ class BaseRefs<Z> {
     this(Collections::emptyList, Collections.emptyList(), taskId, type);
   }
 
-  BaseRefs(Fn<List<Task<?>>> inputs, List<OpProvider<?>> ops, TaskId taskId, Class<Z> type) {
+  BaseRefs(Fn<List<Task<?>>> inputs, List<TaskContext<?>> taskContexts, TaskId taskId, Class<Z> type) {
     this.inputs = inputs;
-    this.ops = ops;
+    this.taskContexts = taskContexts;
     this.taskId = taskId;
     this.type = type;
   }

@@ -51,15 +51,15 @@ public class TaskTest {
   }
 
   @Test
-  public void shouldHaveListOfOperators() throws Exception {
-    final OpProviderGeneric<Object> op1 = mock(OpProviderGeneric.class);
-    final OpProviderGeneric<Object> op2 = mock(OpProviderGeneric.class);
+  public void shouldHaveListOfTaskContexts() throws Exception {
+    final TaskContextGeneric<Object> op1 = mock(TaskContextGeneric.class);
+    final TaskContextGeneric<Object> op2 = mock(TaskContextGeneric.class);
     Task<String> task = Task.named("Inputs").ofType(String.class)
-        .op(op1)
-        .op(op2)
+        .context(op1)
+        .context(op2)
         .process((a, b) -> "constant");
 
-    assertThat(task.ops(), contains(op1, op2));
+    assertThat(task.taskContexts(), contains(op1, op2));
   }
 
   //  Naming convention for tests

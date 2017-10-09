@@ -21,8 +21,22 @@
 package com.spotify.flo;
 
 /**
- * This is to be extended when building a provider that does not have requirements on the type
- * of the value returned by the task.
+ * This is to be extended when building a {@link TaskContext} that is intended to work only with a
+ * task whose returned value is of type {@link S}.
  */
-public abstract class OpProviderGeneric<T> implements OpProvider<T> {
+public abstract class TaskContextStrict<T, S> implements TaskContext<T> {
+
+  @Override
+  final public void onSuccess(Task<?> task, Object z) {
+   onSuccessStrict(task, (S) z);
+  }
+
+  /**
+   * Will be called just after a task that is using this task context has successfully evaluated.
+   *
+   * @param task The task that evaluated
+   * @param z    The return value of the evaluated task
+   */
+  public void onSuccessStrict(Task<?> task, S z) {
+  }
 }

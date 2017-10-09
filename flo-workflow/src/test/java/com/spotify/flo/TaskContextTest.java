@@ -33,14 +33,14 @@ import static org.mockito.Mockito.when;
 import org.junit.Test;
 import org.mockito.InOrder;
 
-public class OpProviderTest {
+public class TaskContextTest {
 
   private String setFromInjected;
 
   @Test
-  public void injectsOps() throws Exception {
+  public void injectsTaskContexts() throws Exception {
     Task<String> task = Task.named("inject").ofType(String.class)
-        .op(new TestProvider())
+        .context(new TestTaskContext())
         .process(injected -> injected.doSomething("foo"));
 
     String result = evalAndGet(task);
@@ -50,10 +50,10 @@ public class OpProviderTest {
   }
 
   @Test
-  public void injectsOpsSecond() throws Exception {
+  public void injectsTaskContextsSecond() throws Exception {
     Task<String> task = Task.named("inject").ofType(String.class)
         .in(() -> Task.named("foo").ofType(String.class).process(() -> "hej"))
-        .op(new TestProvider())
+        .context(new TestTaskContext())
         .process((a, b) -> b.doSomething("bar"));
 
     String result = evalAndGet(task);
@@ -64,12 +64,12 @@ public class OpProviderTest {
 
   @Test
   public void lifecycleMethodsCalledInOrder() throws Exception {
-    BasicProvider op1 = spy(new BasicProvider("foo"));
+    BasicTaskContext op1 = spy(new BasicTaskContext("foo"));
     Injected injected = spy(new Injected());
-    StrictProvider op2 = spy(new StrictProvider(injected, "bar"));
+    strictTaskContext op2 = spy(new strictTaskContext(injected, "bar"));
     Task<String> task = Task.named("inject").ofType(String.class)
-        .op(op1)
-        .op(op2)
+        .context(op1)
+        .context(op2)
         .process((i1, i2) -> {
           assertThat(i1, is("foo"));
           assertThat(i2, is("bar"));
@@ -89,11 +89,11 @@ public class OpProviderTest {
 
   @Test
   public void lifecycleMethodsCalledInOrderOnFail() throws Exception {
-    BasicProvider op1 = spy(new BasicProvider("foo"));
-    BasicProvider op2 = spy(new BasicProvider("bar"));
+    BasicTaskContext op1 = spy(new BasicTaskContext("foo"));
+    BasicTaskContext op2 = spy(new BasicTaskContext("bar"));
     Task<String> task = Task.named("inject").ofType(String.class)
-        .op(op1)
-        .op(op2)
+        .context(op1)
+        .context(op2)
         .process((i1, i2) -> {
           assertThat(i1, is("foo"));
           assertThat(i2, is("bar"));
@@ -119,11 +119,11 @@ public class OpProviderTest {
     TaskBuilder.F0<String> t2Fn = mock(TaskBuilder.F0.class);
     when(t1Fn.get()).thenReturn("hej");
     when(t2Fn.get()).thenReturn("hej");
-    BasicProvider op1 = spy(new BasicProvider("foo"));
+    BasicTaskContext op1 = spy(new BasicTaskContext("foo"));
 
     Task<String> task = Task.named("inject").ofType(String.class)
         .in(() -> Task.named("foo").ofType(String.class).process(t1Fn))
-        .op(op1)
+        .context(op1)
         .in(() -> Task.named("bar").ofType(String.class).process(t2Fn))
         .process((t1, i1, t2) -> {
           op1.mark();
@@ -145,10 +145,10 @@ public class OpProviderTest {
     //noinspection unchecked
     TaskBuilder.F0<String> t1Fn = mock(TaskBuilder.F0.class);
     when(t1Fn.get()).thenThrow(new RuntimeException("Fail"));
-    BasicProvider op1 = spy(new BasicProvider("foo"));
+    BasicTaskContext op1 = spy(new BasicTaskContext("foo"));
 
     Task<String> task = Task.named("inject").ofType(String.class)
-        .op(op1)
+        .context(op1)
         .in(() -> Task.named("foo").ofType(String.class).process(t1Fn))
         .process((i1, t1) -> {
           op1.mark();
@@ -170,7 +170,7 @@ public class OpProviderTest {
     }
   }
 
-  private class TestProvider extends OpProviderGeneric<Injected> {
+  private class TestTaskContext extends TaskContextGeneric<Injected> {
 
     @Override
     public Injected provide(EvalContext evalContext) {
@@ -178,11 +178,11 @@ public class OpProviderTest {
     }
   }
 
-  private class BasicProvider extends OpProviderGeneric<String> {
+  private class BasicTaskContext extends TaskContextGeneric<String> {
 
     private final String inject;
 
-    private BasicProvider(String inject) {
+    private BasicTaskContext(String inject) {
       this.inject = inject;
     }
 
@@ -196,12 +196,12 @@ public class OpProviderTest {
     }
   }
 
-  private class StrictProvider extends OpProviderStrict<String, String> {
+  private class strictTaskContext extends TaskContextStrict<String, String> {
 
     private final Injected injected;
     private final String value;
 
-    private StrictProvider(Injected injected, String value) {
+    private strictTaskContext(Injected injected, String value) {
       this.injected = injected;
       this.value = value;
     }

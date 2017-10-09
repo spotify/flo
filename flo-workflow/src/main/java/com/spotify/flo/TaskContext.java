@@ -21,26 +21,26 @@
 package com.spotify.flo;
 
 /**
- * Provider interface for operation objects that will be injected into tasks.
+ * TaskContext interface for operation objects that will be injected into tasks.
  *
- * <p>An operator is an object that is aware of the lifecycle of a task and can perform
- * operations before and after the task evaluates. A common use case for operators is to be able
+ * <p>A task context is an object that is aware of the lifecycle of a task and can perform
+ * operations before and after the task evaluates. A common use case for task contexts is to be able
  * to integrate 3rd party libraries into Flo in a way that makes them easily accessible to tasks.
  */
-public interface OpProvider<T> {
+public interface TaskContext<T> {
 
   /**
-   * Creates a new operator instance of type {@link T}. The given {@link EvalContext} will be
-   * the context which was used to evaluate the task which this operator is being injected into.
+   * Creates a new task context instance of type {@link T}. The given {@link EvalContext} will be
+   * the evaluation context for the task.
    * The task itself can be accessed through {@link EvalContext#currentTask()}.
    *
    * @param evalContext The evaluation context in which the current task is being evaluated
-   * @return An instance of the provided operator type
+   * @return An instance of the provided task context type
    */
   T provide(EvalContext evalContext);
 
   /**
-   * Will be called just before a task that is using this operator starts evaluating.
+   * Will be called just before a task that is using this task context starts evaluating.
    *
    * @param task The task being evaluated
    */
@@ -48,7 +48,7 @@ public interface OpProvider<T> {
   }
 
   /**
-   * Will be called just after a task that is using this operator has successfully evaluated.
+   * Will be called just after a task that is using this task context has successfully evaluated.
    *
    * @param task The task that evaluated
    * @param z    The return value of the evaluated task
@@ -57,7 +57,7 @@ public interface OpProvider<T> {
   }
 
   /**
-   * Will be called just after a task that is using this operator has failed evaluating.
+   * Will be called just after a task that is using this task context has failed evaluating.
    *
    * @param task      The task that evaluated
    * @param throwable The throwable that was thrown, causing the failure
