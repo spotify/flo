@@ -47,7 +47,7 @@ object Examples {
     in world(7)
 
     // we'll publish this endpoint when the task is done
-    op Publisher("MyEndpoint")
+    context Publisher("MyEndpoint")
 
     // run function
     process daFoo
@@ -108,7 +108,7 @@ object Publisher {
   def apply(endpointId: String) = new Publisher(endpointId)
 }
 
-class Publisher(val endpointId: String) extends OpProviderGeneric[Pub] {
+class Publisher(val endpointId: String) extends TaskContextGeneric[Pub] {
   def provide(ec: EvalContext): Pub = new Pub {
     def pub(uri: String): Unit = println(s"Publishing $uri to $endpointId")
   }

@@ -21,8 +21,8 @@ trait TaskBuilder0[Z] {
   def ->>(fn: EvalContext => Value[Z]): Task[Z] = processWithContext(fn)
   def └>>(fn: EvalContext => Value[Z]): Task[Z] = processWithContext(fn)
 
-  def op[A](opProviderGeneric: OpProviderGeneric[A]): TaskBuilder1[A, Z]
-  def op[A](opProviderStrict: OpProviderStrict[A, Z]): TaskBuilder1[A, Z]
+  def context[A](taskContextGeneric: TaskContextGeneric[A]): TaskBuilder1[A, Z]
+  def context[A](taskContextStrict: TaskContextStrict[A, Z]): TaskBuilder1[A, Z]
 
   def <[A](task: => Task[A]): TaskBuilder1[A, Z] = in(task)
   def <<[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z] = ins(tasks)
@@ -46,8 +46,8 @@ trait TaskBuilder{{arity}}[{{typeArgs}}, Z] {
   def └>>(fn: EvalContext => ({{typeArgs}}) => Value[Z]): Task[Z] = processWithContext(fn)
   {{^iter.isLast}}
 
-  def op[{{nextArg}}](opProviderGeneric: OpProviderGeneric[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
-  def op[{{nextArg}}](opProviderStrict: OpProviderStrict[{{nextArg}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
+  def context[{{nextArg}}](taskContextGeneric: TaskContextGeneric[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
+  def context[{{nextArg}}](taskContextStrict: TaskContextStrict[{{nextArg}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
 
   def in[{{nextArg}}](task: => Task[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
   def < [{{nextArg}}](task: => Task[{{nextArg}}]) = in(task)

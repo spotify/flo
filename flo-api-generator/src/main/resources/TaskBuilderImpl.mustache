@@ -44,36 +44,36 @@ final class {{implClassName}} {
 
     @Override
     public Task<Z> process(F0<Z> code) {
-      return Task.create(inputs, ops, type, gated(taskId, code::get), taskId);
+      return Task.create(inputs, taskContexts, type, gated(taskId, code::get), taskId);
     }
 
     @Override
     public Task<Z> processWithContext(F1<EvalContext, Value<Z>> code) {
-      return Task.create(inputs, ops, type, gatedVal(taskId, code::apply), taskId);
+      return Task.create(inputs, taskContexts, type, gatedVal(taskId, code::apply), taskId);
     }
 
     @Override
-    public <A> TaskBuilder1<A, Z> op(OpProviderGeneric<A> opProvider) {
-      return op_(opProvider);
+    public <A> TaskBuilder1<A, Z> context(TaskContextGeneric<A> taskContext) {
+      return context_(taskContext);
     }
 
     @Override
-    public <A> TaskBuilder1<A, Z> op(OpProviderStrict<A, Z> opProvider) {
-      return op_(opProvider);
+    public <A> TaskBuilder1<A, Z> context(TaskContextStrict<A, Z> taskContext) {
+      return context_(taskContext);
     }
 
-    private <A> TaskBuilder1<A, Z> op_(OpProvider<A> opProvider) {
+    private <A> TaskBuilder1<A, Z> context_(TaskContext<A> taskContext) {
       return new Builder1<>(
-          inputs, appendToList(ops, opProvider), taskId, type,
+          inputs, appendToList(taskContexts, taskContext), taskId, type,
           leafEvalFn(ec -> {
-            A aOp = opProvider.provide(ec);
+            A aTc = taskContext.provide(ec);
             return ec.immediateValue(f1 -> {
-              // call lifecycle methods on op
+              // call lifecycle methods on context
               Task<?> task = ec.currentTask().get();
-              opProvider.preRun(task);
-              Value<Z> zValue = f1.apply(aOp);
-              zValue.consume(z -> opProvider.onSuccess(task, z));
-              zValue.onFail(throwable -> opProvider.onFail(task, throwable));
+              taskContext.preRun(task);
+              Value<Z> zValue = f1.apply(aTc);
+              zValue.consume(z -> taskContext.onSuccess(task, z));
+              zValue.onFail(throwable -> taskContext.onFail(task, throwable));
 
               return zValue;
             });
@@ -85,7 +85,7 @@ final class {{implClassName}} {
       Fn<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new Builder1<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
-          ops, taskId, type,
+          taskContexts, taskId, type,
           leafEvalFn(ec -> {
             Value<A> aValue = ec.evaluate(aTaskSingleton.get());
             return aValue.map(a -> f1 -> f1.apply(a));
@@ -97,7 +97,7 @@ final class {{implClassName}} {
       Fn<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new Builder1<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
-          ops, taskId, type,
+          taskContexts, taskId, type,
           leafEvalFn(ec -> {
             Value<List<A>> aListValue = aTasksSingleton.get()
                 .stream().map(ec::evaluate).collect(toValueList(ec));
@@ -116,11 +116,11 @@ final class {{implClassName}} {
 
     Builder{{arity}}(
         Fn<List<Task<?>>> inputs,
-        List<OpProvider<?>> ops,
+        List<TaskContext<?>> taskContexts,
         TaskId taskId,
         Class<Z> type,
         ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator) {
-      super(inputs, ops, taskId, type);
+      super(inputs, taskContexts, taskId, type);
       this.evaluator = evaluator;
     }
 
@@ -133,7 +133,7 @@ final class {{implClassName}} {
       EvalClosure<Z> closure = ec -> evaluator.enclose(
           ({{arguments}}) -> ec.invokeProcessFn(taskId, () -> ec.value(() -> code.apply({{arguments}})))
       ).eval(ec);
-      return Task.create(inputs, ops, type, closure, taskId);
+      return Task.create(inputs, taskContexts, type, closure, taskId);
     }
 
     @Override
@@ -145,31 +145,31 @@ final class {{implClassName}} {
       EvalClosure<Z> closure = ec -> evaluator.enclose(
           ({{arguments}}) -> ec.invokeProcessFn(taskId, () -> code.apply(ec, {{arguments}}))
       ).eval(ec);
-      return Task.create(inputs, ops, type, closure, taskId);
+      return Task.create(inputs, taskContexts, type, closure, taskId);
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProviderGeneric<{{nextArg}}> opProvider) {
-      return op_(opProvider);
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> context(TaskContextGeneric<{{nextArg}}> taskContext) {
+      return context_(taskContext);
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op(OpProviderStrict<{{nextArg}}, Z> opProvider) {
-      return op_(opProvider);
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> context(TaskContextStrict<{{nextArg}}, Z> taskContext) {
+      return context_(taskContext);
     }
 
-    private <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> op_(OpProvider<{{nextArg}}> opProvider) {
+    private <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> context_(TaskContext<{{nextArg}}> taskContext) {
       return new Builder{{arityPlus}}<>(
-          inputs, appendToList(ops, opProvider), taskId, type,
+          inputs, appendToList(taskContexts, taskContext), taskId, type,
           evaluator.chain(ec -> {
-            {{nextArg}} {{nextArgLow}}Op = opProvider.provide(ec);
+            {{nextArg}} {{nextArgLow}}Tc = taskContext.provide(ec);
             return ec.immediateValue(f{{arityPlus}} -> ({{arguments}}) -> {
-              // call lifecycle methods on op
+              // call lifecycle methods on context
               Task<?> task = ec.currentTask().get();
-              opProvider.preRun(task);
-              Value<Z> zValue = f{{arityPlus}}.apply({{arguments}}, {{nextArgLow}}Op);
-              zValue.consume(z -> opProvider.onSuccess(task, z));
-              zValue.onFail(throwable -> opProvider.onFail(task, throwable));
+              taskContext.preRun(task);
+              Value<Z> zValue = f{{arityPlus}}.apply({{arguments}}, {{nextArgLow}}Tc);
+              zValue.consume(z -> taskContext.onSuccess(task, z));
+              zValue.onFail(throwable -> taskContext.onFail(task, throwable));
 
               return zValue;
             });
@@ -181,7 +181,7 @@ final class {{implClassName}} {
       Fn<Task<{{nextArg}}>> nextTaskSingleton = Singleton.create(nextTask);
       return new Builder{{arityPlus}}<>(
           lazyFlatten(inputs, lazyList(nextTaskSingleton)),
-          ops, taskId, type,
+          taskContexts, taskId, type,
           evaluator.chain(ec -> {
             Value<{{nextArg}}> nextValue = ec.evaluate(nextTaskSingleton.get());
             return nextValue.map(next -> f{{arityPlus}} -> ({{arguments}}) -> f{{arityPlus}}.apply({{arguments}}, next));
@@ -193,7 +193,7 @@ final class {{implClassName}} {
       Fn<List<Task<{{nextArg}}>>> nextTasksSingleton = Singleton.create(nextTasks);
       return new Builder{{arityPlus}}<>(
           lazyFlatten(inputs, lazyFlatten(nextTasksSingleton)),
-          ops, taskId, type,
+          taskContexts, taskId, type,
           evaluator.chain(ec -> {
             Value<List<{{nextArg}}>> nextValue = nextTasksSingleton.get()
                 .stream().map(ec::evaluate).collect(toValueList(ec));
@@ -209,11 +209,11 @@ final class {{implClassName}} {
 
     Builder{{lastArity}}(
         Fn<List<Task<?>>> inputs,
-        List<OpProvider<?>> ops,
+        List<TaskContext<?>> taskContexts,
         TaskId taskId,
         Class<Z> type,
         ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator) {
-      super(inputs, ops, taskId, type);
+      super(inputs, taskContexts, taskId, type);
       this.evaluator = evaluator;
     }
 
@@ -226,7 +226,7 @@ final class {{implClassName}} {
       EvalClosure<Z> closure = ec -> evaluator.enclose(
           ({{lastArguments}}) -> ec.invokeProcessFn(taskId, () -> ec.immediateValue(code.apply({{lastArguments}})))
       ).eval(ec);
-      return Task.create(inputs, ops, type, closure, taskId);
+      return Task.create(inputs, taskContexts, type, closure, taskId);
     }
 
     @Override
@@ -238,7 +238,7 @@ final class {{implClassName}} {
       EvalClosure<Z> closure = ec -> evaluator.enclose(
            ({{lastArguments}}) -> ec.invokeProcessFn(taskId, () -> code.apply(ec, {{lastArguments}}))
       ).eval(ec);
-      return Task.create(inputs, ops, type, closure, taskId);
+      return Task.create(inputs, taskContexts, type, closure, taskId);
     }
   }
 }

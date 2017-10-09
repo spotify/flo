@@ -22,16 +22,16 @@ private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) exten
   override def processWithContext(fn: (EvalContext) => Value[Z]): Task[Z] =
     builder.processWithContext(f1(fn))
 
-  override def op[A1](opProviderGeneric: OpProviderGeneric[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
+  override def context[A1](taskContextGeneric: TaskContextGeneric[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
     type J1 = A1
     val c1: J1 => A1 = identity
-    val builder = self.builder.op(opProviderGeneric)
+    val builder = self.builder.context(taskContextGeneric)
   }
 
-  override def op[A1](opProviderStrict: OpProviderStrict[A1, Z]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
+  override def context[A1](taskContextStrict: TaskContextStrict[A1, Z]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
     type J1 = A1
     val c1: J1 => A1 = identity
-    val builder = self.builder.op(opProviderStrict)
+    val builder = self.builder.context(taskContextStrict)
   }
 
   override def in[A1](task: => Task[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
@@ -71,20 +71,20 @@ private[dsl] trait Builder{{arity}}[{{typeArgsNumA}}, Z] extends TaskBuilder{{ar
     ))
   {{^iter.isLast}}
 
-  override def op[A{{arityPlus}}](opProviderGeneric: OpProviderGeneric[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
+  override def context[A{{arityPlus}}](taskContextGeneric: TaskContextGeneric[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
     new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] {
       type J{{arityPlus}} = A{{arityPlus}}
       val c{{arityPlus}}: J{{arityPlus}} => A{{arityPlus}} = identity
       val p: self.type = self
-      val builder = self.builder.op(opProviderGeneric)
+      val builder = self.builder.context(taskContextGeneric)
     }
 
-  override def op[A{{arityPlus}}](opProviderStrict: OpProviderStrict[A{{arityPlus}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
+  override def context[A{{arityPlus}}](taskContextStrict: TaskContextStrict[A{{arityPlus}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
     new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] {
       type J{{arityPlus}} = A{{arityPlus}}
       val c{{arityPlus}}: J{{arityPlus}} => A{{arityPlus}} = identity
       val p: self.type = self
-      val builder = self.builder.op(opProviderStrict)
+      val builder = self.builder.context(taskContextStrict)
     }
 
   override def in[A{{arityPlus}}](task: => Task[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
