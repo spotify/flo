@@ -32,7 +32,7 @@ public abstract class TaskContextStrict<T, S> implements TaskContext<T> {
   }
 
   /**
-   * Will be called just after a task that is using this context has successfully evaluated.
+   * Will be called just after a task that is using this task context has successfully evaluated.
    *
    * @param task The task that evaluated
    * @param z    The return value of the evaluated task
