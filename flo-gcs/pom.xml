@@ -4,7 +4,7 @@
   <parent>
     <artifactId>flo</artifactId>
     <groupId>com.spotify</groupId>
-    <version>0.1.6</version>
+    <version>0.1.7-SNAPSHOT</version>
   </parent>
 
   <name>Flo GCS Tasks</name>
@@ -17,12 +17,12 @@
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>flo-workflow</artifactId>
-      <version>0.1.6</version>
+      <version>0.1.7-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>flo-runner</artifactId>
-      <version>0.1.6</version>
+      <version>0.1.7-SNAPSHOT</version>
     </dependency>
 
     <dependency>
