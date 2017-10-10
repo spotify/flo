@@ -22,7 +22,6 @@ package com.spotify.flo.context;
 
 import static com.spotify.flo.Util.colored;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.spotify.flo.EvalContext;
@@ -268,7 +267,7 @@ public class MemoizingContext extends ForwardingEvalContext {
     try {
       return method.invoke(/* static */ null, args);
     } catch (IllegalAccessException | InvocationTargetException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
