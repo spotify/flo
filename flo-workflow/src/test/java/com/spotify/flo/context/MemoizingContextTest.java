@@ -63,7 +63,7 @@ public class MemoizingContextTest {
     assertThat(value, is(val("ups7", 7)));
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test(expected = IllegalStateException.class)
   public void evaluatesButFailsToStore() throws InterruptedException {
     context = MemoizingContext.builder(sync())
         .memoizer(new MemoizingContext.Memoizer<ExampleValue>() {
@@ -76,7 +76,7 @@ public class MemoizingContextTest {
           @Override
           public void store(Task<ExampleValue> task,
                             ExampleValue value) {
-            throw new RuntimeException();
+            throw new IllegalStateException();
           }
         })
         .build();
