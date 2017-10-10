@@ -50,7 +50,7 @@ public abstract class Task<T> implements Serializable {
 
   abstract Fn<List<Task<?>>> lazyInputs();
 
-  public abstract List<TaskContext<?>> taskContexts();
+  public abstract List<TaskContext<?>> contexts();
 
   public List<Task<?>> inputs() {
     return lazyInputs().get();
@@ -84,11 +84,11 @@ public abstract class Task<T> implements Serializable {
 
   static <T> Task<T> create(
       Fn<List<Task<?>>> inputs,
-      List<TaskContext<?>> taskContexts,
+      List<TaskContext<?>> contexts,
       Class<T> type,
       EvalClosure<T> code,
       TaskId taskId) {
-    return new AutoValue_Task<>(taskId, type, code, inputs, taskContexts);
+    return new AutoValue_Task<>(taskId, type, code, inputs, contexts);
   }
 
   /**

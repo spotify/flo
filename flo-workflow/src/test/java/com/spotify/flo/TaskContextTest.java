@@ -64,50 +64,50 @@ public class TaskContextTest {
 
   @Test
   public void lifecycleMethodsCalledInOrder() throws Exception {
-    BasicTaskContext op1 = spy(new BasicTaskContext("foo"));
+    BasicTaskContext tc1 = spy(new BasicTaskContext("foo"));
     Injected injected = spy(new Injected());
-    strictTaskContext op2 = spy(new strictTaskContext(injected, "bar"));
+    strictTaskContext tc2 = spy(new strictTaskContext(injected, "bar"));
     Task<String> task = Task.named("inject").ofType(String.class)
-        .context(op1)
-        .context(op2)
+        .context(tc1)
+        .context(tc2)
         .process((i1, i2) -> {
           assertThat(i1, is("foo"));
           assertThat(i2, is("bar"));
-          op1.mark();
+          tc1.mark();
           return i1 + i2;
         });
 
     evalAndGet(task);
-    InOrder inOrder = inOrder(op1, op2, injected);
-    inOrder.verify(op1).preRun(task);
-    inOrder.verify(op2).preRun(task);
-    inOrder.verify(op1).mark();
-    inOrder.verify(op2).onSuccess(task, "foobar");
+    InOrder inOrder = inOrder(tc1, tc2, injected);
+    inOrder.verify(tc1).preRun(task);
+    inOrder.verify(tc2).preRun(task);
+    inOrder.verify(tc1).mark();
+    inOrder.verify(tc2).onSuccess(task, "foobar");
     inOrder.verify(injected).doSomething("foobar");
-    inOrder.verify(op1).onSuccess(task, "foobar");
+    inOrder.verify(tc1).onSuccess(task, "foobar");
   }
 
   @Test
   public void lifecycleMethodsCalledInOrderOnFail() throws Exception {
-    BasicTaskContext op1 = spy(new BasicTaskContext("foo"));
-    BasicTaskContext op2 = spy(new BasicTaskContext("bar"));
+    BasicTaskContext tc1 = spy(new BasicTaskContext("foo"));
+    BasicTaskContext tc2 = spy(new BasicTaskContext("bar"));
     Task<String> task = Task.named("inject").ofType(String.class)
-        .context(op1)
-        .context(op2)
+        .context(tc1)
+        .context(tc2)
         .process((i1, i2) -> {
           assertThat(i1, is("foo"));
           assertThat(i2, is("bar"));
-          op1.mark();
+          tc1.mark();
           throw new RuntimeException("force fail");
         });
 
     Throwable throwable = evalAndGetException(task);
-    InOrder inOrder = inOrder(op1, op2);
-    inOrder.verify(op1).preRun(task);
-    inOrder.verify(op2).preRun(task);
-    inOrder.verify(op1).mark();
-    inOrder.verify(op2).onFail(task, throwable);
-    inOrder.verify(op1).onFail(task, throwable);
+    InOrder inOrder = inOrder(tc1, tc2);
+    inOrder.verify(tc1).preRun(task);
+    inOrder.verify(tc2).preRun(task);
+    inOrder.verify(tc1).mark();
+    inOrder.verify(tc2).onFail(task, throwable);
+    inOrder.verify(tc1).onFail(task, throwable);
     assertThat(throwable.getMessage(), is("force fail"));
   }
 
@@ -119,25 +119,25 @@ public class TaskContextTest {
     TaskBuilder.F0<String> t2Fn = mock(TaskBuilder.F0.class);
     when(t1Fn.get()).thenReturn("hej");
     when(t2Fn.get()).thenReturn("hej");
-    BasicTaskContext op1 = spy(new BasicTaskContext("foo"));
+    BasicTaskContext tc1 = spy(new BasicTaskContext("foo"));
 
     Task<String> task = Task.named("inject").ofType(String.class)
         .in(() -> Task.named("foo").ofType(String.class).process(t1Fn))
-        .context(op1)
+        .context(tc1)
         .in(() -> Task.named("bar").ofType(String.class).process(t2Fn))
         .process((t1, i1, t2) -> {
-          op1.mark();
+          tc1.mark();
           return t1 + i1 + t2;
         });
 
     evalAndGet(task);
-    InOrder inOrder = inOrder(t1Fn, t2Fn, op1);
+    InOrder inOrder = inOrder(t1Fn, t2Fn, tc1);
     inOrder.verify(t2Fn).get();
-    inOrder.verify(op1).provide(any());
+    inOrder.verify(tc1).provide(any());
     inOrder.verify(t1Fn).get();
-    inOrder.verify(op1).preRun(task);
-    inOrder.verify(op1).mark();
-    inOrder.verify(op1).onSuccess(task, "hejfoohej");
+    inOrder.verify(tc1).preRun(task);
+    inOrder.verify(tc1).mark();
+    inOrder.verify(tc1).onSuccess(task, "hejfoohej");
   }
 
   @Test
@@ -145,21 +145,21 @@ public class TaskContextTest {
     //noinspection unchecked
     TaskBuilder.F0<String> t1Fn = mock(TaskBuilder.F0.class);
     when(t1Fn.get()).thenThrow(new RuntimeException("Fail"));
-    BasicTaskContext op1 = spy(new BasicTaskContext("foo"));
+    BasicTaskContext tc1 = spy(new BasicTaskContext("foo"));
 
     Task<String> task = Task.named("inject").ofType(String.class)
-        .context(op1)
+        .context(tc1)
         .in(() -> Task.named("foo").ofType(String.class).process(t1Fn))
         .process((i1, t1) -> {
-          op1.mark();
+          tc1.mark();
           return t1 + i1;
         });
 
     Throwable throwable = evalAndGetException(task);
     assertThat(throwable.getMessage(), is("Fail"));
-    InOrder inOrder = inOrder(t1Fn, op1);
+    InOrder inOrder = inOrder(t1Fn, tc1);
     inOrder.verify(t1Fn).get();
-    inOrder.verify(op1).provide(any());
+    inOrder.verify(tc1).provide(any());
     inOrder.verifyNoMoreInteractions();
   }
 

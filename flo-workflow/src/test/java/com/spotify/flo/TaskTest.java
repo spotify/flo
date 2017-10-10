@@ -52,14 +52,14 @@ public class TaskTest {
 
   @Test
   public void shouldHaveListOfTaskContexts() throws Exception {
-    final TaskContextGeneric<Object> op1 = mock(TaskContextGeneric.class);
-    final TaskContextGeneric<Object> op2 = mock(TaskContextGeneric.class);
+    final TaskContextGeneric<Object> tc1 = mock(TaskContextGeneric.class);
+    final TaskContextGeneric<Object> tc2 = mock(TaskContextGeneric.class);
     Task<String> task = Task.named("Inputs").ofType(String.class)
-        .context(op1)
-        .context(op2)
+        .context(tc1)
+        .context(tc2)
         .process((a, b) -> "constant");
 
-    assertThat(task.taskContexts(), contains(op1, op2));
+    assertThat(task.contexts(), contains(tc1, tc2));
   }
 
   //  Naming convention for tests
