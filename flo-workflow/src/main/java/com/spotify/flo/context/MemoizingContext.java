@@ -215,10 +215,12 @@ public class MemoizingContext extends ForwardingEvalContext {
     final Task<T> task = evalBundle.task;
     final Memoizer<T> memoizer = evalBundle.memoizer;
 
-    final Value<T> tValue = delegate.invokeProcessFn(taskId, processFn);
-    tValue.consume(v -> memoizer.store(task, v));
+    final Value<T> newValue = processFn.get().map(v -> {
+      memoizer.store(task, v);
+      return v;
+    });
 
-    return tValue;
+    return delegate.invokeProcessFn(taskId, () -> newValue);
   }
 
   /**
