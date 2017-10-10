@@ -170,6 +170,7 @@ public final class FloRunner {
       listener = new ChainedListener(newListener, listener, logging);
     }
 
+    closer.register(listener);
     return InstrumentedContext.composeWith(delegate, listener);
   }
 

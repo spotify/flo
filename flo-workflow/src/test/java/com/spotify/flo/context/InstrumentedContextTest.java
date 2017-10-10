@@ -31,12 +31,17 @@ import com.google.common.collect.Lists;
 import com.spotify.flo.Task;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskId;
+import java.io.IOException;
 import java.util.List;
 import org.junit.Test;
 
 public class InstrumentedContextTest {
 
   InstrumentedContext.Listener listener = new InstrumentedContext.Listener() {
+    @Override
+    public void close() throws IOException {
+    }
+
     @Override
     public void task(Task<?> task) {
       calls.add("task:" + task.id());

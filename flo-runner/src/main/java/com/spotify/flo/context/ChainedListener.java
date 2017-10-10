@@ -24,6 +24,9 @@ import static java.util.Objects.requireNonNull;
 
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * A {@link InstrumentedContext.Listener} that chains calls between two other listener instances.
@@ -60,5 +63,30 @@ class ChainedListener implements InstrumentedContext.Listener {
     } catch (Throwable t) {
       logging.exception(t);
     }
+  }
+
+  @Override
+  public void close() throws IOException {
+    final Optional<IOException> exception =
+        Stream.of(first, second)
+            .map(this::close)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .findFirst();
+
+    // TODO: Throw a composition of two exceptions when both first and second throw exceptions
+    if (exception.isPresent()) {
+      throw exception.get();
+    }
+  }
+
+  private Optional<IOException> close(InstrumentedContext.Listener listener) {
+    try {
+      listener.close();
+    } catch (IOException e) {
+      logging.exception(e);
+      return Optional.of(e);
+    }
+    return Optional.empty();
   }
 }

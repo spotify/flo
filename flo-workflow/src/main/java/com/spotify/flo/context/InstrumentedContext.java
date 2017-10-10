@@ -24,6 +24,7 @@ import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
+import java.io.Closeable;
 import java.util.Objects;
 
 /**
@@ -49,7 +50,7 @@ public class InstrumentedContext extends ForwardingEvalContext {
   /**
    * A listener for instrumented evaluation. See {@link InstrumentedContext} for more details.
    */
-  public interface Listener {
+  public interface Listener extends Closeable {
 
     /**
      * Called when a {@link Task} is discovered.
