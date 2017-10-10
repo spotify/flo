@@ -28,8 +28,8 @@ import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
 
 import com.google.common.collect.Lists;
-import com.spotify.flo.Task;
 import com.spotify.flo.EvalContext;
+import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import java.util.List;
 import org.junit.Test;
