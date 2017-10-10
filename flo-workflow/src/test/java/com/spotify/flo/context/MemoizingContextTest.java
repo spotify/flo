@@ -26,8 +26,8 @@ import static org.junit.Assert.assertThat;
 
 import com.google.auto.value.AutoValue;
 import com.spotify.flo.AwaitValue;
-import com.spotify.flo.Task;
 import com.spotify.flo.EvalContext;
+import com.spotify.flo.Task;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Before;
@@ -61,6 +61,27 @@ public class MemoizingContextTest {
     assertThat(countUpstreamRuns, is(1));
     assertThat(countExampleRuns, is(1));
     assertThat(value, is(val("ups7", 7)));
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void evaluatesButFailsToStore() throws InterruptedException {
+    context = MemoizingContext.builder(sync())
+        .memoizer(new MemoizingContext.Memoizer<ExampleValue>() {
+          @Override
+          public Optional<ExampleValue> lookup(
+              Task<ExampleValue> task) {
+            return Optional.empty();
+          }
+
+          @Override
+          public void store(Task<ExampleValue> task,
+                            ExampleValue value) {
+            throw new IllegalStateException();
+          }
+        })
+        .build();
+
+    context.evaluate(example(7));
   }
 
   @Test
