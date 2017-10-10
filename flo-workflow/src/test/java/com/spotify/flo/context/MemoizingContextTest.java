@@ -20,17 +20,15 @@
 
 package com.spotify.flo.context;
 
-import static com.spotify.flo.EvalContext.async;
 import static com.spotify.flo.EvalContext.sync;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 import com.google.auto.value.AutoValue;
 import com.spotify.flo.AwaitValue;
-import com.spotify.flo.Task;
 import com.spotify.flo.EvalContext;
+import com.spotify.flo.Task;
 import java.util.Optional;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +38,7 @@ public class MemoizingContextTest {
   static ExampleValue value;
   static MemoizingContext.Memoizer<ExampleValue> memoizer;
 
-  EvalContext context = MemoizingContext.composeWith(async(Executors.newSingleThreadExecutor()));
+  EvalContext context = MemoizingContext.composeWith(sync());
 
   int countUpstreamRuns = 0;
   int countExampleRuns = 0;
@@ -63,6 +61,27 @@ public class MemoizingContextTest {
     assertThat(countUpstreamRuns, is(1));
     assertThat(countExampleRuns, is(1));
     assertThat(value, is(val("ups7", 7)));
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void evaluatesButFailsToStore() throws InterruptedException {
+    context = MemoizingContext.builder(sync())
+        .memoizer(new MemoizingContext.Memoizer<ExampleValue>() {
+          @Override
+          public Optional<ExampleValue> lookup(
+              Task<ExampleValue> task) {
+            return Optional.empty();
+          }
+
+          @Override
+          public void store(Task<ExampleValue> task,
+                            ExampleValue value) {
+            throw new RuntimeException();
+          }
+        })
+        .build();
+
+    context.evaluate(example(7));
   }
 
   @Test
