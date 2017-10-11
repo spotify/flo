@@ -22,7 +22,6 @@ package com.spotify.flo.context;
 
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
-import java.io.IOException;
 
 class NoopListener implements InstrumentedContext.Listener {
 
