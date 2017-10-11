@@ -25,7 +25,9 @@ import static java.util.Objects.requireNonNull;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -67,16 +69,15 @@ class ChainedListener implements InstrumentedContext.Listener {
 
   @Override
   public void close() throws IOException {
-    final Optional<IOException> exception =
-        Stream.of(first, second)
-            .map(this::close)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .findFirst();
+    final List<IOException> exceptions = Stream.of(first, second)
+        .map(this::close)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toList());
 
     // TODO: Throw a composition of two exceptions when both first and second throw exceptions
-    if (exception.isPresent()) {
-      throw exception.get();
+    if (!exceptions.isEmpty()) {
+      throw exceptions.get(0);
     }
   }
 

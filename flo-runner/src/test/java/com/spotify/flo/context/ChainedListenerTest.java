@@ -27,6 +27,7 @@ import static org.mockito.Mockito.verify;
 import com.spotify.flo.Task;
 import com.spotify.flo.context.InstrumentedContext.Listener;
 import com.spotify.flo.context.InstrumentedContext.Listener.Phase;
+import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,6 +40,8 @@ public class ChainedListenerTest {
   @Mock Listener first;
   @Mock Listener second;
   @Mock Logging logging;
+
+  final IOException ioException = new IOException("TestException");
 
   Task<String> task = Task.named("test").ofType(String.class).process(() -> "hello");
 
@@ -83,5 +86,38 @@ public class ChainedListenerTest {
 
     verify(logging).exception(exception);
     verify(second).status(task.id(), Phase.START);
+  }
+
+  @Test(expected = IOException.class)
+  public void shouldThrowExceptionOnClose() throws IOException {
+    doThrow(ioException).when(first).close();
+    verifyListenerClose();
+  }
+
+  @Test(expected = IOException.class)
+  public void shouldThrowExceptionOnClose2() throws IOException {
+    doThrow(ioException).when(second).close();
+    verifyListenerClose();
+  }
+
+  @Test(expected = IOException.class)
+  public void shouldThrowExceptionOnClose3() throws IOException {
+    doThrow(ioException).when(first).close();
+    doThrow(ioException).when(second).close();
+    verifyListenerClose();
+  }
+
+  @Test
+  public void shouldCloseWithoutException() throws IOException {
+    verifyListenerClose();
+  }
+
+  private void verifyListenerClose() throws IOException {
+    try {
+      sut.close();
+    } finally {
+      verify(first).close();
+      verify(second).close();
+    }
   }
 }
