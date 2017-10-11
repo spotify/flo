@@ -25,6 +25,7 @@ import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Objects;
 
 /**
@@ -67,6 +68,14 @@ public class InstrumentedContext extends ForwardingEvalContext {
      * @param phase  The phase of evaluation
      */
     void status(TaskId task, Phase phase);
+
+    /**
+     * Called to close resources or connections used by the implementing class.
+     *
+     * @throws IOException
+     */
+    @Override
+    default void close() throws IOException {}
 
     /**
      * The different phases of task evaluation.

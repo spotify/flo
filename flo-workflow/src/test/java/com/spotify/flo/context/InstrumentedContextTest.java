@@ -39,10 +39,6 @@ public class InstrumentedContextTest {
 
   InstrumentedContext.Listener listener = new InstrumentedContext.Listener() {
     @Override
-    public void close() throws IOException {
-    }
-
-    @Override
     public void task(Task<?> task) {
       calls.add("task:" + task.id());
     }

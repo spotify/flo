@@ -33,8 +33,4 @@ class NoopListener implements InstrumentedContext.Listener {
   @Override
   public void status(TaskId taskId, Phase phase) {
   }
-
-  @Override
-  public void close() throws IOException {
-  }
 }

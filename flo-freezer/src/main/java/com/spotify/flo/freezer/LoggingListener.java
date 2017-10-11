@@ -25,7 +25,6 @@ import static com.spotify.flo.Util.colored;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.InstrumentedContext;
-import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,9 +45,5 @@ public class LoggingListener implements InstrumentedContext.Listener {
   @Override
   public void status(TaskId task, Phase phase) {
     LOG.info("{} :: {}", colored(task), phase);
-  }
-
-  @Override
-  public void close() throws IOException {
   }
 }
