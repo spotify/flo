@@ -108,8 +108,8 @@ public class MemoizingContext extends ForwardingEvalContext {
     @interface Impl { }
 
     /**
-     * Lookup a memoized value for a given task. Implementation can throw out a {@link RuntimeException}
-     * and that would fail the task evaluation.
+     * Lookup a memoized value for a given task. Implementation can throw out a
+     * {@link RuntimeException} and that would fail the task evaluation.
      *
      * @param task  The task for which the lookup is made
      * @return An optional memoized value for the task
@@ -117,8 +117,8 @@ public class MemoizingContext extends ForwardingEvalContext {
     Optional<T> lookup(Task<T> task);
 
     /**
-     * Store an evaluated value for a given task. Implementation can throw out a {@link RuntimeException}
-     * and that would fail the task evaluation.
+     * Store an evaluated value for a given task. Implementation can throw out a
+     * {@link RuntimeException} and that would fail the task evaluation.
      *
      * @param task   The task for which the value was produced
      * @param value  The value that was produced
