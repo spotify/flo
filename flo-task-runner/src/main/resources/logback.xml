@@ -1,9 +1,0 @@
-<configuration debug="false">
-  <root level="debug">
-    <appender class="ch.qos.logback.core.ConsoleAppender">
-      <encoder>
-        <pattern>%msg%n</pattern>
-      </encoder>
-    </appender>
-  </root>
-</configuration>
