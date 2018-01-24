@@ -24,20 +24,13 @@ import static com.spotify.flo.Util.colored;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.ansi;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.ConsoleAppender;
 import com.spotify.apollo.core.ApolloHelpException;
 import com.spotify.apollo.core.Service;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskInfo;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.status.TaskStatusException;
-import com.typesafe.config.Config;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 import org.apache.commons.lang.time.DurationFormatUtils;
 import org.fusesource.jansi.AnsiConsole;
@@ -59,7 +52,6 @@ class ConsoleLogging implements Logging {
   @Override
   public Logging init(Service.Instance instance) {
     AnsiConsole.systemInstall();
-    configureLogback(instance);
     return this;
   }
 
@@ -134,39 +126,5 @@ class ConsoleLogging implements Logging {
     LOG.info("Evaluation plan:");
     PrintUtils.tree(taskInfo).forEach(LOG::info);
     LOG.info("");
-  }
-
-  private static void configureLogback(Service.Instance instance) {
-    final Config config = instance.getConfig();
-    final int level = config.hasPath("logging.verbosity")
-        ? config.getInt("logging.verbosity")
-        : 0;
-
-    final ch.qos.logback.classic.Logger
-        floLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("com.spotify.flo");
-
-    if (level > 1) {
-      floLogger.setLevel(Level.TRACE);
-    } else if (level > 0) {
-      floLogger.setLevel(Level.DEBUG);
-    }
-
-    if (level > 0) {
-      final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-      final ch.qos.logback.classic.Logger
-          rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(
-          ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-      final ConsoleAppender<ILoggingEvent> stdout =
-          (ConsoleAppender<ILoggingEvent>) rootLogger.getAppender("STDOUT");
-      final PatternLayoutEncoder layout = new PatternLayoutEncoder();
-      layout.setPattern("%gray(%d{HH:mm:ss.SSS} %-28thread) %highlight(| %-5level| %-10logger{0}) "
-                        + "%green(|>) %msg%n");
-      layout.setCharset(StandardCharsets.UTF_8);
-      layout.setContext(lc);
-      layout.start();
-
-      stdout.setEncoder(layout);
-      stdout.start();
-    }
   }
 }

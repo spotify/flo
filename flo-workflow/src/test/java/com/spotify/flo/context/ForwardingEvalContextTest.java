@@ -28,10 +28,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.spotify.flo.EvalContext;
+import com.spotify.flo.EvalContext.Value;
 import com.spotify.flo.EvalContextWithTask;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
-import com.spotify.flo.EvalContext.Value;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
