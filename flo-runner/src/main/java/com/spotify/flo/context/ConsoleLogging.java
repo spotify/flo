@@ -24,14 +24,11 @@ import static com.spotify.flo.Util.colored;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.ansi;
 
-import com.spotify.apollo.core.ApolloHelpException;
-import com.spotify.apollo.core.Service;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskInfo;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.status.TaskStatusException;
 import java.io.IOException;
-import java.util.stream.Stream;
 import org.apache.commons.lang.time.DurationFormatUtils;
 import org.fusesource.jansi.AnsiConsole;
 import org.slf4j.Logger;
@@ -50,9 +47,8 @@ class ConsoleLogging implements Logging {
   private static final Logger LOG = LoggerFactory.getLogger("com.spotify.flo.context.FloRunner");
 
   @Override
-  public Logging init(Service.Instance instance) {
+  public void init() {
     AnsiConsole.systemInstall();
-    return this;
   }
 
   @Override
@@ -109,12 +105,6 @@ class ConsoleLogging implements Logging {
     } else {
       LOG.warn("Exception", throwable);
     }
-  }
-
-  @Override
-  public void help(ApolloHelpException ahe) {
-    Stream.of(ahe.getMessage().split("\n"))
-        .forEachOrdered(LOG::info);
   }
 
   @Override

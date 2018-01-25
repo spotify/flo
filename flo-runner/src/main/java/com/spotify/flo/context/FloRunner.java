@@ -28,7 +28,6 @@ import static java.util.Objects.requireNonNull;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Closer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.spotify.apollo.core.ApolloHelpException;
 import com.spotify.apollo.core.Service;
 import com.spotify.apollo.core.Services;
 import com.spotify.flo.EvalContext;
@@ -99,9 +98,6 @@ public final class FloRunner {
       i.waitForShutdown();
       final long elapsed = System.currentTimeMillis() - t0;
       logging.complete(task.id(), elapsed);
-    } catch (ApolloHelpException ahe) {
-      logging.help(ahe);
-      System.exit(1);
     } catch (Throwable e) {
       logging.exception(e);
       System.exit(1);
@@ -112,7 +108,8 @@ public final class FloRunner {
 
   private Task<?> run(TaskConstructor<?> taskConstructor) {
     logging = (isMode("tree") && isJsonMode()) ? new JsonTreeLogging() : logging;
-    closer.register(logging.init(instance));
+    logging.init();
+    closer.register(logging);
 
     final ImmutableList<String> unprocessedArgs = instance.getUnprocessedArgs();
     final String[] taskArgs = unprocessedArgs.toArray(new String[unprocessedArgs.size()]);
