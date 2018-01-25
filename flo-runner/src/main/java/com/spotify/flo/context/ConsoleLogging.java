@@ -58,6 +58,7 @@ class ConsoleLogging implements Logging {
   @Override
   public void close() throws IOException {
     AnsiConsole.systemUninstall();
+    // TODO: find out what the print below does
     AnsiConsole.out.print(ansi().a("\u001B[?25h"));
     AnsiConsole.out.flush();
   }
