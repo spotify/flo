@@ -57,11 +57,6 @@
       </dependency>
 
       <dependency>
-        <groupId>net.sf.jopt-simple</groupId>
-        <artifactId>jopt-simple</artifactId>
-        <version>4.9</version>
-      </dependency>
-      <dependency>
         <groupId>com.google.auto.service</groupId>
         <artifactId>auto-service</artifactId>
         <version>1.0-rc2</version>
@@ -79,7 +74,7 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.7.20</version>
+        <version>1.7.25</version>
       </dependency>
       <dependency>
         <groupId>org.fusesource.jansi</groupId>

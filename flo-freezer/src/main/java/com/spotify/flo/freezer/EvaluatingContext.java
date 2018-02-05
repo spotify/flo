@@ -23,9 +23,9 @@ package com.spotify.flo.freezer;
 import static com.spotify.flo.Util.colored;
 import static com.spotify.flo.freezer.PersistingContext.cleanForFilename;
 
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
-import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.ForwardingEvalContext;
 import java.nio.file.Files;

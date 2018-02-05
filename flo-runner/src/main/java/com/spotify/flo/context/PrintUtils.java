@@ -22,13 +22,10 @@ package com.spotify.flo.context;
 
 import static com.spotify.flo.Util.colored;
 import static java.util.stream.Collectors.joining;
-import static org.fusesource.jansi.Ansi.Color.CYAN;
-import static org.fusesource.jansi.Ansi.Color.WHITE;
 import static org.fusesource.jansi.Ansi.Color.YELLOW;
 import static org.fusesource.jansi.Ansi.ansi;
 
 import com.google.common.collect.ImmutableList;
-import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskInfo;
 import java.util.ArrayList;
 import java.util.List;

@@ -26,8 +26,8 @@ import static org.junit.Assert.assertThat;
 
 import com.spotify.flo.AwaitValue;
 import com.spotify.flo.EvalContext;
-import com.spotify.flo.Task;
 import com.spotify.flo.EvalContext.Promise;
+import com.spotify.flo.Task;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;

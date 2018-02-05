@@ -20,8 +20,6 @@
 
 package com.spotify.flo.context;
 
-import com.spotify.apollo.core.ApolloHelpException;
-import com.spotify.apollo.core.Service;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskInfo;
 import java.io.Closeable;
@@ -29,9 +27,7 @@ import java.io.IOException;
 
 interface Logging extends Closeable {
 
-  default Logging init(Service.Instance instance) {
-    return this;
-  }
+  default void init() {}
 
   default void header() {}
 
@@ -46,8 +42,6 @@ interface Logging extends Closeable {
   default void complete(TaskId taskId, long elapsed) {}
 
   default void exception(Throwable throwable) {}
-
-  default void help(ApolloHelpException ahe) {}
 
   default void tree(TaskInfo taskInfo) {}
 
