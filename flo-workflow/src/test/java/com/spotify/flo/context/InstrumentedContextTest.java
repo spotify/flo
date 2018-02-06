@@ -27,10 +27,10 @@ import static com.spotify.flo.context.InstrumentedContext.Listener.Phase.SUCCESS
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
 
-import com.google.common.collect.Lists;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 
@@ -48,7 +48,7 @@ public class InstrumentedContextTest {
     }
   };
 
-  List<String> calls = Lists.newArrayList();
+  List<String> calls = new ArrayList<>();
   EvalContext context = InstrumentedContext.composeWith(sync(), listener);
 
   @Test

@@ -22,8 +22,6 @@ package com.spotify.flo.context;
 
 import static com.spotify.flo.Util.colored;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
@@ -36,8 +34,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import org.slf4j.Logger;
@@ -145,10 +146,10 @@ public class MemoizingContext extends ForwardingEvalContext {
     }
   };
 
-  private final ImmutableMap<Class<?>, Memoizer<?>> memoizers;
-  private final ConcurrentMap<TaskId, EvalBundle<?>> ongoing = Maps.newConcurrentMap();
+  private final Map<Class<?>, Memoizer<?>> memoizers;
+  private final ConcurrentMap<TaskId, EvalBundle<?>> ongoing = new ConcurrentHashMap<>();
 
-  private MemoizingContext(EvalContext baseContext, ImmutableMap<Class<?>, Memoizer<?>> memoizers) {
+  private MemoizingContext(EvalContext baseContext, Map<Class<?>, Memoizer<?>> memoizers) {
     super(baseContext);
     this.memoizers = Objects.requireNonNull(memoizers);
   }
@@ -164,7 +165,7 @@ public class MemoizingContext extends ForwardingEvalContext {
   public static class Builder {
 
     private final EvalContext baseContext;
-    private final ImmutableMap.Builder<Class<?>, Memoizer<?>> memoizers = ImmutableMap.builder();
+    private final Map<Class<?>, Memoizer<?>> memoizers = new HashMap<>();
 
     public Builder(EvalContext baseContext) {
       this.baseContext = Objects.requireNonNull(baseContext);
@@ -179,7 +180,7 @@ public class MemoizingContext extends ForwardingEvalContext {
     }
 
     public EvalContext build() {
-      return new MemoizingContext(baseContext, memoizers.build());
+      return new MemoizingContext(baseContext, memoizers);
     }
 
     private void mapMemoizer(Memoizer<?> memoizer) {
