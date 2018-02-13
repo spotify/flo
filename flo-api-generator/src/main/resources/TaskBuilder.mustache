@@ -27,8 +27,8 @@ public interface {{interfaceName}}<Z> {
   <A> {{interfaceName}}1<A, Z> context(TaskContextGeneric<A> taskContextGeneric);
   <A> {{interfaceName}}1<A, Z> context(TaskContextStrict<A, Z> taskContextStrict);
 
-  <A> {{interfaceName}}1<A, Z> in(Fn<Task<A>> task);
-  <A> {{interfaceName}}1<List<A>, Z> ins(Fn<List<Task<A>>> tasks);
+  <A> {{interfaceName}}1<A, Z> input(Fn<Task<A>> task);
+  <A> {{interfaceName}}1<List<A>, Z> inputs(Fn<List<Task<A>>> tasks);
 {{#genBuilder}}
 
   interface {{interfaceName}}{{arity}}<{{typeArgs}}, Z> {
@@ -39,8 +39,8 @@ public interface {{interfaceName}}<Z> {
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> context(TaskContextGeneric<{{nextArg}}> taskContextGeneric);
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> context(TaskContextStrict<{{nextArg}}, Z> taskContextStrict);
 
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> in(Fn<Task<{{nextArg}}>> task);
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Z> ins(Fn<List<Task<{{nextArg}}>>> tasks);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> input(Fn<Task<{{nextArg}}>> task);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Z> inputs(Fn<List<Task<{{nextArg}}>>> tasks);
   {{/iter.isLast}}
   }
 {{/genBuilder}}

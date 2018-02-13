@@ -81,7 +81,7 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <A> {{interfaceName}}1<A, Z> in(Fn<Task<A>> aTask) {
+    public <A> {{interfaceName}}1<A, Z> input(Fn<Task<A>> aTask) {
       Fn<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new Builder1<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
@@ -93,7 +93,7 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <A> {{interfaceName}}1<List<A>, Z> ins(Fn<List<Task<A>>> aTasks) {
+    public <A> {{interfaceName}}1<List<A>, Z> inputs(Fn<List<Task<A>>> aTasks) {
       Fn<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new Builder1<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
@@ -177,7 +177,7 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> in(Fn<Task<{{nextArg}}>> nextTask) {
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> input(Fn<Task<{{nextArg}}>> nextTask) {
       Fn<Task<{{nextArg}}>> nextTaskSingleton = Singleton.create(nextTask);
       return new Builder{{arityPlus}}<>(
           lazyFlatten(inputs, lazyList(nextTaskSingleton)),
@@ -189,7 +189,7 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Z> ins(Fn<List<Task<{{nextArg}}>>> nextTasks) {
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Z> inputs(Fn<List<Task<{{nextArg}}>>> nextTasks) {
       Fn<List<Task<{{nextArg}}>>> nextTasksSingleton = Singleton.create(nextTasks);
       return new Builder{{arityPlus}}<>(
           lazyFlatten(inputs, lazyFlatten(nextTasksSingleton)),

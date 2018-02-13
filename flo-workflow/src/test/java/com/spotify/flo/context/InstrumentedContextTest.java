@@ -92,8 +92,8 @@ public class InstrumentedContextTest {
 
   Task<Integer> example(int i) {
     return Task.named("example", i).ofType(Integer.class)
-        .in(() -> upstream(i))
-        .in(() -> upstream(i+1))
+        .input(() -> upstream(i))
+        .input(() -> upstream(i+1))
         .process((u1, u2) -> u1.length() + u2.length());
   }
 

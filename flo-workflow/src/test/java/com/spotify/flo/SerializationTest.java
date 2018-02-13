@@ -46,8 +46,8 @@ public class SerializationTest {
     Task<Long> task1 = Task.named("Foo", "Bar", 39).ofType(Long.class)
         .process(() -> 9999L);
     Task<String> task2 = Task.named("Baz", 40).ofType(String.class)
-        .in(() -> task1)
-        .ins(() -> singletonList(task1))
+        .input(() -> task1)
+        .inputs(() -> singletonList(task1))
         .process((t1, t1l) -> t1l + " hello " + (t1 + 5));
 
     serialize(task2);
@@ -63,8 +63,8 @@ public class SerializationTest {
     Task<Long> task1 = Task.named("Foo", "Bar", 39).ofType(Long.class)
         .process(() -> 9999L);
     Task<String> task2 = Task.named("Baz", 40).ofType(String.class)
-        .in(() -> task1)
-        .ins(() -> singletonList(task1))
+        .input(() -> task1)
+        .inputs(() -> singletonList(task1))
         .processWithContext((ec, t1, t1l) -> ec.immediateValue(t1l + " hello " + (t1 + 5)));
 
     serialize(task2);

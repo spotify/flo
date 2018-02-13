@@ -53,9 +53,9 @@ public class AsyncContextFailurePropagationTest {
 
     AtomicBoolean ran = new AtomicBoolean(false);
     Task<String> task = Task.named("Dependent").ofType(String.class)
-        .ins(() -> Arrays.asList(successfulUpstream, failingUpstream))
-        .in(() -> successfulUpstream)
-        .in(() -> failingUpstream)
+        .inputs(() -> Arrays.asList(successfulUpstream, failingUpstream))
+        .input(() -> successfulUpstream)
+        .input(() -> failingUpstream)
         .process((a, b, c) -> {
           ran.set(true);
           return c + b + a;
