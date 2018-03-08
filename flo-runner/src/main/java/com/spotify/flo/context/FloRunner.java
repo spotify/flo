@@ -230,16 +230,21 @@ public final class FloRunner<T> {
     }
 
     /*
-     * Wait until done and {@code System.exit()} with an appropriate status code.
+     * Wait until task has finished running and {@code System.exit()} with an appropriate
+     * status code.
      */
     public void waitAndExit() {
       waitAndExit(System::exit);
     }
 
+    /**
+     * See {@link Future#get()}
+     */
     public T value() throws ExecutionException, InterruptedException {
       return future.get();
     }
 
+    // visible for testing
     void waitAndExit(Consumer<Integer> exiter) {
       try {
         future.get();
