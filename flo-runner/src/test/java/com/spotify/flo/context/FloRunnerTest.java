@@ -22,7 +22,6 @@ package com.spotify.flo.context;
 
 import static com.spotify.flo.context.FloRunner.runTask;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -32,18 +31,19 @@ import com.spotify.flo.status.NotReady;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Test;
 
 public class FloRunnerTest {
 
   @Test
   public void nonBlockingRunnerDoesNotBlock() {
-    final CompletableFuture<String> future = new CompletableFuture<>();
+    final AtomicBoolean hasHappened = new AtomicBoolean();
     final Task<Void> task = Task.named("task").ofType(Void.class)
         .process(() -> {
           try {
             Thread.sleep(10);
-            future.complete("foo");
+            hasHappened.set(true);
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
@@ -52,17 +52,17 @@ public class FloRunnerTest {
 
     runTask(task);
 
-    assertThat(future.isDone(), is(false));
+    assertThat(hasHappened.get(), is(false));
   }
 
   @Test
   public void blockingRunnerBlocks() {
-    final CompletableFuture<String> future = new CompletableFuture<>();
+    final AtomicBoolean hasHappened = new AtomicBoolean();
     final Task<Void> task = Task.named("task").ofType(Void.class)
         .process(() -> {
           try {
             Thread.sleep(10);
-            future.complete("foo");
+            hasHappened.set(true);
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
@@ -71,7 +71,7 @@ public class FloRunnerTest {
 
     runTask(task).waitAndExit(status -> { });
 
-    assertThat(future.isDone(), is(true));
+    assertThat(hasHappened.get(), is(true));
   }
 
   @Test
@@ -85,51 +85,6 @@ public class FloRunnerTest {
   }
 
   @Test
-  public void valuesArePassedToDependents() throws Exception {
-    final Task<String> bar = Task.named("bar").ofType(String.class)
-        .process(() -> "bar");
-
-    final CompletableFuture<String> future = new CompletableFuture<>();
-
-    final Task<Boolean> foo = Task.named("foo").ofType(Boolean.class)
-        .in(() -> bar)
-        .process(future::complete);
-
-    runTask(foo).future().get(1, TimeUnit.SECONDS);
-
-    assertThat(future.get(), is("bar"));
-  }
-
-  @Test
-  public void exceptionsThrownInParallelAreUndeterministic() throws Exception {
-    // TODO: suppress exceptions instead
-    final RuntimeException e1 = new RuntimeException("1");
-    final RuntimeException e2 = new RuntimeException("2");
-
-    final Task<String> t1 = Task.named("t1").ofType(String.class)
-        .process(() -> {
-          throw e1;
-        });
-
-    final Task<String> t2 = Task.named("t2").ofType(String.class)
-        .process(() -> {
-          throw e2;
-        });
-
-    final Task<String> task = Task.named("task").ofType(String.class)
-        .in(() -> t1)
-        .in(() -> t2)
-        .process((v1, v2) -> null);
-
-    try {
-      runTask(task).value();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e.getCause(), isOneOf(e1, e2));
-    }
-  }
-
-  @Test
   public void exceptionsArePassed() throws Exception {
     final RuntimeException expectedException = new RuntimeException("foo");
 
@@ -140,27 +95,6 @@ public class FloRunnerTest {
 
     try {
       runTask(task).value();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e.getCause(), is(expectedException));
-    }
-  }
-
-  @Test
-  public void exceptionsArePassedThroughDag() throws Exception {
-    final RuntimeException expectedException = new RuntimeException("foo");
-
-    final Task<String> bar = Task.named("bar").ofType(String.class)
-        .process(() -> {
-          throw expectedException;
-        });
-
-    final Task<Void> foo = Task.named("foo").ofType(Void.class)
-        .in(() -> bar)
-        .process(b -> null);
-
-    try {
-      runTask(foo).value();
       fail();
     } catch (ExecutionException e) {
       assertThat(e.getCause(), is(expectedException));
