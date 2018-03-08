@@ -44,8 +44,7 @@ public class Logging {
   }
 
   void header() {
-    final Package floContextPackage = Package.getPackage("com.spotify.flo.context");
-    LOG.info("Runner {}", colored(GREEN, "v" + floContextPackage.getImplementationVersion()));
+    LOG.info("Runner {}", colored(GREEN, "v" + getClass().getPackage().getImplementationVersion()));
     LOG.info("");
   }
 
