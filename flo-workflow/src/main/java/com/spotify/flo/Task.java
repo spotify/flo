@@ -23,10 +23,7 @@ package com.spotify.flo;
 import com.google.auto.value.AutoValue;
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * A task is some work that has to be done, once a list of input tasks have completed. Tasks are
@@ -54,20 +51,6 @@ public abstract class Task<T> implements Serializable {
 
   public List<Task<?>> inputs() {
     return lazyInputs().get();
-  }
-
-  public Stream<Task<?>> inputsInOrder() {
-    return inputsInOrder(new HashSet<>());
-  }
-
-  private Stream<Task<?>> inputsInOrder(Set<TaskId> visits) {
-    return inputs().stream()
-        .filter(input -> !visits.contains(input.id()))
-        .peek(input -> visits.add(input.id()))
-        .flatMap(input -> Stream.concat(
-            input.inputsInOrder(visits),
-            Stream.of(input)
-        ));
   }
 
   public static NamedTaskBuilder named(String taskName, Object... args) {
