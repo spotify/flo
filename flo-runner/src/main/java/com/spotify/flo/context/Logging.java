@@ -21,6 +21,7 @@
 package com.spotify.flo.context;
 
 import static com.spotify.flo.Util.colored;
+import static org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 
 import com.spotify.flo.TaskId;
@@ -28,7 +29,6 @@ import com.spotify.flo.TaskInfo;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.status.TaskStatusException;
 import java.time.Duration;
-import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.slf4j.Logger;
 
 public class Logging {
@@ -55,23 +55,25 @@ public class Logging {
     LOG.info("{} Running ...", colored(taskId));
   }
 
-  <T> void completedValue(TaskId taskId, T value) {
-    LOG.info("{} Completed -> {}", colored(taskId), value);
+  <T> void completedValue(TaskId taskId, T value, Duration elapsed) {
+    LOG.info("{} Completed in {} -> {}",
+        colored(taskId), formatDurationHMS(elapsed.toMillis()), value);
   }
 
-  void failedValue(TaskId taskId, Throwable valueError) {
+  void failedValue(TaskId taskId, Throwable valueError, Duration elapsed) {
+    final String hms = formatDurationHMS(elapsed.toMillis());
     if (valueError instanceof TaskStatusException) {
       final String exception = valueError.getClass().getSimpleName();
-      LOG.warn("{} Signalled {}", colored(taskId), exception);
+      LOG.warn("{} Signalled {} after {}", colored(taskId), exception, hms);
     } else if (valueError instanceof Persisted) {
       // ignore
     } else {
-      LOG.warn("{} Failed", colored(taskId), valueError);
+      LOG.warn("{} Failed after {}", colored(taskId), hms, valueError);
     }
   }
 
   void complete(TaskId taskId, Duration elapsed) {
-    LOG.info("Total time {}", DurationFormatUtils.formatDurationHMS(elapsed.toMillis()));
+    LOG.info("Total time {}", formatDurationHMS(elapsed.toMillis()));
   }
 
   void exception(Throwable throwable) {

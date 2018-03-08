@@ -24,6 +24,7 @@ import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
+import java.time.Duration;
 import java.util.Objects;
 
 /**
@@ -52,10 +53,13 @@ class LoggingContext implements EvalContext {
   @Override
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
     logging.startEval(taskId);
+    final long t0 = System.nanoTime();
     final Value<T> tValue = baseContext.invokeProcessFn(taskId, processFn);
 
-    tValue.consume((v) -> logging.completedValue(taskId, v));
-    tValue.onFail((valueError) -> logging.failedValue(taskId, valueError));
+    tValue.consume(v ->
+        logging.completedValue(taskId, v, Duration.ofNanos(System.nanoTime() - t0)));
+    tValue.onFail(valueError ->
+        logging.failedValue(taskId, valueError, Duration.ofNanos(System.nanoTime() - t0)));
 
     return tValue;
   }
