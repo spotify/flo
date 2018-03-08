@@ -52,7 +52,7 @@ public class TaskContextTest {
   @Test
   public void injectsTaskContextsSecond() throws Exception {
     Task<String> task = Task.named("inject").ofType(String.class)
-        .in(() -> Task.named("foo").ofType(String.class).process(() -> "hej"))
+        .input(() -> Task.named("foo").ofType(String.class).process(() -> "hej"))
         .context(new TestTaskContext())
         .process((a, b) -> b.doSomething("bar"));
 
@@ -122,9 +122,9 @@ public class TaskContextTest {
     BasicTaskContext tc1 = spy(new BasicTaskContext("foo"));
 
     Task<String> task = Task.named("inject").ofType(String.class)
-        .in(() -> Task.named("foo").ofType(String.class).process(t1Fn))
+        .input(() -> Task.named("foo").ofType(String.class).process(t1Fn))
         .context(tc1)
-        .in(() -> Task.named("bar").ofType(String.class).process(t2Fn))
+        .input(() -> Task.named("bar").ofType(String.class).process(t2Fn))
         .process((t1, i1, t2) -> {
           tc1.mark();
           return t1 + i1 + t2;
@@ -149,7 +149,7 @@ public class TaskContextTest {
 
     Task<String> task = Task.named("inject").ofType(String.class)
         .context(tc1)
-        .in(() -> Task.named("foo").ofType(String.class).process(t1Fn))
+        .input(() -> Task.named("foo").ofType(String.class).process(t1Fn))
         .process((i1, t1) -> {
           tc1.mark();
           return t1 + i1;

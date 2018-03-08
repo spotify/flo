@@ -34,16 +34,16 @@ private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) exten
     val builder = self.builder.context(taskContextStrict)
   }
 
-  override def in[A1](task: => Task[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
+  override def input[A1](task: => Task[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
     type J1 = A1
     val c1: J1 => A1 = identity
-    val builder = self.builder.in(fn(task))
+    val builder = self.builder.input(fn(task))
   }
 
-  override def ins[A1](tasks: => List[Task[A1]]) = new Builder1[List[A1], Z] {
+  override def inputs[A1](tasks: => List[Task[A1]]) = new Builder1[List[A1], Z] {
     type J1 = java.util.List[A1]
     val c1: J1 => List[A1] = JavaConversions.iterableAsScalaIterable(_).toList
-    val builder = self.builder.ins(javaList(tasks))
+    val builder = self.builder.inputs(javaList(tasks))
   }
 }
 {{#genBuilder}}
@@ -87,20 +87,20 @@ private[dsl] trait Builder{{arity}}[{{typeArgsNumA}}, Z] extends TaskBuilder{{ar
       val builder = self.builder.context(taskContextStrict)
     }
 
-  override def in[A{{arityPlus}}](task: => Task[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
+  override def input[A{{arityPlus}}](task: => Task[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
     new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] {
       type J{{arityPlus}} = A{{arityPlus}}
       val c{{arityPlus}}: J{{arityPlus}} => A{{arityPlus}} = identity
       val p: self.type = self
-      val builder = self.builder.in(fn(task))
+      val builder = self.builder.input(fn(task))
     }
 
-  override def ins[A{{arityPlus}}](tasks: => List[Task[A{{arityPlus}}]]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, List[A{{arityPlus}}], Z] =
+  override def inputs[A{{arityPlus}}](tasks: => List[Task[A{{arityPlus}}]]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, List[A{{arityPlus}}], Z] =
     new Builder{{arityPlus}}[{{typeArgsNumA}}, List[A{{arityPlus}}], Z] {
       type J{{arityPlus}} = java.util.List[A{{arityPlus}}]
       val c{{arityPlus}}: J{{arityPlus}} => List[A{{arityPlus}}] = JavaConversions.iterableAsScalaIterable(_).toList
       val p: self.type = self
-      val builder = self.builder.ins(javaList(tasks))
+      val builder = self.builder.inputs(javaList(tasks))
     }
   {{/iter.isLast}}
 }

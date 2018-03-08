@@ -49,13 +49,13 @@ public class TaskInfoTest {
 
   private Task<String> first() {
     return Task.named("First").ofType(String.class)
-        .in(() -> second(1))
+        .input(() -> second(1))
         .process((s) -> "foo");
   }
 
   private Task<String> second(int i) {
     return Task.named("Second", i).ofType(String.class)
-        .in(() -> second(i))
+        .input(() -> second(i))
         .process((self) -> "bar");
   }
 }

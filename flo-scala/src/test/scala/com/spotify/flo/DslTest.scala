@@ -5,7 +5,7 @@ import org.scalatest._
 class DslTest extends FlatSpec with Matchers {
 
   "A defTask `$` builder" can "be accessed in dsl scope to create a task" in {
-    defTask[String]() dsl ($ -> "hello") shouldBe a [Task[_]]
+    defTask[String]() dsl ($ process "hello") shouldBe a [Task[_]]
   }
 
   it should "create a task using the name of the enclosing class method" in {

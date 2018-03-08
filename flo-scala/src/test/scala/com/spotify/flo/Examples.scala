@@ -12,21 +12,21 @@ object Examples {
   }
 
   def meet(person: String): Task[String] = defTask(person)
-    .in(greet(person))
+    .input(greet(person))
     .process { (greeting) =>
       s"$greeting, nice to meet you"
     }
 
   def meetDsl(person: String): Task[String] = defTask[String](person) dsl ($
-    in      greet(person)
+    input      greet(person)
     process ( greeting =>
       s"$greeting, nice to meet you"
     )
   )
 
   def world(arg: Int): Task[String] = defTask[String](arg) dsl (
-    $ ┬ fib(arg)
-      └> (a => s"world $arg:$a")
+    $ input fib(arg)
+      process  (a => s"world $arg:$a")
   )
 
   def world2(arg: Int): Task[String] = defTaskNamed("custom-name", arg) process {
@@ -34,17 +34,17 @@ object Examples {
   }
 
   def hello: Task[String] = defTask[String]() dsl (
-    $ ┬ world(0)
-      ╞ List(world(7), world(14))
-      ├ world2(21)
-      ╞ List(world2(22))
-      └> ((a, b, c, d) => s"hello $a $b $c $d")
+    $ input world(0)
+      inputs List(world(7), world(14))
+      input world2(21)
+      inputs List(world2(22))
+      process ((a, b, c, d) => s"hello $a $b $c $d")
   )
 
   def readableDsl: Task[String] = defTask[String]() dsl ($
     // upstream dependencies
-    in hello
-    in world(7)
+    input hello
+    input world(7)
 
     // we'll publish this endpoint when the task is done
     context Publisher("MyEndpoint")
@@ -59,28 +59,28 @@ object Examples {
   }
 
   def hello2: Task[String] = defTask[String]() dsl ($
-    in      world(0)
-    ins     List(world(7), world(14))
-    in      world2(21)
-    ins     List(world2(22))
+    input      world(0)
+    inputs     List(world(7), world(14))
+    input      world2(21)
+    inputs     List(world2(22))
     process ((a, b, c, d) => s"hello $a $b $c $d")
   )
 
   def fib(n: Int): Task[Int] = defTask[Int](n) dsl (
     if (n < 2)
-      $ -> n
+      $ process n
     else
-      $ ┬ fib(n - 1)
-        ├ fib(n - 2)
-        └> (_ + _)
+      $ input fib(n - 1)
+        input fib(n - 2)
+        process (_ + _)
   )
 
   def fib2(n: Int): Task[Int] = defTask[Int](n) dsl (
     if (n < 2)
       $ process n
     else
-      $ in fib2(n - 1)
-        in fib2(n - 2)
+      $ input fib2(n - 1)
+        input fib2(n - 2)
         process (_ + _)
   )
 

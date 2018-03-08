@@ -39,8 +39,8 @@ public class TaskTest {
   @Test
   public void shouldHaveListOfInputs() throws Exception {
     Task<String> task = Task.named("Inputs").ofType(String.class)
-        .in(() -> leaf("A"))
-        .ins(() -> asList(leaf("B"), leaf("C")))
+        .input(() -> leaf("A"))
+        .inputs(() -> asList(leaf("B"), leaf("C")))
         .process((a, bc) -> "constant");
 
     assertThat(task.inputs(), contains(
@@ -104,7 +104,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate1ND_I() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
-        .in(() -> leaf("A"))
+        .input(() -> leaf("A"))
         .process((a) -> "done: " + a);
 
     validateEvaluation(task, "done: A", leaf("A"));
@@ -113,7 +113,7 @@ public class TaskTest {
   @Test
   public void shouldEvaluate1ND_L() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
-        .ins(() -> asList(leaf("A"), leaf("B")))
+        .inputs(() -> asList(leaf("A"), leaf("B")))
         .process((ab) -> "done: " + ab);
 
     validateEvaluation(task, "done: [A, B]", leaf("A"), leaf("B"));
@@ -123,7 +123,7 @@ public class TaskTest {
   public void shouldEvaluate1NC_I() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
     Task<String> task = Task.named("InContext").ofType(String.class)
-        .in(() -> leaf("A"))
+        .input(() -> leaf("A"))
         .processWithContext((ec, a) -> {
           Promise<String> promise = ec.promise();
           promiseRef.set(promise);
@@ -137,7 +137,7 @@ public class TaskTest {
   public void shouldEvaluate1NC_L() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
     Task<String> task = Task.named("InContext").ofType(String.class)
-        .ins(() -> asList(leaf("A"), leaf("B")))
+        .inputs(() -> asList(leaf("A"), leaf("B")))
         .processWithContext((ec, ab) -> {
           Promise<String> promise = ec.promise();
           promiseRef.set(promise);
@@ -152,8 +152,8 @@ public class TaskTest {
   @Test
   public void shouldEvaluate2ND_II() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
         .process((a, b) -> "done: " + a + " - " + b);
 
     validateEvaluation(task, "done: A - B", leaf("A"), leaf("B"));
@@ -162,8 +162,8 @@ public class TaskTest {
   @Test
   public void shouldEvaluate2ND_IL() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
-        .in(() -> leaf("A"))
-        .ins(() -> asList(leaf("B"), leaf("C")))
+        .input(() -> leaf("A"))
+        .inputs(() -> asList(leaf("B"), leaf("C")))
         .process((a, bc) -> "done: " + a + " - " + bc);
 
     validateEvaluation(task, "done: A - [B, C]", leaf("A"), leaf("B"), leaf("C"));
@@ -173,8 +173,8 @@ public class TaskTest {
   public void shouldEvaluate2NC_II() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
     Task<String> task = Task.named("InContext").ofType(String.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
         .processWithContext((ec, a, b) -> {
           Promise<String> promise = ec.promise();
           promiseRef.set(promise);
@@ -188,8 +188,8 @@ public class TaskTest {
   public void shouldEvaluate2NC_IL() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
     Task<String> task = Task.named("InContext").ofType(String.class)
-        .in(() -> leaf("A"))
-        .ins(() -> asList(leaf("B"), leaf("C")))
+        .input(() -> leaf("A"))
+        .inputs(() -> asList(leaf("B"), leaf("C")))
         .processWithContext((ec, a, bc) -> {
           Promise<String> promise = ec.promise();
           promiseRef.set(promise);
@@ -204,9 +204,9 @@ public class TaskTest {
   @Test
   public void shouldEvaluate3ND_III() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .in(() -> leaf("C"))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
+        .input(() -> leaf("C"))
         .process((a, b, c) -> "done: " + a + " - " + b +" - " + c);
 
     validateEvaluation(task, "done: A - B - C", leaf("A"), leaf("B"), leaf("C"));
@@ -215,9 +215,9 @@ public class TaskTest {
   @Test
   public void shouldEvaluate3ND_IIL() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .ins(() -> asList(leaf("C"), leaf("D")))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
+        .inputs(() -> asList(leaf("C"), leaf("D")))
         .process((a, b, cd) -> "done: " + a + " - " + b +" - " + cd);
 
     validateEvaluation(task, "done: A - B - [C, D]", leaf("A"), leaf("B"), leaf("C"), leaf("D"));
@@ -227,9 +227,9 @@ public class TaskTest {
   public void shouldEvaluate3NC_III() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
     Task<String> task = Task.named("InContext").ofType(String.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .in(() -> leaf("C"))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
+        .input(() -> leaf("C"))
         .processWithContext((ec, a, b, c) -> {
           Promise<String> promise = ec.promise();
           promiseRef.set(promise);
@@ -243,9 +243,9 @@ public class TaskTest {
   public void shouldEvaluate3NC_IIL() throws Exception {
     AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
     Task<String> task = Task.named("InContext").ofType(String.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .ins(() -> asList(leaf("C"), leaf("D")))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
+        .inputs(() -> asList(leaf("C"), leaf("D")))
         .processWithContext((ec, a, b, cd) -> {
           Promise<String> promise = ec.promise();
           promiseRef.set(promise);
@@ -263,16 +263,16 @@ public class TaskTest {
     Task<String> task0 = Task.named("WithType").ofType(String.class)
         .process(() -> "");
     Task<String> task1 = Task.named("WithType").ofType(String.class)
-        .in(() -> leaf("A"))
+        .input(() -> leaf("A"))
         .process((a) -> a);
     Task<String> task2 = Task.named("WithType").ofType(String.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
         .process((a, b) -> a + " - " + b);
     Task<String> task3 = Task.named("WithType").ofType(String.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .in(() -> leaf("C"))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
+        .input(() -> leaf("C"))
         .process((a, b, c) -> a + " - " + b +" - " + c);
 
     assertThat(task0.type(), equalTo(String.class));

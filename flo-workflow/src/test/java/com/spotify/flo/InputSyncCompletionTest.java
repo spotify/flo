@@ -49,8 +49,8 @@ public class InputSyncCompletionTest {
   @Test
   public void shouldNotCompleteTaskBeforeAllInputsAreDone_FailingBefore() throws Exception {
     Task<String> task = Task.named("sync").ofType(String.class)
-        .in(() -> failing)
-        .in(() -> blocking)
+        .input(() -> failing)
+        .input(() -> blocking)
         .process((a, b) -> "should not happen");
 
     awaitBlocked(task);
@@ -59,8 +59,8 @@ public class InputSyncCompletionTest {
   @Test
   public void shouldNotCompleteTaskBeforeAllInputsAreDone_FailingAfter() throws Exception {
     Task<String> task = Task.named("sync").ofType(String.class)
-        .in(() -> blocking)
-        .in(() -> failing)
+        .input(() -> blocking)
+        .input(() -> failing)
         .process((a, b) -> "should not happen");
 
     awaitBlocked(task);
@@ -69,7 +69,7 @@ public class InputSyncCompletionTest {
   @Test
   public void shouldNotCompleteTaskBeforeAllInputsAreDone_AsInputListBefore() throws Exception {
     Task<String> task = Task.named("sync").ofType(String.class)
-        .ins(() -> Arrays.asList(failing, blocking))
+        .inputs(() -> Arrays.asList(failing, blocking))
         .process(a -> "should not happen");
 
     awaitBlocked(task);
@@ -78,7 +78,7 @@ public class InputSyncCompletionTest {
   @Test
   public void shouldNotCompleteTaskBeforeAllInputsAreDone_AsInputListAfter() throws Exception {
     Task<String> task = Task.named("sync").ofType(String.class)
-        .ins(() -> Arrays.asList(blocking, failing))
+        .inputs(() -> Arrays.asList(blocking, failing))
         .process(a -> "should not happen");
 
     awaitBlocked(task);

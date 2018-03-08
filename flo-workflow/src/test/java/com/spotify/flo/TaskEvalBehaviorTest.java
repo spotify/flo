@@ -70,7 +70,7 @@ public class TaskEvalBehaviorTest {
         .collect(toList());
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
-        .ins(() -> fiveInts)
+        .inputs(() -> fiveInts)
         .process(this::sumInts);
 
     // 1+2+3+4+5 = 15
@@ -88,9 +88,9 @@ public class TaskEvalBehaviorTest {
         .collect(toList());
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
-        .in(() -> isEven(5))
-        .ins(() -> fiveInts)
-        .in(() -> isEven(2))
+        .input(() -> isEven(5))
+        .inputs(() -> fiveInts)
+        .input(() -> isEven(2))
         .process((a, ints, b) -> a.result() + sumInts(ints) + b.result());
 
     // (5*2) + (1+2+3+4+5) + 2 = 27
@@ -107,8 +107,8 @@ public class TaskEvalBehaviorTest {
         .collect(toList());
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
-        .ins(fiveInts)
-        .ins(fiveInts)
+        .inputs(fiveInts)
+        .inputs(fiveInts)
         .process((first5, second5) -> sumInts(first5) + sumInts(second5));
 
     // (1+2+3+4+5) + (6+7+8+9+10) = 55
@@ -120,9 +120,9 @@ public class TaskEvalBehaviorTest {
     Fn<Task<Integer>> countSupplier = countConstructor();
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
-        .in(countSupplier)
-        .in(countSupplier)
-        .in(countSupplier)
+        .input(countSupplier)
+        .input(countSupplier)
+        .input(countSupplier)
         .process((a, b, c) -> a + b + c);
 
     // dummy run
@@ -142,9 +142,9 @@ public class TaskEvalBehaviorTest {
         .collect(toList());
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
-        .ins(fiveInts)
-        .ins(fiveInts)
-        .ins(fiveInts)
+        .inputs(fiveInts)
+        .inputs(fiveInts)
+        .inputs(fiveInts)
         .process((first5, second5, third5) -> sumInts(first5) + sumInts(second5) + sumInts(third5));
 
     // dummy run
@@ -157,9 +157,9 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldListInputIds() throws Exception {
     Task<String> top = Task.named("Top").ofType(String.class)
-        .in(() -> isEven(0))
-        .in(() -> isEven(1))
-        .in(() -> isEven(3))
+        .input(() -> isEven(0))
+        .input(() -> isEven(1))
+        .input(() -> isEven(3))
         .process((a, b, c) -> "done");
 
     List<TaskId> inputs = top.inputs().stream().map(Task::id).collect(toList());
@@ -178,9 +178,9 @@ public class TaskEvalBehaviorTest {
     Fn<Task<Integer>> countSupplier = countConstructor();
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
-        .in(countSupplier)
-        .in(countSupplier)
-        .in(countSupplier)
+        .input(countSupplier)
+        .input(countSupplier)
+        .input(countSupplier)
         .process((a, b, c) -> a + b + c);
 
     // pre fetch one
@@ -201,8 +201,8 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldLinearizeTasks() throws Exception {
     Task<String> top = Task.named("Top").ofType(String.class)
-        .in(() -> isEven(0))
-        .in(() -> isEven(1))
+        .input(() -> isEven(0))
+        .input(() -> isEven(1))
         .process((a, b) -> "done");
 
     List<TaskId> taskIds = top.inputsInOrder()
@@ -218,7 +218,7 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldFlattenStreamParameters() throws Exception {
     Task<String> top = Task.named("Top").ofType(String.class)
-        .ins(() -> asList(isEven(0), isEven(1)))
+        .inputs(() -> asList(isEven(0), isEven(1)))
         .process(results -> "done " + results.size());
 
     List<TaskId> taskIds = top.inputsInOrder()
@@ -236,13 +236,13 @@ public class TaskEvalBehaviorTest {
   public void shouldLinearizeMixedStreamAndPlainParameters() throws Exception {
     F1<Integer, Task<Integer>> evenResult = n ->
         Task.named("EvenResult", n).ofType(Integer.class)
-            .in(() -> isEven(n))
+            .input(() -> isEven(n))
             .process(EvenResult::result);
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
-        .in(() -> isEven(5))
-        .ins(() -> asList(evenResult.apply(0), evenResult.apply(1)))
-        .ins(() -> singletonList(evenResult.apply(3)))
+        .input(() -> isEven(5))
+        .inputs(() -> asList(evenResult.apply(0), evenResult.apply(1)))
+        .inputs(() -> singletonList(evenResult.apply(3)))
         .process((a, ints, b) -> a.result() + sumInts(ints) + sumInts(b));
 
     List<TaskId> taskIds = sum.inputsInOrder()
@@ -270,7 +270,7 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldGetTaskIdFromContext1() throws Exception {
     Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
-        .in(() -> leaf("A"))
+        .input(() -> leaf("A"))
         .processWithContext((ec, a) -> ec.immediateValue(ec.currentTask().get()));
 
     validateReturnsOwnTask(task);
@@ -279,8 +279,8 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldGetTaskIdFromContext2() throws Exception {
     Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
         .processWithContext((ec, a, b) -> ec.immediateValue(ec.currentTask().get()));
 
     validateReturnsOwnTask(task);
@@ -289,9 +289,9 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldGetTaskIdFromContext3() throws Exception {
     Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .in(() -> leaf("C"))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
+        .input(() -> leaf("C"))
         .processWithContext((ec, a, b, c) -> ec.immediateValue(ec.currentTask().get()));
 
     validateReturnsOwnTask(task);
@@ -306,9 +306,9 @@ public class TaskEvalBehaviorTest {
           return ec.immediateValue("");
         });
     Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
-        .in(() -> leaf("A"))
-        .in(() -> innerTask)
-        .in(() -> leaf("C"))
+        .input(() -> leaf("A"))
+        .input(() -> innerTask)
+        .input(() -> leaf("C"))
         .processWithContext((ec, a, b, c) -> ec.immediateValue(ec.currentTask().get()));
 
     validateReturnsOwnTask(task);
@@ -328,9 +328,9 @@ public class TaskEvalBehaviorTest {
   public void shouldEvaluateInputsInParallelForChainedTask() throws Exception {
     AtomicBoolean processed = new AtomicBoolean(false);
     Task<String> task = Task.named("WithInputs").ofType(String.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .in(() -> leaf("C"))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
+        .input(() -> leaf("C"))
         .process((a, b, c) -> {
           processed.set(true);
           return "done: " + a + b + c;
@@ -379,7 +379,7 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldInterceptProcessFunctionInContext1() throws Exception {
     Task<String> top = Task.named("Top").ofType(String.class)
-        .in(() -> leaf("A"))
+        .input(() -> leaf("A"))
         .process((a) -> "done");
 
     validateInterception(top, "done", leaf("A"));
@@ -388,7 +388,7 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldInterceptProcessFunctionInContext1L() throws Exception {
     Task<String> top = Task.named("Top").ofType(String.class)
-        .ins(() -> singletonList(leaf("A")))
+        .inputs(() -> singletonList(leaf("A")))
         .process((a) -> "done");
 
     validateInterception(top, "done", leaf("A"));
@@ -397,8 +397,8 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldInterceptProcessFunctionInContext2() throws Exception {
     Task<String> top = Task.named("Top").ofType(String.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
         .process((a, b) -> "done");
 
     validateInterception(top, "done", leaf("A"), leaf("B"));
@@ -407,8 +407,8 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldInterceptProcessFunctionInContext2L() throws Exception {
     Task<String> top = Task.named("Top").ofType(String.class)
-        .ins(() -> singletonList(leaf("A")))
-        .ins(() -> singletonList(leaf("B")))
+        .inputs(() -> singletonList(leaf("A")))
+        .inputs(() -> singletonList(leaf("B")))
         .process((a, b) -> "done");
 
     validateInterception(top, "done", leaf("A"), leaf("B"));
@@ -417,9 +417,9 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldInterceptProcessFunctionInContext3() throws Exception {
     Task<String> top = Task.named("Top").ofType(String.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
-        .in(() -> leaf("C"))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
+        .input(() -> leaf("C"))
         .process((a, b, c) -> "done");
 
     validateInterception(top, "done", leaf("A"), leaf("B"), leaf("C"));
@@ -436,8 +436,8 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldInterceptProcessFunctionInContextC() throws Exception {
     Task<String> top = Task.named("Top").ofType(String.class)
-        .in(() -> leaf("A"))
-        .in(() -> leaf("B"))
+        .input(() -> leaf("A"))
+        .input(() -> leaf("B"))
         .processWithContext((ec, a, b) -> ec.immediateValue("done"));
 
     validateInterception(top, "done", leaf("A"), leaf("B"));
@@ -446,8 +446,8 @@ public class TaskEvalBehaviorTest {
   @Test
   public void shouldInterceptProcessFunctionInContextCL() throws Exception {
     Task<String> top = Task.named("Top").ofType(String.class)
-        .ins(() -> singletonList(leaf("A")))
-        .ins(() -> singletonList(leaf("B")))
+        .inputs(() -> singletonList(leaf("A")))
+        .inputs(() -> singletonList(leaf("B")))
         .processWithContext((ec, a, b) -> ec.immediateValue("done"));
 
     validateInterception(top, "done", leaf("A"), leaf("B"));
@@ -510,7 +510,7 @@ public class TaskEvalBehaviorTest {
     }
 
     return isEven
-        .in(() -> evenify(n))
+        .input(() -> evenify(n))
         .process(MadeEven::new);
   }
 

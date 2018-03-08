@@ -124,9 +124,9 @@ public class MemoizingContextTest {
         .process(counter::incrementAndGet);
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
-        .in(() -> count)
-        .in(() -> count)
-        .in(() -> count)
+        .input(() -> count)
+        .input(() -> count)
+        .input(() -> count)
         .process((a, b, c) -> a + b + c);
 
     AwaitValue<Integer> await = new AwaitValue<>();
@@ -158,8 +158,8 @@ public class MemoizingContextTest {
 
   Task<ExampleValue> example(int i) {
     return Task.named("example", i).ofType(ExampleValue.class)
-        .in(() -> upstream(i))
-        .in(() -> upstream(i))
+        .input(() -> upstream(i))
+        .input(() -> upstream(i))
         .process((ups, ups1) -> {
           countExampleRuns++;
           return val(ups, i);

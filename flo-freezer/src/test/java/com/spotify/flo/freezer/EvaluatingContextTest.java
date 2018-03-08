@@ -146,7 +146,7 @@ public class EvaluatingContextTest {
 
   static Task<String> downstreamTask(String arg) {
     return Task.named("downstream", arg).ofType(String.class)
-        .in(() -> {
+        .input(() -> {
           calledInputCode = true;
           return singleTask(arg);
         })
