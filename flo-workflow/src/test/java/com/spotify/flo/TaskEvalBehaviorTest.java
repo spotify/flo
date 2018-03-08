@@ -24,6 +24,8 @@ import static com.spotify.flo.TestUtils.evalAndGet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -32,7 +34,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import com.spotify.flo.TaskBuilder.F1;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -168,9 +169,7 @@ public class TaskEvalBehaviorTest {
     TaskId isEven1Id = isEven(1).id();
     TaskId isEven3Id = isEven(3).id();
 
-    assertThat(inputs, containsInOrder(isEven0Id, isEven1Id));
-    assertThat(inputs, containsInOrder(isEven0Id, isEven3Id));
-    assertThat(inputs, containsInOrder(isEven1Id, isEven3Id));
+    assertThat(inputs, contains(isEven0Id, isEven1Id, isEven3Id));
   }
 
   @Test
@@ -198,65 +197,46 @@ public class TaskEvalBehaviorTest {
     assertThat(evalAndGet(sum), is(9)); // 2+3+4 = 9
   }
 
-  @Test
-  public void shouldLinearizeTasks() throws Exception {
-    Task<String> top = Task.named("Top").ofType(String.class)
-        .input(() -> isEven(0))
-        .input(() -> isEven(1))
-        .process((a, b) -> "done");
+  public void shouldFlattenListParametersToSameAsIndividual() throws Exception {
+    final Task<EvenResult> isEven0 = isEven(0);
+    final Task<EvenResult> isEven1 = isEven(1);
 
-    List<TaskId> taskIds = top.inputsInOrder()
-        .map(Task::id)
-        .collect(toList());
-
-    TaskId evenify1Id = evenify(1).id();
-    TaskId isEven1Id = isEven(1).id();
-
-    assertThat(taskIds, containsInOrder(evenify1Id, isEven1Id));
-  }
-
-  @Test
-  public void shouldFlattenStreamParameters() throws Exception {
-    Task<String> top = Task.named("Top").ofType(String.class)
-        .inputs(() -> asList(isEven(0), isEven(1)))
+    Task<String> list = Task.named("Top").ofType(String.class)
+        .inputs(() -> asList(isEven0, isEven1))
         .process(results -> "done " + results.size());
 
-    List<TaskId> taskIds = top.inputsInOrder()
+    Task<String> individual = Task.named("Top").ofType(String.class)
+        .input(() -> isEven0)
+        .input(() -> isEven1)
+        .process((in0, in1) -> "done");
+
+    List<TaskId> listInputs = list.inputs()
+        .stream()
         .map(Task::id)
         .collect(toList());
 
-    TaskId isEven1Id = isEven(1).id();
-    TaskId evenify1Id = evenify(1).id();
+    List<TaskId> individualInputs = individual.inputs()
+        .stream()
+        .map(Task::id)
+        .collect(toList());
 
-    assertThat(taskIds.size(), is(3));
-    assertThat(taskIds, containsInOrder(evenify1Id, isEven1Id));
+    assertThat(listInputs, containsInOrder(isEven0.id(), isEven1.id()));
+    assertThat(listInputs, equalTo(individualInputs));
   }
 
-  @Test
-  public void shouldLinearizeMixedStreamAndPlainParameters() throws Exception {
-    F1<Integer, Task<Integer>> evenResult = n ->
-        Task.named("EvenResult", n).ofType(Integer.class)
-            .input(() -> isEven(n))
-            .process(EvenResult::result);
+  public void shouldFlattenListParameters() throws Exception {
+    final Task<EvenResult> isEven0 = isEven(0);
+    final Task<EvenResult> isEven1 = isEven(1);
+    Task<String> top = Task.named("Top").ofType(String.class)
+        .inputs(() -> asList(isEven0, isEven1))
+        .process(results -> "done " + results.size());
 
-    Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
-        .input(() -> isEven(5))
-        .inputs(() -> asList(evenResult.apply(0), evenResult.apply(1)))
-        .inputs(() -> singletonList(evenResult.apply(3)))
-        .process((a, ints, b) -> a.result() + sumInts(ints) + sumInts(b));
-
-    List<TaskId> taskIds = sum.inputsInOrder()
+    List<TaskId> taskIds = top.inputs()
+        .stream()
         .map(Task::id)
         .collect(toList());
 
-    TaskId evenify5Id = evenify(5).id();
-    TaskId evenify1Id = evenify(1).id();
-    TaskId evenify3Id = evenify(3).id();
-
-    assertThat(taskIds.size(), is(10));
-    assertThat(taskIds, containsInOrder(evenify5Id, evenify1Id));
-    assertThat(taskIds, containsInOrder(evenify5Id, evenify3Id));
-    assertThat(taskIds, containsInOrder(evenify1Id, evenify3Id));
+    assertThat(taskIds, containsInOrder(isEven0.id(), isEven1.id()));
   }
 
   @Test

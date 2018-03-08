@@ -24,10 +24,4 @@ package com.spotify.flo.status;
  * Signals that a task can not be executed at this moment.
  */
 public class NotReady extends TaskStatusException {
-
-  public static final int CODE = 20;
-
-  public NotReady() {
-    super(CODE);
-  }
 }

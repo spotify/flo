@@ -13,7 +13,6 @@ __Some key features__
 * Lazy DAG expansion
 * DAG serialization (for 3rd party persistence)
 * Extensible DAG evaluation
-* A command line parser generator for instantiation of workflow definitions: `flo-cli`
 
 ## Dependency
 
@@ -42,7 +41,6 @@ JavaDocs here: http://spotify.github.io/flo/maven/latest/apidocs/
   - [Tasks are lazy](#tasks-are-lazy)
   - [Task DAGs as data structures](#task-dags-as-data-structures)
 - [`EvalContext`](#evalcontext)
-- [CLI generator](#cli-generator)
 
 ## Quick Example: Fibonacci
 
@@ -115,7 +113,7 @@ following sections.
 Your workflow tasks are not defined as classes that extend [`Task<T>`][Task], rather they are
 defined by using the `TaskBuilder` API as we've already seen in the fibonacci example. This is in
 many ways very similar to a very clean class with no mutable state, only final members and two
-overriden methods for inputs and evaluation function. But with a very important difference, we're
+overridden methods for inputs and evaluation function. But with a very important difference, we're
 handling the input tasks in a type-safe manner. Each input task you add will further construct the
 type for your evaluation function. This is how we can get a clean lambda such as `(a, b) -> a + b`
 as the evaluation function for our fibonacci example.

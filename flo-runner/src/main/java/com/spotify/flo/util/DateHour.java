@@ -20,7 +20,6 @@
 
 package com.spotify.flo.util;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.time.ZoneOffset.UTC;
 
 import com.google.auto.value.AutoValue;
@@ -46,8 +45,12 @@ public abstract class DateHour implements Comparable<DateHour>, Serializable {
   public abstract ZonedDateTime dateTime();
 
   public static DateHour of(ZonedDateTime dateHour) {
-    checkArgument(dateHour.equals(dateHour.truncatedTo(ChronoUnit.HOURS)), "dateHour should be truncated to the hour");
-    checkArgument(dateHour.getZone().equals(UTC), "dateHour should be in UTC");
+    if (!dateHour.equals(dateHour.truncatedTo(ChronoUnit.HOURS))) {
+      throw new IllegalArgumentException("dateHour should be truncated to the hour");
+    }
+    if (!dateHour.getZone().equals(UTC)) {
+      throw new IllegalArgumentException("dateHour should be in UTC");
+    }
     return new AutoValue_DateHour(dateHour);
   }
 

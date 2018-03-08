@@ -25,7 +25,6 @@ import static java.util.stream.Collectors.joining;
 import static org.fusesource.jansi.Ansi.Color.YELLOW;
 import static org.fusesource.jansi.Ansi.ansi;
 
-import com.google.common.collect.ImmutableList;
 import com.spotify.flo.TaskInfo;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +45,7 @@ final class PrintUtils {
     lines.add(colored(taskInfo.id()).toString());
     popSubTree(taskInfo.inputs(), lines, new Stack<>());
 
-    return ImmutableList.copyOf(lines);
+    return lines;
   }
 
   private static void popSubTree(List<TaskInfo> inputs, List<String> list, Stack<Boolean> indents) {

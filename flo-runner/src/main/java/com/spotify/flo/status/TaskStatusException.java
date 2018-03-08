@@ -24,15 +24,4 @@ package com.spotify.flo.status;
  * Generic exception for signalling that a task could not execute for some reason.
  */
 public abstract class TaskStatusException extends RuntimeException {
-
-  private final int code;
-
-  public TaskStatusException(int code) {
-    super("Task failed with status code " + code);
-    this.code = code;
-  }
-
-  public int code() {
-    return code;
-  }
 }

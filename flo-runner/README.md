@@ -49,7 +49,7 @@ object MyWorkflow {
   def main(args: Array[String]): Unit = {
     val task = exampleTask("world")
 
-    FloRunner.runTask(task, args:_*)
+    FloRunner.runTask(task).waitAndExit()
   }
 }
 ```
@@ -77,7 +77,6 @@ running the jar (`java -Dproperty=value <jar>`).
 | property | behaviour |
 |:---:|---|
 | **`-Dmode=tree`** | Only print the Evaluation plan and exit. |
-| **`-DjsonTree=true`** | Print the evaluation plan as JSON. Requires `-Dmode=tree`. |
 
 ## Utilities
 
@@ -92,21 +91,3 @@ useful for parsing and using these kind of parameters in your tasks.
 val dateHour = DateHour.parse(args(0))
 val task = exampleTask(dateHour)
 ```
-
-### Google Cloud Storage
-
-Add the following dependency to your project `com.spotify:flo-gcs:<version>`.
-
-`GcsTasks` contains tasks for simple interactions with GCS, e.g. checking if a blob exists.
-
-```scala
-import com.spotify.flo.gcs.GcsTasks.blobExists
-
-def exampleTask(dateHour: DateHour): Task[Unit] = defTask(dateHour) ($
-  in       blobExists(s"gs://my-bucket/some/prefix/$dateHour/_SUCCESS")
-
-  process  ((blob) => /*...*/ )
-)
-```
-
-The `blobExists` task will only complete successfully if the referenced blob exists on GCS.
