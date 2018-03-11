@@ -27,6 +27,7 @@ import static org.junit.Assert.assertThat;
 import com.google.auto.value.AutoValue;
 import com.spotify.flo.AwaitValue;
 import com.spotify.flo.EvalContext;
+import com.spotify.flo.EvalContext.Value;
 import com.spotify.flo.Task;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -74,8 +75,9 @@ public class MemoizingContextTest {
           }
 
           @Override
-          public void store(Task<ExampleValue> task,
-                            ExampleValue value) {
+          public Value<ExampleValue> store(EvalContext evalContext,
+                                           Task<ExampleValue> task,
+                                           ExampleValue value) {
             throw new IllegalStateException();
           }
         })
@@ -190,9 +192,11 @@ public class MemoizingContextTest {
     }
 
     @Override
-    public void store(Task<ExampleValue> task, ExampleValue value) {
+    public Value<ExampleValue> store(EvalContext evalContext, Task<ExampleValue> task,
+                                     ExampleValue value) {
       System.out.println("store task " + task.id() + " value = " + value);
       MemoizingContextTest.value = value;
+      return evalContext.immediateValue(value);
     }
   }
 }

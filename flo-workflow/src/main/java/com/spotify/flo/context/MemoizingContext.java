@@ -122,8 +122,10 @@ public class MemoizingContext extends ForwardingEvalContext {
      *
      * @param task   The task for which the value was produced
      * @param value  The value that was produced
+     * @return a {@code Value<T>} containing either the produced value or whatever value
+     *         {@link #lookup(Task)} would return.
      */
-    void store(Task<T> task, T value);
+    Value<T> store(EvalContext evalContext, Task<T> task, T value);
 
     /**
      * A memoizer that does nothing and always returns empty {@link #lookup} values
@@ -142,7 +144,8 @@ public class MemoizingContext extends ForwardingEvalContext {
     }
 
     @Override
-    public void store(Task<Object> task, Object value) {
+    public Value<Object> store(EvalContext evalContext, Task<Object> task, Object value) {
+      return evalContext.immediateValue(value);
     }
   };
 
@@ -217,10 +220,8 @@ public class MemoizingContext extends ForwardingEvalContext {
     final Task<T> task = evalBundle.task;
     final Memoizer<T> memoizer = evalBundle.memoizer;
 
-    return delegate.invokeProcessFn(taskId, () -> processFn.get().map(v -> {
-      memoizer.store(task, v);
-      return v;
-    }));
+    return delegate.invokeProcessFn(taskId, () -> processFn.get()
+        .flatMap(v -> memoizer.store(this, task, v)));
   }
 
   /**
