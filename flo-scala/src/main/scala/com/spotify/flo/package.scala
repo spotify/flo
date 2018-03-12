@@ -26,7 +26,6 @@ package object flo {
   }
 
   def $[T]: TaskBuilder0[T] = currentBuilder
-  def ▫[T]: TaskBuilder0[T] = currentBuilder
 
   private def currentBuilder[T]: TaskBuilder0[T] = {
     val builder = dynamicBuilder.value
