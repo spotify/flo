@@ -41,7 +41,8 @@
   <modules>
     <module>flo-api-generator</module>
     <module>flo-workflow</module>
-    <module>flo-scala</module>
+    <module>flo-scala_2.11</module>
+    <module>flo-scala_2.12</module>
     <module>flo-runner</module>
     <module>flo-freezer</module>
   </modules>

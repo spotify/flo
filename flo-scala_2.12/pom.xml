@@ -7,15 +7,16 @@
     <version>0.2.3-SNAPSHOT</version>
   </parent>
 
-  <name>Flo Scala API</name>
-  <artifactId>flo-scala_${scala.baseVersion}</artifactId>
+  <name>Flo Scala 2.12 API</name>
+  <artifactId>flo-scala_2.12</artifactId>
   <description>
     Scala API Bindings for Flo
   </description>
 
   <properties>
-    <scala.baseVersion>2.11</scala.baseVersion>
-    <scala.version>2.11.8</scala.version>
+    <scala.baseVersion>2.12</scala.baseVersion>
+    <scala.version>2.12.4</scala.version>
+    <java.version>1.8</java.version>
   </properties>
 
   <dependencies>
@@ -40,7 +41,7 @@
     <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${scala.baseVersion}</artifactId>
-      <version>3.0.1</version>
+      <version>3.0.4</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -50,7 +51,7 @@
       <plugin>
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>
-        <version>3.2.1</version>
+        <version>3.2.2</version>
         <executions>
           <execution>
             <id>add-generated-sources</id>
@@ -74,6 +75,17 @@
           <sendJavaToScalac>false</sendJavaToScalac>
           <addScalacArgs>-Xexperimental</addScalacArgs>
         </configuration>
+      </plugin>
+
+      <plugin>
+          <inherited>true</inherited>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>2.3.2</version>
+          <configuration>
+            <source>${java.version}</source>
+            <target>${java.version}</target>
+          </configuration>
       </plugin>
 
       <!-- enable scalatest -->
