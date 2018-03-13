@@ -51,7 +51,7 @@ public class Logging {
   void willEval(TaskId id) { }
 
   void startEval(TaskId taskId) {
-    LOG.info("{} Running ...", colored(taskId));
+    LOG.info("{} Started", colored(taskId));
   }
 
   <T> void completedValue(TaskId taskId, T value, Duration elapsed) {
