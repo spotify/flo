@@ -20,6 +20,8 @@
 
 package com.spotify.flo;
 
+import java.util.Optional;
+
 /**
  * This is to be extended when building a {@link TaskContext} that is intended to work only with a
  * task whose returned value is of type {@link S}.
@@ -38,5 +40,16 @@ public abstract class TaskContextStrict<T, S> implements TaskContext<T> {
    * @param z    The return value of the evaluated task
    */
   public void onSuccessStrict(Task<?> task, S z) {
+  }
+
+  /**
+   * Perform a lookup of the value this task would have produced if it ran. Override to be able
+   * to short-circuit a task with a previously calculated value.
+   *
+   * @param task a task with a {@link TaskContextStrict} to lookup a value for
+   * @return the value for this {@link TaskContextStrict} (e.g. from a previous run)
+   */
+  public Optional<S> lookup(Task<S> task) {
+    return Optional.empty();
   }
 }
