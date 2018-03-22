@@ -23,26 +23,27 @@ package com.spotify.flo.context;
 import static com.spotify.flo.context.FloRunner.runTask;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 import com.spotify.flo.Task;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.status.NotReady;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
 public class FloRunnerTest {
 
   @Test
   public void nonBlockingRunnerDoesNotBlock() {
-    final AtomicBoolean hasHappened = new AtomicBoolean();
+    final AtomicBoolean hasHappened = new AtomicBoolean(false);
+    final CountDownLatch latch = new CountDownLatch(1);
     final Task<Void> task = Task.named("task").ofType(Void.class)
         .process(() -> {
           try {
-            Thread.sleep(10);
+            latch.await();
             hasHappened.set(true);
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -53,6 +54,8 @@ public class FloRunnerTest {
     runTask(task);
 
     assertThat(hasHappened.get(), is(false));
+
+    latch.countDown();
   }
 
   @Test
@@ -93,12 +96,13 @@ public class FloRunnerTest {
           throw expectedException;
         });
 
+    Throwable exception = null;
     try {
       runTask(task).value();
-      fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause(), is(expectedException));
+      exception = e.getCause();
     }
+    assertThat(exception, is(expectedException));
   }
 
   @Test
@@ -108,13 +112,11 @@ public class FloRunnerTest {
           throw new Persisted();
         });
 
-    final CompletableFuture<Integer> future = new CompletableFuture<>();
+    AtomicInteger status = new AtomicInteger(1);
 
-    runTask(task).waitAndExit(future::complete);
+    runTask(task).waitAndExit(status::set);
 
-    final int status = future.get(1, TimeUnit.SECONDS);
-
-    assertThat(status, is(0));
+    assertThat(status.get(), is(0));
   }
 
   @Test
@@ -134,28 +136,24 @@ public class FloRunnerTest {
           throw new NotReady();
         });
 
-    final CompletableFuture<Integer> future = new CompletableFuture<>();
+    AtomicInteger status = new AtomicInteger();
 
-    runTask(task).waitAndExit(future::complete);
+    runTask(task).waitAndExit(status::set);
 
-    final int status = future.get(1, TimeUnit.SECONDS);
-
-    assertThat(status, is(20));
+    assertThat(status.get(), is(20));
   }
 
   @Test
   public void exceptionsExitNonZero() throws Exception {
-    final Task<String> throwingTask = Task.named("throwingTask").ofType(String.class)
+    final Task<String> task = Task.named("task").ofType(String.class)
         .process(() -> {
           throw new RuntimeException("this task should throw");
         });
 
-    final CompletableFuture<Integer> future = new CompletableFuture<>();
+    AtomicInteger status = new AtomicInteger();
 
-    runTask(throwingTask).waitAndExit(future::complete);
+    runTask(task).waitAndExit(status::set);
 
-    final int status = future.get(1, TimeUnit.SECONDS);
-
-    assertThat(status, is(1));
+    assertThat(status.get(), is(1));
   }
 }

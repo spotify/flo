@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -111,18 +112,26 @@ public final class FloRunner<T> {
     value.consume(future::complete);
     value.onFail(future::completeExceptionally);
 
-    future.thenRun(() -> {
-      logging.complete(task.id(), Duration.ofNanos(System.nanoTime() - t0));
-      closeables.forEach(closeable -> {
-        try {
-          closeable.close();
-        } catch (IOException e) {
-          LOG.warn("could not close", e);
-        }
-      });
-    });
+    return future.handle((v, throwable) -> {
+      new Thread(() ->
+          closeables.forEach(closeable -> {
+            try {
+              closeable.close();
+            } catch (IOException e) {
+              LOG.warn("could not close {}", closeable.getClass(), e);
+            }
+          }), "flo-runner-closer").start();
 
-    return future;
+      if (throwable != null) {
+        logging.exception(throwable);
+        logging.complete(task.id(), Duration.ofNanos(System.nanoTime() - t0));
+        throw new CompletionException(throwable);
+      }
+
+      logging.complete(task.id(), Duration.ofNanos(System.nanoTime() - t0));
+
+      return v;
+    });
   }
 
   private EvalContext createContext() {
