@@ -4,7 +4,7 @@
   <parent>
     <artifactId>flo</artifactId>
     <groupId>com.spotify</groupId>
-    <version>0.2.1</version>
+    <version>0.2.2-SNAPSHOT</version>
   </parent>
 
   <name>Flo Freezer</name>
@@ -17,7 +17,7 @@
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>flo-workflow</artifactId>
-      <version>0.2.1</version>
+      <version>0.2.2-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.esotericsoftware</groupId>
