@@ -24,7 +24,6 @@ import static com.spotify.flo.EvalContext.sync;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-import com.spotify.flo.AwaitValue;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskContextStrict;
@@ -33,12 +32,18 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OverridingContextTest {
 
-  EvalContext context = OverridingContext.composeWith(sync());
+  private static final Logger LOG = LoggerFactory.getLogger(OverridingContext.class);
+
+  EvalContext context = OverridingContext.composeWith(sync(), Logging.create(LOG));
 
   Map<TaskId, Integer> lookup = new HashMap<>();
 
@@ -77,7 +82,7 @@ public class OverridingContextTest {
   }
 
   @Test
-  public void shouldSkipOnExistingLookup() throws InterruptedException {
+  public void shouldSkipOnExistingLookup() throws InterruptedException, ExecutionException {
     final Task<Integer> task = rootTaskWithUpstreams(
         upstreamCharCount("1"),
         upstreamCharCount("22")
@@ -85,9 +90,9 @@ public class OverridingContextTest {
 
     lookup.put(task.id(), 3);
 
-    final AwaitValue<Integer> val = new AwaitValue<>();
-    context.evaluate(task).consume(val);
-    final Integer value = val.awaitAndGet();
+    CompletableFuture<Integer> future = new CompletableFuture<>();
+    context.evaluate(task).consume(future::complete);
+    final Integer value = future.get();
 
     assertThat(value, is(3));
     assertThat(countUpstreamRuns, is(0));
@@ -95,7 +100,7 @@ public class OverridingContextTest {
   }
 
   @Test
-  public void shouldSkipUpstreamOnExistingLookup() throws InterruptedException {
+  public void shouldSkipUpstreamOnExistingLookup() throws InterruptedException, ExecutionException {
     final Task<Integer> upstream = upstreamCharCount("1");
     final Task<Integer> task = rootTaskWithUpstreams(
         upstream,
@@ -104,9 +109,9 @@ public class OverridingContextTest {
 
     lookup.put(upstream.id(), 1);
 
-    final AwaitValue<Integer> val = new AwaitValue<>();
-    context.evaluate(task).consume(val);
-    final Integer value = val.awaitAndGet();
+    CompletableFuture<Integer> future = new CompletableFuture<>();
+    context.evaluate(task).consume(future::complete);
+    final Integer value = future.get();
 
     assertThat(value, is(3));
     assertThat(countUpstreamRuns, is(1));
