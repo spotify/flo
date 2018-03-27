@@ -35,13 +35,15 @@ import org.slf4j.LoggerFactory;
  */
 public class OverridingContext extends ForwardingEvalContext {
   private static final Logger LOG = LoggerFactory.getLogger(OverridingContext.class);
+  private final Logging logging;
 
-  private OverridingContext(EvalContext delegate) {
+  private OverridingContext(EvalContext delegate, Logging logging) {
     super(delegate);
+    this.logging = logging;
   }
 
-  public static EvalContext composeWith(EvalContext baseContext) {
-    return new OverridingContext(baseContext);
+  public static EvalContext composeWith(EvalContext baseContext, Logging logging) {
+    return new OverridingContext(baseContext, logging);
   }
 
   @Override
@@ -58,9 +60,11 @@ public class OverridingContext extends ForwardingEvalContext {
             if (value.isPresent()) {
               final T t = value.get();
               LOG.debug("Not expanding {}, lookup = {}", colored(task.id()), t);
+              logging.overriddenValue(task.id(), t);
               return context.immediateValue(t);
             } else {
-              LOG.debug("Expanding {}", colored(task.id()));
+              LOG.debug("Lookup not found, expanding {}", colored(task.id()));
+              logging.overriddenValueNotFound(task.id());
               return delegate.evaluateInternal(task, context);
             }
           });

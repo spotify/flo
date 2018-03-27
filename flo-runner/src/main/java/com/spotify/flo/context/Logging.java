@@ -59,6 +59,14 @@ public class Logging {
         colored(taskId), formatDurationHMS(elapsed.toMillis()), value);
   }
 
+  <T> void overriddenValue(TaskId taskId, T value) {
+    LOG.info("{} has already been computed -> {}", colored(taskId), value);
+  }
+
+  void overriddenValueNotFound(TaskId taskId) {
+    LOG.info("{} has not previously been computed", colored(taskId));
+  }
+
   void failedValue(TaskId taskId, Throwable valueError, Duration elapsed) {
     final String hms = formatDurationHMS(elapsed.toMillis());
     if (valueError instanceof TaskStatusException) {

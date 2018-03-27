@@ -144,7 +144,8 @@ public final class FloRunner<T> {
         MemoizingContext.composeWith(
             OverridingContext.composeWith(
                 LoggingContext.composeWith(
-                    baseContext, logging)));
+                    baseContext, logging),
+                logging));
   }
 
   private EvalContext createRootContext() {
