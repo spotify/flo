@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.spotify</groupId>
     <artifactId>flo</artifactId>
-    <version>0.2.3-SNAPSHOT</version>
+    <version>0.2.3</version>
   </parent>
 
   <name>Flo Workflow Definition</name>
@@ -17,7 +17,7 @@
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>flo-api-generator</artifactId>
-      <version>0.2.3-SNAPSHOT</version>
+      <version>0.2.3</version>
       <scope>provided</scope>
     </dependency>
 
