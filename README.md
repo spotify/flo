@@ -28,8 +28,6 @@ __Some key features__
 "com.spotify" %% "flo-scala" % floVersion
 ```
 
-_Only Scala 2.11 artifacts available at the moment_
-
 JavaDocs here: http://spotify.github.io/flo/maven/latest/apidocs/
 
 ## Table of contents
