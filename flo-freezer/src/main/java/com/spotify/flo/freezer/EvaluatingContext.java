@@ -20,7 +20,6 @@
 
 package com.spotify.flo.freezer;
 
-import static com.spotify.flo.Util.colored;
 import static com.spotify.flo.freezer.PersistingContext.cleanForFilename;
 
 import com.spotify.flo.EvalContext;
@@ -138,7 +137,7 @@ public class EvaluatingContext {
       // todo: fail if called for taskId != evalTask
 
       final Value<T> tValue = super.invokeProcessFn(taskId, processFn);
-      tValue.consume(v -> LOG.info("{} == {}", colored(taskId), v));
+      tValue.consume(v -> LOG.info("{} == {}", taskId, v));
       return tValue;
     }
   }

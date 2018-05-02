@@ -20,9 +20,7 @@
 
 package com.spotify.flo.context;
 
-import static com.spotify.flo.Util.colored;
 import static org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS;
-import static org.fusesource.jansi.Ansi.Color.GREEN;
 
 import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskInfo;
@@ -44,38 +42,38 @@ public class Logging {
   }
 
   void header() {
-    LOG.info("Runner {}", colored(GREEN, "v" + getClass().getPackage().getImplementationVersion()));
+    LOG.info("Runner v{}", getClass().getPackage().getImplementationVersion());
     LOG.info("");
   }
 
   void willEval(TaskId id) { }
 
   void startEval(TaskId taskId) {
-    LOG.info("{} Started", colored(taskId));
+    LOG.info("{} Started", taskId);
   }
 
   <T> void completedValue(TaskId taskId, T value, Duration elapsed) {
     LOG.info("{} Completed in {} -> {}",
-        colored(taskId), formatDurationHMS(elapsed.toMillis()), value);
+        taskId, formatDurationHMS(elapsed.toMillis()), value);
   }
 
   <T> void overriddenValue(TaskId taskId, T value) {
-    LOG.info("{} has already been computed -> {}", colored(taskId), value);
+    LOG.info("{} has already been computed -> {}", taskId, value);
   }
 
   void overriddenValueNotFound(TaskId taskId) {
-    LOG.info("{} has not previously been computed", colored(taskId));
+    LOG.info("{} has not previously been computed", taskId);
   }
 
   void failedValue(TaskId taskId, Throwable valueError, Duration elapsed) {
     final String hms = formatDurationHMS(elapsed.toMillis());
     if (valueError instanceof TaskStatusException) {
       final String exception = valueError.getClass().getSimpleName();
-      LOG.warn("{} Signalled {} after {}", colored(taskId), exception, hms);
+      LOG.warn("{} Signalled {} after {}", taskId, exception, hms);
     } else if (valueError instanceof Persisted) {
       // ignore
     } else {
-      LOG.warn("{} Failed after {}", colored(taskId), hms, valueError);
+      LOG.warn("{} Failed after {}", taskId, hms, valueError);
     }
   }
 

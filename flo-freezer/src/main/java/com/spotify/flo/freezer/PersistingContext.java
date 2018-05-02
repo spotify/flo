@@ -20,7 +20,6 @@
 
 package com.spotify.flo.freezer;
 
-import static com.spotify.flo.Util.colored;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.newOutputStream;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
@@ -89,7 +88,7 @@ public class PersistingContext extends ForwardingEvalContext {
   @Override
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
     final Promise<T> promise = promise();
-    LOG.info("Will not invoke {}", colored(taskId));
+    LOG.info("Will not invoke {}", taskId);
     promise.fail(new Persisted());
     return promise.value();
   }

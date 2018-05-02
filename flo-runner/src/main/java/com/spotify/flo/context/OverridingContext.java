@@ -20,8 +20,6 @@
 
 package com.spotify.flo.context;
 
-import static com.spotify.flo.Util.colored;
-
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskContextStrict;
@@ -59,17 +57,17 @@ public class OverridingContext extends ForwardingEvalContext {
           .flatMap(value -> {
             if (value.isPresent()) {
               final T t = value.get();
-              LOG.debug("Not expanding {}, lookup = {}", colored(task.id()), t);
+              LOG.debug("Not expanding {}, lookup = {}", task.id(), t);
               logging.overriddenValue(task.id(), t);
               return context.immediateValue(t);
             } else {
-              LOG.debug("Lookup not found, expanding {}", colored(task.id()));
+              LOG.debug("Lookup not found, expanding {}", task.id());
               logging.overriddenValueNotFound(task.id());
               return delegate.evaluateInternal(task, context);
             }
           });
     } else {
-      LOG.debug("Expanding {}", colored(task.id()));
+      LOG.debug("Expanding {}", task.id());
       return delegate.evaluateInternal(task, context);
     }
   }
