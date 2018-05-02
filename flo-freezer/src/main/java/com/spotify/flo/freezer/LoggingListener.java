@@ -20,8 +20,6 @@
 
 package com.spotify.flo.freezer;
 
-import static com.spotify.flo.Util.colored;
-
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.InstrumentedContext;
@@ -38,12 +36,12 @@ public class LoggingListener implements InstrumentedContext.Listener {
   @Override
   public void task(Task<?> task) {
     task.inputs().forEach(
-        (upstream) -> LOG.info("{} <- {}", colored(upstream.id()), colored(task.id()))
+        (upstream) -> LOG.info("{} <- {}", upstream.id(), task.id())
     );
   }
 
   @Override
   public void status(TaskId task, Phase phase) {
-    LOG.info("{} :: {}", colored(task), phase);
+    LOG.info("{} :: {}", task, phase);
   }
 }

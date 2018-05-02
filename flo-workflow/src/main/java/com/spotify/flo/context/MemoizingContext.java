@@ -20,8 +20,6 @@
 
 package com.spotify.flo.context;
 
-import static com.spotify.flo.Util.colored;
-
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
@@ -305,10 +303,10 @@ public class MemoizingContext extends ForwardingEvalContext {
       final Optional<T> lookup = memoizer.lookup(task);
       if (lookup.isPresent()) {
         final T t = lookup.get();
-        LOG.debug("Not expanding {}, lookup = {}", colored(task.id()), t);
+        LOG.debug("Not expanding {}, lookup = {}", task.id(), t);
         promise.set(t);
       } else {
-        LOG.debug("Expanding {}", colored(task.id()));
+        LOG.debug("Expanding {}", task.id());
         chain(delegate.evaluateInternal(task, context), promise);
       }
     }
