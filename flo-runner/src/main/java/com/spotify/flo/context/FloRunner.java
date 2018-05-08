@@ -57,16 +57,56 @@ import org.slf4j.LoggerFactory;
 /**
  * This class implements a top-level runner for {@link Task}s.
  */
-public final class FloRunner<T> {
+public class FloRunner<T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(FloRunner.class);
+  private static final TerminationHookFactory DEFAULT_TERMINATION_HOOK_FACTORY = () ->
+      (Integer exitCode) -> {
+        LOG.info("Termination with exit code " + exitCode);
+        System.exit(exitCode);
+      };
 
   private final Logging logging = Logging.create(LOG);
   private final Collection<Closeable> closeables = new ArrayList<>();
   private final Config config;
+  private TerminationHookFactory terminationHookFactory;
+
+  public static class Builder {
+
+    private Config config = defaultConfig();
+    private TerminationHookFactory terminationHookFactory = DEFAULT_TERMINATION_HOOK_FACTORY;
+
+    public Builder setConfig(Config config) {
+      this.config = config;
+      return this;
+    }
+
+    public Builder setTerminationHookFactory(TerminationHookFactory terminationHookFactory) {
+      this.terminationHookFactory = terminationHookFactory;
+      return this;
+    }
+
+    public FloRunner build() {
+      return new FloRunner(this);
+    }
+  }
+
+  public static Builder newBuilder() {
+    return new Builder();
+  }
+
+  public static FloRunner createDefault() {
+    return newBuilder().build();
+  }
 
   private FloRunner(Config config) {
     this.config = requireNonNull(config);
+    this.terminationHookFactory = requireNonNull(DEFAULT_TERMINATION_HOOK_FACTORY);
+  }
+
+  private FloRunner(Builder builder) {
+    this.config = requireNonNull(defaultConfig());
+    this.terminationHookFactory = requireNonNull(builder.terminationHookFactory);
   }
 
   private static Config defaultConfig() {
@@ -81,6 +121,10 @@ public final class FloRunner<T> {
    * @return a {@link Result} with the value and throwable (if thrown)
    */
   public static <T> Result<T> runTask(Task<T> task, Config config) {
+    if (config.getBoolean("termination.logging")) {
+      final FloRunner runner = new FloRunner(config);
+      return new Result<>(runner.run(task), runner.terminationHookFactory.create());
+    }
     return new Result<>(new FloRunner<T>(config).run(task));
   }
 
@@ -234,9 +278,16 @@ public final class FloRunner<T> {
 
   public static class Result<T> {
     private final Future<T> future;
+    private final Consumer<Integer> exiter;
 
     Result(Future<T> future) {
       this.future = future;
+      this.exiter = System::exit;
+    }
+
+    Result(Future<T> future, Consumer<Integer> exiter) {
+      this.future = future;
+      this.exiter = exiter;
     }
 
     public Future<T> future() {
@@ -248,7 +299,7 @@ public final class FloRunner<T> {
      * status code.
      */
     public void waitAndExit() {
-      waitAndExit(System::exit);
+      waitAndExit(exiter);
     }
 
     /**
