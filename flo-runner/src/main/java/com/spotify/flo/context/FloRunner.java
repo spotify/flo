@@ -40,6 +40,8 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -81,7 +83,27 @@ public final class FloRunner<T> {
    * @return a {@link Result} with the value and throwable (if thrown)
    */
   public static <T> Result<T> runTask(Task<T> task, Config config) {
+    if (config.getBoolean("termination.logging")) {
+
+      Optional<TerminationHook> terminationHook = loadTerminationHook();
+      if (terminationHook.isPresent()){
+        return new Result<T>(new FloRunner<T>(config).run(task), terminationHook.get());
+      }
+      LOG.warn("Termination logging enabled, but no TerminationHookFactory is configured");
+    }
+
     return new Result<>(new FloRunner<T>(config).run(task));
+  }
+
+  private static Optional<TerminationHook> loadTerminationHook() {
+    final ServiceLoader<TerminationHookFactory> factories =
+        ServiceLoader.load(TerminationHookFactory.class);
+
+    final Iterator<TerminationHookFactory> factoryIterator = factories.iterator();
+    if (factoryIterator.hasNext()) {
+      return Optional.of(requireNonNull(factoryIterator.next().create()));
+    }
+    return Optional.empty();
   }
 
   /**
@@ -234,9 +256,16 @@ public final class FloRunner<T> {
 
   public static class Result<T> {
     private final Future<T> future;
+    private final Consumer<Integer> exiter;
 
     Result(Future<T> future) {
       this.future = future;
+      this.exiter = System::exit;
+    }
+
+    Result(Future<T> future, Consumer<Integer> exiter) {
+      this.future = future;
+      this.exiter = exiter;
     }
 
     public Future<T> future() {
@@ -244,11 +273,11 @@ public final class FloRunner<T> {
     }
 
     /*
-     * Wait until task has finished running and {@code System.exit()} with an appropriate
-     * status code.
+     * Wait until task has finished running and {@code System.exit()} or {@field exiter} exits
+     * with an appropriate status code.
      */
     public void waitAndExit() {
-      waitAndExit(System::exit);
+      waitAndExit(exiter);
     }
 
     /**
