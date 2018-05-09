@@ -83,15 +83,10 @@ public final class FloRunner<T> {
    * @return a {@link Result} with the value and throwable (if thrown)
    */
   public static <T> Result<T> runTask(Task<T> task, Config config) {
-    if (config.getBoolean("termination.logging")) {
-
-      Optional<TerminationHook> terminationHook = loadTerminationHook();
-      if (terminationHook.isPresent()){
-        return new Result<T>(new FloRunner<T>(config).run(task), terminationHook.get());
-      }
-      LOG.warn("Termination logging enabled, but no TerminationHookFactory is configured");
+    Optional<TerminationHook> terminationHook = loadTerminationHook();
+    if (terminationHook.isPresent()) {
+      return new Result<>(new FloRunner<T>(config).run(task), terminationHook.get());
     }
-
     return new Result<>(new FloRunner<T>(config).run(task));
   }
 
@@ -101,7 +96,7 @@ public final class FloRunner<T> {
 
     final Iterator<TerminationHookFactory> factoryIterator = factories.iterator();
     if (factoryIterator.hasNext()) {
-      return Optional.of(requireNonNull(factoryIterator.next().create()));
+      return Optional.of(factoryIterator.next().create());
     }
     return Optional.empty();
   }
