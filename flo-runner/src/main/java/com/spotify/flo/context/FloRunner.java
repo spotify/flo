@@ -83,11 +83,8 @@ public final class FloRunner<T> {
    * @return a {@link Result} with the value and throwable (if thrown)
    */
   public static <T> Result<T> runTask(Task<T> task, Config config) {
-    Optional<TerminationHook> terminationHook = loadTerminationHook();
-    if (terminationHook.isPresent()) {
-      return new Result<>(new FloRunner<T>(config).run(task), terminationHook.get());
-    }
-    return new Result<>(new FloRunner<T>(config).run(task));
+    return new Result<>(new FloRunner<T>(config).run(task),
+        loadTerminationHook().orElse(System::exit));
   }
 
   private static Optional<TerminationHook> loadTerminationHook() {
@@ -253,21 +250,21 @@ public final class FloRunner<T> {
     private final Future<T> future;
     private final Consumer<Integer> exiter;
 
-    Result(Future<T> future) {
-      this.future = future;
-      this.exiter = System::exit;
-    }
-
     Result(Future<T> future, Consumer<Integer> exiter) {
       this.future = future;
-      this.exiter = exiter;
+      this.exiter = (Integer exitCode) -> {
+        exiter.accept(exitCode);
+        // exiter might already be System::exit, but that won't matter. The following call will
+        // simply not be reached
+        System.exit(exitCode);
+      };
     }
 
     public Future<T> future() {
       return future;
     }
 
-    /*
+    /**
      * Wait until task has finished running and {@code System.exit()} or {@field exiter} exits
      * with an appropriate status code.
      */
