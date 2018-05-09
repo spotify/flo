@@ -28,9 +28,6 @@ import com.typesafe.config.Config;
  *
  * The {@link #createListener(Config)} method gets a reference to the loaded {@link Config}
  * object which can be used to extract information about the runner configuration.
- *
- * An example is to use {@link StyxExecutionId#fromConfig(Config)} to load information about a
- * Styx execution context, in the case the workflow is run by Styx.
  */
 public interface FloListenerFactory {
 
