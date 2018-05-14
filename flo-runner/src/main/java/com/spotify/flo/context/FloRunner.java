@@ -40,9 +40,9 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -53,6 +53,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,19 +85,16 @@ public final class FloRunner<T> {
    * @return a {@link Result} with the value and throwable (if thrown)
    */
   public static <T> Result<T> runTask(Task<T> task, Config config) {
-    return new Result<>(new FloRunner<T>(config).run(task),
-        loadTerminationHook().orElse(System::exit));
+    return new Result<>(new FloRunner<T>(config).run(task), loadTerminationHooks());
   }
 
-  private static Optional<TerminationHook> loadTerminationHook() {
+  private static Iterable<TerminationHook> loadTerminationHooks() {
     final ServiceLoader<TerminationHookFactory> factories =
         ServiceLoader.load(TerminationHookFactory.class);
 
-    final Iterator<TerminationHookFactory> factoryIterator = factories.iterator();
-    if (factoryIterator.hasNext()) {
-      return Optional.of(factoryIterator.next().create());
-    }
-    return Optional.empty();
+    return StreamSupport
+        .stream(Spliterators.spliteratorUnknownSize(factories.iterator(), Spliterator.NONNULL), false)
+        .map(TerminationHookFactory::create).collect(Collectors.toList());
   }
 
   /**
@@ -250,12 +249,10 @@ public final class FloRunner<T> {
     private final Future<T> future;
     private final Consumer<Integer> exiter;
 
-    Result(Future<T> future, Consumer<Integer> exiter) {
+    Result(Future<T> future, Iterable<TerminationHook> terminationHooks) {
       this.future = future;
       this.exiter = (Integer exitCode) -> {
-        exiter.accept(exitCode);
-        // exiter might already be System::exit, but that won't matter. The following call will
-        // simply not be reached
+        terminationHooks.forEach(hook -> hook.accept(exitCode));
         System.exit(exitCode);
       };
     }
