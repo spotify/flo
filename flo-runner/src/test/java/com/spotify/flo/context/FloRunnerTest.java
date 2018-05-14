@@ -24,19 +24,16 @@ import static com.spotify.flo.context.FloRunner.runTask;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mock;
 
 import com.spotify.flo.Task;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.status.NotReady;
-import com.sun.tools.javac.util.List;
-import java.util.ServiceLoader;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -44,47 +41,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(value = {FloRunner.class})
 public class FloRunnerTest {
 
   final Task<String> FOO_TASK = Task.named("task").ofType(String.class)
       .process(() -> "foo");
 
-  private ServiceLoader<TerminationHookFactory> terminationHookFactoryServiceLoader;
-  private TerminationHookFactory exceptionalTerminationHookFactory;
-  private TerminationHookFactory validTerminationHookFactory;
-  private TerminationHookFactory nullTerminationHookFactory;
   private TerminationHook validTerminationHook;
   private TerminationHook exceptionalTerminationHook;
 
   @Before
   public void setUp() {
-    PowerMockito.mockStatic(ServiceLoader.class);
-    terminationHookFactoryServiceLoader = mock(ServiceLoader.class);
-
-    when(ServiceLoader.load(eq(TerminationHookFactory.class))).thenCallRealMethod();
-    when(ServiceLoader.load(eq(FloListenerFactory.class))).thenCallRealMethod();
-
-    exceptionalTerminationHookFactory = mock(TerminationHookFactory.class);
-    validTerminationHookFactory = mock(TerminationHookFactory.class);
-    nullTerminationHookFactory = mock(TerminationHookFactory.class);
-
-    validTerminationHook = mock(TerminationHook.class);
-    doNothing().when(validTerminationHook).accept(any());
-
     exceptionalTerminationHook = mock(TerminationHook.class);
     doThrow(new RuntimeException("hook exception")).when(exceptionalTerminationHook).accept(any());
 
-    when(exceptionalTerminationHookFactory.create())
-        .thenThrow(new RuntimeException("exception exception"));
-    when(nullTerminationHookFactory.create()).thenReturn(null);
-    when(validTerminationHookFactory.create()).thenReturn(validTerminationHook);
+    validTerminationHook = mock(TerminationHook.class);
+    doNothing().when(validTerminationHook).accept(any());
   }
 
   @Test
@@ -204,50 +176,70 @@ public class FloRunnerTest {
 
   @Test
   public void handleInvalidTerminationHookFactories() throws Exception {
-    when(ServiceLoader.load(eq(TerminationHookFactory.class))).thenReturn(
-        terminationHookFactoryServiceLoader);
-    when(terminationHookFactoryServiceLoader.iterator()).thenReturn(
-        List.of(exceptionalTerminationHookFactory, nullTerminationHookFactory).iterator());
+    TestTerminationHookFactory.injectHook(exceptionalTerminationHook);
 
     AtomicInteger status = new AtomicInteger();
     runTask(FOO_TASK).waitAndExit(status::set);
 
-    verify(exceptionalTerminationHookFactory, times(1)).create();
-    verify(nullTerminationHookFactory, times(1)).create();
-
-    assertThat(status.get(), is(0));
-  }
-
-  @Test
-  public void verifyCallToValidTerminationHookFactories() throws Exception {
-    when(ServiceLoader.load(eq(TerminationHookFactory.class))).thenReturn(
-        terminationHookFactoryServiceLoader);
-    when(terminationHookFactoryServiceLoader.iterator()).thenReturn(
-        List.of(validTerminationHookFactory).iterator());
-
-    AtomicInteger status = new AtomicInteger();
-    runTask(FOO_TASK).waitAndExit(status::set);
-
-    verify(validTerminationHookFactory, times(1)).create();
-    verify(validTerminationHook, times(1)).accept(0);
-
-    assertThat(status.get(), is(0));
-  }
-
-  @Test
-  public void handleExceptionalTerminationHooks() throws Exception {
-    when(ServiceLoader.load(eq(TerminationHookFactory.class))).thenReturn(
-        terminationHookFactoryServiceLoader);
-    when(terminationHookFactoryServiceLoader.iterator()).thenReturn(
-        List.of(validTerminationHookFactory).iterator());
-    when(validTerminationHookFactory.create()).thenReturn(exceptionalTerminationHook);
-
-    AtomicInteger status = new AtomicInteger();
-    runTask(FOO_TASK).waitAndExit(status::set);
-
-    verify(validTerminationHookFactory, times(1)).create();
     verify(exceptionalTerminationHook, times(1)).accept(0);
 
     assertThat(status.get(), is(0));
+  }
+
+  @Test
+  public void testValidTerminationHook() {
+    final HookResult hookResult = new HookResult();
+
+    doAnswer(invocation -> {
+      Integer exitCode = invocation.getArgumentAt(0, Integer.class);
+      hookResult.setExitCode(exitCode);
+      return null;
+    }).when(validTerminationHook).accept(any());
+
+    TestTerminationHookFactory.injectHook(validTerminationHook);
+
+    AtomicInteger status = new AtomicInteger();
+    runTask(FOO_TASK).waitAndExit(status::set);
+
+    assertThat(hookResult.getExitCode(), is(0));
+  }
+
+  @Test
+  public void testTerminationHookInvocationWhenTaskFails() {
+    final Task<String> task = Task.named("task").ofType(String.class)
+        .process(() -> {
+          throw new RuntimeException("this task should throw");
+        });
+
+    final HookResult hookResult = new HookResult();
+
+    doAnswer(invocation -> {
+      Integer exitCode = invocation.getArgumentAt(0, Integer.class);
+      hookResult.setExitCode(exitCode);
+      return null;
+    }).when(validTerminationHook).accept(any());
+
+    TestTerminationHookFactory.injectHook(validTerminationHook);
+
+    AtomicInteger status = new AtomicInteger();
+    runTask(task).waitAndExit(status::set);
+
+    assertThat(hookResult.getExitCode(), is(1));
+  }
+
+  class HookResult {
+
+    Integer exitCode;
+
+    HookResult() {
+    }
+
+    public void setExitCode(Integer exitCode) {
+      this.exitCode = exitCode;
+    }
+
+    public Integer getExitCode() {
+      return exitCode;
+    }
   }
 }
