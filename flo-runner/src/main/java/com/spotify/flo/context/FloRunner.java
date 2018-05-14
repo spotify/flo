@@ -96,15 +96,7 @@ public final class FloRunner<T> {
     return StreamSupport
         .stream(
             Spliterators.spliteratorUnknownSize(factories.iterator(), Spliterator.ORDERED), false)
-        .filter(Objects::nonNull)
-        .map(factory -> {
-          try {
-            return factory.create();
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        })
-        .filter(Objects::nonNull)
+        .map(factory -> Objects.requireNonNull(factory.create()))
         .collect(Collectors.toList());
   }
 
@@ -257,14 +249,13 @@ public final class FloRunner<T> {
   }
 
   public static class Result<T> {
+
     private final Future<T> future;
     private final Iterable<TerminationHook> terminationHooks;
-    private Consumer<Integer> exiter;
 
     Result(Future<T> future, Iterable<TerminationHook> terminationHooks) {
       this.future = future;
       this.terminationHooks = terminationHooks;
-      this.exiter = System::exit;
     }
 
     public Future<T> future() {
@@ -272,11 +263,11 @@ public final class FloRunner<T> {
     }
 
     /**
-     * Wait until task has finished running and {@code System.exit()} or {@field exiter} exits
+     * Wait until task has finished running and {@code System.exit()} exits
      * with an appropriate status code.
      */
     public void waitAndExit() {
-      waitAndExit(exiter);
+      waitAndExit(System::exit);
     }
 
     /**
@@ -288,10 +279,9 @@ public final class FloRunner<T> {
 
     // visible for testing
     void waitAndExit(Consumer<Integer> exiter) {
-      this.exiter = exiter;
       try {
         future.get();
-        exit(0);
+        exit(exiter, 0);
       } catch (ExecutionException e) {
         final int status;
         if (e.getCause() instanceof NotReady) {
@@ -301,13 +291,13 @@ public final class FloRunner<T> {
         } else {
           status = 1;
         }
-        exit(status);
+        exit(exiter, status);
       } catch (RuntimeException | InterruptedException e) {
-        exit(1);
+        exit(exiter, 1);
       }
     }
 
-    private void exit(int exitCode) {
+    private void exit(Consumer<Integer> exiter, int exitCode) {
       this.terminationHooks.forEach(hook -> {
         try {
           hook.accept(exitCode);
@@ -315,7 +305,7 @@ public final class FloRunner<T> {
           LOG.warn("Termination hook failed ", e);
         }
       });
-      this.exiter.accept(exitCode);
+      exiter.accept(exitCode);
     }
   }
 }
