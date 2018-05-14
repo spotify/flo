@@ -24,7 +24,7 @@ import static com.spotify.flo.context.FloRunner.runTask;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -128,7 +128,7 @@ public class FloRunnerTest {
   }
 
   @Test
-  public void persistedExitsZero() throws Exception {
+  public void persistedExitsZero() {
     final Task<Void> task = Task.named("persisted").ofType(Void.class)
         .process(() -> {
           throw new Persisted();
@@ -149,7 +149,7 @@ public class FloRunnerTest {
   }
 
   @Test
-  public void notReadyExitsTwenty() throws Exception {
+  public void notReadyExitsTwenty() {
     final Task<String> task = Task.named("task").ofType(String.class)
         .process(() -> {
           throw new NotReady();
@@ -163,7 +163,7 @@ public class FloRunnerTest {
   }
 
   @Test
-  public void exceptionsExitNonZero() throws Exception {
+  public void exceptionsExitNonZero() {
     final Task<String> task = Task.named("task").ofType(String.class)
         .process(() -> {
           throw new RuntimeException("this task should throw");
@@ -177,79 +177,48 @@ public class FloRunnerTest {
   }
 
   @Test
-  public void handleInvalidTerminationHookFactories() throws Exception {
+  public void ignoreExceptionsFromTerminationHook() {
     TestTerminationHookFactory.injectHook(exceptionalTerminationHook);
 
     AtomicInteger status = new AtomicInteger();
     runTask(FOO_TASK).waitAndExit(status::set);
 
-    verify(exceptionalTerminationHook, times(1)).accept(0);
-
+    verify(exceptionalTerminationHook, times(1)).accept(eq(0));
     assertThat(status.get(), is(0));
   }
 
   @Test
-  public void testValidTerminationHook() {
-    final HookResult hookResult = new HookResult();
-
-    doAnswer(invocation -> {
-      Integer exitCode = invocation.getArgumentAt(0, Integer.class);
-      hookResult.setExitCode(exitCode);
-      return null;
-    }).when(validTerminationHook).accept(any());
-
+  public void validateTerminationHookInvocationOnTaskSuccess() {
     TestTerminationHookFactory.injectHook(validTerminationHook);
 
     AtomicInteger status = new AtomicInteger();
     runTask(FOO_TASK).waitAndExit(status::set);
 
-    assertThat(hookResult.getExitCode(), is(0));
+    verify(validTerminationHook, times(1)).accept(eq(0));
+    assertThat(status.get(), is(0));
   }
 
   @Test
-  public void testTerminationHookInvocationWhenTaskFails() {
+  public void validateTerminationHookInvocationOnTaskFailure() {
     final Task<String> task = Task.named("task").ofType(String.class)
         .process(() -> {
           throw new RuntimeException("this task should throw");
         });
-
-    final HookResult hookResult = new HookResult();
-
-    doAnswer(invocation -> {
-      Integer exitCode = invocation.getArgumentAt(0, Integer.class);
-      hookResult.setExitCode(exitCode);
-      return null;
-    }).when(validTerminationHook).accept(any());
 
     TestTerminationHookFactory.injectHook(validTerminationHook);
 
     AtomicInteger status = new AtomicInteger();
     runTask(task).waitAndExit(status::set);
 
-    assertThat(hookResult.getExitCode(), is(1));
+    verify(validTerminationHook, times(1)).accept(eq(1));
+    assertThat(status.get(), is(1));
   }
 
   @Test(expected = RuntimeException.class)
-  public void testExceptionalTerminationHookFactory() {
+  public void failOnExceptionalTerminationHookFactory() {
     TestTerminationHookFactory.injectCreator(() -> {
       throw new RuntimeException("factory exception");
     });
     runTask(FOO_TASK);
-  }
-
-  class HookResult {
-
-    Integer exitCode;
-
-    HookResult() {
-    }
-
-    public void setExitCode(Integer exitCode) {
-      this.exitCode = exitCode;
-    }
-
-    public Integer getExitCode() {
-      return exitCode;
-    }
   }
 }
