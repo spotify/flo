@@ -31,8 +31,8 @@ public class TestTerminationHookFactory implements TerminationHookFactory {
   private static TerminationHook HOOK = (Integer num) -> LOG.info("{}", num);
   private static TerminationHookFactory FACTORY = () -> HOOK;
 
-  public static void injectHook(TerminationHook consumer) {
-    HOOK = consumer;
+  public static void injectHook(TerminationHook hook) {
+    FACTORY = () -> hook;
   }
 
   public static void injectCreator(TerminationHookFactory factory) {

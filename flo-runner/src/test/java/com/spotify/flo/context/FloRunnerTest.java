@@ -57,6 +57,8 @@ public class FloRunnerTest {
 
     validTerminationHook = mock(TerminationHook.class);
     doNothing().when(validTerminationHook).accept(any());
+
+    TestTerminationHookFactory.injectCreator(() -> validTerminationHook);
   }
 
   @Test
