@@ -40,6 +40,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -93,8 +94,19 @@ public final class FloRunner<T> {
         ServiceLoader.load(TerminationHookFactory.class);
 
     return StreamSupport
-        .stream(Spliterators.spliteratorUnknownSize(factories.iterator(), Spliterator.NONNULL), false)
-        .map(TerminationHookFactory::create).collect(Collectors.toList());
+        .stream(
+            Spliterators.spliteratorUnknownSize(factories.iterator(), Spliterator.ORDERED), false)
+        .filter(Objects::nonNull)
+        .map(factory -> {
+          try {
+            return factory.create();
+          } catch (Exception e) {
+            LOG.warn("Failed to create TerminationHook from {} ", factory.getClass(), e);
+          }
+          return null;
+        })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
   }
 
   /**
@@ -247,14 +259,13 @@ public final class FloRunner<T> {
 
   public static class Result<T> {
     private final Future<T> future;
-    private final Consumer<Integer> exiter;
+    private final Iterable<TerminationHook> terminationHooks;
+    private Consumer<Integer> exiter;
 
     Result(Future<T> future, Iterable<TerminationHook> terminationHooks) {
       this.future = future;
-      this.exiter = (Integer exitCode) -> {
-        terminationHooks.forEach(hook -> hook.accept(exitCode));
-        System.exit(exitCode);
-      };
+      this.terminationHooks = terminationHooks;
+      this.exiter = System::exit;
     }
 
     public Future<T> future() {
@@ -278,9 +289,10 @@ public final class FloRunner<T> {
 
     // visible for testing
     void waitAndExit(Consumer<Integer> exiter) {
+      this.exiter = exiter;
       try {
         future.get();
-        exiter.accept(0);
+        exit(0);
       } catch (ExecutionException e) {
         final int status;
         if (e.getCause() instanceof NotReady) {
@@ -290,10 +302,21 @@ public final class FloRunner<T> {
         } else {
           status = 1;
         }
-        exiter.accept(status);
+        exit(status);
       } catch (RuntimeException | InterruptedException e) {
-        exiter.accept(1);
+        exit(1);
       }
+    }
+
+    private void exit(int exitCode) {
+      this.terminationHooks.forEach(hook -> {
+        try {
+          hook.accept(exitCode);
+        } catch (Exception e) {
+          LOG.warn("Termination hook failed ", e);
+        }
+      });
+      this.exiter.accept(exitCode);
     }
   }
 }
