@@ -101,9 +101,8 @@ public final class FloRunner<T> {
           try {
             return factory.create();
           } catch (Exception e) {
-            LOG.warn("Failed to create TerminationHook from {} ", factory.getClass(), e);
+            throw new RuntimeException(e);
           }
-          return null;
         })
         .filter(Objects::nonNull)
         .collect(Collectors.toList());

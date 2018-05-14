@@ -227,6 +227,14 @@ public class FloRunnerTest {
     assertThat(hookResult.getExitCode(), is(1));
   }
 
+  @Test(expected = RuntimeException.class)
+  public void testExceptionalTerminationHookFactory() {
+    TestTerminationHookFactory.injectCreator(() -> {
+      throw new RuntimeException("factory exception");
+    });
+    runTask(FOO_TASK);
+  }
+
   class HookResult {
 
     Integer exitCode;
