@@ -56,6 +56,8 @@ public class TerminationLoggingTest {
   @Test
   public void shouldWriteToTerminationLog() throws IOException {
     final Path tempFile = Files.createTempFile("termination-log-", "");
+    tempFile.toFile().deleteOnExit();
+
     when(config.getString("styx.termination.log")).thenReturn(tempFile.toString());
 
     final String expected = "{\"component_id\": \"foo\","
@@ -69,8 +71,6 @@ public class TerminationLoggingTest {
 
     final String content = new String(Files.readAllBytes(tempFile));
     assertThat(content, is(expected));
-
-    tempFile.toFile().deleteOnExit();
   }
   
   @Test(expected = RuntimeException.class)
