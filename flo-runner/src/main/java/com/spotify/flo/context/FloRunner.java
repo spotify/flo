@@ -40,7 +40,10 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.ServiceLoader;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -51,6 +54,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +86,18 @@ public final class FloRunner<T> {
    * @return a {@link Result} with the value and throwable (if thrown)
    */
   public static <T> Result<T> runTask(Task<T> task, Config config) {
-    return new Result<>(new FloRunner<T>(config).run(task));
+    return new Result<>(new FloRunner<T>(config).run(task), loadTerminationHooks());
+  }
+
+  private static Iterable<TerminationHook> loadTerminationHooks() {
+    final ServiceLoader<TerminationHookFactory> factories =
+        ServiceLoader.load(TerminationHookFactory.class);
+
+    return StreamSupport
+        .stream(
+            Spliterators.spliteratorUnknownSize(factories.iterator(), Spliterator.ORDERED), false)
+        .map(factory -> Objects.requireNonNull(factory.create()))
+        .collect(Collectors.toList());
   }
 
   /**
@@ -233,19 +249,22 @@ public final class FloRunner<T> {
   }
 
   public static class Result<T> {
-    private final Future<T> future;
 
-    Result(Future<T> future) {
+    private final Future<T> future;
+    private final Iterable<TerminationHook> terminationHooks;
+
+    Result(Future<T> future, Iterable<TerminationHook> terminationHooks) {
       this.future = future;
+      this.terminationHooks = terminationHooks;
     }
 
     public Future<T> future() {
       return future;
     }
 
-    /*
-     * Wait until task has finished running and {@code System.exit()} with an appropriate
-     * status code.
+    /**
+     * Wait until task has finished running and {@code System.exit()} exits
+     * with an appropriate status code.
      */
     public void waitAndExit() {
       waitAndExit(System::exit);
@@ -262,7 +281,7 @@ public final class FloRunner<T> {
     void waitAndExit(Consumer<Integer> exiter) {
       try {
         future.get();
-        exiter.accept(0);
+        exit(exiter, 0);
       } catch (ExecutionException e) {
         final int status;
         if (e.getCause() instanceof NotReady) {
@@ -272,10 +291,21 @@ public final class FloRunner<T> {
         } else {
           status = 1;
         }
-        exiter.accept(status);
+        exit(exiter, status);
       } catch (RuntimeException | InterruptedException e) {
-        exiter.accept(1);
+        exit(exiter, 1);
       }
+    }
+
+    private void exit(Consumer<Integer> exiter, int exitCode) {
+      this.terminationHooks.forEach(hook -> {
+        try {
+          hook.accept(exitCode);
+        } catch (Exception e) {
+          LOG.warn("Termination hook failed ", e);
+        }
+      });
+      exiter.accept(exitCode);
     }
   }
 }
