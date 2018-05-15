@@ -5,28 +5,31 @@
     <groupId>com.spotify</groupId>
     <artifactId>flo</artifactId>
     <version>0.2.6-SNAPSHOT</version>
+    <relativePath>../..</relativePath>
   </parent>
 
-  <name>Flo Workflow Definition</name>
-  <artifactId>flo-workflow</artifactId>
+  <name>Flo BigQuery</name>
+  <artifactId>flo-bigquery</artifactId>
   <description>
-    Core workflow definition API
+    Flo BigQuery support
   </description>
 
   <dependencies>
     <dependency>
       <groupId>com.spotify</groupId>
-      <artifactId>flo-api-generator</artifactId>
-      <scope>provided</scope>
+      <artifactId>flo-runner</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>flo-workflow</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigquery</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
     </dependency>
   </dependencies>
 </project>

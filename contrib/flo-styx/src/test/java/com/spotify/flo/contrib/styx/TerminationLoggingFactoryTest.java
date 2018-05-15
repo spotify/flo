@@ -1,6 +1,6 @@
 /*-
  * -\-\-
- * Flo Runner
+ * flo-styx
  * --
  * Copyright (C) 2016 - 2018 Spotify AB
  * --
@@ -18,11 +18,28 @@
  * -/-/-
  */
 
-package com.spotify.flo.context;
+package com.spotify.flo.contrib.styx;
 
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+
+import com.spotify.flo.context.TerminationHookFactory;
 import com.typesafe.config.Config;
+import org.junit.Before;
+import org.junit.Test;
 
-public interface TerminationHookFactory {
+public class TerminationLoggingFactoryTest {
+  private TerminationHookFactory terminationHookFactory;
+  
+  @Before
+  public void setUp() {
+    terminationHookFactory = new TerminationLoggingFactory();
+  }
 
-  TerminationHook create(Config config);
+  @Test
+  public void shouldCreateInstance() {
+    assertThat(terminationHookFactory.create(mock(Config.class)), is(notNullValue()));
+  }
 }

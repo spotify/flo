@@ -1,0 +1,72 @@
+/*-
+ * -\-\-
+ * flo-bigquery
+ * --
+ * Copyright (C) 2016 - 2018 Spotify AB
+ * --
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -/-/-
+ */
+
+package com.spotify.flo.contrib.bigquery;
+
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.Table;
+import com.google.cloud.bigquery.TableId;
+
+import com.spotify.flo.Task;
+import com.spotify.flo.status.NotReady;
+import com.spotify.flo.util.Date;
+import com.spotify.flo.util.DateHour;
+
+import java.util.Optional;
+
+public final class BigQueryTasks {
+
+  private BigQueryTasks() {
+  }
+
+  private static Task<TableId> lookup(BigQuery bigQuery, TableId tableId) {
+    return Task.named(tableId.getProject(), tableId.getDataset(), tableId.getTable())
+        .ofType(TableId.class)
+        .process(() ->
+            Optional.ofNullable(bigQuery.getTable(tableId))
+                .map(Table::getTableId)
+                .orElseThrow(NotReady::new));
+  }
+
+  public static Task<TableId> lookup(TableId tableId) {
+    return lookup(BigQueryOptions.getDefaultInstance().getService(), tableId);
+  }
+
+  public static Task<TableId> lookup(String project, String dataset, String table) {
+    return lookup(TableId.of(project, dataset, table));
+  }
+
+  public static String formatTableDate(Date date) {
+    return date.toString().replace("-", "");
+  }
+
+  public static String formatTableDateHour(DateHour dateHour) {
+    return dateHour.toString().replace("-", "");
+  }
+
+  public static String legacyTableRef(TableId tableId) {
+    return tableId.getProject() + ":" + tableId.getDataset() + "." + tableId.getTable();
+  }
+
+  public static String tableRef(TableId tableId) {
+    return tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable();
+  }
+}
