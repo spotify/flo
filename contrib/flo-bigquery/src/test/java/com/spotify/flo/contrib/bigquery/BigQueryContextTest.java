@@ -28,12 +28,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.RetryOption;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.Dataset;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
 import com.google.cloud.bigquery.Job;
 import com.google.cloud.bigquery.JobInfo;
+import com.google.cloud.bigquery.JobStatus;
 import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
 import org.junit.Before;
@@ -46,18 +48,21 @@ import org.mockito.runners.MockitoJUnitRunner;
 public class BigQueryContextTest {
 
   @Mock
-  BigQuery bigQuery;
+  private BigQuery bigQuery;
 
   @Mock
-  Dataset dataset;
+  private Dataset dataset;
+  
+  @Mock
+  private Job job;
 
-  static final String PROJECT = "project";
-  static final String LOCATION = "EU";
-  static final DatasetId DATASET_ID = DatasetId.of(PROJECT, "dataset");
-  static final TableId TABLE_ID = TableId.of(PROJECT, DATASET_ID.getDataset(), "table");
+  private static final String PROJECT = "project";
+  private static final String LOCATION = "EU";
+  private static final DatasetId DATASET_ID = DatasetId.of(PROJECT, "dataset");
+  private static final TableId TABLE_ID = TableId.of(PROJECT, DATASET_ID.getDataset(), "table");
 
   @Before
-  public void setup() throws Exception {
+  public void setup() {
     when(dataset.getLocation()).thenReturn(LOCATION);
     when(bigQuery.create(any(DatasetInfo.class))).thenReturn(dataset);
     when(bigQuery.create(any(JobInfo.class))).thenReturn(mock(Job.class));
@@ -71,7 +76,7 @@ public class BigQueryContextTest {
   }
 
   @Test
-  public void shouldCreateStagingDatasetIfDoesNotExist() throws Exception {
+  public void shouldCreateStagingDatasetIfDoesNotExist() {
     when(bigQuery.getDataset(DATASET_ID)).thenReturn(dataset);
 
     final BigQueryContext bigQueryContext = BigQueryContext.create(bigQuery, TABLE_ID);
@@ -82,7 +87,7 @@ public class BigQueryContextTest {
   }
 
   @Test
-  public void shouldProvideStagingTableId() throws Exception {
+  public void shouldProvideStagingTableId() {
     when(bigQuery.getDataset(any(DatasetId.class))).thenReturn(dataset);
 
     final BigQueryContext bigQueryContext = BigQueryContext.create(bigQuery, TABLE_ID);
@@ -93,8 +98,13 @@ public class BigQueryContextTest {
   }
 
   @Test
-  public void shouldReturnTableIdWhenCallingPublish() throws Exception {
+  public void shouldReturnTableIdWhenCallingPublish() throws InterruptedException {
     when(bigQuery.getDataset(any(DatasetId.class))).thenReturn(dataset);
+    when(bigQuery.create(any(JobInfo.class))).thenReturn(job);
+    when(job.waitFor(any(RetryOption.class))).thenReturn(job);
+    
+    final JobStatus jobStatus = mock(JobStatus.class);
+    when(job.getStatus()).thenReturn(jobStatus);
 
     final BigQueryContext bigQueryContext = BigQueryContext.create(bigQuery, TABLE_ID);
 
@@ -106,7 +116,7 @@ public class BigQueryContextTest {
   }
 
   @Test
-  public void shouldReturnTableIdWhenExists() throws Exception {
+  public void shouldReturnTableIdWhenExists() {
     when(bigQuery.getDataset(DATASET_ID)).thenReturn(mock(Dataset.class));
     when(bigQuery.getTable(TABLE_ID)).thenReturn(mock(Table.class));
 
