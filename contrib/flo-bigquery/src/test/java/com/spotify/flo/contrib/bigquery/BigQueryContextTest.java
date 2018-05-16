@@ -24,12 +24,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.RetryOption;
 import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryError;
+import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.Dataset;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
@@ -38,6 +41,7 @@ import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.JobStatus;
 import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
+import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -98,13 +102,11 @@ public class BigQueryContextTest {
   }
 
   @Test
-  public void shouldReturnTableIdWhenCallingPublish() throws InterruptedException {
+  public void shouldReturnTableIdOnJobSuccess() throws InterruptedException {
     when(bigQuery.getDataset(any(DatasetId.class))).thenReturn(dataset);
     when(bigQuery.create(any(JobInfo.class))).thenReturn(job);
     when(job.waitFor(any(RetryOption.class))).thenReturn(job);
-    
-    final JobStatus jobStatus = mock(JobStatus.class);
-    when(job.getStatus()).thenReturn(jobStatus);
+    when(job.getStatus()).thenReturn(mock(JobStatus.class));
 
     final BigQueryContext bigQueryContext = BigQueryContext.create(bigQuery, TABLE_ID);
 
@@ -125,5 +127,38 @@ public class BigQueryContextTest {
     final TableId tableId = bigQueryContext.lookup(null).get();
 
     assertThat(tableId, is(TABLE_ID));
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void shouldFailWhenJobTerminatesWithError() throws InterruptedException {
+    when(bigQuery.getDataset(DATASET_ID)).thenReturn(mock(Dataset.class));
+
+    when(bigQuery.create(any(JobInfo.class))).thenReturn(job);
+    when(job.waitFor(any(RetryOption.class))).thenReturn(job);
+    when(job.getStatus()).thenReturn(mock(JobStatus.class));
+    when(job.getStatus().getError()).thenReturn(new BigQueryError("", "", "job error"));
+
+    BigQueryContext.create(bigQuery, TABLE_ID).provide(null).publish();
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void shouldFailWhenJobDisappears() throws InterruptedException {
+    when(bigQuery.getDataset(DATASET_ID)).thenReturn(mock(Dataset.class));
+
+    when(bigQuery.create(any(JobInfo.class))).thenReturn(job);
+    when(job.waitFor(any(RetryOption.class))).thenReturn(null);
+
+    BigQueryContext.create(bigQuery, TABLE_ID).provide(null).publish();
+  }
+
+  @Test(expected = BigQueryException.class)
+  public void shouldFailWhenJobTerminatesExceptionally() throws InterruptedException {
+    when(bigQuery.getDataset(DATASET_ID)).thenReturn(mock(Dataset.class));
+
+    when(bigQuery.create(any(JobInfo.class))).thenReturn(job);
+    doThrow(new BigQueryException(mock(IOException.class))).when(job)
+        .waitFor(any(RetryOption.class));
+
+    BigQueryContext.create(bigQuery, TABLE_ID).provide(null).publish();
   }
 }
