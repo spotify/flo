@@ -141,16 +141,15 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
     if (job != null && job.getStatus().getError() == null) {
       LOG.info("successfully published table {}", tableId);
     } else {
-      String message;
+      String error;
       if (job == null) {
-        message = "job no longer exists";
+        error = "job no longer exists";
       } else {
-        message = String.format(
-            "Could not copy BigQuery table %s from staging to target with error %s",
-            tableId, job.getStatus().getError());
+        error = job.getStatus().getError().toString();
       }
-      LOG.error(message);
-      throw new RuntimeException(message);
+      LOG.error("Could not copy BigQuery table {} from staging to target with error: {}",
+          tableId, error);
+      throw new RuntimeException(error);
     }
   }
 }
