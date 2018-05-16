@@ -98,6 +98,41 @@ object Examples {
       print(info.inputs.get(i))
     }
   }
+
+  def asyncExample(): Unit = {
+    import com.spotify.flo.context.{AsyncContext, AwaitingConsumer, MemoizingContext}
+    import java.util.concurrent.{ForkJoinPool, TimeUnit}
+
+    // d <- a -> b -> c
+    //      +---------^
+
+    // NOTE need a named task for MemoizingContext
+    val d = defTaskNamed[Unit]("d").process({
+      println("d")
+      Thread.sleep(1000)
+    })
+
+    val c = defTaskNamed[Unit]("c").process({
+      println("c")
+      Thread.sleep(1000)
+    })
+
+    val b = defTaskNamed[Unit]("b").inputs(List(c)).process({
+      x => println("b")
+      Thread.sleep(1000)
+    })
+
+    val a = defTaskNamed[Unit]("a").inputs(List(b, c, d)).process({
+      x => println("a")
+      Thread.sleep(1000)
+    })
+
+    val consumer = new AwaitingConsumer[Unit]()
+
+    MemoizingContext.composeWith(AsyncContext.create(new ForkJoinPool())).evaluate(a).consume(consumer)
+
+    consumer.await(10, TimeUnit.SECONDS)
+  }
 }
 
 trait Pub {
