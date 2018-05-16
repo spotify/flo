@@ -28,6 +28,7 @@ import com.google.cloud.bigquery.CopyJobConfiguration;
 import com.google.cloud.bigquery.Dataset;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
+import com.google.cloud.bigquery.Job;
 import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.TableId;
 import com.spotify.flo.EvalContext;
@@ -119,9 +120,9 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
     final TableId staging = stagingTableId.tableId();
     LOG.debug("copying staging table {} to {}", staging, tableId);
     try {
-      bigQuery.create(JobInfo.of(CopyJobConfiguration.of(tableId, staging)))
+      final Job job = bigQuery.create(JobInfo.of(CopyJobConfiguration.of(tableId, staging)))
           .waitFor(RetryOption.totalTimeout(Duration.ofMinutes(1)));
-      LOG.info("successfully published table {}", tableId);
+      checkJobStatus(job, tableId);
     } catch (BigQueryException e) {
       LOG.error("Could not copy BigQuery table from staging to target", e);
       throw e;
@@ -134,5 +135,21 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
     bigQuery.delete(staging);
 
     return tableId;
+  }
+
+  private static void checkJobStatus(Job job, TableId tableId) {
+    if (job != null && job.getStatus().getError() == null) {
+      LOG.info("successfully published table {}", tableId);
+    } else {
+      String message;
+      if (job == null) {
+        message = "job no longer exists";
+      } else {
+        message = String.format("failed to publish table %s with error %s",
+            tableId, job.getStatus().getError());
+      }
+      LOG.error(message);
+      throw new RuntimeException(message);
+    }
   }
 }
