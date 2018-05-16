@@ -64,7 +64,7 @@ public class TerminationLoggingTest {
                             + "\"workflow_id\": \"bar\","
                             + "\"parameter\": \"2018-01-01\","
                             + "\"execution_id\": \"foobar\","
-                            + "\"event\": \"terminated\","
+                            + "\"event\": \"exited\","
                             + "\"exit_code\": 20}";
 
     terminationHook.accept(20);
