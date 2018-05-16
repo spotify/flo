@@ -53,7 +53,7 @@ public class TerminationLogging implements TerminationHook {
                                          + "\"workflow_id\": \"%s\","
                                          + "\"parameter\": \"%s\","
                                          + "\"execution_id\": \"%s\","
-                                         + "\"event\": \"terminated\","
+                                         + "\"event\": \"exited\","
                                          + "\"exit_code\": %d}",
         config.getString(STYX_COMPONENT_ID),
         config.getString(STYX_WORKFLOW_ID),
