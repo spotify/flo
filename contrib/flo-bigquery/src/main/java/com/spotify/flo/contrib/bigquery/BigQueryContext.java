@@ -122,12 +122,12 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
     try {
       final Job job = bigQuery.create(JobInfo.of(CopyJobConfiguration.of(tableId, staging)))
           .waitFor(RetryOption.totalTimeout(Duration.ofMinutes(1)));
-      checkJobStatus(job, tableId);
+      throwIfUnsuccessfulJobStatus(job, tableId);
     } catch (BigQueryException e) {
-      LOG.error("Could not copy BigQuery table from staging to target", e);
+      LOG.error("Could not copy BigQuery table {} from staging to target", tableId, e);
       throw e;
     } catch (InterruptedException e) {
-      LOG.error("Could not copy BigQuery table from staging to target", e);
+      LOG.error("Could not copy BigQuery table {} from staging to target", tableId, e);
       throw new RuntimeException(e);
     }
 
@@ -137,7 +137,7 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
     return tableId;
   }
 
-  private static void checkJobStatus(Job job, TableId tableId) {
+  private static void throwIfUnsuccessfulJobStatus(Job job, TableId tableId) {
     if (job != null && job.getStatus().getError() == null) {
       LOG.info("successfully published table {}", tableId);
     } else {
@@ -145,7 +145,8 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
       if (job == null) {
         message = "job no longer exists";
       } else {
-        message = String.format("failed to publish table %s with error %s",
+        message = String.format(
+            "Could not copy BigQuery table %s from staging to target with error %s",
             tableId, job.getStatus().getError());
       }
       LOG.error(message);
