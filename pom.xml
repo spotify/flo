@@ -104,6 +104,7 @@
         <groupId>com.google.auto.service</groupId>
         <artifactId>auto-service</artifactId>
         <version>1.0-rc3</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>com.esotericsoftware</groupId>
