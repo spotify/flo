@@ -58,7 +58,7 @@ public class FloRunnerTest {
     validTerminationHook = mock(TerminationHook.class);
     doNothing().when(validTerminationHook).accept(any());
 
-    TestTerminationHookFactory.injectCreator(() -> validTerminationHook);
+    TestTerminationHookFactory.injectCreator((config) -> validTerminationHook);
   }
 
   @Test
@@ -216,7 +216,7 @@ public class FloRunnerTest {
 
   @Test(expected = RuntimeException.class)
   public void failOnExceptionalTerminationHookFactory() {
-    TestTerminationHookFactory.injectCreator(() -> {
+    TestTerminationHookFactory.injectCreator((config) -> {
       throw new RuntimeException("factory exception");
     });
     runTask(FOO_TASK);

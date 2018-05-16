@@ -86,17 +86,17 @@ public final class FloRunner<T> {
    * @return a {@link Result} with the value and throwable (if thrown)
    */
   public static <T> Result<T> runTask(Task<T> task, Config config) {
-    return new Result<>(new FloRunner<T>(config).run(task), loadTerminationHooks());
+    return new Result<>(new FloRunner<T>(config).run(task), loadTerminationHooks(config));
   }
 
-  private static Iterable<TerminationHook> loadTerminationHooks() {
+  private static Iterable<TerminationHook> loadTerminationHooks(Config config) {
     final ServiceLoader<TerminationHookFactory> factories =
         ServiceLoader.load(TerminationHookFactory.class);
 
     return StreamSupport
         .stream(
             Spliterators.spliteratorUnknownSize(factories.iterator(), Spliterator.ORDERED), false)
-        .map(factory -> Objects.requireNonNull(factory.create()))
+        .map(factory -> Objects.requireNonNull(factory.create(config)))
         .collect(Collectors.toList());
   }
 

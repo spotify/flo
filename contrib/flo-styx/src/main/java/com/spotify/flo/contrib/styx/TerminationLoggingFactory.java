@@ -1,6 +1,6 @@
 /*-
  * -\-\-
- * Flo Runner
+ * flo-styx
  * --
  * Copyright (C) 2016 - 2018 Spotify AB
  * --
@@ -18,30 +18,16 @@
  * -/-/-
  */
 
-package com.spotify.flo.context;
+package com.spotify.flo.contrib.styx;
 
-import com.google.auto.service.AutoService;
+import com.spotify.flo.context.TerminationHook;
+import com.spotify.flo.context.TerminationHookFactory;
 import com.typesafe.config.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-@AutoService(TerminationHookFactory.class)
-public class TestTerminationHookFactory implements TerminationHookFactory {
-
-  private static final Logger LOG = LoggerFactory.getLogger(TestTerminationHookFactory.class);
-  private static TerminationHook HOOK = (Integer num) -> LOG.info("{}", num);
-  private static TerminationHookFactory FACTORY = (config) -> HOOK;
-
-  public static void injectHook(TerminationHook hook) {
-    FACTORY = (config) -> hook;
-  }
-
-  public static void injectCreator(TerminationHookFactory factory) {
-    FACTORY = factory;
-  }
+public class TerminationLoggingFactory implements TerminationHookFactory {
 
   @Override
   public TerminationHook create(Config config) {
-    return FACTORY.create(config);
+    return new TerminationLogging(config);
   }
 }

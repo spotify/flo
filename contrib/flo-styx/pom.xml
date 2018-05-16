@@ -5,25 +5,28 @@
     <groupId>com.spotify</groupId>
     <artifactId>flo</artifactId>
     <version>0.2.6-SNAPSHOT</version>
+    <relativePath>../..</relativePath>
   </parent>
 
-  <name>Flo Workflow Definition</name>
-  <artifactId>flo-workflow</artifactId>
+  <name>Flo Styx</name>
+  <artifactId>flo-styx</artifactId>
   <description>
-    Core workflow definition API
+    Flo working with Styx
   </description>
 
   <dependencies>
     <dependency>
       <groupId>com.spotify</groupId>
-      <artifactId>flo-api-generator</artifactId>
-      <scope>provided</scope>
+      <artifactId>flo-runner</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe</groupId>
+      <artifactId>config</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
-
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
