@@ -25,7 +25,7 @@ import com.spotify.flo.context.TerminationHook;
 import com.spotify.flo.context.TerminationHookFactory;
 import com.typesafe.config.Config;
 
-@AutoService(TerminationLoggingFactory.class)
+@AutoService(TerminationHookFactory.class)
 public class TerminationLoggingFactory implements TerminationHookFactory {
 
   @Override
