@@ -22,6 +22,9 @@ package com.spotify.flo.contrib.styx;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.spotify.flo.context.TerminationHook;
@@ -52,6 +55,7 @@ public class TerminationLoggingTest {
 
   @Before
   public void setUp() {
+    when(config.hasPath(STYX_TERMINATION_LOG)).thenReturn(true);
     when(config.getString(STYX_COMPONENT_ID)).thenReturn("foo");
     when(config.getString(STYX_WORKFLOW_ID)).thenReturn("bar");
     when(config.getString(STYX_PARAMETER)).thenReturn("2018-01-01");
@@ -63,10 +67,17 @@ public class TerminationLoggingTest {
   @Test
   public void shouldLoadConfig() {
     final Config loadedConfig = ConfigFactory.load();
+    assertThat(loadedConfig.hasPath(STYX_TERMINATION_LOG), is(false));
     assertThat(loadedConfig.getString(STYX_COMPONENT_ID), is("UNKNOWN_COMPONENT"));
     assertThat(loadedConfig.getString(STYX_WORKFLOW_ID), is("UNKNOWN_WORKFLOW"));
     assertThat(loadedConfig.getString(STYX_PARAMETER), is("UNKNOWN_PARAMETER"));
     assertThat(loadedConfig.getString(STYX_EXECUTION_ID), is("UNKNOWN_EXECUTION"));
+  }
+
+  @Test
+  public void shouldDoNothingIfNoTerminationLog() {
+    when(config.hasPath(STYX_TERMINATION_LOG)).thenReturn(false);
+    verify(config, never()).getString(anyString());
   }
 
   @Test

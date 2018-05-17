@@ -49,6 +49,11 @@ public class TerminationLogging implements TerminationHook {
 
   @Override
   public void accept(Integer exitCode) {
+    // make termination log optional
+    if (!config.hasPath(STYX_TERMINATION_LOG)) {
+      return;
+    }
+
     final String content = String.format("{\"component_id\": \"%s\","
                                          + "\"workflow_id\": \"%s\","
                                          + "\"parameter\": \"%s\","
