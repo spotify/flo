@@ -68,7 +68,7 @@ public class TerminationLogging implements TerminationHook {
     final Path path = Paths.get(config.getString(STYX_TERMINATION_LOG));
 
     try {
-      Files.write(path, content.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
+      Files.write(path, content.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     } catch (IOException e) {
       LOG.error("Could not write termination log to {}.", path, e);
       throw new RuntimeException(e);
