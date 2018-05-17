@@ -20,7 +20,7 @@
 
 package com.spotify.flo.contrib.bigquery;
 
-import com.google.cloud.RetryOption;
+import com.google.cloud.WaitForOption;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.BigQueryOptions;
@@ -36,6 +36,8 @@ import com.spotify.flo.Task;
 import com.spotify.flo.TaskContextStrict;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.threeten.bp.Duration;
@@ -121,12 +123,12 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
     LOG.debug("copying staging table {} to {}", staging, tableId);
     try {
       final Job job = bigQuery.create(JobInfo.of(CopyJobConfiguration.of(tableId, staging)))
-          .waitFor(RetryOption.totalTimeout(Duration.ofMinutes(1)));
+          .waitFor(WaitForOption.timeout(1, TimeUnit.MINUTES));
       throwIfUnsuccessfulJobStatus(job, tableId);
     } catch (BigQueryException e) {
       LOG.error("Could not copy BigQuery table {} from staging to target", tableId, e);
       throw e;
-    } catch (InterruptedException e) {
+    } catch (InterruptedException | TimeoutException e) {
       LOG.error("Could not copy BigQuery table {} from staging to target", tableId, e);
       throw new RuntimeException(e);
     }
