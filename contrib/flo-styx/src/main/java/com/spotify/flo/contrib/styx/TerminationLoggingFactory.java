@@ -20,10 +20,12 @@
 
 package com.spotify.flo.contrib.styx;
 
+import com.google.auto.service.AutoService;
 import com.spotify.flo.context.TerminationHook;
 import com.spotify.flo.context.TerminationHookFactory;
 import com.typesafe.config.Config;
 
+@AutoService(TerminationLoggingFactory.class)
 public class TerminationLoggingFactory implements TerminationHookFactory {
 
   @Override
