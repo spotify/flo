@@ -77,6 +77,7 @@ public class TerminationLoggingTest {
   @Test
   public void shouldDoNothingIfNoTerminationLog() {
     when(config.hasPath(STYX_TERMINATION_LOG)).thenReturn(false);
+    terminationHook.accept(20);
     verify(config, never()).getString(anyString());
   }
 
