@@ -49,7 +49,7 @@ public class TerminationLogging implements TerminationHook {
 
   @Override
   public void accept(Integer exitCode) {
-    // make termination log optional
+    // make termination logging optional
     if (!config.hasPath(STYX_TERMINATION_LOG)) {
       return;
     }
