@@ -21,6 +21,7 @@
 package com.spotify.flo.contrib.styx;
 
 import com.spotify.flo.contrib.dataflow.PipelineOptionsProvider;
+import org.apache.beam.sdk.options.PipelineOptions;
 
 public class Client {
 
@@ -29,10 +30,8 @@ public class Client {
         .jobName("foobar")
         .build();
 
-    LabeledPipelineOptionsProvider.builder()
-        .pipelineOptionsProvider(foobar)
-        .build()
-        .options();
+    final PipelineOptions options = new LabeledPipelineOptionsProvider(foobar).options();
+    // ScioContext(options)
   }
 
 }

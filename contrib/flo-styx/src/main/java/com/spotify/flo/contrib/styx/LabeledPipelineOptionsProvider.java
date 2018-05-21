@@ -21,32 +21,37 @@
 package com.spotify.flo.contrib.styx;
 
 import com.spotify.flo.contrib.dataflow.PipelineOptionsProvider;
-import io.norberg.automatter.AutoMatter;
-import java.util.Optional;
+import java.util.Objects;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 
-@AutoMatter
-public interface LabeledPipelineOptionsProvider {
+public class LabeledPipelineOptionsProvider {
 
-  String DEFAULT_LABEL_PREFIX = "spotify";
+  private static final String DEFAULT_LABEL_PREFIX = "spotify";
 
-  String STYX_COMPONENT_ID_LABEL = "styx-component-id";
-  String STYX_WORKFLOW_ID_LABEL = "styx-workflow-id";
-  String STYX_PARAMETER_LABEL = "styx-parameter";
-  String STYX_EXECUTION_ID_LABEL = "styx-execution-id";
-  String STYX_TRIGGER_ID_LABEL = "styx-trigger-id";
-  String STYX_TRIGGER_TYPE_LABEL = "styx-trigger-type";
+  private static final String STYX_COMPONENT_ID_LABEL = "styx-component-id";
+  private static final String STYX_WORKFLOW_ID_LABEL = "styx-workflow-id";
+  private static final String STYX_PARAMETER_LABEL = "styx-parameter";
+  private static final String STYX_EXECUTION_ID_LABEL = "styx-execution-id";
+  private static final String STYX_TRIGGER_ID_LABEL = "styx-trigger-id";
+  private static final String STYX_TRIGGER_TYPE_LABEL = "styx-trigger-type";
 
-  Optional<String> labelPrefix();
+  private String labelPrefix;
   
-  PipelineOptionsProvider pipelineOptionsProvider();
+  private PipelineOptionsProvider pipelineOptionsProvider;
 
-  static LabeledPipelineOptionsProviderBuilder builder() {
-    return new LabeledPipelineOptionsProviderBuilder().labelPrefix(DEFAULT_LABEL_PREFIX);
+  public LabeledPipelineOptionsProvider(PipelineOptionsProvider pipelineOptionsProvider) {
+    this(DEFAULT_LABEL_PREFIX, pipelineOptionsProvider);
   }
   
-  default DataflowPipelineOptions options() {
-    final DataflowPipelineOptions pipelineOptions = pipelineOptionsProvider().options();
+  public LabeledPipelineOptionsProvider(String labelPrefix,
+                                        PipelineOptionsProvider pipelineOptionsProvider) {
+    this.labelPrefix = Objects.requireNonNull(labelPrefix);
+    this.pipelineOptionsProvider = Objects.requireNonNull(pipelineOptionsProvider);
+  }
+
+
+  public DataflowPipelineOptions options() {
+    final DataflowPipelineOptions pipelineOptions = pipelineOptionsProvider.options();
     // TODO: add labels
     pipelineOptions.setLabels(null);
     return pipelineOptions;
