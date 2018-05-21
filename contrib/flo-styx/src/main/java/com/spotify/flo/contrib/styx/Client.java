@@ -20,10 +20,19 @@
 
 package com.spotify.flo.contrib.styx;
 
+import com.spotify.flo.contrib.dataflow.PipelineOptionsProvider;
+
 public class Client {
 
   public static void main(String[] args) {
-    LabeledOptions.builder().setProject("ss").setConfig(config).build();
+    final PipelineOptionsProvider foobar = PipelineOptionsProvider.builder()
+        .jobName("foobar")
+        .build();
+
+    LabeledPipelineOptionsProvider.builder()
+        .pipelineOptionsProvider(foobar)
+        .build()
+        .options();
   }
 
 }

@@ -18,18 +18,17 @@
  * -/-/-
  */
 
-package com.spotify.flo.contrib.beam;
+package com.spotify.flo.contrib.dataflow;
 
 import io.norberg.automatter.AutoMatter;
 import java.util.Optional;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions.AutoscalingAlgorithmType;
-import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 
 @AutoMatter
-public interface BeamOptions {
+public interface PipelineOptionsProvider {
 
   String project();
 
@@ -65,15 +64,15 @@ public interface BeamOptions {
 
   Optional<Class<DataflowRunner>> runner();
 
-  default BeamOptionsBuilder builder() {
-    return new BeamOptionsBuilder()
+  static PipelineOptionsProviderBuilder builder() {
+    return new PipelineOptionsProviderBuilder()
         .maxNumWorkers(5)
         .network("default")
         .autoscalingAlgorithm(AutoscalingAlgorithmType.NONE)
         .runner(DataflowRunner.class);
   }
 
-  default PipelineOptions options() {
+  default DataflowPipelineOptions options() {
     DataflowPipelineOptions pipelineOptions = PipelineOptionsFactory.create()
         .as(DataflowPipelineOptions.class);
 
