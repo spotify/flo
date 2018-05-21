@@ -43,5 +43,9 @@
       <groupId>io.norberg</groupId>
       <artifactId>auto-matter</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
+    </dependency>
   </dependencies>
 </project>

@@ -182,6 +182,7 @@
         <groupId>org.apache.beam</groupId>
         <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
         <version>${beam.version}</version>
+        <scope>provided</scope>
       </dependency>
 
       <!-- version resolution -->
