@@ -81,6 +81,11 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>flo-extras</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>1.7.25</version>
@@ -177,7 +182,6 @@
         <groupId>org.apache.beam</groupId>
         <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
         <version>${beam.version}</version>
-        <scope>provided</scope>
       </dependency>
 
       <!-- version resolution -->

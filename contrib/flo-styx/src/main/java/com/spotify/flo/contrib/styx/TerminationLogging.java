@@ -20,6 +20,8 @@
 
 package com.spotify.flo.contrib.styx;
 
+import static com.spotify.flo.contrib.styx.Constants.*;
+
 import com.spotify.flo.context.TerminationHook;
 import com.typesafe.config.Config;
 import java.io.IOException;
@@ -34,12 +36,6 @@ import org.slf4j.LoggerFactory;
 public class TerminationLogging implements TerminationHook {
 
   private static final Logger LOG = LoggerFactory.getLogger(TerminationLogging.class);
-
-  private static final String STYX_TERMINATION_LOG = "styx.termination.log";
-  private static final String STYX_COMPONENT_ID = "styx.component.id";
-  private static final String STYX_WORKFLOW_ID = "styx.workflow.id";
-  private static final String STYX_PARAMETER = "styx.parameter";
-  private static final String STYX_EXECUTION_ID = "styx.execution.id";
 
   private final Config config;
 

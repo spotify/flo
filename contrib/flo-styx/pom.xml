@@ -20,6 +20,10 @@
       <artifactId>flo-runner</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>flo-extras</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.typesafe</groupId>
       <artifactId>config</artifactId>
     </dependency>
@@ -34,6 +38,10 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.norberg</groupId>
+      <artifactId>auto-matter</artifactId>
     </dependency>
   </dependencies>
 </project>

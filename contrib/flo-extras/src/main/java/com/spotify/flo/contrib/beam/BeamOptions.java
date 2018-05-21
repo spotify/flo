@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,10 @@
 package com.spotify.flo.contrib.beam;
 
 import io.norberg.automatter.AutoMatter;
+import java.util.Optional;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions.AutoscalingAlgorithmType;
-import org.apache.beam.sdk.PipelineRunner;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 
@@ -33,50 +33,74 @@ public interface BeamOptions {
 
   String project();
 
-  int numWorkers();
+  Optional<Integer> numWorkers();
 
-  String region();
+  Optional<Integer> maxNumWorkers();
 
-  String zone();
+  Optional<String> region();
 
-  String stagingLocation();
+  Optional<String> zone();
 
-  String tempLocation();
+  Optional<String> stagingLocation();
 
-  String gcpTempLocation();
+  Optional<String> tempLocation();
 
-  AutoscalingAlgorithmType autoscalingAlgorithm();
+  Optional<String> gcpTempLocation();
 
-  int maxNumWorkers();
+  Optional<AutoscalingAlgorithmType> autoscalingAlgorithm();
 
-  String network();
+  Optional<String> network();
 
-  String subNetwork();
+  Optional<String> subNetwork();
 
-  int diskSizeGb();
+  Optional<Integer> diskSizeGb();
 
-  String workerMachineType();
+  Optional<String> workerMachineType();
 
-  String jobName();
+  Optional<String> workerDiskType();
 
-  String workerDiskType();
+  Optional<String> jobName();
 
-  String serviceAccount();
+  Optional<String> serviceAccount();
 
-  String bqStagingLocation();
+  Optional<Class<DataflowRunner>> runner();
 
-  long bqDefaultExpirationMs();
-
-  Class<PipelineRunner> runner();
+  default BeamOptionsBuilder builder() {
+    return new BeamOptionsBuilder()
+        .maxNumWorkers(5)
+        .network("default")
+        .autoscalingAlgorithm(AutoscalingAlgorithmType.NONE)
+        .runner(DataflowRunner.class);
+  }
 
   default PipelineOptions options() {
     DataflowPipelineOptions pipelineOptions = PipelineOptionsFactory.create()
         .as(DataflowPipelineOptions.class);
 
-    pipelineOptions.setMaxNumWorkers(5);
-    pipelineOptions.setAutoscalingAlgorithm(AutoscalingAlgorithmType.NONE);
-    pipelineOptions.setNetwork("default");
-    pipelineOptions.setRunner(DataflowRunner.class);
+    pipelineOptions.setProject(project());
+
+    numWorkers().ifPresent(pipelineOptions::setNumWorkers);
+    maxNumWorkers().ifPresent(pipelineOptions::setMaxNumWorkers);
+
+    region().ifPresent(pipelineOptions::setRegion);
+    zone().ifPresent(pipelineOptions::setZone);
+
+    stagingLocation().ifPresent(pipelineOptions::setStagingLocation);
+    tempLocation().ifPresent(pipelineOptions::setTemplateLocation);
+    gcpTempLocation().ifPresent(pipelineOptions::setGcpTempLocation);
+
+    autoscalingAlgorithm().ifPresent(pipelineOptions::setAutoscalingAlgorithm);
+    network().ifPresent(pipelineOptions::setNetwork);
+    subNetwork().ifPresent(pipelineOptions::setSubnetwork);
+
+    diskSizeGb().ifPresent(pipelineOptions::setDiskSizeGb);
+    workerMachineType().ifPresent(pipelineOptions::setWorkerMachineType);
+    workerDiskType().ifPresent(pipelineOptions::setWorkerDiskType);
+
+    jobName().ifPresent(pipelineOptions::setJobName);
+    serviceAccount().ifPresent(pipelineOptions::setServiceAccount);
+
+    runner().ifPresent(pipelineOptions::setRunner);
 
     return pipelineOptions;
   }
