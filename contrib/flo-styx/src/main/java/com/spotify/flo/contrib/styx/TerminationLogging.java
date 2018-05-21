@@ -20,7 +20,11 @@
 
 package com.spotify.flo.contrib.styx;
 
-import static com.spotify.flo.contrib.styx.Constants.*;
+import static com.spotify.flo.contrib.styx.Constants.STYX_COMPONENT_ID;
+import static com.spotify.flo.contrib.styx.Constants.STYX_EXECUTION_ID;
+import static com.spotify.flo.contrib.styx.Constants.STYX_PARAMETER;
+import static com.spotify.flo.contrib.styx.Constants.STYX_TERMINATION_LOG;
+import static com.spotify.flo.contrib.styx.Constants.STYX_WORKFLOW_ID;
 
 import com.spotify.flo.context.TerminationHook;
 import com.typesafe.config.Config;
