@@ -28,15 +28,16 @@ import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions.AutoscalingAlgorithmType;
 import org.apache.beam.sdk.PipelineRunner;
+import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 
 /**
- * A supplier of {@link DataflowPipelineOptions}.
+ * A supplier of {@link PipelineOptions}.
  *
  * Please refer to https://cloud.google.com/dataflow/pipelines/specifying-exec-params for details.
  */
 @AutoMatter
-public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOptions> {
+public interface PipelineOptionsSupplier extends Supplier<PipelineOptions> {
 
   /**
    * The project ID for your Google Cloud Project.
@@ -145,11 +146,11 @@ public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOption
   }
 
   /**
-   * Build {@link DataflowPipelineOptions} based on configured values of this supplier.
+   * Build {@link PipelineOptions} based on configured values of this supplier.
    *
-   * @return {@link DataflowPipelineOptions}
+   * @return {@link PipelineOptions}
    */
-  default DataflowPipelineOptions get() {
+  default PipelineOptions get() {
     final DataflowPipelineOptions pipelineOptions = PipelineOptionsFactory.create()
         .as(DataflowPipelineOptions.class);
 
