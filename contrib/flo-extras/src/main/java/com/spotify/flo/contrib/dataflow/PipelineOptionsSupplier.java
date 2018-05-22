@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions.AutoscalingAlgorithmType;
+import org.apache.beam.sdk.PipelineRunner;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 
 @AutoMatter
@@ -63,7 +64,7 @@ public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOption
 
   Optional<String> serviceAccount();
 
-  Optional<Class<DataflowRunner>> runner();
+  Optional<Class<? extends PipelineRunner<?>>> runner();
 
   static PipelineOptionsSupplierBuilder builder() {
     return new PipelineOptionsSupplierBuilder()

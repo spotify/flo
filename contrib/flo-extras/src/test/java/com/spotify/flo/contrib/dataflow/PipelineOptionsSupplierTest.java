@@ -21,10 +21,12 @@
 package com.spotify.flo.contrib.dataflow;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.typeCompatibleWith;
 import static org.junit.Assert.assertThat;
 
 import java.util.Optional;
 import org.apache.beam.runners.dataflow.DataflowRunner;
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions.AutoscalingAlgorithmType;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,5 +56,18 @@ public class PipelineOptionsSupplierTest {
     assertThat(pipelineOptionsSupplier.autoscalingAlgorithm(),
         is(Optional.of(AutoscalingAlgorithmType.NONE)));
     assertThat(pipelineOptionsSupplier.runner(), is(Optional.of(DataflowRunner.class)));
+  }
+  
+  @Test
+  public void shouldSupplyDefaultPipelineOptions() {
+    final DataflowPipelineOptions pipelineOptions = PipelineOptionsSupplier.builder()
+        .project("foo")
+        .build()
+        .get();
+    assertThat(pipelineOptions.getProject(), is("foo"));
+    assertThat(pipelineOptions.getMaxNumWorkers(), is(5));
+    assertThat(pipelineOptions.getNetwork(), is("default"));
+    assertThat(pipelineOptions.getAutoscalingAlgorithm(), is(AutoscalingAlgorithmType.NONE));
+    assertThat(pipelineOptions.getRunner(), typeCompatibleWith(DataflowRunner.class));
   }
 }
