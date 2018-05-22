@@ -65,8 +65,8 @@ public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOption
 
   Optional<Class<DataflowRunner>> runner();
 
-  static PipelineOptionsProviderBuilder builder() {
-    return new PipelineOptionsProviderBuilder()
+  static PipelineOptionsSupplierBuilder builder() {
+    return new PipelineOptionsSupplierBuilder()
         .maxNumWorkers(5)
         .network("default")
         .autoscalingAlgorithm(AutoscalingAlgorithmType.NONE)
