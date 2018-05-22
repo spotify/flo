@@ -22,13 +22,15 @@ package com.spotify.flo.contrib.styx;
 
 final class Constants {
 
-  private Constants() {
+  Constants() {
     throw new UnsupportedOperationException();
   }
 
-  static final String STYX_TERMINATION_LOG = "styx.termination.log";
-  static final String STYX_COMPONENT_ID = "styx.component.id";
-  static final String STYX_WORKFLOW_ID = "styx.workflow.id";
-  static final String STYX_PARAMETER = "styx.parameter";
-  static final String STYX_EXECUTION_ID = "styx.execution.id";
+  public static final String STYX_TERMINATION_LOG = "styx.termination.log";
+  public static final String STYX_COMPONENT_ID = "styx.component.id";
+  public static final String STYX_WORKFLOW_ID = "styx.workflow.id";
+  public static final String STYX_PARAMETER = "styx.parameter";
+  public static final String STYX_EXECUTION_ID = "styx.execution.id";
+  public static final String STYX_TRIGGER_ID = "styx.trigger.id";
+  public static final String STYX_TRIGGER_TYPE = "styx.trigger.type";
 }

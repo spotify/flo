@@ -20,82 +20,38 @@
 
 package com.spotify.flo.contrib.styx;
 
-import java.util.Objects;
+import static com.spotify.flo.contrib.styx.LabelUtil.buildLabels;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import io.norberg.automatter.AutoMatter;
 import java.util.function.Supplier;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 
-public class LabeledPipelineOptionsSupplier implements Supplier<DataflowPipelineOptions> {
+@AutoMatter
+public interface LabeledPipelineOptionsSupplier extends Supplier<DataflowPipelineOptions> {
 
-  private static final String DEFAULT_LABEL_PREFIX = "spotify";
+  String DEFAULT_LABEL_PREFIX = "spotify";
 
-  private static final String STYX_COMPONENT_ID_LABEL = "styx-component-id";
-  private static final String STYX_WORKFLOW_ID_LABEL = "styx-workflow-id";
-  private static final String STYX_PARAMETER_LABEL = "styx-parameter";
-  private static final String STYX_EXECUTION_ID_LABEL = "styx-execution-id";
-  private static final String STYX_TRIGGER_ID_LABEL = "styx-trigger-id";
-  private static final String STYX_TRIGGER_TYPE_LABEL = "styx-trigger-type";
+  String labelPrefix();
 
-  private String labelPrefix;
+  Supplier<DataflowPipelineOptions> supplier();
 
-  private Supplier<DataflowPipelineOptions> supplier;
+  Config config();
 
-  private LabeledPipelineOptionsSupplier(Supplier<DataflowPipelineOptions> supplier) {
-    this(DEFAULT_LABEL_PREFIX, supplier);
-  }
-  
-  private LabeledPipelineOptionsSupplier(String labelPrefix,
-                                         Supplier<DataflowPipelineOptions> supplier) {
-    this.labelPrefix = Objects.requireNonNull(labelPrefix);
-    this.supplier = Objects.requireNonNull(supplier);
-  }
-
-  public DataflowPipelineOptions get() {
-    final DataflowPipelineOptions pipelineOptions = supplier.get();
-    // TODO: add labels
-    pipelineOptions.setLabels(null);
+  default DataflowPipelineOptions get() {
+    final DataflowPipelineOptions pipelineOptions = supplier().get();
+    pipelineOptions.setLabels(buildLabels(labelPrefix(), config()));
     return pipelineOptions;
   }
 
-  public static Supplier<DataflowPipelineOptions> from(Supplier<DataflowPipelineOptions> supplier) {
-    return new LabeledPipelineOptionsSupplier(supplier);
+  static LabeledPipelineOptionsSupplierBuilder defaultBuilder() {
+    return new LabeledPipelineOptionsSupplierBuilder()
+        .labelPrefix(DEFAULT_LABEL_PREFIX)
+        .config(ConfigFactory.load());
   }
 
-  public static Supplier<DataflowPipelineOptions> from(String labelPrefix,
-                                                       Supplier<DataflowPipelineOptions> supplier) {
-    return new LabeledPipelineOptionsSupplier(labelPrefix, supplier);
+  static LabeledPipelineOptionsSupplierBuilder builder() {
+    return new LabeledPipelineOptionsSupplierBuilder();
   }
-
-
-//  @Override
-//  default PipelineOptions options() {
-//    DataflowPipelineOptions pipelineOptions = PipelineOptionsSupplier.super.options()
-//        .as(DataflowPipelineOptions.class);
-//
-//    pipelineOptions.setLabels(getLabelsMap());
-//    return pipelineOptions;
-//  }
-//
-//  default Map<String,String> getLabelsMap(){
-//    final Config config = ConfigFactory.load();
-//
-//    final Map<String, String> labels = new HashMap<>();
-//
-//    putLabel(labels, STYX_COMPONENT_ID_LABEL, config.getString(Constants.STYX_COMPONENT_ID));
-//
-////    labels.put(STYX_COMPONENT_ID_LABEL, config.getString(Constants.STYX_COMPONENT_ID));
-////    labels.put(STYX_WORKFLOW_ID_LABEL, config.getString(Constants.STYX_WORKFLOW_ID));
-////    labels.put(STYX_PARAMETER_LABEL, config.getString(Constants.STYX_PARAMETER));
-////    labels.put(LABEL_PREFIX+STYX_EXECUTION_ID_LABEL, config.getString(Constants.STYX_EXECUTION_ID));
-//  }
-//
-//  default void putLabel(Map<String, String> labels, String label, String value) {
-//    //sanitize
-//    //validate
-////    labels.put(LABEL_PREFIX + label, value);
-//  }
-//
-//  default String sanitizeLabelValue(String pad, String value) {
-//    return "new-value";
-//  }
-
 }
