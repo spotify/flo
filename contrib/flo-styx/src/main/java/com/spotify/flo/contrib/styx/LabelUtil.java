@@ -106,17 +106,21 @@ final class LabelUtil {
 
     // Only allow [-a-z0-9]
     String value = config.getString(path).toLowerCase().replaceAll(LABEL_VALUE_REPLACE_REGEX, "-");
+
     // First character must be [a-z]
     if (!Character.isAlphabetic(value.charAt(0))) {
       value = String.format("%s-%s", pad, value);
     }
+
+    // We always assume padding at the end is needed to be on the safe side
+    // so the worst case is we trim more than we actually need
+    if (value.length() + pad.length() > LABEL_VALUE_MAX_LENGTH) {
+      value = value.substring(0, LABEL_VALUE_MAX_LENGTH - pad.length());
+    }
+
     // Last character must be [a-z0-9] (not -)
     if (value.charAt(value.length() - 1) == '-') {
       value = String.format("%s%s", value, pad);
-    }
-    // Trim string if it is too long
-    if (value.length() > LABEL_VALUE_MAX_LENGTH) {
-      value = value.substring(0, LABEL_VALUE_MAX_LENGTH);
     }
 
     // Final check

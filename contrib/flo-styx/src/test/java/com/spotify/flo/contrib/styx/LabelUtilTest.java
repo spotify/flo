@@ -112,20 +112,21 @@ public class LabelUtilTest {
     when(config.hasPath("styx.component.id")).thenReturn(false);
     // . should be replaced
     when(config.getString("styx.workflow.id")).thenReturn("foo.bar");
-    // too long should be trimmed
+    // too long should be trimmed and we trim more than we need
     when(config.getString("styx.parameter")).thenReturn(Strings.repeat("foo", 40));
     // should be padded
     when(config.getString("styx.execution.id")).thenReturn("0123-");
-    // becomes invalid after trimmed
-    when(config.getString("styx.trigger.id")).thenReturn(Strings.repeat("foo123-", 30));
+    // too long should be trimmed
+    when(config.getString("styx.trigger.id")).thenReturn(Strings.repeat("foo", 20) + "---");
     // valid value
     when(config.getString("styx.trigger.type")).thenReturn("foo-bar");
 
     final Map<String, String> labels = buildLabels("foo", config);
     final Map<String, String> expected = new HashMap<>();
     expected.put("foo-styx-workflow-id", "foo-bar");
-    expected.put("foo-styx-parameter", Strings.repeat("foo", 21));
+    expected.put("foo-styx-parameter", Strings.repeat("foo", 20) + "fo");
     expected.put("foo-styx-execution-id", "e-0123-e");
+    expected.put("foo-styx-trigger-id", Strings.repeat("foo", 20) + "--t");
     expected.put("foo-styx-trigger-type", "foo-bar");
 
     assertThat(labels, is(expected));
