@@ -55,7 +55,7 @@ public class LabeledPipelineOptionsSupplierTest {
 
   @Test
   public void shouldBuildFromSupplier() {
-    assertThat(LabeledPipelineOptionsSupplier.defaultBuilder().supplier(supplier).build(),
+    assertThat(LabeledPipelineOptionsSupplier.builder().supplier(supplier).build(),
         notNullValue());
   }
 
@@ -80,7 +80,7 @@ public class LabeledPipelineOptionsSupplierTest {
     expected.put("spotify-styx-trigger-type", "unknown-trigger-type");
 
     final DataflowPipelineOptions dataflowPipelineOptions =
-        LabeledPipelineOptionsSupplier.defaultBuilder().supplier(supplier).build().get();
+        LabeledPipelineOptionsSupplier.builder().supplier(supplier).build().get();
     verify(dataflowPipelineOptions).setLabels(expected);
   }
 }

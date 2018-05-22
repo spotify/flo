@@ -45,13 +45,9 @@ public interface LabeledPipelineOptionsSupplier extends Supplier<DataflowPipelin
     return pipelineOptions;
   }
 
-  static LabeledPipelineOptionsSupplierBuilder defaultBuilder() {
+  static LabeledPipelineOptionsSupplierBuilder builder() {
     return new LabeledPipelineOptionsSupplierBuilder()
         .labelPrefix(DEFAULT_LABEL_PREFIX)
         .config(ConfigFactory.load());
-  }
-
-  static LabeledPipelineOptionsSupplierBuilder builder() {
-    return new LabeledPipelineOptionsSupplierBuilder();
   }
 }
