@@ -21,6 +21,7 @@
 package com.spotify.flo.contrib.dataflow;
 
 import io.norberg.automatter.AutoMatter;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.apache.beam.runners.dataflow.DataflowRunner;
@@ -66,6 +67,8 @@ public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOption
 
   Optional<Class<? extends PipelineRunner<?>>> runner();
 
+  Optional<List<String>> experiment();
+
   static PipelineOptionsSupplierBuilder builder() {
     return new PipelineOptionsSupplierBuilder()
         .maxNumWorkers(5)
@@ -75,7 +78,7 @@ public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOption
   }
 
   default DataflowPipelineOptions get() {
-    DataflowPipelineOptions pipelineOptions = PipelineOptionsFactory.create()
+    final DataflowPipelineOptions pipelineOptions = PipelineOptionsFactory.create()
         .as(DataflowPipelineOptions.class);
 
     pipelineOptions.setProject(project());
@@ -87,7 +90,7 @@ public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOption
     zone().ifPresent(pipelineOptions::setZone);
 
     stagingLocation().ifPresent(pipelineOptions::setStagingLocation);
-    tempLocation().ifPresent(pipelineOptions::setTemplateLocation);
+    tempLocation().ifPresent(pipelineOptions::setTempLocation);
     gcpTempLocation().ifPresent(pipelineOptions::setGcpTempLocation);
 
     autoscalingAlgorithm().ifPresent(pipelineOptions::setAutoscalingAlgorithm);
@@ -100,6 +103,8 @@ public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOption
 
     jobName().ifPresent(pipelineOptions::setJobName);
     serviceAccount().ifPresent(pipelineOptions::setServiceAccount);
+
+    experiment().ifPresent(pipelineOptions::setExperiments);
 
     runner().ifPresent(pipelineOptions::setRunner);
 

@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.typeCompatibleWith;
 import static org.junit.Assert.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import java.util.Optional;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
@@ -69,5 +70,44 @@ public class PipelineOptionsSupplierTest {
     assertThat(pipelineOptions.getNetwork(), is("default"));
     assertThat(pipelineOptions.getAutoscalingAlgorithm(), is(AutoscalingAlgorithmType.NONE));
     assertThat(pipelineOptions.getRunner(), typeCompatibleWith(DataflowRunner.class));
+  }
+
+  @Test
+  public void shouldSupplyPipelineOptionsAsConfigured() {
+    final DataflowPipelineOptions pipelineOptions = PipelineOptionsSupplier.builder()
+        .project("foo")
+        .maxNumWorkers(1)
+        .region("foo")
+        .zone("bar")
+        .stagingLocation("gs://foo")
+        .tempLocation("gs://bar")
+        .gcpTempLocation("gs://foobar")
+        .autoscalingAlgorithm(AutoscalingAlgorithmType.THROUGHPUT_BASED)
+        .network("foo")
+        .subNetwork("foobar")
+        .diskSizeGb(100)
+        .workerDiskType("foo")
+        .jobName("foo")
+        .serviceAccount("foo@example.com")
+        .runner(DataflowRunner.class)
+        .experiment(ImmutableList.of("foo", "bar"))
+        .build()
+        .get();
+    assertThat(pipelineOptions.getProject(), is("foo"));
+    assertThat(pipelineOptions.getMaxNumWorkers(), is(1));
+    assertThat(pipelineOptions.getRegion(), is("foo"));
+    assertThat(pipelineOptions.getZone(), is("bar"));
+    assertThat(pipelineOptions.getStagingLocation(), is("gs://foo"));
+    assertThat(pipelineOptions.getTempLocation(), is("gs://bar"));
+    assertThat(pipelineOptions.getGcpTempLocation(), is("gs://foobar"));
+    assertThat(pipelineOptions.getAutoscalingAlgorithm(), is(AutoscalingAlgorithmType.THROUGHPUT_BASED));
+    assertThat(pipelineOptions.getNetwork(), is("foo"));
+    assertThat(pipelineOptions.getSubnetwork(), is("foobar"));
+    assertThat(pipelineOptions.getDiskSizeGb(), is(100));
+    assertThat(pipelineOptions.getWorkerDiskType(), is("foo"));
+    assertThat(pipelineOptions.getJobName(), is("foo"));
+    assertThat(pipelineOptions.getServiceAccount(), is("foo@example.com"));
+    assertThat(pipelineOptions.getRunner(), typeCompatibleWith(DataflowRunner.class));
+    assertThat(pipelineOptions.getExperiments(), is(ImmutableList.of("foo", "bar")));
   }
 }
