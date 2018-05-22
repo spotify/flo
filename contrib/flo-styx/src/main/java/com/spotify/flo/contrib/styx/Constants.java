@@ -22,7 +22,7 @@ package com.spotify.flo.contrib.styx;
 
 final class Constants {
 
-  Constants() {
+  private Constants() {
     throw new UnsupportedOperationException();
   }
 

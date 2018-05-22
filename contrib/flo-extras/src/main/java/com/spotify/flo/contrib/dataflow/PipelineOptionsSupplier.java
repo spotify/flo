@@ -46,6 +46,7 @@ public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOption
 
   /**
    * Run the job as a specific service account.
+   * Mandatory value. Not setting it will result {@link NullPointerException}.
    */
   String serviceAccount();
 
