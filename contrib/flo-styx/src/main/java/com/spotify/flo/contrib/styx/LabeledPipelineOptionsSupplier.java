@@ -20,11 +20,11 @@
 
 package com.spotify.flo.contrib.styx;
 
-import com.spotify.flo.contrib.dataflow.PipelineOptionsProvider;
 import java.util.Objects;
+import java.util.function.Supplier;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 
-public class LabeledPipelineOptionsProvider {
+public class LabeledPipelineOptionsSupplier implements Supplier<DataflowPipelineOptions> {
 
   private static final String DEFAULT_LABEL_PREFIX = "spotify";
 
@@ -36,30 +36,39 @@ public class LabeledPipelineOptionsProvider {
   private static final String STYX_TRIGGER_TYPE_LABEL = "styx-trigger-type";
 
   private String labelPrefix;
-  
-  private PipelineOptionsProvider pipelineOptionsProvider;
 
-  public LabeledPipelineOptionsProvider(PipelineOptionsProvider pipelineOptionsProvider) {
-    this(DEFAULT_LABEL_PREFIX, pipelineOptionsProvider);
+  private Supplier<DataflowPipelineOptions> supplier;
+
+  private LabeledPipelineOptionsSupplier(Supplier<DataflowPipelineOptions> supplier) {
+    this(DEFAULT_LABEL_PREFIX, supplier);
   }
   
-  public LabeledPipelineOptionsProvider(String labelPrefix,
-                                        PipelineOptionsProvider pipelineOptionsProvider) {
+  private LabeledPipelineOptionsSupplier(String labelPrefix,
+                                         Supplier<DataflowPipelineOptions> supplier) {
     this.labelPrefix = Objects.requireNonNull(labelPrefix);
-    this.pipelineOptionsProvider = Objects.requireNonNull(pipelineOptionsProvider);
+    this.supplier = Objects.requireNonNull(supplier);
   }
 
-
-  public DataflowPipelineOptions options() {
-    final DataflowPipelineOptions pipelineOptions = pipelineOptionsProvider.options();
+  public DataflowPipelineOptions get() {
+    final DataflowPipelineOptions pipelineOptions = supplier.get();
     // TODO: add labels
     pipelineOptions.setLabels(null);
     return pipelineOptions;
   }
 
+  public static Supplier<DataflowPipelineOptions> from(Supplier<DataflowPipelineOptions> supplier) {
+    return new LabeledPipelineOptionsSupplier(supplier);
+  }
+
+  public static Supplier<DataflowPipelineOptions> from(String labelPrefix,
+                                                       Supplier<DataflowPipelineOptions> supplier) {
+    return new LabeledPipelineOptionsSupplier(labelPrefix, supplier);
+  }
+
+
 //  @Override
 //  default PipelineOptions options() {
-//    DataflowPipelineOptions pipelineOptions = PipelineOptionsProvider.super.options()
+//    DataflowPipelineOptions pipelineOptions = PipelineOptionsSupplier.super.options()
 //        .as(DataflowPipelineOptions.class);
 //
 //    pipelineOptions.setLabels(getLabelsMap());
