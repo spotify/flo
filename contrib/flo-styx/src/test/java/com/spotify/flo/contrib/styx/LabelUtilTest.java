@@ -80,7 +80,30 @@ public class LabelUtilTest {
 
     buildLabels("123", config);
   }
-  
+
+  @Test
+  public void shouldHandleValuesWithCorrectPadding() {
+    when(config.hasPath(anyString())).thenReturn(true);
+
+    when(config.getString("styx.component.id")).thenReturn("0123-");
+    when(config.getString("styx.workflow.id")).thenReturn("0123-");
+    when(config.getString("styx.parameter")).thenReturn("0123-");
+    when(config.getString("styx.execution.id")).thenReturn("0123-");
+    when(config.getString("styx.trigger.id")).thenReturn("0123-");
+    when(config.getString("styx.trigger.type")).thenReturn("0123-");
+
+    final Map<String, String> labels = buildLabels("foo", config);
+    final Map<String, String> expected = new HashMap<>();
+    expected.put("foo-styx-component-id", "c-0123-c");
+    expected.put("foo-styx-workflow-id", "w-0123-w");
+    expected.put("foo-styx-parameter", "p-0123-p");
+    expected.put("foo-styx-execution-id", "e-0123-e");
+    expected.put("foo-styx-trigger-id", "t-0123-t");
+    expected.put("foo-styx-trigger-type", "tt-0123-tt");
+
+    assertThat(labels, is(expected));
+  }
+
   @Test
   public void shouldHandleValues() {
     when(config.hasPath(anyString())).thenReturn(true);
