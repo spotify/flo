@@ -27,12 +27,13 @@ import com.typesafe.config.ConfigFactory;
 import io.norberg.automatter.AutoMatter;
 import java.util.function.Supplier;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
+import org.apache.beam.sdk.options.PipelineOptions;
 
 /**
- * A supplier injecting labels to Dataflow job.
+ * A supplier injecting labels to Dataflow job. This only supports {@link DataflowPipelineOptions}.
  */
 @AutoMatter
-public interface LabeledPipelineOptionsSupplier extends Supplier<DataflowPipelineOptions> {
+public interface LabeledPipelineOptionsSupplier extends Supplier<PipelineOptions> {
 
   String DEFAULT_LABEL_PREFIX = "spotify";
 
@@ -42,9 +43,9 @@ public interface LabeledPipelineOptionsSupplier extends Supplier<DataflowPipelin
   String labelKeyPrefix();
 
   /**
-   * The underlying {@link Supplier} supplying {@link DataflowPipelineOptions}.
+   * The underlying {@link Supplier} supplying {@link PipelineOptions}.
    */
-  Supplier<DataflowPipelineOptions> supplier();
+  Supplier<PipelineOptions> supplier();
 
   /**
    * The config object from which label values are read. If not set, default to
@@ -53,12 +54,13 @@ public interface LabeledPipelineOptionsSupplier extends Supplier<DataflowPipelin
   Config config();
 
   /**
-   * Build {@link DataflowPipelineOptions} using underlying {@link Supplier} and inject labels.
+   * Build {@link PipelineOptions} using underlying {@link Supplier} and inject labels.
    *
-   * @return {@link DataflowPipelineOptions} with injected labels
+   * @return {@link PipelineOptions} with injected labels
    */
-  default DataflowPipelineOptions get() {
-    final DataflowPipelineOptions pipelineOptions = supplier().get();
+  default PipelineOptions get() {
+    final DataflowPipelineOptions pipelineOptions =
+        supplier().get().as(DataflowPipelineOptions.class);
     pipelineOptions.setLabels(buildLabels(labelKeyPrefix(), config()));
     return pipelineOptions;
   }

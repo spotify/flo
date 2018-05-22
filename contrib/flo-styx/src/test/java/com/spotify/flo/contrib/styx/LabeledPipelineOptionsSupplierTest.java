@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
+import org.apache.beam.sdk.options.PipelineOptions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +41,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 public class LabeledPipelineOptionsSupplierTest {
   
   @Mock
-  private Supplier<DataflowPipelineOptions> supplier;
+  private Supplier<PipelineOptions> supplier;
   
   @Mock
   private DataflowPipelineOptions dataflowPipelineOptions;
@@ -50,6 +51,8 @@ public class LabeledPipelineOptionsSupplierTest {
   
   @Before
   public void setUp() {
+    when(dataflowPipelineOptions.as(DataflowPipelineOptions.class))
+        .thenReturn(dataflowPipelineOptions);
     when(supplier.get()).thenReturn(dataflowPipelineOptions);
   }
 
@@ -80,7 +83,10 @@ public class LabeledPipelineOptionsSupplierTest {
     expected.put("spotify-styx-trigger-type", "unknown-trigger-type");
 
     final DataflowPipelineOptions dataflowPipelineOptions =
-        LabeledPipelineOptionsSupplier.builder().supplier(supplier).build().get();
+        LabeledPipelineOptionsSupplier.builder().supplier(supplier)
+            .build()
+            .get()
+            .as(DataflowPipelineOptions.class);
     verify(dataflowPipelineOptions).setLabels(expected);
   }
 }

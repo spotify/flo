@@ -63,7 +63,8 @@ public class PipelineOptionsSupplierTest {
         .project("foo")
         .serviceAccount("foo@example.com")
         .build()
-        .get();
+        .get()
+        .as(DataflowPipelineOptions.class);
     assertThat(pipelineOptions.getProject(), is("foo"));
     assertThat(pipelineOptions.getServiceAccount(), is("foo@example.com"));
     assertThat(pipelineOptions.getRunner(), typeCompatibleWith(DataflowRunner.class));
@@ -89,7 +90,8 @@ public class PipelineOptionsSupplierTest {
         .runner(DataflowRunner.class)
         .experiment(ImmutableList.of("foo", "bar"))
         .build()
-        .get();
+        .get()
+        .as(DataflowPipelineOptions.class);
     assertThat(pipelineOptions.getProject(), is("foo"));
     assertThat(pipelineOptions.getMaxNumWorkers(), is(1));
     assertThat(pipelineOptions.getRegion(), is("foo"));
