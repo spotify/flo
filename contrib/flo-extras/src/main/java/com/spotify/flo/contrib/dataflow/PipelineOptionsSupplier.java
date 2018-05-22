@@ -63,7 +63,7 @@ public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOption
 
   Optional<String> jobName();
 
-  Optional<String> serviceAccount();
+  String serviceAccount();
 
   Optional<Class<? extends PipelineRunner<?>>> runner();
 
@@ -71,8 +71,6 @@ public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOption
 
   static PipelineOptionsSupplierBuilder builder() {
     return new PipelineOptionsSupplierBuilder()
-        .maxNumWorkers(5)
-        .network("default")
         .autoscalingAlgorithm(AutoscalingAlgorithmType.NONE)
         .runner(DataflowRunner.class);
   }
@@ -102,7 +100,7 @@ public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOption
     workerDiskType().ifPresent(pipelineOptions::setWorkerDiskType);
 
     jobName().ifPresent(pipelineOptions::setJobName);
-    serviceAccount().ifPresent(pipelineOptions::setServiceAccount);
+    pipelineOptions.setServiceAccount(serviceAccount());
 
     experiment().ifPresent(pipelineOptions::setExperiments);
 

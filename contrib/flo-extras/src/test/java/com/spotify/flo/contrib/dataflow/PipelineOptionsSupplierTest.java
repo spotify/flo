@@ -50,10 +50,9 @@ public class PipelineOptionsSupplierTest {
   public void shouldBuildDefaultSupplier() {
     final PipelineOptionsSupplier pipelineOptionsSupplier = PipelineOptionsSupplier.builder()
         .project("foo")
+        .serviceAccount("foo@example.com")
         .build();
     assertThat(pipelineOptionsSupplier.project(), is("foo"));
-    assertThat(pipelineOptionsSupplier.maxNumWorkers(), is(Optional.of(5)));
-    assertThat(pipelineOptionsSupplier.network(), is(Optional.of("default")));
     assertThat(pipelineOptionsSupplier.autoscalingAlgorithm(),
         is(Optional.of(AutoscalingAlgorithmType.NONE)));
     assertThat(pipelineOptionsSupplier.runner(), is(Optional.of(DataflowRunner.class)));
@@ -63,11 +62,10 @@ public class PipelineOptionsSupplierTest {
   public void shouldSupplyDefaultPipelineOptions() {
     final DataflowPipelineOptions pipelineOptions = PipelineOptionsSupplier.builder()
         .project("foo")
+        .serviceAccount("foo@example.com")
         .build()
         .get();
     assertThat(pipelineOptions.getProject(), is("foo"));
-    assertThat(pipelineOptions.getMaxNumWorkers(), is(5));
-    assertThat(pipelineOptions.getNetwork(), is("default"));
     assertThat(pipelineOptions.getAutoscalingAlgorithm(), is(AutoscalingAlgorithmType.NONE));
     assertThat(pipelineOptions.getRunner(), typeCompatibleWith(DataflowRunner.class));
   }
