@@ -68,10 +68,10 @@ public class TerminationLoggingTest {
   public void shouldLoadConfig() {
     final Config loadedConfig = ConfigFactory.load();
     assertThat(loadedConfig.hasPath(STYX_TERMINATION_LOG), is(false));
-    assertThat(loadedConfig.getString(STYX_COMPONENT_ID), is("UNKNOWN_COMPONENT"));
-    assertThat(loadedConfig.getString(STYX_WORKFLOW_ID), is("UNKNOWN_WORKFLOW"));
+    assertThat(loadedConfig.getString(STYX_COMPONENT_ID), is("UNKNOWN_COMPONENT_ID"));
+    assertThat(loadedConfig.getString(STYX_WORKFLOW_ID), is("UNKNOWN_WORKFLOW_ID"));
     assertThat(loadedConfig.getString(STYX_PARAMETER), is("UNKNOWN_PARAMETER"));
-    assertThat(loadedConfig.getString(STYX_EXECUTION_ID), is("UNKNOWN_EXECUTION"));
+    assertThat(loadedConfig.getString(STYX_EXECUTION_ID), is("UNKNOWN_EXECUTION_ID"));
   }
 
   @Test
