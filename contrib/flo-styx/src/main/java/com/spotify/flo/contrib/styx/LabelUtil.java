@@ -52,20 +52,20 @@ final class LabelUtil {
     throw new UnsupportedOperationException();
   }
 
-  static Map<String, String> buildLabels(String labelPrefix, Config config) {
+  static Map<String, String> buildLabels(String labelKeyPrefix, Config config) {
     final Map<String, String> map = new HashMap<>();
 
-    final String componentIdLabelKey = validateAndPrefixLabelKey(labelPrefix,
+    final String componentIdLabelKey = validateAndPrefixLabelKey(labelKeyPrefix,
         STYX_COMPONENT_ID_LABEL_KEY);
-    final String workflowIdLabelKey = validateAndPrefixLabelKey(labelPrefix,
+    final String workflowIdLabelKey = validateAndPrefixLabelKey(labelKeyPrefix,
         STYX_WORKFLOW_ID_LABEL_KEY);
-    final String parameterLabelKey = validateAndPrefixLabelKey(labelPrefix,
+    final String parameterLabelKey = validateAndPrefixLabelKey(labelKeyPrefix,
         STYX_PARAMETER_LABEL_KEY);
-    final String executionIdLabelKey = validateAndPrefixLabelKey(labelPrefix,
+    final String executionIdLabelKey = validateAndPrefixLabelKey(labelKeyPrefix,
         STYX_EXECUTION_ID_LABEL_KEY);
-    final String triggerIdLabelKey = validateAndPrefixLabelKey(labelPrefix,
+    final String triggerIdLabelKey = validateAndPrefixLabelKey(labelKeyPrefix,
         STYX_TRIGGER_ID_LABEL_KEY);
-    final String triggerTypeLabelKey = validateAndPrefixLabelKey(labelPrefix,
+    final String triggerTypeLabelKey = validateAndPrefixLabelKey(labelKeyPrefix,
         STYX_TRIGGER_TYPE_LABEL_KEY);
     
     sanitizeLabelValue("c", STYX_COMPONENT_ID, config)
@@ -84,8 +84,8 @@ final class LabelUtil {
     return map;
   }
 
-  private static String validateAndPrefixLabelKey(String labelPrefix, String label) {
-    final String prefixedLabelKey = String.format("%s-%s", labelPrefix, label);
+  private static String validateAndPrefixLabelKey(String labelKeyPrefix, String label) {
+    final String prefixedLabelKey = String.format("%s-%s", labelKeyPrefix, label);
 
     if (prefixedLabelKey.length() > LABEL_KEY_MAX_LENGTH) {
       throw new IllegalArgumentException("Invalid label key: Too long, must be <= 63 characters: "

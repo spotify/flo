@@ -30,56 +30,131 @@ import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOption
 import org.apache.beam.sdk.PipelineRunner;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 
+/**
+ * A supplier of {@link DataflowPipelineOptions}.
+ *
+ * Please refer to https://cloud.google.com/dataflow/pipelines/specifying-exec-params for details.
+ */
 @AutoMatter
 public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOptions> {
 
+  /**
+   * The project ID for your Google Cloud Project.
+   * Mandatory value. Not setting it will result {@link NullPointerException}.
+   */
   String project();
 
-  Optional<Integer> numWorkers();
-
-  Optional<Integer> maxNumWorkers();
-
-  Optional<String> region();
-
-  Optional<String> zone();
-
-  Optional<String> stagingLocation();
-
-  Optional<String> tempLocation();
-
-  Optional<String> gcpTempLocation();
-
-  Optional<AutoscalingAlgorithmType> autoscalingAlgorithm();
-
-  Optional<String> network();
-
-  Optional<String> subNetwork();
-
-  Optional<Integer> diskSizeGb();
-
-  Optional<String> workerMachineType();
-
-  Optional<String> workerDiskType();
-
-  Optional<String> jobName();
-
+  /**
+   * Run the job as a specific service account.
+   */
   String serviceAccount();
 
+  /**
+   * The initial number of Google Compute Engine instances to use when executing your pipeline.
+   */
+  Optional<Integer> numWorkers();
+
+  /**
+   * The maximum number of Google Compute Engine instances to be made available to your pipeline
+   * during execution.
+   */
+  Optional<Integer> maxNumWorkers();
+
+  /**
+   * Specifying a regional endpoint allows you to define a region for deploying your Cloud
+   * Dataflow jobs.
+   */
+  Optional<String> region();
+
+  /**
+   * The Compute Engine availability zone for launching worker instances to run your pipeline.
+   */
+  Optional<String> zone();
+
+  /**
+   * Google Cloud Storage path for staging local files. Must be a valid Cloud Storage URL,
+   * beginning with gs://.
+   */
+  Optional<String> stagingLocation();
+
+  /**
+   * A Google Cloud Storage path for Dataflow to stage any temporary files.
+   */
+  Optional<String> tempLocation();
+
+  /**
+   * A Google Cloud Storage path for Dataflow to stage any temporary files.
+   */
+  Optional<String> gcpTempLocation();
+
+  /**
+   * The Autoscaling mode to use for your Dataflow job.
+   */
+  Optional<AutoscalingAlgorithmType> autoscalingAlgorithm();
+
+  /**
+   * The Google Compute Engine network for launching Compute Engine instances to run your pipeline.
+   */
+  Optional<String> network();
+
+  /**
+   * The Google Compute Engine subnetwork for launching Compute Engine instances to run your
+   * pipeline.
+   */
+  Optional<String> subNetwork();
+
+  /**
+   * The disk size, in gigabytes, to use on each remote Compute Engine worker instance.
+   */
+  Optional<Integer> diskSizeGb();
+
+  /**
+   * The Google Compute Engine machine type that Dataflow will use when spinning up worker VMs.
+   */
+  Optional<String> workerMachineType();
+
+  /**
+   * The type of persistent disk to use, specified by a full URL of the disk type resource.
+   */
+  Optional<String> workerDiskType();
+
+  /**
+   * Name of the pipeline execution.
+   */
+  Optional<String> jobName();
+
+  /**
+   * The PipelineRunner to use.
+   */
   Optional<Class<? extends PipelineRunner<?>>> runner();
 
+  /**
+   * Apache Beam experimental feature flags.
+   */
   Optional<List<String>> experiment();
 
+  /**
+   * Return a builder with runner set to {@link DataflowRunner}.
+   *
+   * @return a builder with runner set to {@link DataflowRunner}
+   */
   static PipelineOptionsSupplierBuilder builder() {
     return new PipelineOptionsSupplierBuilder()
-        .autoscalingAlgorithm(AutoscalingAlgorithmType.NONE)
         .runner(DataflowRunner.class);
   }
 
+  /**
+   * Build {@link DataflowPipelineOptions} based on configured values of this supplier.
+   *
+   * @return {@link DataflowPipelineOptions}
+   */
   default DataflowPipelineOptions get() {
     final DataflowPipelineOptions pipelineOptions = PipelineOptionsFactory.create()
         .as(DataflowPipelineOptions.class);
 
     pipelineOptions.setProject(project());
+    pipelineOptions.setServiceAccount(serviceAccount());
+    jobName().ifPresent(pipelineOptions::setJobName);
 
     numWorkers().ifPresent(pipelineOptions::setNumWorkers);
     maxNumWorkers().ifPresent(pipelineOptions::setMaxNumWorkers);
@@ -98,9 +173,6 @@ public interface PipelineOptionsSupplier extends Supplier<DataflowPipelineOption
     diskSizeGb().ifPresent(pipelineOptions::setDiskSizeGb);
     workerMachineType().ifPresent(pipelineOptions::setWorkerMachineType);
     workerDiskType().ifPresent(pipelineOptions::setWorkerDiskType);
-
-    jobName().ifPresent(pipelineOptions::setJobName);
-    pipelineOptions.setServiceAccount(serviceAccount());
 
     experiment().ifPresent(pipelineOptions::setExperiments);
 

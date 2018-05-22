@@ -62,7 +62,7 @@ public class LabeledPipelineOptionsSupplierTest {
   @Test
   public void shouldBuildFromScratch() {
     assertThat(LabeledPipelineOptionsSupplier.builder()
-            .labelPrefix("foo")
+            .labelKeyPrefix("foo")
             .config(config)
             .supplier(supplier)
             .build(),

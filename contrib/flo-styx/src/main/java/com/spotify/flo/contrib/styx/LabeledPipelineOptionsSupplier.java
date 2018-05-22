@@ -28,26 +28,51 @@ import io.norberg.automatter.AutoMatter;
 import java.util.function.Supplier;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 
+/**
+ * A supplier injecting labels to Dataflow job.
+ */
 @AutoMatter
 public interface LabeledPipelineOptionsSupplier extends Supplier<DataflowPipelineOptions> {
 
   String DEFAULT_LABEL_PREFIX = "spotify";
 
-  String labelPrefix();
+  /**
+   * Prefix of the label key.
+   */
+  String labelKeyPrefix();
 
+  /**
+   * The underlying {@link Supplier} supplying {@link DataflowPipelineOptions}.
+   */
   Supplier<DataflowPipelineOptions> supplier();
 
+  /**
+   * The config object from which label values are read. If not set, default to
+   * ConfigFactory.load().
+   */
   Config config();
 
+  /**
+   * Build {@link DataflowPipelineOptions} using underlying {@link Supplier} and inject labels.
+   *
+   * @return {@link DataflowPipelineOptions} with injected labels
+   */
   default DataflowPipelineOptions get() {
     final DataflowPipelineOptions pipelineOptions = supplier().get();
-    pipelineOptions.setLabels(buildLabels(labelPrefix(), config()));
+    pipelineOptions.setLabels(buildLabels(labelKeyPrefix(), config()));
     return pipelineOptions;
   }
 
+  /**
+   * Return a builder with label key prefix set to "spotify", and loading config using
+   * ConfigFactory.load().
+   *
+   * @return a build with label key prefix set to "spotify", and loading config using
+   *     ConfigFactory.load().
+   */
   static LabeledPipelineOptionsSupplierBuilder builder() {
     return new LabeledPipelineOptionsSupplierBuilder()
-        .labelPrefix(DEFAULT_LABEL_PREFIX)
+        .labelKeyPrefix(DEFAULT_LABEL_PREFIX)
         .config(ConfigFactory.load());
   }
 }

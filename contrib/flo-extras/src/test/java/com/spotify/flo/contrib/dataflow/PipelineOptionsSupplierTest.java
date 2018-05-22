@@ -53,8 +53,7 @@ public class PipelineOptionsSupplierTest {
         .serviceAccount("foo@example.com")
         .build();
     assertThat(pipelineOptionsSupplier.project(), is("foo"));
-    assertThat(pipelineOptionsSupplier.autoscalingAlgorithm(),
-        is(Optional.of(AutoscalingAlgorithmType.NONE)));
+    assertThat(pipelineOptionsSupplier.serviceAccount(), is("foo@example.com"));
     assertThat(pipelineOptionsSupplier.runner(), is(Optional.of(DataflowRunner.class)));
   }
   
@@ -66,7 +65,7 @@ public class PipelineOptionsSupplierTest {
         .build()
         .get();
     assertThat(pipelineOptions.getProject(), is("foo"));
-    assertThat(pipelineOptions.getAutoscalingAlgorithm(), is(AutoscalingAlgorithmType.NONE));
+    assertThat(pipelineOptions.getServiceAccount(), is("foo@example.com"));
     assertThat(pipelineOptions.getRunner(), typeCompatibleWith(DataflowRunner.class));
   }
 

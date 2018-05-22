@@ -63,12 +63,12 @@ public class LabelUtilTest {
   
   @Test
   public void shouldFailIfKeyTooLong() {
-    final String labelPrefix = Strings.repeat("foo", 30);
+    final String labelKeyPrefix = Strings.repeat("foo", 30);
 
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage(String
         .format("Invalid label key: Too long, must be <= 63 characters: %s-styx-component-id",
-            labelPrefix));
+            labelKeyPrefix));
 
     buildLabels(Strings.repeat("foo", 30), config);
   }
