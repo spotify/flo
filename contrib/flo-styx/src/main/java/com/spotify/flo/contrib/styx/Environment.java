@@ -91,7 +91,7 @@ public final class Environment {
    *
    * @return Styx environment variables which are visible to containers launched by Styx
    */
-  public static Map<String, String> getSanitizedEnvWithDefaultPrefix() {
+  public static Map<String, String> getSanitizedEnvWithDefaultKeyPrefix() {
     return getSanitizedEnv(DEFAULT_KEY_PREFIX);
   }
 

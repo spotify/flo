@@ -47,8 +47,8 @@ public class EnvironmentTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   @Test
-  public void shouldReturnEnvWithDefaultPrefix() {
-    final Map<String, String> env = Environment.getSanitizedEnvWithDefaultPrefix();
+  public void shouldReturnEnvWithDefaultKeyPrefix() {
+    final Map<String, String> env = Environment.getSanitizedEnvWithDefaultKeyPrefix();
     final Map<String, String> expected = new HashMap<>();
     expected.put("spotify-styx-component-id", "unknown-component-id");
     expected.put("spotify-styx-workflow-id", "unknown-workflow-id");
@@ -75,7 +75,7 @@ public class EnvironmentTest {
   }
 
   @Test
-  public void shouldReturnEnvWithNoPrefix() {
+  public void shouldReturnEnvWithNoKeyPrefix() {
     final Map<String, String> env = Environment.getSanitizedEnv();
     final Map<String, String> expected = new HashMap<>();
     expected.put("styx-component-id", "unknown-component-id");
