@@ -20,26 +20,17 @@
 
 package com.spotify.flo.contrib.styx;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
+final class Constants {
 
-import com.spotify.flo.context.TerminationHookFactory;
-import com.typesafe.config.Config;
-import org.junit.Before;
-import org.junit.Test;
-
-public class TerminationLoggingFactoryTest {
-  private TerminationHookFactory terminationHookFactory;
-  
-  @Before
-  public void setUp() {
-    terminationHookFactory = new TerminationLoggingFactory();
+  private Constants() {
+    throw new UnsupportedOperationException();
   }
 
-  @Test
-  public void shouldCreateInstance() {
-    assertThat(terminationHookFactory.create(mock(Config.class)), is(notNullValue()));
-  }
+  static final String STYX_TERMINATION_LOG = "styx.termination.log";
+  static final String STYX_COMPONENT_ID = "styx.component.id";
+  static final String STYX_WORKFLOW_ID = "styx.workflow.id";
+  static final String STYX_PARAMETER = "styx.parameter";
+  static final String STYX_EXECUTION_ID = "styx.execution.id";
+  static final String STYX_TRIGGER_ID = "styx.trigger.id";
+  static final String STYX_TRIGGER_TYPE = "styx.trigger.type";
 }
