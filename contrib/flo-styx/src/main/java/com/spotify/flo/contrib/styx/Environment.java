@@ -27,6 +27,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Sanitized Styx environment variables where key should match "^([a-z]([-a-z0-9]*[a-z0-9])?)?$" and
+ * less than 64 characters, and value should match "^([a-z]([-a-z0-9]*[a-z0-9])?)?$" and less than
+ * 64 characters.
+ */
 public final class Environment {
 
   private static final String DEFAULT_KEY_PREFIX = "spotify";
