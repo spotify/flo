@@ -35,8 +35,6 @@ import java.util.Optional;
  */
 public final class Environment {
 
-  private static final String DEFAULT_KEY_PREFIX = "spotify";
-
   private static final String STYX_COMPONENT_ID = "styx.component.id";
   private static final String STYX_WORKFLOW_ID = "styx.workflow.id";
   private static final String STYX_PARAMETER = "styx.parameter";
@@ -76,23 +74,6 @@ public final class Environment {
    */
   public static Map<String, String> getSanitizedEnv() {
     return getSanitizedEnv("");
-  }
-
-  /**
-   * Get sanitized Styx environment variables which are visible to containers launched by Styx:
-   *
-   * <ul>
-   * <li>spotify-styx-component-id</li>
-   * <li>spotify-styx-workflow-id</li>
-   * <li>spotify-styx-parameter</li>
-   * <li>spotify-styx-trigger-id</li>
-   * <li>spotify-styx-trigger-type</li>
-   * </ul>
-   *
-   * @return Styx environment variables which are visible to containers launched by Styx
-   */
-  public static Map<String, String> getSanitizedEnvWithDefaultKeyPrefix() {
-    return getSanitizedEnv(DEFAULT_KEY_PREFIX);
   }
 
   /**

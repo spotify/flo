@@ -47,20 +47,6 @@ public class EnvironmentTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   @Test
-  public void shouldReturnEnvWithDefaultKeyPrefix() {
-    final Map<String, String> env = Environment.getSanitizedEnvWithDefaultKeyPrefix();
-    final Map<String, String> expected = new HashMap<>();
-    expected.put("spotify-styx-component-id", "unknown-component-id");
-    expected.put("spotify-styx-workflow-id", "unknown-workflow-id");
-    expected.put("spotify-styx-parameter", "unknown-parameter");
-    expected.put("spotify-styx-execution-id", "unknown-execution-id");
-    expected.put("spotify-styx-trigger-id", "unknown-trigger-id");
-    expected.put("spotify-styx-trigger-type", "unknown-trigger-type");
-
-    assertThat(env, is(expected));
-  }
-
-  @Test
   public void shouldReturnEnv() {
     final Map<String, String> env = Environment.getSanitizedEnv("foo");
     final Map<String, String> expected = new HashMap<>();
