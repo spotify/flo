@@ -20,7 +20,7 @@
 
 package com.spotify.flo.contrib.styx;
 
-import static com.spotify.flo.contrib.styx.Environment.getEnv;
+import static com.spotify.flo.contrib.styx.Environment.getSanitizedEnv;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyString;
@@ -48,7 +48,7 @@ public class EnvironmentTest {
 
   @Test
   public void shouldReturnEnvWithDefaultPrefix() {
-    final Map<String, String> env = getEnv();
+    final Map<String, String> env = Environment.getSanitizedEnv();
     final Map<String, String> expected = new HashMap<>();
     expected.put("spotify-styx-component-id", "unknown-component-id");
     expected.put("spotify-styx-workflow-id", "unknown-workflow-id");
@@ -62,7 +62,7 @@ public class EnvironmentTest {
 
   @Test
   public void shouldReturnEnv() {
-    final Map<String, String> env = getEnv("foo");
+    final Map<String, String> env = Environment.getSanitizedEnv("foo");
     final Map<String, String> expected = new HashMap<>();
     expected.put("foo-styx-component-id", "unknown-component-id");
     expected.put("foo-styx-workflow-id", "unknown-workflow-id");
@@ -82,7 +82,7 @@ public class EnvironmentTest {
     expectedException.expectMessage(String
         .format("Invalid key: Too long, must be <= 63 characters: %s-styx-component-id", keyPrefix));
 
-    getEnv(Strings.repeat("foo", 30), config);
+    getSanitizedEnv(Strings.repeat("foo", 30), config);
   }
 
   @Test
@@ -90,7 +90,7 @@ public class EnvironmentTest {
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage("Invalid key: 123-styx-component-id");
 
-    getEnv("123", config);
+    getSanitizedEnv("123", config);
   }
 
   @Test
@@ -104,7 +104,7 @@ public class EnvironmentTest {
     when(config.getString("styx.trigger.id")).thenReturn("0123-");
     when(config.getString("styx.trigger.type")).thenReturn("0123-");
 
-    final Map<String, String> env = getEnv("foo", config);
+    final Map<String, String> env = getSanitizedEnv("foo", config);
     final Map<String, String> expected = new HashMap<>();
     expected.put("foo-styx-component-id", "c-0123-c");
     expected.put("foo-styx-workflow-id", "w-0123-w");
@@ -133,7 +133,7 @@ public class EnvironmentTest {
     // valid value
     when(config.getString("styx.trigger.type")).thenReturn("foo-bar");
 
-    final Map<String, String> env = getEnv("foo", config);
+    final Map<String, String> env = getSanitizedEnv("foo", config);
     final Map<String, String> expected = new HashMap<>();
     expected.put("foo-styx-workflow-id", "foo-bar");
     expected.put("foo-styx-parameter", Strings.repeat("foo", 20) + "fo");

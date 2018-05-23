@@ -73,8 +73,8 @@ public final class Environment {
    *
    * @return Styx environment variables which are visible to containers launched by Styx
    */
-  public static Map<String, String> getEnv() {
-    return getEnv(DEFAULT_KEY_PREFIX);
+  public static Map<String, String> getSanitizedEnv() {
+    return getSanitizedEnv(DEFAULT_KEY_PREFIX);
   }
 
   /**
@@ -92,12 +92,12 @@ public final class Environment {
    *
    * @return Styx environment variables which are visible to containers launched by Styx
    */
-  public static Map<String, String> getEnv(String keyPrefix) {
-    return getEnv(keyPrefix, ConfigFactory.load());
+  public static Map<String, String> getSanitizedEnv(String keyPrefix) {
+    return getSanitizedEnv(keyPrefix, ConfigFactory.load());
   }
 
   @VisibleForTesting
-  static Map<String, String> getEnv(String keyPrefix, Config config) {
+  static Map<String, String> getSanitizedEnv(String keyPrefix, Config config) {
     final Map<String, String> map = new HashMap<>();
 
     final String componentIdKey = validateAndPrefixKey(keyPrefix, STYX_COMPONENT_ID_KEY);
