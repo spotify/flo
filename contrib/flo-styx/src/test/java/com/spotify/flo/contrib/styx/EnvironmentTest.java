@@ -48,7 +48,7 @@ public class EnvironmentTest {
 
   @Test
   public void shouldReturnEnvWithDefaultPrefix() {
-    final Map<String, String> env = Environment.getSanitizedEnv();
+    final Map<String, String> env = Environment.getSanitizedEnvWithDefaultPrefix();
     final Map<String, String> expected = new HashMap<>();
     expected.put("spotify-styx-component-id", "unknown-component-id");
     expected.put("spotify-styx-workflow-id", "unknown-workflow-id");
@@ -72,6 +72,26 @@ public class EnvironmentTest {
     expected.put("foo-styx-trigger-type", "unknown-trigger-type");
 
     assertThat(env, is(expected));
+  }
+
+  @Test
+  public void shouldReturnEnvWithNoPrefix() {
+    final Map<String, String> env = Environment.getSanitizedEnv();
+    final Map<String, String> expected = new HashMap<>();
+    expected.put("styx-component-id", "unknown-component-id");
+    expected.put("styx-workflow-id", "unknown-workflow-id");
+    expected.put("styx-parameter", "unknown-parameter");
+    expected.put("styx-execution-id", "unknown-execution-id");
+    expected.put("styx-trigger-id", "unknown-trigger-id");
+    expected.put("styx-trigger-type", "unknown-trigger-type");
+
+    assertThat(env, is(expected));
+  }
+
+  @Test
+  public void shouldFailIfNullKeyPrefix() {
+    expectedException.expect(NullPointerException.class);
+    getSanitizedEnv(null);
   }
 
   @Test

@@ -25,6 +25,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -64,6 +65,23 @@ public final class Environment {
    * Get sanitized Styx environment variables which are visible to containers launched by Styx:
    *
    * <ul>
+   * <li>styx-component-id</li>
+   * <li>styx-workflow-id</li>
+   * <li>styx-parameter</li>
+   * <li>styx-trigger-id</li>
+   * <li>styx-trigger-type</li>
+   * </ul>
+   *
+   * @return Styx environment variables which are visible to containers launched by Styx
+   */
+  public static Map<String, String> getSanitizedEnv() {
+    return getSanitizedEnv("");
+  }
+
+  /**
+   * Get sanitized Styx environment variables which are visible to containers launched by Styx:
+   *
+   * <ul>
    * <li>spotify-styx-component-id</li>
    * <li>spotify-styx-workflow-id</li>
    * <li>spotify-styx-parameter</li>
@@ -73,7 +91,7 @@ public final class Environment {
    *
    * @return Styx environment variables which are visible to containers launched by Styx
    */
-  public static Map<String, String> getSanitizedEnv() {
+  public static Map<String, String> getSanitizedEnvWithDefaultPrefix() {
     return getSanitizedEnv(DEFAULT_KEY_PREFIX);
   }
 
@@ -93,7 +111,7 @@ public final class Environment {
    * @return Styx environment variables which are visible to containers launched by Styx
    */
   public static Map<String, String> getSanitizedEnv(String keyPrefix) {
-    return getSanitizedEnv(keyPrefix, ConfigFactory.load());
+    return getSanitizedEnv(Objects.requireNonNull(keyPrefix), ConfigFactory.load());
   }
 
   @VisibleForTesting
@@ -124,7 +142,9 @@ public final class Environment {
   }
 
   private static String validateAndPrefixKey(String keyPrefix, String key) {
-    final String prefixedLabelKey = String.format("%s-%s", keyPrefix, key);
+    final String prefixedLabelKey = keyPrefix.isEmpty()
+                                    ? key
+                                    : String.format("%s-%s", keyPrefix, key);
 
     if (prefixedLabelKey.length() > KEY_MAX_LENGTH) {
       throw new IllegalArgumentException("Invalid key: Too long, must be <= 63 characters: "
