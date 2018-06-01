@@ -24,9 +24,8 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-api</artifactId>
-      <version>0.13.2</version>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-context</artifactId>
     </dependency>
 
     <dependency>
