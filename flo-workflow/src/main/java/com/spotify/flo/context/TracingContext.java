@@ -1,5 +1,7 @@
 package com.spotify.flo.context;
 
+import static com.spotify.flo.Tracing.TASK_ARGS;
+import static com.spotify.flo.Tracing.TASK_ID;
 import static com.spotify.flo.Tracing.TASK_NAME;
 
 import com.spotify.flo.EvalContext;
@@ -21,8 +23,9 @@ public class TracingContext extends ForwardingEvalContext {
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
     try {
       return Context.current()
-          // TODO: also set task parameters?
+          .withValue(TASK_ID, taskId.toString())
           .withValue(TASK_NAME, taskId.name())
+          .withValue(TASK_ARGS, taskId.args())
           .call(() -> super.invokeProcessFn(taskId, processFn));
     } catch (Exception e) {
       if (e instanceof RuntimeException) {
