@@ -24,6 +24,7 @@ import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F0;
+import io.grpc.Context;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -43,7 +44,7 @@ public class AsyncContext implements EvalContext {
   private final Executor executor;
 
   protected AsyncContext(Executor executor) {
-    this.executor = Objects.requireNonNull(executor);
+    this.executor = Context.currentContextExecutor(Objects.requireNonNull(executor));
   }
 
   public static EvalContext create(Executor executor) {

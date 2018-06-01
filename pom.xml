@@ -109,6 +109,11 @@
         <artifactId>kryo-shaded</artifactId>
         <version>4.0.0</version>
       </dependency>
+      <dependency>
+        <groupId>io.opencensus</groupId>
+        <artifactId>opencensus-api</artifactId>
+        <version>0.13.2</version>
+      </dependency>
 
       <!-- test dependencies -->
       <dependency>
