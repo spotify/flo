@@ -30,7 +30,13 @@ import com.spotify.flo.AwaitValue;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.EvalContext.Promise;
 import com.spotify.flo.EvalContext.Value;
+import com.spotify.flo.Fn;
+import com.spotify.flo.Task;
+import com.spotify.flo.TaskId;
+import io.grpc.Context;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
 
@@ -251,5 +257,36 @@ public class AsyncContextTest {
     Promise<String> promise = context.promise();
     promise.fail(new Throwable());
     promise.fail(new Throwable());
+  }
+
+  @Test
+  public void grpcContextIsPropagated() throws Exception {
+    final Context.Key<String> key = Context.key("foo");
+    final String value = "bar";
+    final Context grpcContext = Context.current().withValue(key, value);
+
+    // #value()
+    {
+      final CompletableFuture<String> future = new CompletableFuture<>();
+      grpcContext.call(() -> context.value(key::get)).consume(future::complete);
+      assertThat(future.get(30, TimeUnit.SECONDS), is(value));
+    }
+
+    // #evaluate()
+    {
+      final Task<String> task = Task.named("test").ofType(String.class)
+          .process(key::get);
+      final CompletableFuture<String> future = new CompletableFuture<>();
+      grpcContext.call(() -> context.evaluate(task)).consume(future::complete);
+      assertThat(future.get(30, TimeUnit.SECONDS), is(value));
+    }
+
+    // #invokeProcessFn()
+    {
+      final CompletableFuture<String> future = new CompletableFuture<>();
+      final Fn<Value<String>> processFn = () -> context.immediateValue(key.get());
+      grpcContext.call(() -> context.invokeProcessFn(TaskId.create("test"), processFn)).consume(future::complete);
+      assertThat(future.get(30, TimeUnit.SECONDS), is(value));
+    }
   }
 }
