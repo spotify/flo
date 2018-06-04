@@ -24,9 +24,7 @@ import io.grpc.Context;
 
 public final class Tracing {
 
-  public static final Context.Key<String> TASK_ID = Context.keyWithDefault("task-id", "");
-  public static final Context.Key<String> TASK_NAME = Context.keyWithDefault("task-name", "");
-  public static final Context.Key<String> TASK_ARGS = Context.keyWithDefault("task-args", "");
+  public static final Context.Key<TaskId> TASK_ID = Context.key("task-id");
 
   private Tracing() {
     throw new UnsupportedOperationException();

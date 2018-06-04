@@ -32,6 +32,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.spotify.flo.Task;
+import com.spotify.flo.TaskId;
 import com.spotify.flo.Tracing;
 import com.spotify.flo.context.FloRunner.Result;
 import com.spotify.flo.freezer.Persisted;
@@ -240,12 +241,12 @@ public class FloRunnerTest {
   }
 
   @Test
-  public void taskNameIsInContext() throws Exception {
-    final Task<String> task = Task.named("task").ofType(String.class)
-        .process(Tracing.TASK_NAME::get);
+  public void taskIdIsInContext() throws Exception {
+    final Task<TaskId> task = Task.named("task").ofType(TaskId.class)
+        .process(Tracing.TASK_ID::get);
 
-    final Result<String> result = runTask(task);
+    final Result<TaskId> result = runTask(task);
 
-    assertThat(result.value(), is(task.id().name()));
+    assertThat(result.value(), is(task.id()));
   }
 }

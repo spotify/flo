@@ -20,15 +20,17 @@
 
 package com.spotify.flo.context;
 
-import static com.spotify.flo.Tracing.TASK_ARGS;
 import static com.spotify.flo.Tracing.TASK_ID;
-import static com.spotify.flo.Tracing.TASK_NAME;
 
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
+import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import io.grpc.Context;
 
+/**
+ * A {@link EvalContext} that sets the current {@link Task#id()} on the {@link Context} when calling the process fn.
+ */
 public class TracingContext extends ForwardingEvalContext {
 
   private TracingContext(EvalContext delegate) {
@@ -43,9 +45,7 @@ public class TracingContext extends ForwardingEvalContext {
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
     try {
       return Context.current()
-          .withValue(TASK_ID, taskId.toString())
-          .withValue(TASK_NAME, taskId.name())
-          .withValue(TASK_ARGS, taskId.args())
+          .withValue(TASK_ID, taskId)
           .call(() -> super.invokeProcessFn(taskId, processFn));
     } catch (RuntimeException e) {
       throw e;
