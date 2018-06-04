@@ -112,7 +112,7 @@
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-context</artifactId>
-        <version>1.12.0</version>
+        <version>1.4.0</version>
       </dependency>
 
       <!-- test dependencies -->
