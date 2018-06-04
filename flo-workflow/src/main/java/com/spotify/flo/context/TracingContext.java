@@ -27,12 +27,10 @@ public class TracingContext extends ForwardingEvalContext {
           .withValue(TASK_NAME, taskId.name())
           .withValue(TASK_ARGS, taskId.args())
           .call(() -> super.invokeProcessFn(taskId, processFn));
+    } catch (RuntimeException e) {
+      throw e;
     } catch (Exception e) {
-      if (e instanceof RuntimeException) {
-        throw (RuntimeException) e;
-      } else {
-        throw new RuntimeException(e);
-      }
+      throw new RuntimeException(e);
     }
   }
 }
