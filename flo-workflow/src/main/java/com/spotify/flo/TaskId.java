@@ -36,6 +36,11 @@ public interface TaskId {
   int hash();
 
   /**
+   * @return A string representation of the task arguments.
+   */
+  String args();
+
+  /**
    * Creates a {@link TaskId}.
    *
    * <p>The task name can not contain any parenthesis.

@@ -32,8 +32,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.spotify.flo.Task;
+import com.spotify.flo.TaskId;
+import com.spotify.flo.Tracing;
+import com.spotify.flo.context.FloRunner.Result;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.status.NotReady;
+import io.grpc.Context;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -220,5 +224,29 @@ public class FloRunnerTest {
       throw new RuntimeException("factory exception");
     });
     runTask(FOO_TASK);
+  }
+
+  @Test
+  public void contextIsPropagated() throws Exception {
+    final Context.Key<String> fooKey = Context.key("foo");
+    final String fooValue = "foobar";
+
+    final Task<String> task = Task.named("task").ofType(String.class)
+        .process(fooKey::get);
+
+    final Result<String> result = Context.current().withValue(fooKey, fooValue)
+        .call(() -> runTask(task));
+
+    assertThat(result.value(), is(fooValue));
+  }
+
+  @Test
+  public void taskIdIsInContext() throws Exception {
+    final Task<TaskId> task = Task.named("task").ofType(TaskId.class)
+        .process(Tracing.TASK_ID::get);
+
+    final Result<TaskId> result = runTask(task);
+
+    assertThat(result.value(), is(task.id()));
   }
 }

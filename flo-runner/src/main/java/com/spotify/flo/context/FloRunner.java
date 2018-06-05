@@ -157,11 +157,12 @@ public final class FloRunner<T> {
         : instrumentedContext;
 
     return
-        MemoizingContext.composeWith(
-            OverridingContext.composeWith(
-                LoggingContext.composeWith(
-                    baseContext, logging),
-                logging));
+        TracingContext.composeWith(
+            MemoizingContext.composeWith(
+                OverridingContext.composeWith(
+                    LoggingContext.composeWith(
+                        baseContext, logging),
+                    logging)));
   }
 
   private EvalContext createRootContext() {

@@ -109,6 +109,11 @@
         <artifactId>kryo-shaded</artifactId>
         <version>4.0.0</version>
       </dependency>
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-context</artifactId>
+        <version>1.4.0</version>
+      </dependency>
 
       <!-- test dependencies -->
       <dependency>

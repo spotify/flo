@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 @AutoValue
 abstract class TaskIds implements TaskId, Serializable {
 
-  abstract String args();
+  public abstract String args();
 
   static TaskId create(String name, Object... args) {
     if (name.contains("(") || name.contains(")")) {
