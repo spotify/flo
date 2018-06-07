@@ -117,12 +117,6 @@
 
       <!-- test dependencies -->
       <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-simple</artifactId>
-        <version>1.7.25</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
         <groupId>com.google.truth</groupId>
         <artifactId>truth</artifactId>
         <version>0.24</version>
@@ -181,6 +175,12 @@
       <artifactId>auto-value</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.2.3</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
