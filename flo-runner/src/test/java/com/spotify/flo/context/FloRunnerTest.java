@@ -21,6 +21,7 @@
 package com.spotify.flo.context;
 
 import static com.spotify.flo.context.FloRunner.runTask;
+import static com.spotify.flo.context.NotDoneException.NOT_DONE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -31,18 +32,26 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.spotify.flo.Task;
+import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.Tracing;
 import com.spotify.flo.context.FloRunner.Result;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.status.NotReady;
 import io.grpc.Context;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -248,5 +257,68 @@ public class FloRunnerTest {
     final Result<TaskId> result = runTask(task);
 
     assertThat(result.value(), is(task.id()));
+  }
+
+
+  @Test
+  public void testPolling() throws ExecutionException, InterruptedException {
+    final Task<String> task = Task.named("foobar").ofType(String.class)
+        .process(new F0<String>() {
+          private String jobId = null;
+
+          @Override
+          public String get() {
+            System.err.println("get(): jobId=" + jobId);
+
+            if (jobId == null) {
+              jobId = startJob(() -> {
+                Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
+                return "foobar!";
+              });
+              throw NOT_DONE;
+            }
+
+            final Boolean done = isJobDone(jobId);
+            if (done == null) {
+              throw new RuntimeException("job lost!");
+            }
+
+            if (!done) {
+              throw NOT_DONE;
+            }
+
+            final String result = jobResult(jobId);
+
+            System.err.println("result: " + result);
+
+            return result;
+          }
+        });
+
+    final Result<String> result = FloRunner.runTask(task);
+
+    final String value = result.value();
+    System.err.println("value=" + value);
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T jobResult(String jobId) {
+    final CompletableFuture<?> f = jobs.get(jobId);
+    if (!f.isDone()) {
+      throw new IllegalStateException();
+    }
+    return (T) f.getNow(null);
+  }
+
+  private Boolean isJobDone(String jobId) {
+    return Optional.ofNullable(jobs.get(jobId)).map(CompletableFuture::isDone).orElse(null);
+  }
+
+  private ConcurrentMap<String, CompletableFuture<?>> jobs = new ConcurrentHashMap<>();
+
+  private <T> String startJob(Supplier<T> job) {
+    final String id = UUID.randomUUID().toString();
+    jobs.putIfAbsent(id, CompletableFuture.supplyAsync(job));
+    return id;
   }
 }
