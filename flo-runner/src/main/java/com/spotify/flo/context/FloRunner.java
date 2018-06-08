@@ -157,7 +157,7 @@ public final class FloRunner<T> {
         : instrumentedContext;
 
     return
-        PollingContext.composeWith(
+        EphemeralPollingContext.composeWith(
             TracingContext.composeWith(
                 MemoizingContext.composeWith(
                     OverridingContext.composeWith(

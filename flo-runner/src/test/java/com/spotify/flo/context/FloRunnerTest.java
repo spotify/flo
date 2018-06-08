@@ -302,7 +302,7 @@ public class FloRunnerTest {
   }
 
   @SuppressWarnings("unchecked")
-  private <T> T jobResult(String jobId) {
+  private static <T> T jobResult(String jobId) {
     final CompletableFuture<?> f = jobs.get(jobId);
     if (!f.isDone()) {
       throw new IllegalStateException();
@@ -310,13 +310,13 @@ public class FloRunnerTest {
     return (T) f.getNow(null);
   }
 
-  private Boolean isJobDone(String jobId) {
+  private static Boolean isJobDone(String jobId) {
     return Optional.ofNullable(jobs.get(jobId)).map(CompletableFuture::isDone).orElse(null);
   }
 
-  private ConcurrentMap<String, CompletableFuture<?>> jobs = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, CompletableFuture<?>> jobs = new ConcurrentHashMap<>();
 
-  private <T> String startJob(Supplier<T> job) {
+  private static <T> String startJob(Supplier<T> job) {
     final String id = UUID.randomUUID().toString();
     jobs.putIfAbsent(id, CompletableFuture.supplyAsync(job));
     return id;
