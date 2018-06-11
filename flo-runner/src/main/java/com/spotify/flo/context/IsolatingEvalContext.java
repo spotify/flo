@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,18 +46,27 @@ import org.slf4j.LoggerFactory;
  * An {@link EvalContext} that runs tasks in a separate {@link ClassLoader}. All inputs and outputs of a task must be
  * serializable. This includes exceptions.
  */
-class ClassLoaderIsolatingEvalContext extends ForwardingEvalContext {
+public class IsolatingEvalContext extends ForwardingEvalContext {
 
   private static final Logger log = LoggerFactory.getLogger(ForwardingEvalContext.class);
 
   private static boolean FLO_DISABLE_ISOLATION = Boolean.parseBoolean(System.getenv("FLO_DISABLE_ISOLATION"));
 
-  private ClassLoaderIsolatingEvalContext(EvalContext delegate) {
+  private static volatile TaskId currentTaskId;
+
+  private IsolatingEvalContext(EvalContext delegate) {
     super(delegate);
   }
 
-  static EvalContext composeWith(EvalContext baseContext) {
-    return new ClassLoaderIsolatingEvalContext(baseContext);
+  public static EvalContext composeWith(EvalContext baseContext) {
+    return new IsolatingEvalContext(baseContext);
+  }
+
+  /**
+   * Returns the current {@link TaskId} when called from within an isolated task. E.g. by a logging implementation.
+   */
+  public static TaskId currentTaskId() {
+    return currentTaskId;
   }
 
   @Override
@@ -195,14 +204,18 @@ class ClassLoaderIsolatingEvalContext extends ForwardingEvalContext {
   private static class Trampoline {
 
     @SuppressWarnings("unchecked")
-    private static void run(String taskId, String closureFile, String resultFile, String errorFile) throws Exception {
+    private static void run(String taskIdString, String closureFile, String resultFile, String errorFile)
+        throws Exception {
       log.debug("deserializing closure");
       final Fn<?> fn = PersistingContext.deserialize(Paths.get(closureFile));
+
+      final TaskId taskId = TaskId.parse(taskIdString);
+      IsolatingEvalContext.currentTaskId = taskId;
 
       log.debug("executing closure");
       try {
         final Object result = Context.current()
-            .withValue(Tracing.TASK_ID, TaskId.parse(taskId))
+            .withValue(Tracing.TASK_ID, taskId)
             .call(fn::get);
         PersistingContext.serialize(result, Paths.get(resultFile));
       } catch (Exception e) {

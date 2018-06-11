@@ -178,7 +178,7 @@ public final class FloRunner<T> {
           config.getInt("flo.workers"),
           threadFactory);
       closeables.add(executorCloser(executor));
-      return ClassLoaderIsolatingEvalContext.composeWith(EvalContext.async(executor));
+      return IsolatingEvalContext.composeWith(EvalContext.async(executor));
     } else {
       return EvalContext.sync();
     }

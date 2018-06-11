@@ -33,6 +33,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.Tracing;
@@ -250,27 +251,23 @@ public class FloRunnerTest {
     runTask(FOO_TASK);
   }
 
-  @Ignore("Not sure how to do this")
   @Test
-  public void contextIsPropagated() throws Exception {
-    final Context.Key<String> fooKey = Context.key("foo");
-    final String fooValue = "foobar";
+  public void taskIdIsInGrpcContext() throws Exception {
+    final Task<TaskId> task = Task.named("task").ofType(TaskId.class)
+        .process(() -> {
+          return Tracing.TASK_ID.get();
+        });
 
-    final Task<String> task = Task.named("task").ofType(String.class)
-        .process(fooKey::get);
+    final Result<TaskId> result = runTask(task);
 
-    final Result<String> result = Context.current().withValue(fooKey, fooValue)
-        .call(() -> runTask(task));
-
-    assertThat(result.value(), is(fooValue));
+    assertThat(result.value(), is(task.id()));
   }
 
   @Test
-  public void taskIdIsInContext() throws Exception {
+  public void currentTaskIdIsInIsolatingEvalContext() throws Exception {
     final Task<TaskId> task = Task.named("task").ofType(TaskId.class)
         .process(() -> {
-          System.err.println(ManagementFactory.getRuntimeMXBean().getInputArguments());
-          return Tracing.TASK_ID.get();
+          return IsolatingEvalContext.currentTaskId();
         });
 
     final Result<TaskId> result = runTask(task);
