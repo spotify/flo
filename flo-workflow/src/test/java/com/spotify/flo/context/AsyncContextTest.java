@@ -284,7 +284,7 @@ public class AsyncContextTest {
     // #invokeProcessFn()
     {
       final CompletableFuture<String> future = new CompletableFuture<>();
-      final Fn<Value<String>> processFn = () -> context.immediateValue(key.get());
+      final Fn<String> processFn = key::get;
       grpcContext.call(() -> context.invokeProcessFn(TaskId.create("test"), processFn)).consume(future::complete);
       assertThat(future.get(30, TimeUnit.SECONDS), is(value));
     }

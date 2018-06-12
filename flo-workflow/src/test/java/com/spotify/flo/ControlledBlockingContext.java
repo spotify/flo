@@ -159,15 +159,15 @@ class ControlledBlockingContext implements EvalContext {
   }
 
   @Override
-  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
+  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
     //noinspection unchecked
     final Interceptor<T> interceptor = (Interceptor<T>) interceptors.get(taskId);
     if (interceptor != null) {
       LOG.info("Intercepting {}", taskId);
-      return interceptor.apply(processFn);
+      return value(() -> interceptor.apply(processFn.get()));
     }
 
-    return processFn.get();
+    return value(processFn);
   }
 
   @Override
@@ -257,6 +257,6 @@ class ControlledBlockingContext implements EvalContext {
   }
 
   @FunctionalInterface
-  interface Interceptor<T> extends F1<Fn<Value<T>>, Value<T>> {
+  interface Interceptor<T> extends F1<T, T> {
   }
 }

@@ -348,9 +348,9 @@ public class TaskEvalBehaviorTest {
 
     // gating mechanism used in ControlledBlockingContext to implement intercepts
     ControlledBlockingContext context = new ControlledBlockingContext();
-    context.intercept(task, valueFn -> {
+    context.intercept(task, done -> {
       intercepted.set(true);
-      return valueFn.get().map(done -> "!!" + done + "!!");
+      return "!!" + done + "!!";
     });
 
     AwaitValue<String> val = new AwaitValue<>();

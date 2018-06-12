@@ -44,7 +44,7 @@ final class {{implClassName}} {
     public Task<Z> process(F0<Z> code) {
       // local ref to drop ref to Builder instance, b/c serialization
       TaskId taskId = this.taskId;
-      EvalClosure<Z> closure = ec -> ec.invokeProcessFn(taskId, () -> ec.value(code::get));
+      EvalClosure<Z> closure = ec -> ec.invokeProcessFn(taskId, code::get);
       return Task.create(inputs, taskContexts, type, closure, taskId);
     }
 
@@ -127,7 +127,7 @@ final class {{implClassName}} {
       ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
 
       EvalClosure<Z> closure = ec -> evaluator.enclose(
-          ({{arguments}}) -> ec.invokeProcessFn(taskId, () -> ec.value(() -> code.apply({{arguments}})))
+          ({{arguments}}) -> ec.invokeProcessFn(taskId, () -> code.apply({{arguments}}))
       ).eval(ec);
       return Task.create(inputs, taskContexts, type, closure, taskId);
     }
@@ -208,7 +208,7 @@ final class {{implClassName}} {
       ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
 
       EvalClosure<Z> closure = ec -> evaluator.enclose(
-          ({{lastArguments}}) -> ec.invokeProcessFn(taskId, () -> ec.immediateValue(code.apply({{lastArguments}})))
+          ({{lastArguments}}) -> ec.invokeProcessFn(taskId, () -> code.apply({{lastArguments}}))
       ).eval(ec);
       return Task.create(inputs, taskContexts, type, closure, taskId);
     }
