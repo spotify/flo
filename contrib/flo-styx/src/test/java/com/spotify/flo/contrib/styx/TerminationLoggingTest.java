@@ -22,63 +22,51 @@ package com.spotify.flo.contrib.styx;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.spotify.flo.context.TerminationHook;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TerminationLoggingTest {
 
-  private static final String STYX_TERMINATION_LOG = "styx.termination.log";
-  private static final String STYX_COMPONENT_ID = "styx.component.id";
-  private static final String STYX_WORKFLOW_ID = "styx.workflow.id";
-  private static final String STYX_PARAMETER = "styx.parameter";
-  private static final String STYX_EXECUTION_ID = "styx.execution.id";
+  private static final String STYX_TERMINATION_LOG = "STYX_TERMINATION_LOG";
+  private static final String STYX_COMPONENT_ID = "STYX_COMPONENT_ID";
+  private static final String STYX_WORKFLOW_ID = "STYX_WORKFLOW_ID";
+  private static final String STYX_PARAMETER = "STYX_PARAMETER";
+  private static final String STYX_EXECUTION_ID = "STYX_EXECUTION_ID";
 
-  @Mock
-  private Config config;
+  @Rule
+  public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
   private TerminationHook terminationHook;
 
   @Before
   public void setUp() {
-    when(config.hasPath(STYX_TERMINATION_LOG)).thenReturn(true);
-    when(config.getString(STYX_COMPONENT_ID)).thenReturn("foo");
-    when(config.getString(STYX_WORKFLOW_ID)).thenReturn("bar");
-    when(config.getString(STYX_PARAMETER)).thenReturn("2018-01-01");
-    when(config.getString(STYX_EXECUTION_ID)).thenReturn("foobar");
+    environmentVariables.set(STYX_COMPONENT_ID, "foo");
+    environmentVariables.set(STYX_WORKFLOW_ID, "bar");
+    environmentVariables.set(STYX_PARAMETER, "2018-01-01");
+    environmentVariables.set(STYX_EXECUTION_ID, "foobar");
 
-    terminationHook = new TerminationLogging(config);
+    terminationHook = new TerminationLogging();
   }
 
   @Test
-  public void shouldLoadConfig() {
-    final Config loadedConfig = ConfigFactory.load();
-    assertThat(loadedConfig.hasPath(STYX_TERMINATION_LOG), is(false));
-    assertThat(loadedConfig.getString(STYX_COMPONENT_ID), is("UNKNOWN_COMPONENT_ID"));
-    assertThat(loadedConfig.getString(STYX_WORKFLOW_ID), is("UNKNOWN_WORKFLOW_ID"));
-    assertThat(loadedConfig.getString(STYX_PARAMETER), is("UNKNOWN_PARAMETER"));
-    assertThat(loadedConfig.getString(STYX_EXECUTION_ID), is("UNKNOWN_EXECUTION_ID"));
-  }
+  public void shouldNotWriteFileIfNoTerminationLog() throws IOException {
+    final Path tempFile = Files.createTempFile("termination-log-", "");
+    tempFile.toFile().deleteOnExit();
 
-  @Test
-  public void shouldDoNothingIfNoTerminationLog() {
-    when(config.hasPath(STYX_TERMINATION_LOG)).thenReturn(false);
     terminationHook.accept(20);
-    verify(config, never()).getString(anyString());
+
+    final String content = new String(Files.readAllBytes(tempFile));
+    assertThat(content, is(""));
   }
 
   @Test
@@ -86,7 +74,7 @@ public class TerminationLoggingTest {
     final Path tempFile = Files.createTempFile("termination-log-", "");
     tempFile.toFile().deleteOnExit();
 
-    when(config.getString(STYX_TERMINATION_LOG)).thenReturn(tempFile.toString());
+    environmentVariables.set(STYX_TERMINATION_LOG, tempFile.toString());
 
     final String expected = "{\"component_id\": \"foo\","
                             + "\"workflow_id\": \"bar\","
@@ -100,10 +88,32 @@ public class TerminationLoggingTest {
     final String content = new String(Files.readAllBytes(tempFile));
     assertThat(content, is(expected));
   }
+
+  @Test
+  public void shouldWriteToTerminationLogWithDefaultValues() throws IOException {
+    final Path tempFile = Files.createTempFile("termination-log-", "");
+    tempFile.toFile().deleteOnExit();
+
+    environmentVariables.set(STYX_TERMINATION_LOG, tempFile.toString());
+    environmentVariables
+        .clear(STYX_COMPONENT_ID, STYX_WORKFLOW_ID, STYX_PARAMETER, STYX_EXECUTION_ID);
+
+    final String expected = "{\"component_id\": \"UNKNOWN_COMPONENT_ID\","
+                            + "\"workflow_id\": \"UNKNOWN_WORKFLOW_ID\","
+                            + "\"parameter\": \"UNKNOWN_PARAMETER\","
+                            + "\"execution_id\": \"UNKNOWN_EXECUTION_ID\","
+                            + "\"event\": \"exited\","
+                            + "\"exit_code\": 20}";
+
+    terminationHook.accept(20);
+
+    final String content = new String(Files.readAllBytes(tempFile));
+    assertThat(content, is(expected));
+  }
   
   @Test(expected = RuntimeException.class)
   public void shouldFailToWriteTerminationLog() {
-    when(config.getString(STYX_TERMINATION_LOG)).thenReturn(".");
+    environmentVariables.set(STYX_TERMINATION_LOG, ".");
     terminationHook.accept(20);
   }
 }
