@@ -26,7 +26,6 @@ import static org.junit.Assert.assertThat;
 
 import com.spotify.flo.AwaitValue;
 import com.spotify.flo.EvalContext;
-import com.spotify.flo.EvalContext.Promise;
 import com.spotify.flo.Task;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,10 +37,8 @@ public class AsyncContextFailurePropagationTest {
   @Test
   public void shouldFailTaskIfUpstreamsFail() throws Exception {
     Task<String> failingUpstream = Task.named("Failing").ofType(String.class)
-        .processWithContext(ec -> {
-          final Promise<String> promise = ec.promise();
-          promise.fail(new RuntimeException("failed"));
-          return promise.value();
+        .process(() -> {
+          throw new RuntimeException("failed");
         });
 
     AtomicInteger count = new AtomicInteger(0);

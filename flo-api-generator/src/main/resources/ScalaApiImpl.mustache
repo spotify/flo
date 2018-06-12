@@ -19,9 +19,6 @@ private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) exten
   override def process(fn: => Z): Task[Z] =
     builder.process(f0(fn))
 
-  override def processWithContext(fn: (EvalContext) => Value[Z]): Task[Z] =
-    builder.processWithContext(f1(fn))
-
   override def context[A1](taskContextGeneric: TaskContextGeneric[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
     type J1 = A1
     val c1: J1 => A1 = identity
@@ -63,11 +60,6 @@ private[dsl] trait Builder{{arity}}[{{typeArgsNumA}}, Z] extends TaskBuilder{{ar
   override def process(fn: ({{typeArgsNumA}}) => Z): Task[Z] =
     builder.process(f{{arity}}(
       ({{argumentsNum}}) => fn({{argumentsPsConv}})
-    ))
-
-  override def processWithContext(fn: (EvalContext) => ({{typeArgsNumA}}) => Value[Z]): Task[Z] =
-    builder.processWithContext(f{{arityPlus}}(
-      (ec, {{argumentsNum}}) => fn(ec)({{argumentsPsConv}})
     ))
   {{^iter.isLast}}
 

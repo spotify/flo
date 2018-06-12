@@ -91,9 +91,8 @@ public interface EvalContext {
   }
 
   /**
-   * When called from within any of the functions passed to {@code processWithContext}, this
-   * method will return the {@link Task} currently being processed. Otherwise an empty value
-   * will be returned.
+   * When called during the evaluation of a task, this method will return the {@link Task}
+   * currently being processed. Otherwise an empty value will be returned.
    *
    * <p>The return value of this method is stable for each instance of {@link EvalContext} that is
    * passed into the process functions. Calls from multiple threads will see the same result as

@@ -12,7 +12,6 @@ object FloTask {
 
 trait TaskBuilder0[Z] {
   def process(fn: => Z): Task[Z]
-  def processWithContext(fn: EvalContext => Value[Z]): Task[Z]
   def input[A](task: => Task[A]): TaskBuilder1[A, Z]
   def inputs[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z]
 
@@ -23,8 +22,6 @@ trait TaskBuilder0[Z] {
 
 trait TaskBuilder{{arity}}[{{typeArgs}}, Z] {
   def process(fn: ({{typeArgs}}) => Z): Task[Z]
-
-  def processWithContext(fn: EvalContext => ({{typeArgs}}) => Value[Z]): Task[Z]
   {{^iter.isLast}}
 
   def context[{{nextArg}}](taskContextGeneric: TaskContextGeneric[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]

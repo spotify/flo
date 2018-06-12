@@ -197,6 +197,7 @@ public class TaskEvalBehaviorTest {
     assertThat(evalAndGet(sum), is(9)); // 2+3+4 = 9
   }
 
+  @Test
   public void shouldFlattenListParametersToSameAsIndividual() throws Exception {
     final Task<EvenResult> isEven0 = isEven(0);
     final Task<EvenResult> isEven1 = isEven(1);
@@ -224,6 +225,7 @@ public class TaskEvalBehaviorTest {
     assertThat(listInputs, equalTo(individualInputs));
   }
 
+  @Test
   public void shouldFlattenListParameters() throws Exception {
     final Task<EvenResult> isEven0 = isEven(0);
     final Task<EvenResult> isEven1 = isEven(1);
@@ -237,71 +239,6 @@ public class TaskEvalBehaviorTest {
         .collect(toList());
 
     assertThat(taskIds, containsInOrder(isEven0.id(), isEven1.id()));
-  }
-
-  @Test
-  public void shouldGetTaskIdFromContext0() throws Exception {
-    Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
-        .processWithContext(ec -> ec.immediateValue(ec.currentTask().get()));
-
-    validateReturnsOwnTask(task);
-  }
-
-  @Test
-  public void shouldGetTaskIdFromContext1() throws Exception {
-    Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
-        .input(() -> leaf("A"))
-        .processWithContext((ec, a) -> ec.immediateValue(ec.currentTask().get()));
-
-    validateReturnsOwnTask(task);
-  }
-
-  @Test
-  public void shouldGetTaskIdFromContext2() throws Exception {
-    Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
-        .input(() -> leaf("A"))
-        .input(() -> leaf("B"))
-        .processWithContext((ec, a, b) -> ec.immediateValue(ec.currentTask().get()));
-
-    validateReturnsOwnTask(task);
-  }
-
-  @Test
-  public void shouldGetTaskIdFromContext3() throws Exception {
-    Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
-        .input(() -> leaf("A"))
-        .input(() -> leaf("B"))
-        .input(() -> leaf("C"))
-        .processWithContext((ec, a, b, c) -> ec.immediateValue(ec.currentTask().get()));
-
-    validateReturnsOwnTask(task);
-  }
-
-  @Test
-  public void shouldGetTaskIdFromContextNested() throws Exception {
-    AwaitValue<Task> inner = new AwaitValue<>();
-    Task<String> innerTask = Task.named("Inner").ofType(String.class)
-        .processWithContext(ec -> {
-          inner.accept(ec.currentTask().get());
-          return ec.immediateValue("");
-        });
-    Task<Task> task = Task.named("MyOwnId").ofType(Task.class)
-        .input(() -> leaf("A"))
-        .input(() -> innerTask)
-        .input(() -> leaf("C"))
-        .processWithContext((ec, a, b, c) -> ec.immediateValue(ec.currentTask().get()));
-
-    validateReturnsOwnTask(task);
-    assertThat(inner.awaitAndGet(), is(innerTask));
-  }
-
-  private void validateReturnsOwnTask(Task<Task> task) throws InterruptedException {
-    AwaitValue<Task> val = new AwaitValue<>();
-    EvalContext.sync()
-        .evaluate(task)
-        .consume(val);
-
-    assertThat(val.awaitAndGet(), is(task));
   }
 
   @Test
@@ -403,34 +340,6 @@ public class TaskEvalBehaviorTest {
         .process((a, b, c) -> "done");
 
     validateInterception(top, "done", leaf("A"), leaf("B"), leaf("C"));
-  }
-
-  @Test
-  public void shouldInterceptProcessFunctionInContext0C() throws Exception {
-    Task<String> top = Task.named("Top").ofType(String.class)
-        .processWithContext((ec) -> ec.immediateValue("done"));
-
-    validateInterception(top, "done");
-  }
-
-  @Test
-  public void shouldInterceptProcessFunctionInContextC() throws Exception {
-    Task<String> top = Task.named("Top").ofType(String.class)
-        .input(() -> leaf("A"))
-        .input(() -> leaf("B"))
-        .processWithContext((ec, a, b) -> ec.immediateValue("done"));
-
-    validateInterception(top, "done", leaf("A"), leaf("B"));
-  }
-
-  @Test
-  public void shouldInterceptProcessFunctionInContextCL() throws Exception {
-    Task<String> top = Task.named("Top").ofType(String.class)
-        .inputs(() -> singletonList(leaf("A")))
-        .inputs(() -> singletonList(leaf("B")))
-        .processWithContext((ec, a, b) -> ec.immediateValue("done"));
-
-    validateInterception(top, "done", leaf("A"), leaf("B"));
   }
 
   private void validateInterception(Task<String> task, String res, Task<?>... inputs)

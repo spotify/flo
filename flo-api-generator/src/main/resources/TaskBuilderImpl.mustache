@@ -9,8 +9,6 @@ import com.spotify.flo.EvalContext.Value;
 import com.spotify.flo.TaskBuilder.*;
 
 import static com.spotify.flo.BuilderUtils.appendToList;
-import static com.spotify.flo.BuilderUtils.gated;
-import static com.spotify.flo.BuilderUtils.gatedVal;
 import static com.spotify.flo.BuilderUtils.lazyFlatten;
 import static com.spotify.flo.BuilderUtils.lazyList;
 import static com.spotify.flo.BuilderUtils.leafEvalFn;
@@ -44,12 +42,10 @@ final class {{implClassName}} {
 
     @Override
     public Task<Z> process(F0<Z> code) {
-      return Task.create(inputs, taskContexts, type, gated(taskId, code::get), taskId);
-    }
-
-    @Override
-    public Task<Z> processWithContext(F1<EvalContext, Value<Z>> code) {
-      return Task.create(inputs, taskContexts, type, gatedVal(taskId, code::apply), taskId);
+      // local ref to drop ref to Builder instance, b/c serialization
+      TaskId taskId = this.taskId;
+      EvalClosure<Z> closure = ec -> ec.invokeProcessFn(taskId, () -> ec.value(code::get));
+      return Task.create(inputs, taskContexts, type, closure, taskId);
     }
 
     @Override
@@ -137,18 +133,6 @@ final class {{implClassName}} {
     }
 
     @Override
-    public Task<Z> processWithContext(F{{arityPlus}}<EvalContext, {{typeArgs}}, Value<Z>> code) {
-      // local ref to drop ref to Builder instance, b/c serialization
-      TaskId taskId = this.taskId;
-      ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
-
-      EvalClosure<Z> closure = ec -> evaluator.enclose(
-          ({{arguments}}) -> ec.invokeProcessFn(taskId, () -> code.apply(ec, {{arguments}}))
-      ).eval(ec);
-      return Task.create(inputs, taskContexts, type, closure, taskId);
-    }
-
-    @Override
     public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> context(TaskContextGeneric<{{nextArg}}> taskContext) {
       return context_(taskContext);
     }
@@ -225,18 +209,6 @@ final class {{implClassName}} {
 
       EvalClosure<Z> closure = ec -> evaluator.enclose(
           ({{lastArguments}}) -> ec.invokeProcessFn(taskId, () -> ec.immediateValue(code.apply({{lastArguments}})))
-      ).eval(ec);
-      return Task.create(inputs, taskContexts, type, closure, taskId);
-    }
-
-    @Override
-    public Task<Z> processWithContext(F{{lastArityPlus}}<EvalContext, {{lastTypeArgs}}, Value<Z>> code) {
-      // local ref to drop ref to Builder instance, b/c serialization
-      TaskId taskId = this.taskId;
-      ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
-
-      EvalClosure<Z> closure = ec -> evaluator.enclose(
-           ({{lastArguments}}) -> ec.invokeProcessFn(taskId, () -> code.apply(ec, {{lastArguments}}))
       ).eval(ec);
       return Task.create(inputs, taskContexts, type, closure, taskId);
     }

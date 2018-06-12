@@ -22,7 +22,7 @@ package com.spotify.flo.context;
 
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
-import com.spotify.flo.Task;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -42,11 +42,6 @@ public class SyncContext implements EvalContext {
 
   public static EvalContext create() {
     return new SyncContext();
-  }
-
-  @Override
-  public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
-    return EvalContext.super.evaluateInternal(task, context);
   }
 
   @Override

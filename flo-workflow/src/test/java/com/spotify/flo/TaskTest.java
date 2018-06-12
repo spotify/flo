@@ -30,8 +30,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import com.spotify.flo.EvalContext.Promise;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
 
 public class TaskTest {
@@ -63,17 +61,16 @@ public class TaskTest {
   }
 
   //  Naming convention for tests
-  //  XXX
-  //  ^^^
-  //  |||
-  //  ||`----> D,C = direct, context
+  //  XX
+  //  ^^
+  //  ||
   //  |`-----> I,L = in, ins
   //  `------> arity
   //    eg 2RD_IL = arity 2 curried direct processed task with single input and list input
   // 0. ===========================================================================================
 
   @Test
-  public void shouldEvaluate0ND() throws Exception {
+  public void shouldEvaluate0N() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
         .process(() -> "constant");
 
@@ -87,22 +84,10 @@ public class TaskTest {
     assertThat(val.awaitAndGet(), is("constant"));
   }
 
-  @Test
-  public void shouldEvaluate0NC() throws Exception {
-    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").ofType(String.class).processWithContext(ec -> {
-      Promise<String> promise = ec.promise();
-      promiseRef.set(promise);
-      return promise.value();
-    });
-
-    validatePromiseEvaluation(task, promiseRef, "");
-  }
-
   // 1. ===========================================================================================
 
   @Test
-  public void shouldEvaluate1ND_I() throws Exception {
+  public void shouldEvaluate1N_I() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
         .input(() -> leaf("A"))
         .process((a) -> "done: " + a);
@@ -111,7 +96,7 @@ public class TaskTest {
   }
 
   @Test
-  public void shouldEvaluate1ND_L() throws Exception {
+  public void shouldEvaluate1N_L() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
         .inputs(() -> asList(leaf("A"), leaf("B")))
         .process((ab) -> "done: " + ab);
@@ -119,38 +104,10 @@ public class TaskTest {
     validateEvaluation(task, "done: [A, B]", leaf("A"), leaf("B"));
   }
 
-  @Test
-  public void shouldEvaluate1NC_I() throws Exception {
-    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").ofType(String.class)
-        .input(() -> leaf("A"))
-        .processWithContext((ec, a) -> {
-          Promise<String> promise = ec.promise();
-          promiseRef.set(promise);
-          return promise.value().map(v -> v + " - " + a);
-        });
-
-    validatePromiseEvaluation(task, promiseRef, " - A", leaf("A"));
-  }
-
-  @Test
-  public void shouldEvaluate1NC_L() throws Exception {
-    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").ofType(String.class)
-        .inputs(() -> asList(leaf("A"), leaf("B")))
-        .processWithContext((ec, ab) -> {
-          Promise<String> promise = ec.promise();
-          promiseRef.set(promise);
-          return promise.value().map(v -> v + " - " + ab);
-        });
-
-    validatePromiseEvaluation(task, promiseRef, " - [A, B]", leaf("A"), leaf("B"));
-  }
-
   // 2. ===========================================================================================
 
   @Test
-  public void shouldEvaluate2ND_II() throws Exception {
+  public void shouldEvaluate2N_II() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
         .input(() -> leaf("A"))
         .input(() -> leaf("B"))
@@ -160,7 +117,7 @@ public class TaskTest {
   }
 
   @Test
-  public void shouldEvaluate2ND_IL() throws Exception {
+  public void shouldEvaluate2N_IL() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
         .input(() -> leaf("A"))
         .inputs(() -> asList(leaf("B"), leaf("C")))
@@ -169,40 +126,10 @@ public class TaskTest {
     validateEvaluation(task, "done: A - [B, C]", leaf("A"), leaf("B"), leaf("C"));
   }
 
-  @Test
-  public void shouldEvaluate2NC_II() throws Exception {
-    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").ofType(String.class)
-        .input(() -> leaf("A"))
-        .input(() -> leaf("B"))
-        .processWithContext((ec, a, b) -> {
-          Promise<String> promise = ec.promise();
-          promiseRef.set(promise);
-          return promise.value().map(v -> v + " - " + a + " - " + b);
-        });
-
-    validatePromiseEvaluation(task, promiseRef, " - A - B", leaf("A"), leaf("B"));
-  }
-
-  @Test
-  public void shouldEvaluate2NC_IL() throws Exception {
-    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").ofType(String.class)
-        .input(() -> leaf("A"))
-        .inputs(() -> asList(leaf("B"), leaf("C")))
-        .processWithContext((ec, a, bc) -> {
-          Promise<String> promise = ec.promise();
-          promiseRef.set(promise);
-          return promise.value().map(v -> v + " - " + a + " - " + bc);
-        });
-
-    validatePromiseEvaluation(task, promiseRef, " - A - [B, C]", leaf("A"), leaf("B"), leaf("C"));
-  }
-
   // 3. ===========================================================================================
 
   @Test
-  public void shouldEvaluate3ND_III() throws Exception {
+  public void shouldEvaluate3N_III() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
         .input(() -> leaf("A"))
         .input(() -> leaf("B"))
@@ -213,7 +140,7 @@ public class TaskTest {
   }
 
   @Test
-  public void shouldEvaluate3ND_IIL() throws Exception {
+  public void shouldEvaluate3N_IIL() throws Exception {
     Task<String> task = Task.named("InContext").ofType(String.class)
         .input(() -> leaf("A"))
         .input(() -> leaf("B"))
@@ -221,39 +148,6 @@ public class TaskTest {
         .process((a, b, cd) -> "done: " + a + " - " + b +" - " + cd);
 
     validateEvaluation(task, "done: A - B - [C, D]", leaf("A"), leaf("B"), leaf("C"), leaf("D"));
-  }
-
-  @Test
-  public void shouldEvaluate3NC_III() throws Exception {
-    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").ofType(String.class)
-        .input(() -> leaf("A"))
-        .input(() -> leaf("B"))
-        .input(() -> leaf("C"))
-        .processWithContext((ec, a, b, c) -> {
-          Promise<String> promise = ec.promise();
-          promiseRef.set(promise);
-          return promise.value().map(v -> v + " - " + a + " - " + b +" - " + c);
-        });
-
-    validatePromiseEvaluation(task, promiseRef, " - A - B - C", leaf("A"), leaf("B"), leaf("C"));
-  }
-
-  @Test
-  public void shouldEvaluate3NC_IIL() throws Exception {
-    AtomicReference<Promise<String>> promiseRef = new AtomicReference<>();
-    Task<String> task = Task.named("InContext").ofType(String.class)
-        .input(() -> leaf("A"))
-        .input(() -> leaf("B"))
-        .inputs(() -> asList(leaf("C"), leaf("D")))
-        .processWithContext((ec, a, b, cd) -> {
-          Promise<String> promise = ec.promise();
-          promiseRef.set(promise);
-          return promise.value().map(v -> v + " - " + a + " - " + b +" - " + cd);
-        });
-
-    validatePromiseEvaluation(task, promiseRef, " - A - B - [C, D]", leaf("A"), leaf("B"),
-                              leaf("C"), leaf("D"));
   }
 
   // ==============================================================================================
@@ -308,41 +202,7 @@ public class TaskTest {
     assertThat(val.awaitAndGet(), is(expectedOutput));
   }
 
-  private void validatePromiseEvaluation(
-      Task<String> task,
-      AtomicReference<Promise<String>> promiseRef,
-      String expectedOutput,
-      Task... inputs)
-      throws InterruptedException {
-
-    AwaitValue<String> val = new AwaitValue<>();
-    ControlledBlockingContext context = new ControlledBlockingContext();
-    context.evaluate(task).consume(val);
-
-    context.waitFor(task);
-    context.release(task);
-    context.waitUntilNumConcurrent(inputs.length + 1); // task + inputs
-    for (Task input : inputs) {
-      assertTrue(context.isWaiting(input));
-    }
-    assertFalse(val.isAvailable());
-
-    for (Task input : inputs) {
-      context.release(input);
-    }
-    context.waitUntilNumConcurrent(1); // task will not complete, promise still waiting
-    assertFalse(val.isAvailable());
-
-    //noinspection StatementWithEmptyBody
-    while (promiseRef.get() == null) {
-    }
-
-    promiseRef.get().set("done: from here");
-    context.waitUntilNumConcurrent(0);
-    assertThat(val.awaitAndGet(), is("done: from here" + expectedOutput));
-  }
-
-  Task<String> leaf(String s) {
+  private Task<String> leaf(String s) {
     return Task.named("Leaf", s).ofType(String.class).process(() -> s);
   }
 }

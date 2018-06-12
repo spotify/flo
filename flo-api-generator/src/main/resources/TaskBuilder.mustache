@@ -22,7 +22,6 @@ import com.spotify.flo.EvalContext.Value;
 public interface {{interfaceName}}<Z> {
 
   Task<Z> process(F0<Z> code);
-  Task<Z> processWithContext(F1<EvalContext, EvalContext.Value<Z>> code);
 
   <A> {{interfaceName}}1<A, Z> context(TaskContextGeneric<A> taskContextGeneric);
   <A> {{interfaceName}}1<A, Z> context(TaskContextStrict<A, Z> taskContextStrict);
@@ -33,7 +32,6 @@ public interface {{interfaceName}}<Z> {
 
   interface {{interfaceName}}{{arity}}<{{typeArgs}}, Z> {
     Task<Z> process(F{{arity}}<{{typeArgs}}, Z> code);
-    Task<Z> processWithContext(F{{arityPlus}}<EvalContext, {{typeArgs}}, Value<Z>> code);
   {{^iter.isLast}}
 
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> context(TaskContextGeneric<{{nextArg}}> taskContextGeneric);
