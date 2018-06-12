@@ -24,12 +24,43 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jul-to-slf4j</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.google.auto.service</groupId>
       <artifactId>auto-service</artifactId>
     </dependency>
     <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.norberg</groupId>
+      <artifactId>auto-matter</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!--test deps-->
+    <dependency>
       <groupId>com.github.stefanbirkner</groupId>
       <artifactId>system-rules</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.norberg</groupId>
+      <artifactId>auto-matter-jackson</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>pl.pragmatists</groupId>
+      <artifactId>JUnitParams</artifactId>
+      <version>1.1.1</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>
