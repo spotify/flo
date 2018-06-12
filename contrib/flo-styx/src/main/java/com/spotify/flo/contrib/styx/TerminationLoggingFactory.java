@@ -30,6 +30,6 @@ public class TerminationLoggingFactory implements TerminationHookFactory {
 
   @Override
   public TerminationHook create(Config config) {
-    return new TerminationLogging(config);
+    return new TerminationLogging();
   }
 }
