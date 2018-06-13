@@ -40,6 +40,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -61,9 +62,20 @@ class ForkingExecutor implements Closeable {
   private final List<Execution> executions = new ArrayList<>();
 
   private Map<String, String> environment = Collections.emptyMap();
+  private List<String> javaArgs = Collections.emptyList();
 
-  void environment(Map<String, String> environment) {
-    this.environment = Objects.requireNonNull(environment);
+  ForkingExecutor environment(Map<String, String> environment) {
+    this.environment = new HashMap<>(environment);
+    return this;
+  }
+
+  ForkingExecutor javaArgs(String... javaArgs) {
+    return javaArgs(Arrays.asList(javaArgs));
+  }
+
+  ForkingExecutor javaArgs(List<String> javaArgs) {
+    this.javaArgs = new ArrayList<>(javaArgs);
+    return this;
   }
 
   /**
@@ -125,14 +137,17 @@ class ForkingExecutor implements Closeable {
       final ProcessBuilder processBuilder = new ProcessBuilder(java.toString(), "-cp", classPath)
           .directory(workdir.toFile());
 
-      // Propagate -Xmx.
+      // Propagate -Xmx and -D.
       // Note: This is suboptimal because if the user has configured a max heap size we will effectively use that
       // times the concurrent nummber of executing task processes in addition to the heap of the parent process.
       // However, propagating a lower limit might make the task fail if the user has supplied a heap size that is
       // tailored to the memory requirements of the task.
       ManagementFactory.getRuntimeMXBean().getInputArguments().stream()
-          .filter(s -> s.startsWith("-Xmx"))
+          .filter(s -> s.startsWith("-Xmx") || s.startsWith("-D"))
           .forEach(processBuilder.command()::add);
+
+      // Custom jvm args
+      javaArgs.forEach(processBuilder.command()::add);
 
       // Trampoline arguments
       processBuilder.command().add(Trampoline.class.getName());
