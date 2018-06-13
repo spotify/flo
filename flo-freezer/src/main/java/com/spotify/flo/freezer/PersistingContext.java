@@ -29,6 +29,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.serializers.ClosureSerializer;
+import com.esotericsoftware.kryo.serializers.JavaSerializer;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
@@ -97,6 +98,7 @@ public class PersistingContext extends ForwardingEvalContext {
     final Kryo kryo = new Kryo();
     kryo.register(java.lang.invoke.SerializedLambda.class);
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
+    kryo.addDefaultSerializer(java.lang.Throwable.class, new JavaSerializer());
 
     if (Files.exists(file)) {
       throw new RuntimeException("File " + file + " already exists");
@@ -116,6 +118,7 @@ public class PersistingContext extends ForwardingEvalContext {
     kryo.register(java.lang.invoke.SerializedLambda.class);
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
     kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
+    kryo.addDefaultSerializer(java.lang.Throwable.class, new JavaSerializer());
 
     try (Input input = new Input(newInputStream(filePath))) {
       return (T) kryo.readClassAndObject(input);
