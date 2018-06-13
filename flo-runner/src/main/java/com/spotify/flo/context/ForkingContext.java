@@ -22,14 +22,12 @@ package com.spotify.flo.context;
 
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
-import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.Tracing;
 import io.grpc.Context;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,15 +43,12 @@ import org.slf4j.LoggerFactory;
  * and executing it in a sub-process JVM. The process fn closure and the result is transported in to and out of the
  * sub-process using serialization.
  */
-class ForkingContext implements EvalContext {
+class ForkingContext extends ForwardingEvalContext {
 
   private static final Logger log = LoggerFactory.getLogger(ForkingContext.class);
 
-  // This is marked transient so as to avoid serializing the whole stack of EvalContexts
-  private transient final EvalContext delegate;
-
   private ForkingContext(EvalContext delegate) {
-    this.delegate = Objects.requireNonNull(delegate);
+    super(delegate);
   }
 
   static EvalContext composeWith(EvalContext baseContext) {
@@ -83,64 +78,32 @@ class ForkingContext implements EvalContext {
   }
 
   @Override
-  public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
-    return delegate().evaluateInternal(task, context);
-  }
-
-  @Override
-  public <T> Value<T> value(Fn<T> value) {
-    // Note: This method is called from within the process fn lambda, and thus this ForkingContext instance will be
-    // captured in the closure. This method will then be called in the task sub-process. As the delegate field is
-    // transient it will be null and delegate() will return a SyncContext that will immediately call the value fn.
-    return delegate().value(value);
-  }
-
-  @Override
-  public <T> Value<T> immediateValue(T value) {
-    return delegate().immediateValue(value);
-  }
-
-  @Override
-  public <T> Promise<T> promise() {
-    return delegate().promise();
-  }
-
-  @Override
-  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
+  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
     if (delegate == null) {
       throw new UnsupportedOperationException("nested execution not supported");
     }
     // Wrap the process fn in a lambda that will execute the original process fn closure in a sub-process.
-    final Fn<Value<T>> forkingProcessFn = fork(taskId, processFn);
+    final Fn<T> forkingProcessFn = fork(taskId, processFn);
     // Pass on the wrapped process fn to let the rest of EvalContexts do their thing. The last EvalContext in the chain
     // will invoke the wrapped lambda, causing the sub-process execution to happen there.
     return delegate.invokeProcessFn(taskId, forkingProcessFn);
   }
 
-  private EvalContext delegate() {
-    // The delegate field will be null if this is in the sub-process
-    if (this.delegate == null) {
-      return SyncContext.create();
-    } else {
-      return delegate;
-    }
-  }
-
-  private <T> Fn<Value<T>> fork(TaskId taskId, Fn<Value<T>> value) {
+  private <T> Fn<T> fork(TaskId taskId, Fn<T> fn) {
     return () -> {
       try (final ForkingExecutor executor = new ForkingExecutor()) {
         executor.environment(Collections.singletonMap("FLO_TASK_ID", taskId.toString()));
-        return immediateValue(executor.execute(() -> {
+        return executor.execute(() -> {
           try {
             return Context.current()
                 .withValue(Tracing.TASK_ID, taskId)
-                .call(value::get);
+                .call(fn::get);
           } catch (RuntimeException e) {
             throw e;
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
-        }));
+        });
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
