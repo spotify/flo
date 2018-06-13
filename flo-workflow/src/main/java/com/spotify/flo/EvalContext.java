@@ -79,21 +79,21 @@ public interface EvalContext {
    * method, one can intercept the evaluation flow just at the moment between inputs being ready
    * and when the user supplied function for task processing is being invoked.
    *
-   * <p>The default implementation will simply invoke the function immediately.
+   * <p>The default implementation will simply invoke the function immediately inside a
+   * {@link Value} created by {@link #value(Fn)}.
    *
    * @param taskId     The id of the task being invoked
    * @param processFn  A lazily evaluated handle to the process function
    * @param <T>        The task value type
-   * @return The value of the process function invocation
+   * @return The (deferred) value of the process function invocation
    */
-  default <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
-    return processFn.get();
+  default <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
+    return value(processFn);
   }
 
   /**
-   * When called from within any of the functions passed to {@code processWithContext}, this
-   * method will return the {@link Task} currently being processed. Otherwise an empty value
-   * will be returned.
+   * When called during the evaluation of a task, this method will return the {@link Task}
+   * currently being processed. Otherwise an empty value will be returned.
    *
    * <p>The return value of this method is stable for each instance of {@link EvalContext} that is
    * passed into the process functions. Calls from multiple threads will see the same result as

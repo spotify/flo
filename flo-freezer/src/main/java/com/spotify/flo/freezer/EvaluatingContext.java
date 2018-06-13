@@ -132,7 +132,7 @@ public class EvaluatingContext {
     }
 
     @Override
-    public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
+    public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
       // todo: only invoke fn if taskId == evalTask
       // todo: fail if called for taskId != evalTask
 

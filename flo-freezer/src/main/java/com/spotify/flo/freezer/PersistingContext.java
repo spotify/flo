@@ -86,7 +86,7 @@ public class PersistingContext extends ForwardingEvalContext {
   }
 
   @Override
-  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
+  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
     final Promise<T> promise = promise();
     LOG.info("Will not invoke {}", taskId);
     promise.fail(new Persisted());

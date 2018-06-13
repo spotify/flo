@@ -43,7 +43,7 @@ public abstract class ForwardingEvalContext implements EvalContext {
   }
 
   @Override
-  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
+  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
     return delegate.invokeProcessFn(taskId, processFn);
   }
 

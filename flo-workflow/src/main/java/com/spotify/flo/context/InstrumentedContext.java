@@ -116,14 +116,17 @@ public class InstrumentedContext extends ForwardingEvalContext {
   }
 
   @Override
-  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
-    listener.status(taskId, Listener.Phase.START);
-
-    final Value<T> tValue = delegate.invokeProcessFn(taskId, processFn);
-
-    tValue.consume(v -> listener.status(taskId, Listener.Phase.SUCCESS));
-    tValue.onFail(t -> listener.status(taskId, Listener.Phase.FAILURE));
-
-    return tValue;
+  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
+    return delegate.invokeProcessFn(taskId, () -> {
+      listener.status(taskId, Listener.Phase.START);
+      try {
+        final T value = processFn.get();
+        listener.status(taskId, Listener.Phase.SUCCESS);
+        return value;
+      } catch (Throwable t) {
+        listener.status(taskId, Listener.Phase.FAILURE);
+        throw t;
+      }
+    });
   }
 }

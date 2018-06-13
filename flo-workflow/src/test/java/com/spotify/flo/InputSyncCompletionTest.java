@@ -25,6 +25,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
@@ -33,12 +34,15 @@ public class InputSyncCompletionTest {
 
   EvalContext context = EvalContext.async(Executors.newFixedThreadPool(2));
 
-  AwaitValue<EvalContext.Promise<Integer>> blocked = new AwaitValue<>();
+  CountDownLatch blocked = new CountDownLatch(1);
   Task<Integer> blocking = Task.named("blocking").ofType(Integer.class)
-      .processWithContext((ec) -> {
-        EvalContext.Promise<Integer> promise = ec.promise();
-        blocked.accept(promise);
-        return promise.value();
+      .process(() -> {
+        try {
+          blocked.await(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+        return 42;
       });
 
   Task<Integer> failing = Task.named("failing").ofType(Integer.class)
@@ -91,7 +95,7 @@ public class InputSyncCompletionTest {
     // should not complete before we unblock the blocked promise
     assertThat(eval.await(1, TimeUnit.SECONDS), is(false));
 
-    blocked.awaitAndGet().set(42);
+    blocked.countDown();
     Throwable throwable = eval.awaitAndGet();
 
     assertThat(throwable, instanceOf(RuntimeException.class));

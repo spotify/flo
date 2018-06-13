@@ -30,13 +30,12 @@ import java.util.Objects;
 /**
  * A {@link EvalContext} that integrates evaluation with the {@link Logging} interface
  */
-class LoggingContext implements EvalContext {
+class LoggingContext extends ForwardingEvalContext {
 
-  private final EvalContext baseContext;
   private final Logging logging;
 
   private LoggingContext(EvalContext baseContext, Logging logging) {
-    this.baseContext = Objects.requireNonNull(baseContext);
+    super(baseContext);
     this.logging = Objects.requireNonNull(logging);
   }
 
@@ -47,30 +46,22 @@ class LoggingContext implements EvalContext {
   @Override
   public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
     logging.willEval(task.id());
-    return baseContext.evaluateInternal(task, context);
+    return super.evaluateInternal(task, context);
   }
 
   @Override
-  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
-    logging.startEval(taskId);
-    final long t0 = System.nanoTime();
-    final Value<T> tValue = baseContext.invokeProcessFn(taskId, processFn);
-
-    tValue.consume(v ->
-        logging.completedValue(taskId, v, Duration.ofNanos(System.nanoTime() - t0)));
-    tValue.onFail(valueError ->
-        logging.failedValue(taskId, valueError, Duration.ofNanos(System.nanoTime() - t0)));
-
-    return tValue;
-  }
-
-  @Override
-  public <T> Value<T> value(Fn<T> fn) {
-    return baseContext.value(fn);
-  }
-
-  @Override
-  public <T> Promise<T> promise() {
-    return baseContext.promise();
+  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
+    return super.invokeProcessFn(taskId, () -> {
+      logging.startEval(taskId);
+      final long t0 = System.nanoTime();
+      try {
+        final T tValue = processFn.get();
+        logging.completedValue(taskId, tValue, Duration.ofNanos(System.nanoTime() - t0));
+        return tValue;
+      } catch (Throwable e) {
+        logging.failedValue(taskId, e, Duration.ofNanos(System.nanoTime() - t0));
+        throw e;
+      }
+    });
   }
 }

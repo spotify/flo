@@ -40,16 +40,6 @@ class BuilderUtils {
     return new ChainingEval<>(fClosure);
   }
 
-  static <R> EvalClosure<R> gated(TaskId taskId, Fn<R> code) {
-    return ec -> ec.invokeProcessFn(taskId, () -> ec.value(code));
-  }
-
-  static <R> EvalClosure<R> gatedVal(
-      TaskId taskId,
-      Fn1<EvalContext, Value<R>> code) {
-    return ec -> ec.invokeProcessFn(taskId, () -> code.apply(ec));
-  }
-
   /**
    * Converts an array of {@link Fn}s of {@link Task}s to a {@link Fn} of a list of
    * those tasks {@link Task}s.

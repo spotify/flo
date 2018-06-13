@@ -40,17 +40,18 @@ public class TracingContext extends ForwardingEvalContext {
   public static EvalContext composeWith(EvalContext baseContext) {
     return new TracingContext(baseContext);
   }
-
   @Override
-  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<Value<T>> processFn) {
-    try {
-      return Context.current()
-          .withValue(TASK_ID, taskId)
-          .call(() -> super.invokeProcessFn(taskId, processFn));
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+  public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
+    return super.invokeProcessFn(taskId, () -> {
+      try {
+        return Context.current()
+            .withValue(TASK_ID, taskId)
+            .call(processFn::get);
+      } catch (RuntimeException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 }

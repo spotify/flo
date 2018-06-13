@@ -64,7 +64,7 @@ public class MemoizingContextTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void evaluatesButFailsToStore() throws InterruptedException {
+  public void evaluatesButFailsToStore() throws Throwable {
     context = MemoizingContext.builder(sync())
         .memoizer(new MemoizingContext.Memoizer<ExampleValue>() {
           @Override
@@ -81,7 +81,9 @@ public class MemoizingContextTest {
         })
         .build();
 
-    context.evaluate(example(7));
+    AwaitValue<Throwable> await = new AwaitValue<>();
+    context.evaluate(example(7)).onFail(await);
+    throw await.awaitAndGet();
   }
 
   @Test
