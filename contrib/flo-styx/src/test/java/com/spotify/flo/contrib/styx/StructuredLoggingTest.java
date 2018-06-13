@@ -182,6 +182,35 @@ public class StructuredLoggingTest {
     verifyTextLogging();
   }
 
+  @Test
+  public void testStructuredLoggingWithNoMetadata() throws IOException {
+    // Trigger structured logging
+    final String executionId = UUID.randomUUID().toString();
+    env.set("STYX_EXECUTION_ID", executionId);
+
+    configureLogbackFromFile();
+    final Logger logger = LoggerFactory.getLogger("test");
+    logger.info("hello world!");
+    final String output = stderr.getLog();
+
+    final StructuredLogMessage message = MAPPER.readValue(output, StructuredLogMessage.class);
+
+    assertThat(message.styx_execution_id(), is(executionId));
+    assertThat(message.message(), is("hello world!"));
+
+    assertThat(message.styx_component_id(), is(""));
+    assertThat(message.styx_workflow_id(), is(""));
+    assertThat(message.styx_docker_args(), is(""));
+    assertThat(message.styx_docker_image(), is(""));
+    assertThat(message.styx_commit_sha(), is(""));
+    assertThat(message.styx_parameter(), is(""));
+    assertThat(message.styx_trigger_id(), is(""));
+    assertThat(message.styx_trigger_type(), is(""));
+    assertThat(message.flo_task_id(), is(""));
+    assertThat(message.flo_task_name(), is(""));
+    assertThat(message.flo_task_args(), is(""));
+  }
+
   private void verifyTextLogging() throws Exception {
 
     final String infoMessageText = "hello world " + UUID.randomUUID();

@@ -89,22 +89,10 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
     builder.message(message.toString());
 
     // Flo metadata
-    final TaskId taskId;
-    if (envTaskId != null) {
-      taskId = envTaskId;
-    } else {
-      final TaskId tracingTaskId = Tracing.TASK_ID.get();
-      if (tracingTaskId != null) {
-        taskId = tracingTaskId;
-      } else {
-        taskId = null;
-      }
-    }
-    if (taskId != null) {
-      builder.flo_task_id(taskId.toString());
-      builder.flo_task_name(taskId.name());
-      builder.flo_task_args(taskId.args());
-    }
+    final TaskId taskId = taskId();
+    builder.flo_task_id(taskId != null ? taskId.toString() : "");
+    builder.flo_task_name(taskId != null ? taskId.name() : "");
+    builder.flo_task_args(taskId != null ? taskId.args() : "");
 
     // Serialize to json
     try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -116,8 +104,23 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
     }
   }
 
+  private TaskId taskId() {
+    final TaskId taskId;
+    if (envTaskId != null) {
+      taskId = envTaskId;
+    } else {
+      final TaskId tracingTaskId = Tracing.TASK_ID.get();
+      if (tracingTaskId != null) {
+        taskId = tracingTaskId;
+      } else {
+        taskId = null;
+      }
+    }
+    return taskId;
+  }
+
   private byte[] encodeText(ILoggingEvent event) {
-    final TaskId taskId = Tracing.TASK_ID.get();
+    final TaskId taskId = taskId();
     final String taskIdString = (taskId != null) ? taskId.toString() : "";
     final StringBuilder sb = new StringBuilder();
     final Formatter formatter = new Formatter(sb);
