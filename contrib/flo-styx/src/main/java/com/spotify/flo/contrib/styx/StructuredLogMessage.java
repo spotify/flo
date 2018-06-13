@@ -31,6 +31,7 @@ interface StructuredLogMessage {
   @JsonProperty @Nullable String logger();
   @JsonProperty @Nullable String thread();
   @JsonProperty @Nullable String message();
+  @JsonProperty @Nullable String framework();
   @JsonProperty @Nullable String styx_component_id();
   @JsonProperty @Nullable String styx_workflow_id();
   @JsonProperty @Nullable String styx_docker_args();
@@ -40,13 +41,13 @@ interface StructuredLogMessage {
   @JsonProperty @Nullable String styx_execution_id();
   @JsonProperty @Nullable String styx_trigger_id();
   @JsonProperty @Nullable String styx_trigger_type();
-  @JsonProperty @Nullable String flo_task_id();
-  @JsonProperty @Nullable String flo_task_name();
-  @JsonProperty @Nullable String flo_task_args();
+  @JsonProperty @Nullable String task_id();
+  @JsonProperty @Nullable String task_name();
+  @JsonProperty @Nullable String task_args();
 
   StructuredLogMessageBuilder builder();
 
   static StructuredLogMessageBuilder newBuilder() {
-    return new StructuredLogMessageBuilder();
+    return new StructuredLogMessageBuilder().framework("flo");
   }
 }

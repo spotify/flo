@@ -90,9 +90,9 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
 
     // Flo metadata
     final TaskId taskId = taskId();
-    builder.flo_task_id(taskId != null ? taskId.toString() : "");
-    builder.flo_task_name(taskId != null ? taskId.name() : "");
-    builder.flo_task_args(taskId != null ? taskId.args() : "");
+    builder.task_id(taskId != null ? taskId.toString() : "");
+    builder.task_name(taskId != null ? taskId.name() : "");
+    builder.task_args(taskId != null ? taskId.args() : "");
 
     // Serialize to json
     try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {

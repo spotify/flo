@@ -151,6 +151,7 @@ public class StructuredLoggingTest {
     for (StructuredLogMessage message : new StructuredLogMessage[]{infoMessage, errorMessage}) {
       assertThat((double) Instant.parse(message.time()).toEpochMilli(),
           is(closeTo(Instant.now().toEpochMilli(), 30_000)));
+      assertThat(message.framework(), is("flo"));
       assertThat(message.styx_component_id(), is(styx_component_id));
       assertThat(message.styx_workflow_id(), is(styx_workflow_id));
       assertThat(message.styx_docker_args(), is(styx_docker_args));
@@ -160,9 +161,9 @@ public class StructuredLoggingTest {
       assertThat(message.styx_execution_id(), is(styx_execution_id));
       assertThat(message.styx_trigger_id(), is(styx_trigger_id));
       assertThat(message.styx_trigger_type(), is(styx_trigger_type));
-      assertThat(message.flo_task_id(), is(task.id().toString()));
-      assertThat(message.flo_task_name(), is(task.id().name()));
-      assertThat(message.flo_task_args(), is(task.id().args()));
+      assertThat(message.task_id(), is(task.id().toString()));
+      assertThat(message.task_name(), is(task.id().name()));
+      assertThat(message.task_args(), is(task.id().args()));
     }
   }
 
@@ -197,6 +198,7 @@ public class StructuredLoggingTest {
 
     assertThat(message.styx_execution_id(), is(executionId));
     assertThat(message.message(), is("hello world!"));
+    assertThat(message.framework(), is("flo"));
 
     assertThat(message.styx_component_id(), is(""));
     assertThat(message.styx_workflow_id(), is(""));
@@ -206,9 +208,9 @@ public class StructuredLoggingTest {
     assertThat(message.styx_parameter(), is(""));
     assertThat(message.styx_trigger_id(), is(""));
     assertThat(message.styx_trigger_type(), is(""));
-    assertThat(message.flo_task_id(), is(""));
-    assertThat(message.flo_task_name(), is(""));
-    assertThat(message.flo_task_args(), is(""));
+    assertThat(message.task_id(), is(""));
+    assertThat(message.task_name(), is(""));
+    assertThat(message.task_args(), is(""));
   }
 
   private void verifyTextLogging() throws Exception {
