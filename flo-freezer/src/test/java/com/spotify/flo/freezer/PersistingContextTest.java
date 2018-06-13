@@ -69,10 +69,6 @@ public class PersistingContextTest {
     assertThat(deserialized.getStackTrace().length, is(not(0)));
     assertThat(deserialized.getStackTrace()[0].getClassName(), is("com.spotify.flo.freezer.PersistingContextTest"));
     assertThat(deserialized.getStackTrace()[0].getMethodName(), is("exceptionSerialization"));
-
-    for (StackTraceElement stackTraceElement : deserialized.getStackTrace()) {
-      System.err.println(stackTraceElement);
-    }
   }
 
   private static class FoobarException extends Exception {
