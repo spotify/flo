@@ -36,7 +36,7 @@ import org.junit.rules.ExpectedException;
 public class ForkingExecutorTest {
 
   @Rule public ExpectedException exception = ExpectedException.none();
-  
+
   private ForkingExecutor forkingExecutor;
 
   @Before
@@ -47,7 +47,7 @@ public class ForkingExecutorTest {
   @Test
   public void returnsResult() throws IOException {
     final String result = forkingExecutor.execute(() ->
-        SyncContext.create().value(() -> "hello world!"));
+        "hello world!");
     assertThat(result, is("hello world!"));
   }
 
@@ -55,10 +55,9 @@ public class ForkingExecutorTest {
   public void propagatesException() throws IOException {
     exception.expect(FoobarException.class);
     exception.expectMessage("foobar!");
-    forkingExecutor.execute(() ->
-        SyncContext.create().value(() -> {
-          throw new FoobarException("foobar!");
-        }));
+    forkingExecutor.execute(() -> {
+      throw new FoobarException("foobar!");
+    });
   }
 
   @Test
@@ -66,7 +65,7 @@ public class ForkingExecutorTest {
     final Map<String, String> map = new HashMap<>();
     map.put("foo", "bar");
     final Map<String, String> result = forkingExecutor.execute(() ->
-        SyncContext.create().value(() -> map));
+        map);
     assertThat(result, is(map));
   }
 
@@ -74,8 +73,7 @@ public class ForkingExecutorTest {
   public void executesInSubprocess() throws IOException {
     final String thisJvm = ManagementFactory.getRuntimeMXBean().getName();
     final String subprocessJvm = forkingExecutor.execute(() ->
-        SyncContext.create().value(() ->
-            ManagementFactory.getRuntimeMXBean().getName()));
+        ManagementFactory.getRuntimeMXBean().getName());
     assertThat(thisJvm, is(not(subprocessJvm)));
   }
 

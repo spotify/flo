@@ -20,7 +20,6 @@
 
 package com.spotify.flo.context;
 
-import com.spotify.flo.EvalContext.Value;
 import com.spotify.flo.Fn;
 import com.spotify.flo.freezer.PersistingContext;
 import java.io.BufferedReader;
@@ -44,8 +43,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.slf4j.Logger;
@@ -69,8 +66,6 @@ class ForkingExecutor implements Closeable {
     this.environment = Objects.requireNonNull(environment);
   }
 
-  // TODO: allow just Fn<T>
-
   /**
    * Execute a function in a sub-process.
    *
@@ -79,7 +74,7 @@ class ForkingExecutor implements Closeable {
    *         function the will be propagated and re-thrown.
    * @throws IOException if
    */
-  <T> T execute(Fn<Value<T>> f) throws IOException {
+  <T> T execute(Fn<T> f) throws IOException {
     try (final Execution<T> execution = new Execution<>(f)) {
       executions.add(execution);
       execution.start();
@@ -108,11 +103,11 @@ class ForkingExecutor implements Closeable {
     private final String classPath = System.getProperty("java.class.path");
     private final Path java = Paths.get(home, "bin", "java").toAbsolutePath().normalize();
 
-    private final Fn<Value<T>> f;
+    private final Fn<T> f;
 
     private Process process;
 
-    Execution(Fn<Value<T>> f) throws IOException {
+    Execution(Fn<T> f) throws IOException {
       this.f = Objects.requireNonNull(f);
     }
 
@@ -318,7 +313,7 @@ class ForkingExecutor implements Closeable {
 
     private static void run(Path closureFile, Path resultFile, Path errorFile) {
       log.debug("deserializing closure: {}", closureFile);
-      final Fn<Value<?>> fn;
+      final Fn<?> fn;
       try {
         fn = PersistingContext.deserialize(closureFile);
       } catch (Exception e) {
@@ -328,27 +323,12 @@ class ForkingExecutor implements Closeable {
       }
 
       log.debug("executing closure");
-      Value<?> value = null;
+      Object result = null;
       Throwable error = null;
       try {
-        value = fn.get();
+        result = fn.get();
       } catch (Exception e) {
         error = e;
-      }
-
-      log.debug("getting result");
-      Object result = null;
-      if (value != null) {
-        CompletableFuture<Object> f = new CompletableFuture<>();
-        value.consume(f::complete);
-        value.onFail(f::completeExceptionally);
-        try {
-          result = f.get();
-        } catch (InterruptedException e) {
-          error = e;
-        } catch (ExecutionException e) {
-          error = e.getCause();
-        }
       }
 
       if (error != null) {

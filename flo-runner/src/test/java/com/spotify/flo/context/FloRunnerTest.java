@@ -315,12 +315,12 @@ public class FloRunnerTest {
           return bazJvm;
         });
 
-    final Task<String[]> foo = Task.named("foo", baz, yesterday).ofType(String[].class)
+    final Task<String[]> foo = Task.named("foo", yesterday).ofType(String[].class)
         .input(() -> baz)
-        .processWithContext((ctx, bazJvm) -> {
+        .process(bazJvm -> {
           final String fooJvm = jvmName();
-          log.info("foo: ctx={}, fooJvm={}, bazJvm={}, yesterday={}", ctx, fooJvm, bazJvm, yesterday);
-          return ctx.immediateValue(new String[]{bazJvm, fooJvm});
+          log.info("foo: fooJvm={}, bazJvm={}, yesterday={}", fooJvm, bazJvm, yesterday);
+          return new String[]{bazJvm, fooJvm};
         });
 
     final Task<String> quux = Task.named("quux", today).ofType(String.class)
