@@ -105,18 +105,7 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
   }
 
   private TaskId taskId() {
-    final TaskId taskId;
-    if (envTaskId != null) {
-      taskId = envTaskId;
-    } else {
-      final TaskId tracingTaskId = Tracing.TASK_ID.get();
-      if (tracingTaskId != null) {
-        taskId = tracingTaskId;
-      } else {
-        taskId = null;
-      }
-    }
-    return taskId;
+    return envTaskId != null ? envTaskId : Tracing.TASK_ID.get();
   }
 
   private byte[] encodeText(ILoggingEvent event) {
