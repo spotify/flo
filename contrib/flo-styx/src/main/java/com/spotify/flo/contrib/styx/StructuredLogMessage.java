@@ -22,7 +22,6 @@ package com.spotify.flo.contrib.styx;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.norberg.automatter.AutoMatter;
-import javax.annotation.Nullable;
 
 @AutoMatter
 interface StructuredLogMessage {
@@ -49,8 +48,8 @@ interface StructuredLogMessage {
 
   @JsonProperty String time();
   @JsonProperty String severity();
-  @JsonProperty @Nullable String logger();
-  @JsonProperty @Nullable String thread();
+  @JsonProperty String logger();
+  @JsonProperty String thread();
   @JsonProperty String message();
   @JsonProperty Workflow workflow();
 
