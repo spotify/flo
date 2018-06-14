@@ -110,6 +110,11 @@
         <version>4.0.0</version>
       </dependency>
       <dependency>
+        <groupId>com.twitter</groupId>
+        <artifactId>chill-java</artifactId>
+        <version>0.9.2</version>
+      </dependency>
+      <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-context</artifactId>
         <version>1.4.0</version>
