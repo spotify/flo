@@ -15,10 +15,15 @@
 
   <properties>
     <scala.baseVersion>2.11</scala.baseVersion>
-    <scala.version>2.11.11</scala.version>
+    <scala.version>2.11.12</scala.version>
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>org.scala-lang.modules</groupId>
+      <artifactId>scala-java8-compat_2.11</artifactId>
+      <version>0.9.0</version>
+    </dependency>
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>flo-workflow</artifactId>
@@ -34,6 +39,11 @@
       <version>${scala.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>flo-runner</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${scala.baseVersion}</artifactId>
@@ -53,7 +63,11 @@
           <sourceDir>../flo-scala_2.12/src/main/scala</sourceDir>
           <scalaVersion>${scala.version}</scalaVersion>
           <sendJavaToScalac>false</sendJavaToScalac>
-          <addScalacArgs>-Xexperimental</addScalacArgs>
+          <args>
+            <arg>-Xexperimental</arg>
+            <arg>-Ydelambdafy:method</arg>
+            <arg>-Ybackend:GenBCode</arg>
+          </args>
         </configuration>
       </plugin>
 
