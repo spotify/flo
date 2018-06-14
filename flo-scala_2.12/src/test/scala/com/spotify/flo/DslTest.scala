@@ -40,25 +40,37 @@ class DslTest extends FlatSpec with Matchers {
   }
 
   it should "runInProcesses" in {
-    val foo = defTaskNamed("foo")
-      .process(() => {
-        val jvm = ManagementFactory.getRuntimeMXBean.getName
-        println("foo jvm: " + jvm)
-        jvm
+    val mainJvm = ManagementFactory.getRuntimeMXBean.getName
+    println(s"main jvm: $mainJvm")
+    val foo: Task[String] = defTaskNamed("foo")
+      .process({
+        val fooJvm = ManagementFactory.getRuntimeMXBean.getName
+        println(s"foo jvm: $fooJvm")
+        fooJvm
       })
-    val bar = defTaskNamed("bar")
+    val bar: Task[Array[String]] = defTaskNamed("bar")
       .input(foo)
       .context(new TaskContextStrict[String, Array[String]] {
-        override def provide(evalContext: EvalContext): String = "hello"
+        override def provide(evalContext: EvalContext): String = {
+          val barContextJvm = ManagementFactory.getRuntimeMXBean.getName
+          println(s"bar context jvm: $barContextJvm")
+          barContextJvm
+        }
       })
-      .process((fooName, _) => {
-        val jvm = ManagementFactory.getRuntimeMXBean.getName
-        println("bar jvm: " + jvm)
-        Array(fooName(), jvm)
+      .process((fooJvm, barContextJvm) => {
+        val barJvm = ManagementFactory.getRuntimeMXBean.getName
+        println(s"bar jvm: $barJvm")
+        Array(fooJvm, barJvm, barContextJvm)
       })
-    val result: Array[String] = FloRunner.runTask(bar)
+
+    val result = FloRunner.runTask(bar)
       .future().get()
-    result.toSet should have size 2
+
+    val Array(fooJvm, barJvm, barContextJvm) = result
+    result.toSet should have size 3
+    fooJvm should not be (mainJvm)
+    barJvm should not be (mainJvm)
+    barContextJvm should be (mainJvm)
   }
 
   def classMethod: Task[String] = defTask().process("hello")
