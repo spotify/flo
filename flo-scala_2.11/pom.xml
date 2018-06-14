@@ -35,6 +35,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>flo-runner</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${scala.baseVersion}</artifactId>
       <version>3.0.4</version>

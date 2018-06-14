@@ -99,6 +99,7 @@ public class PersistingContext extends ForwardingEvalContext {
     kryo.register(java.lang.invoke.SerializedLambda.class);
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
     kryo.addDefaultSerializer(java.lang.Throwable.class, new JavaSerializer());
+    kryo.getFieldSerializerConfig().setIgnoreSyntheticFields(false);
 
     if (Files.exists(file)) {
       throw new RuntimeException("File " + file + " already exists");
@@ -119,6 +120,7 @@ public class PersistingContext extends ForwardingEvalContext {
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
     kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
     kryo.addDefaultSerializer(java.lang.Throwable.class, new JavaSerializer());
+    kryo.getFieldSerializerConfig().setIgnoreSyntheticFields(false);
 
     try (Input input = new Input(newInputStream(filePath))) {
       return (T) kryo.readClassAndObject(input);
