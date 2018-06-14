@@ -51,7 +51,7 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
   private static final byte[] LINE_SEPARATOR_BYTES = LINE_SEPARATOR.getBytes();
 
   private final boolean isStyxExecution = System.getenv().containsKey("STYX_EXECUTION_ID");
-  private final StructuredLogMessage template = createTemplate();
+  private final WorkflowBuilder template = createTemplate();
 
   private final TaskId envTaskId;
 
@@ -71,32 +71,32 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
   }
 
   private byte[] encodeStructured(ILoggingEvent event) {
-
-    // Pre-populated with styx metadata
-    final StructuredLogMessageBuilder builder = template.builder();
+    final StructuredLogMessageBuilder structuredLogMessageBuilder =
+        StructuredLogMessage.newBuilder();
 
     // Standard fields
-    builder.time(Instant.ofEpochMilli(event.getTimeStamp()).toString());
-    builder.severity(event.getLevel().toString());
-    builder.logger(event.getLoggerName());
-    builder.thread(event.getThreadName());
+    structuredLogMessageBuilder.time(Instant.ofEpochMilli(event.getTimeStamp()).toString());
+    structuredLogMessageBuilder.severity(event.getLevel().toString());
+    structuredLogMessageBuilder.logger(event.getLoggerName());
+    structuredLogMessageBuilder.thread(event.getThreadName());
     final StringBuilder message = new StringBuilder(event.getFormattedMessage());
     final IThrowableProxy t = event.getThrowableProxy();
     if (t != null) {
       message.append('\n');
       writeStack(message, t, "", 0, "\n");
     }
-    builder.message(message.toString());
+    structuredLogMessageBuilder.message(message.toString());
 
-    // Flo metadata
+    // Workflow metadata
+    final WorkflowBuilder workflowBuilder = WorkflowBuilder.from(template);
     final TaskId taskId = taskId();
-    builder.task_id(taskId != null ? taskId.toString() : "");
-    builder.task_name(taskId != null ? taskId.name() : "");
-    builder.task_args(taskId != null ? taskId.args() : "");
+    workflowBuilder.task_id(taskId != null ? taskId.toString() : "");
+    workflowBuilder.task_name(taskId != null ? taskId.name() : "");
+    workflowBuilder.task_args(taskId != null ? taskId.args() : "");
 
     // Serialize to json
     try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-      WRITER.writeValue(baos, builder.build());
+      WRITER.writeValue(baos, structuredLogMessageBuilder.workflow(workflowBuilder.build()).build());
       baos.write(LINE_SEPARATOR_BYTES);
       return baos.toByteArray();
     } catch (IOException e) {
@@ -174,9 +174,9 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
     return null;
   }
 
-  private static StructuredLogMessage createTemplate() {
+  private static WorkflowBuilder createTemplate() {
     final Map<String, String> env = System.getenv();
-    return StructuredLogMessage.newBuilder()
+    return StructuredLogMessage.Workflow.newBuilder()
         .styx_component_id(env.getOrDefault("STYX_COMPONENT_ID", ""))
         .styx_workflow_id(env.getOrDefault("STYX_WORKFLOW_ID", ""))
         .styx_docker_args(env.getOrDefault("STYX_DOCKER_ARGS", ""))
@@ -185,7 +185,6 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
         .styx_parameter(env.getOrDefault("STYX_PARAMETER", ""))
         .styx_execution_id(env.getOrDefault("STYX_EXECUTION_ID", ""))
         .styx_trigger_id(env.getOrDefault("STYX_TRIGGER_ID", ""))
-        .styx_trigger_type(env.getOrDefault("STYX_TRIGGER_TYPE", ""))
-        .build();
+        .styx_trigger_type(env.getOrDefault("STYX_TRIGGER_TYPE", ""));
   }
 }

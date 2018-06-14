@@ -151,19 +151,19 @@ public class StructuredLoggingTest {
     for (StructuredLogMessage message : new StructuredLogMessage[]{infoMessage, errorMessage}) {
       assertThat((double) Instant.parse(message.time()).toEpochMilli(),
           is(closeTo(Instant.now().toEpochMilli(), 30_000)));
-      assertThat(message.framework(), is("flo"));
-      assertThat(message.styx_component_id(), is(styx_component_id));
-      assertThat(message.styx_workflow_id(), is(styx_workflow_id));
-      assertThat(message.styx_docker_args(), is(styx_docker_args));
-      assertThat(message.styx_docker_image(), is(styx_docker_image));
-      assertThat(message.styx_commit_sha(), is(styx_commit_sha));
-      assertThat(message.styx_parameter(), is(styx_parameter));
-      assertThat(message.styx_execution_id(), is(styx_execution_id));
-      assertThat(message.styx_trigger_id(), is(styx_trigger_id));
-      assertThat(message.styx_trigger_type(), is(styx_trigger_type));
-      assertThat(message.task_id(), is(task.id().toString()));
-      assertThat(message.task_name(), is(task.id().name()));
-      assertThat(message.task_args(), is(task.id().args()));
+      assertThat(message.workflow().framework(), is("flo"));
+      assertThat(message.workflow().styx_component_id(), is(styx_component_id));
+      assertThat(message.workflow().styx_workflow_id(), is(styx_workflow_id));
+      assertThat(message.workflow().styx_docker_args(), is(styx_docker_args));
+      assertThat(message.workflow().styx_docker_image(), is(styx_docker_image));
+      assertThat(message.workflow().styx_commit_sha(), is(styx_commit_sha));
+      assertThat(message.workflow().styx_parameter(), is(styx_parameter));
+      assertThat(message.workflow().styx_execution_id(), is(styx_execution_id));
+      assertThat(message.workflow().styx_trigger_id(), is(styx_trigger_id));
+      assertThat(message.workflow().styx_trigger_type(), is(styx_trigger_type));
+      assertThat(message.workflow().task_id(), is(task.id().toString()));
+      assertThat(message.workflow().task_name(), is(task.id().name()));
+      assertThat(message.workflow().task_args(), is(task.id().args()));
     }
   }
 
@@ -196,21 +196,21 @@ public class StructuredLoggingTest {
 
     final StructuredLogMessage message = MAPPER.readValue(output, StructuredLogMessage.class);
 
-    assertThat(message.styx_execution_id(), is(executionId));
     assertThat(message.message(), is("hello world!"));
-    assertThat(message.framework(), is("flo"));
 
-    assertThat(message.styx_component_id(), is(""));
-    assertThat(message.styx_workflow_id(), is(""));
-    assertThat(message.styx_docker_args(), is(""));
-    assertThat(message.styx_docker_image(), is(""));
-    assertThat(message.styx_commit_sha(), is(""));
-    assertThat(message.styx_parameter(), is(""));
-    assertThat(message.styx_trigger_id(), is(""));
-    assertThat(message.styx_trigger_type(), is(""));
-    assertThat(message.task_id(), is(""));
-    assertThat(message.task_name(), is(""));
-    assertThat(message.task_args(), is(""));
+    assertThat(message.workflow().styx_execution_id(), is(executionId));
+    assertThat(message.workflow().styx_component_id(), is(""));
+    assertThat(message.workflow().styx_workflow_id(), is(""));
+    assertThat(message.workflow().styx_docker_args(), is(""));
+    assertThat(message.workflow().styx_docker_image(), is(""));
+    assertThat(message.workflow().styx_commit_sha(), is(""));
+    assertThat(message.workflow().styx_parameter(), is(""));
+    assertThat(message.workflow().styx_trigger_id(), is(""));
+    assertThat(message.workflow().styx_trigger_type(), is(""));
+    assertThat(message.workflow().framework(), is("flo"));
+    assertThat(message.workflow().task_id(), is(""));
+    assertThat(message.workflow().task_name(), is(""));
+    assertThat(message.workflow().task_args(), is(""));
   }
 
   private void verifyTextLogging() throws Exception {

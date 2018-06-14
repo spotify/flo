@@ -26,28 +26,35 @@ import javax.annotation.Nullable;
 
 @AutoMatter
 interface StructuredLogMessage {
-  @JsonProperty @Nullable String time();
-  @JsonProperty @Nullable String severity();
+  @AutoMatter
+  interface Workflow {
+    @JsonProperty String styx_component_id();
+    @JsonProperty String styx_workflow_id();
+    @JsonProperty String styx_docker_args();
+    @JsonProperty String styx_docker_image();
+    @JsonProperty String styx_commit_sha();
+    @JsonProperty String styx_parameter();
+    @JsonProperty String styx_execution_id();
+    @JsonProperty String styx_trigger_id();
+    @JsonProperty String styx_trigger_type();
+    @JsonProperty String framework();
+    @JsonProperty String task_id();
+    @JsonProperty String task_name();
+    @JsonProperty String task_args();
+
+    static WorkflowBuilder newBuilder() {
+      return new WorkflowBuilder().framework("flo");
+    }
+  }
+
+  @JsonProperty String time();
+  @JsonProperty String severity();
   @JsonProperty @Nullable String logger();
   @JsonProperty @Nullable String thread();
-  @JsonProperty @Nullable String message();
-  @JsonProperty @Nullable String framework();
-  @JsonProperty @Nullable String styx_component_id();
-  @JsonProperty @Nullable String styx_workflow_id();
-  @JsonProperty @Nullable String styx_docker_args();
-  @JsonProperty @Nullable String styx_docker_image();
-  @JsonProperty @Nullable String styx_commit_sha();
-  @JsonProperty @Nullable String styx_parameter();
-  @JsonProperty @Nullable String styx_execution_id();
-  @JsonProperty @Nullable String styx_trigger_id();
-  @JsonProperty @Nullable String styx_trigger_type();
-  @JsonProperty @Nullable String task_id();
-  @JsonProperty @Nullable String task_name();
-  @JsonProperty @Nullable String task_args();
-
-  StructuredLogMessageBuilder builder();
+  @JsonProperty String message();
+  @JsonProperty Workflow workflow();
 
   static StructuredLogMessageBuilder newBuilder() {
-    return new StructuredLogMessageBuilder().framework("flo");
+    return new StructuredLogMessageBuilder();
   }
 }
