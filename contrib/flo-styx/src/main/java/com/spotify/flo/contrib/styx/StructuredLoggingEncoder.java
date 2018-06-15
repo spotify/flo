@@ -51,7 +51,7 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
   private static final byte[] LINE_SEPARATOR_BYTES = LINE_SEPARATOR.getBytes();
 
   private final boolean isStyxExecution = System.getenv().containsKey("STYX_EXECUTION_ID");
-  private final WorkflowBuilder template = createTemplate();
+  private final StyxBuilder template = createTemplate();
 
   private final TaskId envTaskId;
 
@@ -88,15 +88,19 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
     structuredLogMessageBuilder.message(message.toString());
 
     // Workflow metadata
-    final WorkflowBuilder workflowBuilder = WorkflowBuilder.from(template);
+    final WorkflowBuilder workflowBuilder = StructuredLogMessage.Workflow.newBuilder()
+        .styx(template.build());
     final TaskId taskId = taskId();
-    workflowBuilder.task_id(taskId != null ? taskId.toString() : "");
-    workflowBuilder.task_name(taskId != null ? taskId.name() : "");
-    workflowBuilder.task_args(taskId != null ? taskId.args() : "");
+    workflowBuilder.task(StructuredLogMessage.Task.newBuilder()
+        .id(taskId != null ? taskId.toString() : "")
+        .name(taskId != null ? taskId.name() : "")
+        .args(taskId != null ? taskId.args() : "")
+        .build());
+    structuredLogMessageBuilder.workflow(workflowBuilder.build());
 
     // Serialize to json
     try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-      WRITER.writeValue(baos, structuredLogMessageBuilder.workflow(workflowBuilder.build()).build());
+      WRITER.writeValue(baos, structuredLogMessageBuilder.build());
       baos.write(LINE_SEPARATOR_BYTES);
       return baos.toByteArray();
     } catch (IOException e) {
@@ -174,17 +178,17 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
     return null;
   }
 
-  private static WorkflowBuilder createTemplate() {
+  private static StyxBuilder createTemplate() {
     final Map<String, String> env = System.getenv();
-    return StructuredLogMessage.Workflow.newBuilder()
-        .styx_component_id(env.getOrDefault("STYX_COMPONENT_ID", ""))
-        .styx_workflow_id(env.getOrDefault("STYX_WORKFLOW_ID", ""))
-        .styx_docker_args(env.getOrDefault("STYX_DOCKER_ARGS", ""))
-        .styx_docker_image(env.getOrDefault("STYX_DOCKER_IMAGE", ""))
-        .styx_commit_sha(env.getOrDefault("STYX_COMMIT_SHA", ""))
-        .styx_parameter(env.getOrDefault("STYX_PARAMETER", ""))
-        .styx_execution_id(env.getOrDefault("STYX_EXECUTION_ID", ""))
-        .styx_trigger_id(env.getOrDefault("STYX_TRIGGER_ID", ""))
-        .styx_trigger_type(env.getOrDefault("STYX_TRIGGER_TYPE", ""));
+    return StructuredLogMessage.Styx.newBuilder()
+        .component_id(env.getOrDefault("STYX_COMPONENT_ID", ""))
+        .workflow_id(env.getOrDefault("STYX_WORKFLOW_ID", ""))
+        .docker_args(env.getOrDefault("STYX_DOCKER_ARGS", ""))
+        .docker_image(env.getOrDefault("STYX_DOCKER_IMAGE", ""))
+        .commit_sha(env.getOrDefault("STYX_COMMIT_SHA", ""))
+        .parameter(env.getOrDefault("STYX_PARAMETER", ""))
+        .execution_id(env.getOrDefault("STYX_EXECUTION_ID", ""))
+        .trigger_id(env.getOrDefault("STYX_TRIGGER_ID", ""))
+        .trigger_type(env.getOrDefault("STYX_TRIGGER_TYPE", ""));
   }
 }

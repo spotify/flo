@@ -26,20 +26,38 @@ import io.norberg.automatter.AutoMatter;
 @AutoMatter
 interface StructuredLogMessage {
   @AutoMatter
+  interface Styx {
+    @JsonProperty String component_id();
+    @JsonProperty String workflow_id();
+    @JsonProperty String docker_args();
+    @JsonProperty String docker_image();
+    @JsonProperty String commit_sha();
+    @JsonProperty String parameter();
+    @JsonProperty String execution_id();
+    @JsonProperty String trigger_id();
+    @JsonProperty String trigger_type();
+
+    static StyxBuilder newBuilder() {
+      return new StyxBuilder();
+    }
+  }
+
+  @AutoMatter
+  interface Task {
+    @JsonProperty String id();
+    @JsonProperty String name();
+    @JsonProperty String args();
+
+    static TaskBuilder newBuilder() {
+      return new TaskBuilder();
+    }
+  }
+
+  @AutoMatter
   interface Workflow {
-    @JsonProperty String styx_component_id();
-    @JsonProperty String styx_workflow_id();
-    @JsonProperty String styx_docker_args();
-    @JsonProperty String styx_docker_image();
-    @JsonProperty String styx_commit_sha();
-    @JsonProperty String styx_parameter();
-    @JsonProperty String styx_execution_id();
-    @JsonProperty String styx_trigger_id();
-    @JsonProperty String styx_trigger_type();
+    @JsonProperty Styx styx();
     @JsonProperty String framework();
-    @JsonProperty String task_id();
-    @JsonProperty String task_name();
-    @JsonProperty String task_args();
+    @JsonProperty Task task();
 
     static WorkflowBuilder newBuilder() {
       return new WorkflowBuilder().framework("flo");
