@@ -1,5 +1,8 @@
 package com.spotify.flo
 
+import java.lang.management.ManagementFactory
+
+import com.spotify.flo.context.FloRunner
 import org.scalatest._
 
 class DslTest extends FlatSpec with Matchers {
@@ -34,6 +37,40 @@ class DslTest extends FlatSpec with Matchers {
     val exception = the [RuntimeException] thrownBy $
 
     exception should have message "Builder accessor used outside a defTask scope"
+  }
+
+  it should "runInProcesses" in {
+    val mainJvm = ManagementFactory.getRuntimeMXBean.getName
+    println(s"main jvm: $mainJvm")
+    val foo: Task[String] = defTaskNamed("foo")
+      .process({
+        val fooJvm = ManagementFactory.getRuntimeMXBean.getName
+        println(s"foo jvm: $fooJvm")
+        fooJvm
+      })
+    val bar: Task[Array[String]] = defTaskNamed("bar")
+      .input(foo)
+      .context(new TaskContextStrict[String, Array[String]] {
+        override def provide(evalContext: EvalContext): String = {
+          val barContextJvm = ManagementFactory.getRuntimeMXBean.getName
+          println(s"bar context jvm: $barContextJvm")
+          barContextJvm
+        }
+      })
+      .process((fooJvm, barContextJvm) => {
+        val barJvm = ManagementFactory.getRuntimeMXBean.getName
+        println(s"bar jvm: $barJvm")
+        Array(fooJvm, barJvm, barContextJvm)
+      })
+
+    val result = FloRunner.runTask(bar)
+      .future().get()
+
+    val Array(fooJvm, barJvm, barContextJvm) = result
+    result.toSet should have size 3
+    fooJvm should not be (mainJvm)
+    barJvm should not be (mainJvm)
+    barContextJvm should be (mainJvm)
   }
 
   def classMethod: Task[String] = defTask().process("hello")

@@ -22,5 +22,9 @@
       <groupId>com.esotericsoftware</groupId>
       <artifactId>kryo-shaded</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>chill-java</artifactId>
+    </dependency>
   </dependencies>
 </project>

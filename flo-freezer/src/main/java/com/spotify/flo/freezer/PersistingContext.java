@@ -35,6 +35,7 @@ import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.ForwardingEvalContext;
+import com.twitter.chill.java.PackageRegistrar;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -96,9 +97,11 @@ public class PersistingContext extends ForwardingEvalContext {
 
   public static void serialize(Object object, Path file) throws Exception{
     final Kryo kryo = new Kryo();
+    PackageRegistrar.all().apply(kryo);
     kryo.register(java.lang.invoke.SerializedLambda.class);
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
     kryo.addDefaultSerializer(java.lang.Throwable.class, new JavaSerializer());
+    kryo.getFieldSerializerConfig().setIgnoreSyntheticFields(false);
 
     if (Files.exists(file)) {
       throw new RuntimeException("File " + file + " already exists");
@@ -115,10 +118,12 @@ public class PersistingContext extends ForwardingEvalContext {
 
   public static <T> T deserialize(Path filePath) throws Exception {
     Kryo kryo = new Kryo();
+    PackageRegistrar.all().apply(kryo);
     kryo.register(java.lang.invoke.SerializedLambda.class);
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
     kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
     kryo.addDefaultSerializer(java.lang.Throwable.class, new JavaSerializer());
+    kryo.getFieldSerializerConfig().setIgnoreSyntheticFields(false);
 
     try (Input input = new Input(newInputStream(filePath))) {
       return (T) kryo.readClassAndObject(input);
