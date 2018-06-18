@@ -37,6 +37,8 @@ import com.spotify.flo.TaskId;
 import com.spotify.flo.context.ForwardingEvalContext;
 import com.twitter.chill.java.PackageRegistrar;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -127,6 +129,11 @@ public class PersistingContext extends ForwardingEvalContext {
     Kryo kryo = new Kryo();
     PackageRegistrar.all().apply(kryo);
     kryo.register(java.lang.invoke.SerializedLambda.class);
+    try {
+      kryo.register(Class.forName("com.typesafe.config.impl.SimpleConfig"), new ConfigSerializer());
+    } catch (ClassNotFoundException e) {
+      LOG.debug("ConfigSerializer not registered", e);
+    }
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
     kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
     kryo.addDefaultSerializer(Throwable.class, new JavaSerializer());
