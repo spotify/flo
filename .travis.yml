@@ -1,0 +1,27 @@
+language: java
+
+jdk:
+  - oraclejdk8
+
+cache:
+  directories:
+    - "$HOME/.m2/"
+
+branches:
+  only:
+  - master
+
+# Skipping the install step as the script step will do all we need.
+install: true
+
+script:
+  # Run on pull requests (encrypted data not available for pull requests)
+  - 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then mvn clean verify; fi'
+  # Run on merges to master
+  - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then mvn clean verify; fi'
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+notifications:
+  email: false
