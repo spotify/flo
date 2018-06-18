@@ -95,39 +95,43 @@ public class PersistingContext extends ForwardingEvalContext {
     return promise.value();
   }
 
-  public static void serialize(Object object, Path file) throws Exception{
-    final Kryo kryo = new Kryo();
-    PackageRegistrar.all().apply(kryo);
-    kryo.register(java.lang.invoke.SerializedLambda.class);
-    kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
-    kryo.addDefaultSerializer(java.lang.Throwable.class, new JavaSerializer());
-    kryo.getFieldSerializerConfig().setIgnoreSyntheticFields(false);
-
-    if (Files.exists(file)) {
-      throw new RuntimeException("File " + file + " already exists");
-    }
-
+  public static void serialize(Object object, Path file) throws Exception {
     try {
-      try (Output output = new Output(newOutputStream(file, WRITE, CREATE_NEW))) {
-        kryo.writeClassAndObject(output, object);
-      }
+      serialize(object, Files.newOutputStream(file, WRITE, CREATE_NEW));
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
+  public static void serialize(Object object, OutputStream outputStream) {
+    final Kryo kryo = getKryo();
+
+    try (Output output = new Output(outputStream)) {
+      kryo.writeClassAndObject(output, object);
+    }
+  }
+
   public static <T> T deserialize(Path filePath) throws Exception {
+    return deserialize(Files.newInputStream(filePath));
+  }
+
+  public static <T> T deserialize(InputStream inputStream) {
+    final Kryo kryo = getKryo();
+
+    try (Input input = new Input(inputStream)) {
+      return (T) kryo.readClassAndObject(input);
+    }
+  }
+
+  private static Kryo getKryo() {
     Kryo kryo = new Kryo();
     PackageRegistrar.all().apply(kryo);
     kryo.register(java.lang.invoke.SerializedLambda.class);
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
     kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
-    kryo.addDefaultSerializer(java.lang.Throwable.class, new JavaSerializer());
+    kryo.addDefaultSerializer(Throwable.class, new JavaSerializer());
     kryo.getFieldSerializerConfig().setIgnoreSyntheticFields(false);
-
-    try (Input input = new Input(newInputStream(filePath))) {
-      return (T) kryo.readClassAndObject(input);
-    }
+    return kryo;
   }
 
   public static String cleanForFilename(TaskId taskId) {
