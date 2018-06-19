@@ -119,6 +119,7 @@ public class PersistingContext extends ForwardingEvalContext {
 
   public static <T> T deserialize(InputStream inputStream) {
     final Kryo kryo = getKryo();
+    kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
 
     try (Input input = new Input(inputStream)) {
       return (T) kryo.readClassAndObject(input);
@@ -126,7 +127,7 @@ public class PersistingContext extends ForwardingEvalContext {
   }
 
   private static Kryo getKryo() {
-    Kryo kryo = new Kryo();
+    final Kryo kryo = new Kryo();
     PackageRegistrar.all().apply(kryo);
     kryo.register(java.lang.invoke.SerializedLambda.class);
     try {
@@ -135,7 +136,6 @@ public class PersistingContext extends ForwardingEvalContext {
       LOG.debug("ConfigSerializer not registered", e);
     }
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
-    kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
     kryo.addDefaultSerializer(Throwable.class, new JavaSerializer());
     kryo.getFieldSerializerConfig().setIgnoreSyntheticFields(false);
     return kryo;
