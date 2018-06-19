@@ -20,8 +20,6 @@
 
 package com.spotify.flo.freezer;
 
-import static java.nio.file.Files.newInputStream;
-import static java.nio.file.Files.newOutputStream;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.WRITE;
 
@@ -131,6 +129,7 @@ public class PersistingContext extends ForwardingEvalContext {
     PackageRegistrar.all().apply(kryo);
     kryo.register(java.lang.invoke.SerializedLambda.class);
     try {
+      // SimpleConfig is a package private class, hence using Class.forName to reference it
       kryo.register(Class.forName("com.typesafe.config.impl.SimpleConfig"), new ConfigSerializer());
     } catch (ClassNotFoundException e) {
       LOG.debug("ConfigSerializer not registered", e);
