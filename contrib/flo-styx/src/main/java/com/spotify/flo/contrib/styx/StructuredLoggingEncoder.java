@@ -56,7 +56,7 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
   private final TaskId envTaskId;
 
   public StructuredLoggingEncoder() {
-    this.envTaskId = Optional.ofNullable(System.getenv("FLO_TASK_ID"))
+    this.envTaskId = Optional.ofNullable(System.getenv("WORKFLOW_TASK_ID"))
         .map(TaskId::parse)
         .orElse(null);
   }

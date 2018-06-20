@@ -18,6 +18,7 @@
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>flo-runner</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -30,6 +31,7 @@
     <dependency>
       <groupId>com.google.auto.service</groupId>
       <artifactId>auto-service</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>

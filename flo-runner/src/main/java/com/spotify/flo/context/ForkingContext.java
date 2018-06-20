@@ -92,7 +92,7 @@ class ForkingContext extends ForwardingEvalContext {
   private <T> Fn<T> fork(TaskId taskId, Fn<T> fn) {
     return () -> {
       try (final ForkingExecutor executor = new ForkingExecutor()) {
-        executor.environment(Collections.singletonMap("FLO_TASK_ID", taskId.toString()));
+        executor.environment(Collections.singletonMap("WORKFLOW_TASK_ID", taskId.toString()));
         return executor.execute(() -> {
           try {
             return Context.current()
