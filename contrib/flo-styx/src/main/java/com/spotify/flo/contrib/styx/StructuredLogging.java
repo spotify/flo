@@ -62,8 +62,6 @@ public class StructuredLogging {
     rootLogger.addAppender(appender);
     rootLogger.setLevel(fromLocationAwareLoggerInteger(level.toInt()));
 
-    rootLogger.info("hello");
-
     SLF4JBridgeHandler.install();
   }
 
