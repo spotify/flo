@@ -12,7 +12,7 @@
   <url>https://github.com/spotify/flo</url>
 
   <artifactId>flo</artifactId>
-  <version>0.2.10</version>
+  <version>0.2.11-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <licenses>
@@ -27,7 +27,7 @@
     <url>https://github.com/spotify/flo</url>
     <connection>scm:git:git@github.com:spotify/flo.git</connection>
     <developerConnection>scm:git:git@github.com:spotify/flo.git</developerConnection>
-    <tag>v0.2.10</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <developers>
