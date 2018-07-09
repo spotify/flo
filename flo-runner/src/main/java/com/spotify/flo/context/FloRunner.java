@@ -33,7 +33,9 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.URI;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -151,19 +153,25 @@ public final class FloRunner<T> {
   }
 
   private EvalContext createContext() {
-    final EvalContext instrumentedContext = instrument(createRootContext());
-    final EvalContext baseContext = isMode("persist")
-        ? persist(instrumentedContext)
-        : instrumentedContext;
+    final EvalContext baseContext = instrument(createRootContext());
 
-    return
-        TracingContext.composeWith(
-            ForkingContext.composeWith(
-                MemoizingContext.composeWith(
-                    OverridingContext.composeWith(
-                        LoggingContext.composeWith(
-                            baseContext, logging),
-                        logging))));
+    if (isMode("persist")) {
+      return
+          MemoizingContext.composeWith(
+              OverridingContext.composeWith(
+                  LoggingContext.composeWith(
+                      persist(baseContext), logging),
+                  logging));
+    } else {
+      return
+          TracingContext.composeWith(
+              forkingContext(
+                  MemoizingContext.composeWith(
+                      OverridingContext.composeWith(
+                          LoggingContext.composeWith(
+                              baseContext, logging),
+                          logging))));
+    }
   }
 
   private EvalContext createRootContext() {
@@ -200,6 +208,29 @@ public final class FloRunner<T> {
     return InstrumentedContext.composeWith(delegate, listener);
   }
 
+  private EvalContext forkingContext(EvalContext baseContext) {
+    final boolean inDebugger = ManagementFactory.getRuntimeMXBean()
+        .getInputArguments().stream().anyMatch(s -> s.contains("-agentlib:jdwp"));
+
+    if (hasExplicitConfigValue("flo.forking")) {
+      if (config.getBoolean("flo.forking")) {
+        LOG.debug("Forking enabled (config variable flo.forking=true)");
+        return ForkingContext.composeWith(baseContext);
+      } else {
+        LOG.debug("Forking disabled (config variable flo.forking=false)");
+        return baseContext;
+      }
+    } else if (inDebugger) {
+      LOG.debug("Debugger detected, forking disabled by default "
+          + "(enable by setting config variable flo.forking=true)");
+      return baseContext;
+    } else {
+      LOG.debug("Debugger not detected, forking enabled by default "
+          + "(disable by setting config variable flo.forking=false)");
+      return ForkingContext.composeWith(baseContext);
+    }
+  }
+
   private EvalContext persist(EvalContext delegate) {
     final String stateLocation = config.hasPath("flo.state.location")
                                  ? config.getString("flo.state.location")
@@ -219,6 +250,14 @@ public final class FloRunner<T> {
 
   private boolean isMode(String mode) {
     return mode.equalsIgnoreCase(config.getString("mode"));
+  }
+
+  private boolean hasExplicitConfigValue(String path) {
+    final URL configUrl = config.getValue(path).origin().url();
+
+    // If set through env var or system property, there will be no url
+    return configUrl == null || !configUrl.getFile().endsWith("reference.conf");
+
   }
 
   private static Closeable executorCloser(ExecutorService executorService) {
