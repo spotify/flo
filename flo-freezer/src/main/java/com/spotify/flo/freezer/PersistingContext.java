@@ -33,6 +33,8 @@ import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.ForwardingEvalContext;
+import com.twitter.chill.IKryoRegistrar;
+import com.twitter.chill.KryoInstantiator;
 import com.twitter.chill.java.PackageRegistrar;
 import java.io.IOException;
 import java.io.InputStream;
@@ -117,7 +119,6 @@ public class PersistingContext extends ForwardingEvalContext {
 
   public static <T> T deserialize(InputStream inputStream) {
     final Kryo kryo = getKryo();
-    kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
 
     try (Input input = new Input(inputStream)) {
       return (T) kryo.readClassAndObject(input);
@@ -125,8 +126,37 @@ public class PersistingContext extends ForwardingEvalContext {
   }
 
   private static Kryo getKryo() {
-    final Kryo kryo = new Kryo();
-    PackageRegistrar.all().apply(kryo);
+
+    // Look up chill-scala using reflection to avoid having a hard dependency on the
+    // chill-scala library and allow this to work with multiple scala versions.
+    Class<?> scalaKryoInstantiatorClass = null;
+    try {
+      scalaKryoInstantiatorClass = Class.forName("com.twitter.chill.ScalaKryoInstantiator");
+    } catch (ClassNotFoundException e) {
+      LOG.debug("Could not find com.twitter.chill.ScalaKryoInstantiator", e);
+    }
+
+    final Kryo kryo;
+
+    // Instantiate kryo..
+    if (scalaKryoInstantiatorClass!= null) {
+      LOG.debug("using chill-scala");
+      // ...for scala (includes java serializers)
+      final KryoInstantiator instantiator;
+      try {
+        instantiator = KryoInstantiator.class.cast(scalaKryoInstantiatorClass.newInstance());
+      } catch (InstantiationException | IllegalAccessException e) {
+        throw new RuntimeException(e);
+      }
+      kryo = instantiator.newKryo();
+    } else {
+      // ...for java
+      LOG.debug("using chill-java");
+      kryo = new Kryo();
+      PackageRegistrar.all().apply(kryo);
+      kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
+    }
+
     kryo.register(java.lang.invoke.SerializedLambda.class);
     try {
       // SimpleConfig is a package private class, hence using Class.forName to reference it
@@ -136,7 +166,6 @@ public class PersistingContext extends ForwardingEvalContext {
     }
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
     kryo.addDefaultSerializer(Throwable.class, new JavaSerializer());
-    kryo.getFieldSerializerConfig().setIgnoreSyntheticFields(false);
     return kryo;
   }
 
