@@ -56,6 +56,7 @@
           <scalaVersion>${scala.version}</scalaVersion>
           <sendJavaToScalac>false</sendJavaToScalac>
           <addScalacArgs>-Xexperimental</addScalacArgs>
+          <addScalacArgs>-target:jvm-1.8</addScalacArgs>
         </configuration>
       </plugin>
 
