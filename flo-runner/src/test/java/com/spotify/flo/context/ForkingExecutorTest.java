@@ -26,6 +26,7 @@ import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Before;
@@ -75,6 +76,38 @@ public class ForkingExecutorTest {
     final String subprocessJvm = forkingExecutor.execute(() ->
         ManagementFactory.getRuntimeMXBean().getName());
     assertThat(thisJvm, is(not(subprocessJvm)));
+  }
+
+  @Test
+  public void setsEnvironment() throws IOException {
+    final String result = forkingExecutor
+        .environment(Collections.singletonMap("foo", "bar"))
+        .execute(() -> System.getenv("foo"));
+    assertThat(result, is("bar"));
+  }
+
+  @Test
+  public void setsJavaArgs() throws IOException {
+    final String result = forkingExecutor
+        .javaArgs("-Dfoo=bar")
+        .execute(() -> System.getProperty("foo"));
+    assertThat(result, is("bar"));
+  }
+
+  @Test
+  public void propagatesJavaArgs() throws IOException {
+    final String result = forkingExecutor
+        .javaArgs("-Dfoo=bar")
+        .execute(() -> {
+          // Fork again with an executor without -Dfoo=bar explicitly configured
+          try (ForkingExecutor inner = new ForkingExecutor()) {
+            // And check that -Dfoo=bar was automatically propagated
+            return inner.execute(() -> System.getProperty("foo"));
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        });
+    assertThat(result, is("bar"));
   }
 
   private static class FoobarException extends RuntimeException {
