@@ -44,6 +44,7 @@ import com.spotify.flo.context.FloRunner.Result;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
+import com.spotify.flo.status.NotRetriable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -230,6 +231,20 @@ public class FloRunnerTest {
     runTask(task).waitAndExit(status::set);
 
     assertThat(status.get(), is(20));
+  }
+
+  @Test
+  public void notRetriableExitsFifty() {
+    final Task<String> task = Task.named("task").ofType(String.class)
+        .process(() -> {
+          throw new NotRetriable();
+        });
+
+    AtomicInteger status = new AtomicInteger();
+
+    runTask(task).waitAndExit(status::set);
+
+    assertThat(status.get(), is(50));
   }
 
   @Test

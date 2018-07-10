@@ -29,6 +29,7 @@ import com.spotify.flo.TaskInfo;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
+import com.spotify.flo.status.NotRetriable;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.io.Closeable;
@@ -288,6 +289,8 @@ public final class FloRunner<T> {
         final int status;
         if (e.getCause() instanceof NotReady) {
           status = 20;
+        } else if (e.getCause() instanceof NotRetriable) {
+          status = 50;
         } else if (e.getCause() instanceof Persisted) {
           status = 0;
         } else {
