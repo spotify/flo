@@ -73,5 +73,26 @@ class DslTest extends FlatSpec with Matchers {
     barContextJvm should be (mainJvm)
   }
 
+  it should "be possible to use scala collections" in {
+
+    val captured = List(None, Some("baz"))
+
+    val foo: Task[(List[Option[Any]], List[Option[Any]])] = defTaskNamed("foo")
+      .process({
+        (List(Some("foo"), None, Some(4711)), captured)
+      })
+
+    val bar: Task[(List[Option[Any]], List[Option[Any]])] = defTaskNamed("bar")
+      .input(foo)
+      .process(fooTuple => {
+        fooTuple
+      })
+
+    val result = FloRunner.runTask(bar)
+      .future().get()
+
+    result shouldBe (List(Some("foo"), None, Some(4711)), captured)
+  }
+
   def classMethod: Task[String] = defTask().process("hello")
 }
