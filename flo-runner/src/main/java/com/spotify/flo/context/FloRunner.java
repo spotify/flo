@@ -34,7 +34,9 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.URI;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -66,6 +68,12 @@ import org.slf4j.LoggerFactory;
 public final class FloRunner<T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(FloRunner.class);
+
+  private static final String MODE = "mode";
+  private static final String FLO_ASYNC = "flo.async";
+  private static final String FLO_WORKERS = "flo.workers";
+  private static final String FLO_FORKING = "flo.forking";
+  private static final String FLO_STATE_LOCATION = "flo.state.location";
 
   private final Logging logging = Logging.create(LOG);
   private final Collection<Closeable> closeables = new ArrayList<>();
@@ -152,23 +160,29 @@ public final class FloRunner<T> {
   }
 
   private EvalContext createContext() {
-    final EvalContext instrumentedContext = instrument(createRootContext());
-    final EvalContext baseContext = isMode("persist")
-        ? persist(instrumentedContext)
-        : instrumentedContext;
+    final EvalContext baseContext = instrument(createRootContext());
 
-    return
-        TracingContext.composeWith(
-            ForkingContext.composeWith(
-                MemoizingContext.composeWith(
-                    OverridingContext.composeWith(
-                        LoggingContext.composeWith(
-                            baseContext, logging),
-                        logging))));
+    if (isMode("persist")) {
+      return
+          MemoizingContext.composeWith(
+              OverridingContext.composeWith(
+                  LoggingContext.composeWith(
+                      persist(baseContext), logging),
+                  logging));
+    } else {
+      return
+          TracingContext.composeWith(
+              forkingContext(
+                  MemoizingContext.composeWith(
+                      OverridingContext.composeWith(
+                          LoggingContext.composeWith(
+                              baseContext, logging),
+                          logging))));
+    }
   }
 
   private EvalContext createRootContext() {
-    if (config.getBoolean("flo.async")) {
+    if (config.getBoolean(FLO_ASYNC)) {
       final AtomicLong count = new AtomicLong(0);
       final ThreadFactory threadFactory = runnable -> {
         final Thread thread = Executors.defaultThreadFactory().newThread(runnable);
@@ -177,7 +191,7 @@ public final class FloRunner<T> {
         return thread;
       };
       final ExecutorService executor = Executors.newFixedThreadPool(
-          config.getInt("flo.workers"),
+          config.getInt(FLO_WORKERS),
           threadFactory);
       closeables.add(executorCloser(executor));
       return EvalContext.async(executor);
@@ -201,9 +215,32 @@ public final class FloRunner<T> {
     return InstrumentedContext.composeWith(delegate, listener);
   }
 
+  private EvalContext forkingContext(EvalContext baseContext) {
+    final boolean inDebugger = ManagementFactory.getRuntimeMXBean()
+        .getInputArguments().stream().anyMatch(s -> s.contains("-agentlib:jdwp"));
+
+    if (hasExplicitConfigValue(FLO_FORKING)) {
+      if (config.getBoolean(FLO_FORKING)) {
+        LOG.debug("Forking enabled (config variable flo.forking=true)");
+        return ForkingContext.composeWith(baseContext);
+      } else {
+        LOG.debug("Forking disabled (config variable flo.forking=false)");
+        return baseContext;
+      }
+    } else if (inDebugger) {
+      LOG.debug("Debugger detected, forking disabled by default "
+          + "(enable by setting config variable flo.forking=true)");
+      return baseContext;
+    } else {
+      LOG.debug("Debugger not detected, forking enabled by default "
+          + "(disable by setting config variable flo.forking=false)");
+      return ForkingContext.composeWith(baseContext);
+    }
+  }
+
   private EvalContext persist(EvalContext delegate) {
-    final String stateLocation = config.hasPath("flo.state.location")
-                                 ? config.getString("flo.state.location")
+    final String stateLocation = config.hasPath(FLO_STATE_LOCATION)
+                                 ? config.getString(FLO_STATE_LOCATION)
                                  : "file://" + getProperty("user.dir");
 
     final URI basePathUri = URI.create(stateLocation);
@@ -219,7 +256,15 @@ public final class FloRunner<T> {
   }
 
   private boolean isMode(String mode) {
-    return mode.equalsIgnoreCase(config.getString("mode"));
+    return mode.equalsIgnoreCase(config.getString(MODE));
+  }
+
+  private boolean hasExplicitConfigValue(String path) {
+    final URL configUrl = config.getValue(path).origin().url();
+
+    // If set through env var or system property, there will be no url
+    return configUrl == null || !configUrl.getFile().endsWith("reference.conf");
+
   }
 
   private static Closeable executorCloser(ExecutorService executorService) {

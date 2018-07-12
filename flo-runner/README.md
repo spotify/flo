@@ -14,22 +14,22 @@ Add the Maven, SBT or Gradle dependency
 <dependency>
   <groupId>com.spotify</groupId>
   <artifactId>flo-runner</artifactId>
-  <version>0.1.3</version>
+  <version>0.2.11</version>
 </dependency>
 ```
 
 ```
-libraryDependencies += "com.spotify" % "flo-runner" % "0.1.3"
+libraryDependencies += "com.spotify" % "flo-runner" % "0.2.11"
 ```
 
 ```
-compile 'com.spotify:flo-runner:0.1.3"'
+compile 'com.spotify:flo-runner:0.2.11"'
 ```
 
 If you're using the Scala API for [flo], also add
 
 ```
-libraryDependencies += "com.spotify" %% "flo-scala" % "0.1.3"
+libraryDependencies += "com.spotify" %% "flo-scala" % "0.2.11"
 ```
 
 Note: currently only supports scala version `2.11`.
@@ -76,6 +76,8 @@ running the jar (`java -Dproperty=value <jar>`).
 
 | property | behaviour |
 |:---:|---|
+| **`-Dflo.forking=true`** | Fork a subprocess for each task. |
+| **`-Dflo.workers=n`** | Use `n` workers for running tasks concurrently. |
 | **`-Dmode=tree`** | Only print the Evaluation plan and exit. |
 
 ## Utilities

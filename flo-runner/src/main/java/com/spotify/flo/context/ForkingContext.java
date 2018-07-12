@@ -26,18 +26,10 @@ import com.spotify.flo.TaskId;
 import com.spotify.flo.Tracing;
 import io.grpc.Context;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.util.Collections;
-import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * An {@link EvalContext} that runs tasks in sub-processes.
- * <p>
- * Forking can be disabled using the environment variable {@code FLO_DISABLE_FORKING=true}.
- * <p>
- * Forking is disabled by default when running in the debugger, but can be enabled by {@code FLO_FORCE_FORK=true}.
  * <p>
  * The basic idea here is to intercept the process fn by overriding {@link EvalContext#invokeProcessFn(TaskId, Fn)},
  * and executing it in a sub-process JVM. The process fn closure and the result is transported in to and out of the
@@ -45,36 +37,12 @@ import org.slf4j.LoggerFactory;
  */
 class ForkingContext extends ForwardingEvalContext {
 
-  private static final Logger log = LoggerFactory.getLogger(ForkingContext.class);
-
   private ForkingContext(EvalContext delegate) {
     super(delegate);
   }
 
   static EvalContext composeWith(EvalContext baseContext) {
-    // Is the Java Debug Wire Protocol activated?
-    final boolean inDebugger = ManagementFactory.getRuntimeMXBean().
-        getInputArguments().stream().anyMatch(s -> s.contains("-agentlib:jdwp"));
-
-    final Optional<Boolean> forking = Optional.ofNullable(System.getenv("FLO_FORKING")).map(Boolean::parseBoolean);
-
-    if (forking.isPresent()) {
-      if (forking.get()) {
-        log.debug("Forking enabled (environment variable FLO_FORKING=true)");
-        return new ForkingContext(baseContext);
-      } else {
-        log.debug("Forking disabled (environment variable FLO_FORKING=true)");
-        return baseContext;
-      }
-    } else if (inDebugger) {
-      log.debug("Debugger detected, forking disabled by default "
-          + "(enable by setting environment variable FLO_FORKING=true)");
-      return baseContext;
-    } else {
-      log.debug("Debugger not detected, forking enabled by default "
-          + "(disable by setting environment variable FLO_FORKING=false)");
-      return new ForkingContext(baseContext);
-    }
+    return new ForkingContext(baseContext);
   }
 
   @Override
