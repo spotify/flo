@@ -25,6 +25,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
@@ -34,11 +35,21 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.spotify.flo.EvalContext;
+import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
+import com.spotify.flo.TaskBuilder.F1;
+import com.spotify.flo.TaskContextStrict;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.TestContext;
+import com.spotify.flo.TestScope;
 import com.spotify.flo.Tracing;
 import com.spotify.flo.context.FloRunner.Result;
 import com.spotify.flo.freezer.Persisted;
@@ -52,11 +63,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,6 +80,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -369,6 +385,137 @@ public class FloRunnerTest {
     final Set<String> uniqueJvms = new HashSet<>(jvms);
     assertThat(uniqueJvms.size(), is(4));
     assertThat(uniqueJvms, not(contains(mainJvm)));
+  }
+
+  @Test
+  public void isTestShouldBeTrueInTestScope() throws Exception {
+    try (TestScope ts = FloTesting.scope()) {
+      final Task<Boolean> isTest = Task.named("task").ofType(Boolean.class)
+          .process(FloTesting::isTest);
+      assertThat(runTask(isTest).future().get(30, SECONDS), is(true));
+    }
+  }
+
+  @Test
+  public void testMocking() throws Exception {
+
+    // Verify lookups and publishing after the fact
+    try (TestScope ts = FloTesting.scope()) {
+      final Task<String> task = Task.named("task").ofType(String.class)
+          .context(new PublishingContext("foo"))
+          .process(value -> {
+            // Do some processing and produce a value
+            return value.publish("42");
+          });
+
+      assertThat(runTask(task).future().get(30, SECONDS), is("42"));
+
+      assertThat(PublishingContext.mock().lookups("foo"), is(1));
+      assertThat(PublishingContext.mock().lookups("bar"), is(0));
+      assertThat(PublishingContext.mock().published("foo"), contains("42"));
+    }
+
+    // Verify that all mocks are cleared when leaving scope
+    try (TestScope ts = FloTesting.scope()) {
+      assertThat(PublishingContext.mock().published("foo"), is(empty()));
+      assertThat(PublishingContext.mock().lookups("foo"), is(0));
+    }
+
+    // Mock a lookup and verify that the process fn does not run
+    try (TestScope ts = FloTesting.scope()) {
+      PublishingContext.mock().mockValue("foo", "17");
+
+      @SuppressWarnings("unchecked") final F1<PublishingContext.Value, String> mockProcessFn = Mockito.mock(F1.class);
+      when(mockProcessFn.apply(any())).thenThrow(new AssertionError());
+
+      final Task<String> task = Task.named("task").ofType(String.class)
+          .context(new PublishingContext("foo"))
+          .process(mockProcessFn);
+
+      assertThat(runTask(task).future().get(30, SECONDS), is("17"));
+
+      verify(mockProcessFn, never()).apply(any());
+
+      assertThat(PublishingContext.mock().lookups("foo"), is(1));
+      assertThat(PublishingContext.mock().published("foo"), is(empty()));
+    }
+  }
+
+  static class PublishingContext extends TaskContextStrict<PublishingContext.Value, String> {
+
+    private static final TestContext.Key<Mocking> MOCK = TestContext.key("publishing-context-mock", Mocking::new);
+
+    private final String key;
+
+    PublishingContext(String key) {
+      this.key = key;
+    }
+
+    @Override
+    public Value provide(EvalContext evalContext) {
+      return new Value();
+    }
+
+    @Override
+    public Optional<String> lookup(Task task) {
+      if (FloTesting.isTest()) {
+        return MOCK.get().lookup(key);
+      } else {
+        // Talk to some production service
+        throw new UnsupportedOperationException();
+      }
+    }
+
+    public static Mocking mock() {
+      return MOCK.get();
+    }
+
+    class Value {
+
+      String publish(String value) {
+        if (FloTesting.isTest()) {
+          return MOCK.get().publish(key, value);
+        } else {
+          // Talk to some production service
+          throw new UnsupportedOperationException();
+        }
+      }
+    }
+
+    static class Mocking {
+
+      private final ConcurrentMap<String, String> lookupValues = new ConcurrentHashMap<>();
+      private final ConcurrentMap<String, AtomicInteger> lookupOperations = new ConcurrentHashMap<>();
+      private final ConcurrentMap<String, ArrayDeque<String>> publishOperations = new ConcurrentHashMap<>();
+
+      public void mockValue(String key, String value) {
+        lookupValues.put(key, value);
+      }
+
+      Optional<String> lookup(String key) {
+        lookupOperations.computeIfAbsent(key, k -> new AtomicInteger()).incrementAndGet();
+        return Optional.ofNullable(lookupValues.get(key));
+      }
+
+      String publish(String key, String value) {
+        publishOperations.computeIfAbsent(key, k -> new ArrayDeque<>()).add(value);
+        return value;
+      }
+
+      public List<String> published(String key) {
+        return Optional.ofNullable(publishOperations.get(key))
+            .map(ImmutableList::copyOf)
+            .orElse(ImmutableList.of());
+      }
+
+      public Optional<String> publishedLast(String key) {
+        return Optional.ofNullable(Iterables.getLast(published(key), null));
+      }
+
+      public int lookups(String key) {
+        return Optional.ofNullable(lookupOperations.get(key)).map(AtomicInteger::get).orElse(0);
+      }
+    }
   }
 
   private static String jvmName() {

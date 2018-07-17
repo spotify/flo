@@ -27,6 +27,12 @@ package object flo {
 
   def $[T]: TaskBuilder0[T] = currentBuilder
 
+  def test(f: () => Unit) {
+    FloTesting.run(new Runnable {
+      override def run(): Unit = f.apply()
+    })
+  }
+
   private def currentBuilder[T]: TaskBuilder0[T] = {
     val builder = dynamicBuilder.value
     if (builder == null) {
