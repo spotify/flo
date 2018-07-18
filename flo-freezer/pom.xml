@@ -19,14 +19,6 @@
       <artifactId>flo-workflow</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.esotericsoftware</groupId>
-      <artifactId>kryo-shaded</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.twitter</groupId>
-      <artifactId>chill-java</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.typesafe</groupId>
       <artifactId>config</artifactId>
     </dependency>

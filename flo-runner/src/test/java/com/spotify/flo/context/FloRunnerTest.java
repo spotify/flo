@@ -94,17 +94,17 @@ public class FloRunnerTest {
   @Test
   public void nonBlockingRunnerDoesNotBlock() throws Exception {
     final Path directory = temporaryFolder.newFolder().toPath();
-    final Path startedFile = directory.resolve("started");
-    final Path latchFile = directory.resolve("latch");
-    final Path happenedFile = directory.resolve("happened");
+    final File startedFile = directory.resolve("started").toFile();
+    final File latchFile = directory.resolve("latch").toFile();
+    final File happenedFile = directory.resolve("happened").toFile();
 
     final Task<Void> task = Task.named("task").ofType(Void.class)
         .process(() -> {
           try {
-            Files.write(startedFile, new byte[0]);
+            startedFile.createNewFile();
             while (true) {
-              if (Files.exists(latchFile)) {
-                Files.write(happenedFile, new byte[0]);
+              if (latchFile.exists()) {
+                happenedFile.createNewFile();
                 return null;
               }
               Thread.sleep(100);
@@ -119,7 +119,7 @@ public class FloRunnerTest {
     // Verify that the task ran at all
     CompletableFuture.supplyAsync(() -> {
       while (true) {
-        if (Files.exists(startedFile)) {
+        if (startedFile.exists()) {
           return true;
         }
         try {
@@ -138,21 +138,21 @@ public class FloRunnerTest {
     }
 
     // If this file doesn't exist now, it's likely that runTask doesn't block
-    assertThat(Files.exists(happenedFile), is(false));
+    assertThat(happenedFile.exists(), is(false));
 
-    Files.write(latchFile, new byte[0]);
+    latchFile.createNewFile();
   }
 
   @Test
   public void blockingRunnerBlocks() throws IOException {
-    final Path file = temporaryFolder.newFile().toPath();
+    final File file = temporaryFolder.newFile();
 
     final Task<Void> task = Task.named("task").ofType(Void.class)
         .process(() -> {
           try {
             Thread.sleep(10);
             try {
-              Files.write(file, "hello".getBytes(UTF_8));
+              Files.write(file.toPath(), "hello".getBytes(UTF_8));
             } catch (IOException e) {
               throw new RuntimeException(e);
             }
@@ -164,7 +164,7 @@ public class FloRunnerTest {
 
     runTask(task).waitAndExit(status -> { });
 
-    assertThat(new String(Files.readAllBytes(file), UTF_8), is("hello"));
+    assertThat(new String(Files.readAllBytes(file.toPath()), UTF_8), is("hello"));
   }
 
   @Test

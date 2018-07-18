@@ -33,11 +33,6 @@
       <artifactId>scala-library</artifactId>
       <version>${scala.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.twitter</groupId>
-      <artifactId>chill_2.11</artifactId>
-      <version>0.9.2</version>
-    </dependency>
 
     <dependency>
       <groupId>com.spotify</groupId>
