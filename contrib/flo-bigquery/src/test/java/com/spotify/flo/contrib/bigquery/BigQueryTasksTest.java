@@ -60,10 +60,9 @@ public class BigQueryTasksTest {
       future.get();
       fail();
     } catch (ExecutionException e) {
-      // Root cause for serialization errors tend to be NPE. Check that we didn't get that at least.
-      // Verify that we are getting the expected root cause, not some serialization error etc
+      // Verify that we are getting some well known error here so we know with some
+      // certainty that we didn't get a serialization error. Yes, this is quite awful.
       final Throwable rootCause = Throwables.getRootCause(e);
-      System.err.println("root cause: " + rootCause);
       if (rootCause instanceof NotReady) {
         // Seems we had working credentials and the lookup worked. We're done here.
       } else if (rootCause instanceof GoogleJsonResponseException) {
