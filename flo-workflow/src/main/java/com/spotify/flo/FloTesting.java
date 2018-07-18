@@ -24,11 +24,11 @@ import io.grpc.Context;
 
 public class FloTesting {
 
-  static final Context.Key<TestContext> CONTEXT = Context.key("test-context");
+  private static final Context.Key<TestContext> CONTEXT = Context.key("test-context");
 
   public static TestScope scope() {
     if (isTest()) {
-      throw new IllegalStateException("nested tests not supported");
+      throw new IllegalStateException("Nested tests not supported");
     }
     final TestContext tc = new TestContext();
     return new TestScope(Context.current().withValue(CONTEXT, tc));
