@@ -21,7 +21,6 @@
 package com.spotify.flo.context;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
