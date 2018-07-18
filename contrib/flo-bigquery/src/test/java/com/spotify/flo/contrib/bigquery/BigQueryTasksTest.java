@@ -68,6 +68,10 @@ public class BigQueryTasksTest {
         // Seems we had working credentials and the lookup worked. We're done here.
       } else if (rootCause instanceof GoogleJsonResponseException) {
         // Seems we managed to make a request, so the lookup executed. We're done here.
+      } else if (rootCause instanceof IllegalArgumentException &&
+          rootCause.getMessage().startsWith("A project ID is required")) {
+        // Seems we managed to get as far as trying to instantiate the BigQuery client (in the task process).
+        // We're done here.
       } else {
         // Not sure what went wrong here, might be serialization error, so be conservative and fail here.
         throw e;
