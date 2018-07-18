@@ -23,28 +23,21 @@ package com.spotify.flo.freezer;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.WRITE;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.serializers.ClosureSerializer;
-import com.esotericsoftware.kryo.serializers.JavaSerializer;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.ForwardingEvalContext;
-import com.twitter.chill.IKryoRegistrar;
-import com.twitter.chill.KryoInstantiator;
-import com.twitter.chill.java.PackageRegistrar;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,10 +99,10 @@ public class PersistingContext extends ForwardingEvalContext {
   }
 
   public static void serialize(Object object, OutputStream outputStream) {
-    final Kryo kryo = getKryo();
-
-    try (Output output = new Output(outputStream)) {
-      kryo.writeClassAndObject(output, object);
+    try (ObjectOutputStream oos = new ObjectOutputStream(outputStream)) {
+      oos.writeObject(object);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -117,56 +110,13 @@ public class PersistingContext extends ForwardingEvalContext {
     return deserialize(Files.newInputStream(filePath));
   }
 
+  @SuppressWarnings("unchecked")
   public static <T> T deserialize(InputStream inputStream) {
-    final Kryo kryo = getKryo();
-
-    try (Input input = new Input(inputStream)) {
-      return (T) kryo.readClassAndObject(input);
+    try (ObjectInputStream ois = new ObjectInputStream(inputStream)) {
+      return (T) ois.readObject();
+    } catch (IOException | ClassNotFoundException e) {
+      throw new RuntimeException(e);
     }
-  }
-
-  private static Kryo getKryo() {
-
-    // Look up chill-scala using reflection to avoid having a hard dependency on the
-    // chill-scala library and allow this to work with multiple scala versions.
-    Class<?> scalaKryoInstantiatorClass = null;
-    try {
-      scalaKryoInstantiatorClass = Class.forName("com.twitter.chill.ScalaKryoInstantiator");
-    } catch (ClassNotFoundException e) {
-      LOG.debug("Could not find com.twitter.chill.ScalaKryoInstantiator: {}", e.toString());
-    }
-
-    final Kryo kryo;
-
-    // Instantiate kryo..
-    if (scalaKryoInstantiatorClass!= null) {
-      LOG.debug("using chill-scala");
-      // ...for scala (includes java serializers)
-      final KryoInstantiator instantiator;
-      try {
-        instantiator = KryoInstantiator.class.cast(scalaKryoInstantiatorClass.newInstance());
-      } catch (InstantiationException | IllegalAccessException e) {
-        throw new RuntimeException(e);
-      }
-      kryo = instantiator.newKryo();
-    } else {
-      // ...for java
-      LOG.debug("using chill-java");
-      kryo = new Kryo();
-      PackageRegistrar.all().apply(kryo);
-      kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
-    }
-
-    kryo.register(java.lang.invoke.SerializedLambda.class);
-    try {
-      // SimpleConfig is a package private class, hence using Class.forName to reference it
-      kryo.register(Class.forName("com.typesafe.config.impl.SimpleConfig"), new ConfigSerializer());
-    } catch (ClassNotFoundException e) {
-      LOG.debug("ConfigSerializer not registered", e);
-    }
-    kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
-    kryo.addDefaultSerializer(Throwable.class, new JavaSerializer());
-    return kryo;
   }
 
   public static String cleanForFilename(TaskId taskId) {
