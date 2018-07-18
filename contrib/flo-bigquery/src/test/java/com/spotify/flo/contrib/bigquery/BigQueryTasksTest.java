@@ -20,17 +20,18 @@
 
 package com.spotify.flo.contrib.bigquery;
 
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.cloud.bigquery.TableId;
 import com.google.common.base.Throwables;
 import com.spotify.flo.Task;
 import com.spotify.flo.context.FloRunner;
 import com.spotify.flo.freezer.PersistingContext;
+import com.spotify.flo.status.NotReady;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ExecutionException;
@@ -52,19 +53,25 @@ public class BigQueryTasksTest {
 
   @Test
   public void lookupShouldBeRunnable() throws Exception {
-    final String rock = Long.toHexString(ThreadLocalRandom.current().nextLong());
-    final Future<TableId> future = FloRunner.runTask(BigQueryTasks.lookup(() -> {
-      throw new UnsupportedOperationException(rock);
-    }, TableId.of("foo", "bar", "baz"))).future();
+    final Future<TableId> future = FloRunner.runTask(BigQueryTasks.lookup(
+        "none-existent-project", "none-existent-dataset", "none-existent-table")).future();
 
     try {
       future.get();
       fail();
     } catch (ExecutionException e) {
+      // Root cause for serialization errors tend to be NPE. Check that we didn't get that at least.
       // Verify that we are getting the expected root cause, not some serialization error etc
       final Throwable rootCause = Throwables.getRootCause(e);
-      assertThat(rootCause, instanceOf(UnsupportedOperationException.class));
-      assertThat(rootCause.getMessage(), is(rock));
+      System.err.println("root cause: " + rootCause);
+      if (rootCause instanceof NotReady) {
+        // Seems we had working credentials and the lookup worked. We're done here.
+      } else if (rootCause instanceof GoogleJsonResponseException) {
+        // Seems we managed to make a request, so the lookup executed. We're done here.
+      } else {
+        // Not sure what went wrong here, might be serialization error, so be conservative and fail here.
+        throw e;
+      }
     }
   }
 }

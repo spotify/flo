@@ -51,7 +51,7 @@ public final class BigQueryTasks {
   }
 
   public static Task<TableId> lookup(TableId tableId) {
-    return lookup(BigQueryOptions.getDefaultInstance()::getService, tableId);
+    return lookup(() -> BigQueryOptions.getDefaultInstance().getService(), tableId);
   }
 
   public static Task<TableId> lookup(String project, String dataset, String table) {
