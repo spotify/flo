@@ -45,15 +45,17 @@ public class InputSyncCompletionTest {
         return 42;
       });
 
-  Task<Integer> failing = Task.named("failing").ofType(Integer.class)
+  private Task<Integer> failing(String msg) {
+    return Task.named("failing").ofType(Integer.class)
       .process(() -> {
-        throw new RuntimeException("failed");
+        throw new RuntimeException(msg);
       });
+  }
 
   @Test
   public void shouldNotCompleteTaskBeforeAllInputsAreDone_FailingBefore() throws Exception {
     Task<String> task = Task.named("sync").ofType(String.class)
-        .input(() -> failing)
+        .input(() -> failing("failed"))
         .input(() -> blocking)
         .process((a, b) -> "should not happen");
 
@@ -64,7 +66,7 @@ public class InputSyncCompletionTest {
   public void shouldNotCompleteTaskBeforeAllInputsAreDone_FailingAfter() throws Exception {
     Task<String> task = Task.named("sync").ofType(String.class)
         .input(() -> blocking)
-        .input(() -> failing)
+        .input(() -> failing("failed"))
         .process((a, b) -> "should not happen");
 
     awaitBlocked(task);
@@ -73,7 +75,7 @@ public class InputSyncCompletionTest {
   @Test
   public void shouldNotCompleteTaskBeforeAllInputsAreDone_AsInputListBefore() throws Exception {
     Task<String> task = Task.named("sync").ofType(String.class)
-        .inputs(() -> Arrays.asList(failing, blocking))
+        .inputs(() -> Arrays.asList(failing("failed"), blocking))
         .process(a -> "should not happen");
 
     awaitBlocked(task);
@@ -82,10 +84,59 @@ public class InputSyncCompletionTest {
   @Test
   public void shouldNotCompleteTaskBeforeAllInputsAreDone_AsInputListAfter() throws Exception {
     Task<String> task = Task.named("sync").ofType(String.class)
-        .inputs(() -> Arrays.asList(blocking, failing))
+        .inputs(() -> Arrays.asList(blocking, failing("failed")))
         .process(a -> "should not happen");
 
     awaitBlocked(task);
+  }
+
+  @Test
+  public void shouldPropagateExceptionsAsSuppressed() throws Exception {
+    Task<String> task = Task.named("failing").ofType(String.class)
+        .input(() -> failing("failed 1"))
+        .input(() -> failing("failed 2"))
+        .process((a, b) -> "should not happen");
+
+    AwaitValue<Throwable> eval = new AwaitValue<>();
+    context.evaluate(task).onFail(eval);
+
+    Throwable throwable = eval.awaitAndGet();
+
+    assertThat(throwable, instanceOf(RuntimeException.class));
+    assertThat(throwable.getMessage(), is("failed 2"));
+    assertThat(throwable.getSuppressed().length, is(1));
+
+    throwable = throwable.getSuppressed()[0];
+    assertThat(throwable.getMessage(), is("failed 1"));
+  }
+
+  @Test
+  public void shouldPropagateExceptionsAsSuppressedFromMultipleLevels() throws Exception {
+    Task<String> taskLevel2 = Task.named("failing-2").ofType(String.class)
+        .input(() -> failing("failed 1"))
+        .input(() -> failing("failed 2"))
+        .process((a, b) -> "should not happen");
+
+    Task<String> task = Task.named("failing-1").ofType(String.class)
+        .input(() -> taskLevel2)
+        .input(() -> failing("failed 3"))
+        .process((a, b) -> "should not happen");
+
+    AwaitValue<Throwable> eval = new AwaitValue<>();
+    context.evaluate(task).onFail(eval);
+
+    Throwable throwable = eval.awaitAndGet();
+
+    assertThat(throwable, instanceOf(RuntimeException.class));
+    assertThat(throwable.getMessage(), is("failed 3"));
+    assertThat(throwable.getSuppressed().length, is(1));
+
+    throwable = throwable.getSuppressed()[0];
+    assertThat(throwable.getMessage(), is("failed 2"));
+    assertThat(throwable.getSuppressed().length, is(1));
+
+    throwable = throwable.getSuppressed()[0];
+    assertThat(throwable.getMessage(), is("failed 1"));
   }
 
   private void awaitBlocked(Task<String> task) throws InterruptedException {

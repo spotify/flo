@@ -42,7 +42,8 @@ public final class Values {
    *
    * <p>The returned {@link Value} will not complete until both input values have completed either
    * successfully or with an exception. If both inputs fail with an exception, the exception from
-   * {@code first} will be propagated into the returned value.
+   * {@code first} will be propagated into the returned value, having the exception from
+   * {@code second} added as a suppressed exception to it.
    *
    * @param context The context which values are processed in
    * @param first   The first input value
@@ -63,6 +64,9 @@ public final class Values {
     BiConsumer<T, Throwable> firstComplete = (t, firstThrowable) -> {
       BiConsumer<U, Throwable> secondComplete = (v, secondThrowable) -> {
         if (firstThrowable != null) {
+          if (secondThrowable != null && secondThrowable != firstThrowable) {
+            firstThrowable.addSuppressed(secondThrowable);
+          }
           promise.fail(firstThrowable);
         } else if (secondThrowable != null) {
           promise.fail(secondThrowable);
