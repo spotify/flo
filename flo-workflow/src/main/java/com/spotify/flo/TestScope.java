@@ -20,17 +20,14 @@
 
 package com.spotify.flo;
 
-import static com.spotify.flo.FloTesting.CONTEXT;
-
 import io.grpc.Context;
 
 public class TestScope implements AutoCloseable {
 
   private final Context origContext;
 
-  TestScope() {
-    final TestContext tc = new TestContext();
-    origContext = Context.current().withValue(CONTEXT, tc).attach();
+  TestScope(Context context) {
+    origContext = context.attach();
   }
 
   @Override

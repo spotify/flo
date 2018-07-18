@@ -30,14 +30,12 @@ public class FloTesting {
     if (isTest()) {
       throw new IllegalStateException("nested tests not supported");
     }
-    return new TestScope();
+    final TestContext tc = new TestContext();
+    return new TestScope(Context.current().withValue(CONTEXT, tc));
   }
 
   public static void run(Runnable r) {
-    if (isTest()) {
-      throw new IllegalStateException("nested tests not supported");
-    }
-    try (TestScope sc = new TestScope()) {
+    try (TestScope ts = scope()) {
       r.run();
     }
   }
