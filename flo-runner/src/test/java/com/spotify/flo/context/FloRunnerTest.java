@@ -52,6 +52,9 @@ import com.spotify.flo.TestContext;
 import com.spotify.flo.TestScope;
 import com.spotify.flo.Tracing;
 import com.spotify.flo.context.FloRunner.Result;
+import com.spotify.flo.context.Mocks.DataProcessing;
+import com.spotify.flo.context.Mocks.PublishingContext;
+import com.spotify.flo.context.Mocks.StorageLookup;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
@@ -59,6 +62,7 @@ import com.spotify.flo.status.NotRetriable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -406,30 +410,44 @@ public class FloRunnerTest {
 
   @Test
   public void isTestShouldBeTrueInTestScope() throws Exception {
+    assertThat(FloTesting.isTest(), is(false));
     try (TestScope ts = FloTesting.scope()) {
+      assertThat(FloTesting.isTest(), is(true));
       final Task<Boolean> isTest = Task.named("task").ofType(Boolean.class)
           .process(FloTesting::isTest);
       assertThat(runTask(isTest).future().get(30, SECONDS), is(true));
     }
+    assertThat(FloTesting.isTest(), is(false));
   }
 
   @Test
   public void testMocking() throws Exception {
 
-    // Verify lookups and publishing after the fact
+    // Mock input, data processing results and verify lookups and publishing after the fact
     try (TestScope ts = FloTesting.scope()) {
+      final URI barInput = URI.create("gs://bar/4711/");
+      final String jobResult = "42";
+      final URI publishResult = URI.create("meta://bar/4711/");
+
+      PublishingContext.mock().publish(jobResult, publishResult);
+      StorageLookup.mock().data("bar", barInput);
+      DataProcessing.mock().result("quux.baz", barInput, jobResult);
+
       final Task<String> task = Task.named("task").ofType(String.class)
-          .context(new PublishingContext("foo"))
-          .process(value -> {
-            // Do some processing and produce a value
-            return value.publish("42");
+          .input(() -> StorageLookup.of("bar"))
+          .context(PublishingContext.of("foo"))
+          .process((bar, publisher) -> {
+            // Run a data processing job and publish the result
+            final String result = DataProcessing.runJob("quux.baz", bar);
+            return publisher.publish(result);
           });
 
-      assertThat(runTask(task).future().get(30, SECONDS), is("42"));
+      assertThat(runTask(task).future().get(30, SECONDS), is(jobResult));
 
+      assertThat(DataProcessing.mock().jobRuns("quux.baz", barInput), is(1));
+      assertThat(StorageLookup.mock().lookups("bar"), is(1));
       assertThat(PublishingContext.mock().lookups("foo"), is(1));
-      assertThat(PublishingContext.mock().lookups("bar"), is(0));
-      assertThat(PublishingContext.mock().published("foo"), contains("42"));
+      assertThat(PublishingContext.mock().published("foo"), contains(jobResult));
     }
 
     // Verify that all mocks are cleared when leaving scope
@@ -438,15 +456,15 @@ public class FloRunnerTest {
       assertThat(PublishingContext.mock().lookups("foo"), is(0));
     }
 
-    // Mock a lookup and verify that the process fn does not run
+    // Mock a context lookup and verify that the process fn does not run
     try (TestScope ts = FloTesting.scope()) {
-      PublishingContext.mock().mockValue("foo", "17");
+      PublishingContext.mock().value("foo", "17");
 
       @SuppressWarnings("unchecked") final F1<PublishingContext.Value, String> mockProcessFn = Mockito.mock(F1.class);
       when(mockProcessFn.apply(any())).thenThrow(new AssertionError());
 
       final Task<String> task = Task.named("task").ofType(String.class)
-          .context(new PublishingContext("foo"))
+          .context(PublishingContext.of("foo"))
           .process(mockProcessFn);
 
       assertThat(runTask(task).future().get(30, SECONDS), is("17"));
@@ -458,82 +476,7 @@ public class FloRunnerTest {
     }
   }
 
-  static class PublishingContext extends TaskContextStrict<PublishingContext.Value, String> {
 
-    private static final TestContext.Key<Mocking> MOCK = TestContext.key("publishing-context-mock", Mocking::new);
-
-    private final String key;
-
-    PublishingContext(String key) {
-      this.key = key;
-    }
-
-    @Override
-    public Value provide(EvalContext evalContext) {
-      return new Value();
-    }
-
-    @Override
-    public Optional<String> lookup(Task task) {
-      if (FloTesting.isTest()) {
-        return MOCK.get().lookup(key);
-      } else {
-        // Talk to some production service
-        throw new UnsupportedOperationException();
-      }
-    }
-
-    public static Mocking mock() {
-      return MOCK.get();
-    }
-
-    class Value {
-
-      String publish(String value) {
-        if (FloTesting.isTest()) {
-          return MOCK.get().publish(key, value);
-        } else {
-          // Talk to some production service
-          throw new UnsupportedOperationException();
-        }
-      }
-    }
-
-    static class Mocking {
-
-      private final ConcurrentMap<String, String> lookupValues = new ConcurrentHashMap<>();
-      private final ConcurrentMap<String, AtomicInteger> lookupOperations = new ConcurrentHashMap<>();
-      private final ConcurrentMap<String, ArrayDeque<String>> publishOperations = new ConcurrentHashMap<>();
-
-      public void mockValue(String key, String value) {
-        lookupValues.put(key, value);
-      }
-
-      Optional<String> lookup(String key) {
-        lookupOperations.computeIfAbsent(key, k -> new AtomicInteger()).incrementAndGet();
-        return Optional.ofNullable(lookupValues.get(key));
-      }
-
-      String publish(String key, String value) {
-        publishOperations.computeIfAbsent(key, k -> new ArrayDeque<>()).add(value);
-        return value;
-      }
-
-      public List<String> published(String key) {
-        return Optional.ofNullable(publishOperations.get(key))
-            .map(ImmutableList::copyOf)
-            .orElse(ImmutableList.of());
-      }
-
-      public Optional<String> publishedLast(String key) {
-        return Optional.ofNullable(Iterables.getLast(published(key), null));
-      }
-
-      public int lookups(String key) {
-        return Optional.ofNullable(lookupOperations.get(key)).map(AtomicInteger::get).orElse(0);
-      }
-    }
-  }
 
   private static String jvmName() {
     return ManagementFactory.getRuntimeMXBean().getName();
