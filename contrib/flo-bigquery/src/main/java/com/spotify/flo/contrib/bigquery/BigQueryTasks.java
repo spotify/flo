@@ -25,7 +25,9 @@ import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.spotify.flo.Task;
+import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.status.NotReady;
 import com.spotify.flo.util.Date;
 import com.spotify.flo.util.DateHour;
@@ -35,19 +37,21 @@ import java.util.Optional;
 public final class BigQueryTasks {
 
   private BigQueryTasks() {
+    throw new UnsupportedOperationException();
   }
 
-  private static Task<TableId> lookup(BigQuery bigQuery, TableId tableId) {
+  @VisibleForTesting
+  static Task<TableId> lookup(F0<BigQuery> bigQuery, TableId tableId) {
     return Task.named(tableId.getProject(), tableId.getDataset(), tableId.getTable())
         .ofType(TableId.class)
         .process(() ->
-            Optional.ofNullable(bigQuery.getTable(tableId))
+            Optional.ofNullable(bigQuery.get().getTable(tableId))
                 .map(Table::getTableId)
                 .orElseThrow(NotReady::new));
   }
 
   public static Task<TableId> lookup(TableId tableId) {
-    return lookup(BigQueryOptions.getDefaultInstance().getService(), tableId);
+    return lookup(BigQueryOptions.getDefaultInstance()::getService, tableId);
   }
 
   public static Task<TableId> lookup(String project, String dataset, String table) {
