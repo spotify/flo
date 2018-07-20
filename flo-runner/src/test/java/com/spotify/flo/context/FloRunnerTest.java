@@ -54,6 +54,9 @@ import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
 import com.spotify.flo.status.NotRetriable;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValueFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -451,6 +454,25 @@ public class FloRunnerTest {
 
       assertThat(PublishingContext.mock().lookups("foo"), is(1));
       assertThat(PublishingContext.mock().published("foo"), is(empty()));
+    }
+  }
+
+  @Test
+  public void shouldThrowIfForkingIsExplicitlyEnabledInTestMode() {
+    final Task<String> task = Task.named("task").ofType(String.class)
+        .process(() -> {
+          throw new AssertionError();
+        });
+
+    final Config config = ConfigFactory.load("flo")
+        .withValue("flo.forking", ConfigValueFactory.fromAnyRef(true));
+
+    try (TestScope ts = FloTesting.scope()) {
+      try {
+        FloRunner.runTask(task, config);
+      } catch (IllegalStateException e) {
+        assertThat(e.getMessage(), is("Forking is not supported in test mode"));
+      }
     }
   }
 
