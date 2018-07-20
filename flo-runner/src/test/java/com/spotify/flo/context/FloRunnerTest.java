@@ -40,15 +40,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.spotify.flo.EvalContext;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F1;
-import com.spotify.flo.TaskContextStrict;
 import com.spotify.flo.TaskId;
-import com.spotify.flo.TestContext;
 import com.spotify.flo.TestScope;
 import com.spotify.flo.Tracing;
 import com.spotify.flo.context.FloRunner.Result;
@@ -67,15 +62,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -421,7 +412,7 @@ public class FloRunnerTest {
   }
 
   @Test
-  public void testMocking() throws Exception {
+  public void mockingInputsOutputsAndContextShouldBePossibleInTestScope() throws Exception {
 
     // Mock input, data processing results and verify lookups and publishing after the fact
     try (TestScope ts = FloTesting.scope()) {
@@ -455,6 +446,10 @@ public class FloRunnerTest {
       assertThat(PublishingContext.mock().published("foo"), is(empty()));
       assertThat(PublishingContext.mock().lookups("foo"), is(0));
     }
+  }
+
+  @Test
+  public void mockingContextExistsShouldMakeProcessFnNotRunInTestScope() throws Exception {
 
     // Mock a context lookup and verify that the process fn does not run
     try (TestScope ts = FloTesting.scope()) {
@@ -475,8 +470,6 @@ public class FloRunnerTest {
       assertThat(PublishingContext.mock().published("foo"), is(empty()));
     }
   }
-
-
 
   private static String jvmName() {
     return ManagementFactory.getRuntimeMXBean().getName();
