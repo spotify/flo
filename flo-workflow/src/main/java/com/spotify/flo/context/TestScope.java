@@ -18,7 +18,7 @@
  * -/-/-
  */
 
-package com.spotify.flo;
+package com.spotify.flo.context;
 
 import io.grpc.Context;
 

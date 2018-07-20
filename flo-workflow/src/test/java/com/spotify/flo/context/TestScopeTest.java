@@ -18,12 +18,13 @@
  * -/-/-
  */
 
-package com.spotify.flo;
+package com.spotify.flo.context;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
+import com.spotify.flo.context.TestScope;
 import io.grpc.Context;
 import org.junit.Test;
 

@@ -40,11 +40,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F1;
 import com.spotify.flo.TaskId;
-import com.spotify.flo.TestScope;
 import com.spotify.flo.Tracing;
 import com.spotify.flo.context.FloRunner.Result;
 import com.spotify.flo.context.Mocks.DataProcessing;
@@ -54,9 +52,6 @@ import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
 import com.spotify.flo.status.NotRetriable;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigValueFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -471,25 +466,6 @@ public class FloRunnerTest {
 
       assertThat(PublishingContext.mock().lookups("foo"), is(1));
       assertThat(PublishingContext.mock().published("foo"), is(empty()));
-    }
-  }
-
-  @Test
-  public void shouldThrowIfForkingIsExplicitlyEnabledInTestMode() {
-    final Task<String> task = Task.named("task").ofType(String.class)
-        .process(() -> {
-          throw new AssertionError();
-        });
-
-    final Config config = ConfigFactory.load("flo")
-        .withValue("flo.forking", ConfigValueFactory.fromAnyRef(true));
-
-    try (TestScope ts = FloTesting.scope()) {
-      try {
-        FloRunner.runTask(task, config);
-      } catch (IllegalStateException e) {
-        assertThat(e.getMessage(), is("Forking is not supported in test mode"));
-      }
     }
   }
 

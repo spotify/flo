@@ -18,7 +18,7 @@
  * -/-/-
  */
 
-package com.spotify.flo;
+package com.spotify.flo.context;
 
 import io.grpc.Context;
 import java.util.function.Supplier;
@@ -28,11 +28,14 @@ public class FloTesting {
   private static final Context.Key<TestContext> CONTEXT = Context.key("test-context");
 
   public static TestScope scope() {
+    return scopeWithContext(new TestContext());
+  }
+
+  public static TestScope scopeWithContext(TestContext testContext) {
     if (isTest()) {
       throw new IllegalStateException("Nested tests not supported");
     }
-    final TestContext tc = new TestContext();
-    return new TestScope(Context.current().withValue(CONTEXT, tc));
+    return new TestScope(Context.current().withValue(CONTEXT, testContext));
   }
 
   public static void run(Runnable r) {
