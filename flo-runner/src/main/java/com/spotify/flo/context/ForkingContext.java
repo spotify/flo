@@ -21,8 +21,11 @@
 package com.spotify.flo.context;
 
 import com.spotify.flo.EvalContext;
+import com.spotify.flo.FloTesting;
 import com.spotify.flo.Fn;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.TestContext;
+import com.spotify.flo.TestScope;
 import com.spotify.flo.Tracing;
 import io.grpc.Context;
 import java.io.IOException;
@@ -61,20 +64,53 @@ class ForkingContext extends ForwardingEvalContext {
     return () -> {
       try (final ForkingExecutor executor = new ForkingExecutor()) {
         executor.environment(Collections.singletonMap("FLO_TASK_ID", taskId.toString()));
-        return executor.execute(() -> {
+        final TestContext testInput = FloTesting.isTest() ? FloTesting.context().inputOnly() : null;
+        final Result<T> result = executor.execute(() -> {
           try {
             return Context.current()
                 .withValue(Tracing.TASK_ID, taskId)
-                .call(fn::get);
+                .call(() -> {
+                  if (testInput != null) {
+                    try (TestScope scope = FloTesting.scopeWithContext(testInput)) {
+                      return Result.of(testInput, fn.get());
+                    }
+                  } else {
+                    return Result.of(fn.get());
+                  }
+                });
           } catch (RuntimeException e) {
             throw e;
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
         });
+        if (FloTesting.isTest()) {
+          // merge the output from inside the task process into the main test context;
+          FloTesting.context().mergeOutput(result.testContext);
+        }
+        return result.value;
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
     };
+  }
+
+  private static class Result<T> {
+
+    final TestContext testContext;
+    final T value;
+
+    private Result(TestContext testContext, T value) {
+      this.testContext = testContext;
+      this.value = value;
+    }
+
+    private static <T> Result<T> of(TestContext context, T result) {
+      return new Result<>(context, result);
+    }
+
+    private static <T> Result<T> of(T result) {
+      return new Result<>(null, result);
+    }
   }
 }

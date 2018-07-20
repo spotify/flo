@@ -30,35 +30,66 @@ public class TestContext {
   TestContext() {
   }
 
-  private final ConcurrentMap<Key<?>, Object> values = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Key<?>, Value<?>> values = new ConcurrentHashMap<>();
 
-  public static <T> Key<T> key(String name) {
-    return new Key<>(name);
+  public static <T extends Value<T>> Key<T> key(Class<?> cls, String name) {
+    return new Key<>(cls, name);
   }
 
-  public static <T> Key<T> key(String name, F0<T> initializer) {
-    return new Key<>(name, initializer);
+  public static <T extends Value<T>> Key<T> key(Class<?> cls, String name, F0<T> initializer) {
+    return new Key<>(cls, name, initializer);
   }
 
-  private Object lookup(Key<?> key) {
-    return values.get(key);
+  @SuppressWarnings("unchecked")
+  private <T extends Value<T>> Value<T> lookup(Key<T> key) {
+    return (Value<T>) values.get(key);
   }
 
-  private Object lookup(Key<?> key, F0<?> supplier) {
-    return values.computeIfAbsent(key, k -> supplier.get());
+  @SuppressWarnings("unchecked")
+  private <T extends Value<T>> Value<T>  lookup(Key<T> key, F0<T> supplier) {
+    return (Value<T>) values.computeIfAbsent(key, k -> supplier.get());
   }
 
-  public static class Key<T> {
+  public TestContext inputOnly() {
+    final TestContext inputOnly = new TestContext();
+    values.forEach((Key<?> key, Value value) -> inputOnly.values.put(key, value.inputOnly()));
+    return inputOnly;
+  }
 
+  @SuppressWarnings("unchecked")
+  public void mergeOutput(TestContext testContext) {
+    testContext.values.forEach((Key<?> key, Value value) -> {
+      values.compute(key, (Key<?> k, Value currentValue) -> {
+        if (currentValue != null) {
+          return currentValue.mergedOutput(value);
+        } else {
+          return value;
+        }
+      });
+    });
+  }
+
+  @Override
+  public String toString() {
+    return "TestContext{" +
+        "values=" + values +
+        '}';
+  }
+
+  public static class Key<T extends Value<T>> {
+
+    private final String cls;
     private final String name;
     private final F0<T> initializer;
 
-    public Key(String name) {
+    Key(Class<?> cls, String name) {
+      this.cls = cls.getCanonicalName();
       this.name = Objects.requireNonNull(name, "name");
       this.initializer = null;
     }
 
-    public Key(String name, F0<T> initializer) {
+    Key(Class<?> cls, String name, F0<T> initializer) {
+      this.cls = cls.getCanonicalName();
       this.name = Objects.requireNonNull(name, "name");
       this.initializer = Objects.requireNonNull(initializer, "initializer");
     }
@@ -78,10 +109,36 @@ public class TestContext {
     }
 
     @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Key<?> key = (Key<?>) o;
+      return Objects.equals(cls, key.cls) &&
+          Objects.equals(name, key.name);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(cls, name);
+    }
+
+    @Override
     public String toString() {
       return "Key{" +
-          "name='" + name + '\'' +
+          "cls='" + cls + '\'' +
+          ", name='" + name + '\'' +
           '}';
     }
+  }
+
+  public interface Value<T extends Value> {
+
+    T mergedOutput(T other);
+
+    T inputOnly();
   }
 }

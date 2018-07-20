@@ -457,24 +457,24 @@ public class FloRunnerTest {
     }
   }
 
-  @Test
-  public void shouldThrowIfForkingIsExplicitlyEnabledInTestMode() {
-    final Task<String> task = Task.named("task").ofType(String.class)
-        .process(() -> {
-          throw new AssertionError();
-        });
-
-    final Config config = ConfigFactory.load("flo")
-        .withValue("flo.forking", ConfigValueFactory.fromAnyRef(true));
-
-    try (TestScope ts = FloTesting.scope()) {
-      try {
-        FloRunner.runTask(task, config);
-      } catch (IllegalStateException e) {
-        assertThat(e.getMessage(), is("Forking is not supported in test mode"));
-      }
-    }
-  }
+//  @Test
+//  public void shouldThrowIfForkingIsExplicitlyEnabledInTestMode() {
+//    final Task<String> task = Task.named("task").ofType(String.class)
+//        .process(() -> {
+//          throw new AssertionError();
+//        });
+//
+//    final Config config = ConfigFactory.load("flo")
+//        .withValue("flo.forking", ConfigValueFactory.fromAnyRef(true));
+//
+//    try (TestScope ts = FloTesting.scope()) {
+//      try {
+//        FloRunner.runTask(task, config);
+//      } catch (IllegalStateException e) {
+//        assertThat(e.getMessage(), is("Forking is not supported in test mode"));
+//      }
+//    }
+//  }
 
   private static String jvmName() {
     return ManagementFactory.getRuntimeMXBean().getName();

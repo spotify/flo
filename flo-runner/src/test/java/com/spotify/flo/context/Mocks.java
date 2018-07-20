@@ -41,7 +41,7 @@ public class Mocks {
   public static class DataProcessing {
 
     private static final TestContext.Key<DataProcessing.Mocking> MOCK =
-        TestContext.key("data-processing-mock", DataProcessing.Mocking::new);
+        TestContext.key(DataProcessing.class, "data-processing-mock", DataProcessing.Mocking::new);
 
     public static String runJob(final String job, final URI data) {
       if (FloTesting.isTest()) {
@@ -57,7 +57,7 @@ public class Mocks {
       return MOCK.get();
     }
 
-    public static class Mocking {
+    public static class Mocking implements TestContext.Value<Mocking> {
 
       private final ConcurrentMap<String, ConcurrentMap<URI, String>> results = new ConcurrentHashMap<>();
       private final ConcurrentMap<String, ConcurrentMap<URI, AtomicInteger>> runs = new ConcurrentHashMap<>();
@@ -80,13 +80,45 @@ public class Mocks {
             .flatMap(r -> Optional.ofNullable(r.get(data)))
             .map(AtomicInteger::get).orElse(0);
       }
+
+      @Override
+      public Mocking mergedOutput(Mocking other) {
+        Mocking merged = new Mocking();
+        merged.results.putAll(results);
+        merged.putOutput(this);
+        merged.putOutput(other);
+        return merged;
+      }
+
+      @Override
+      public Mocking inputOnly() {
+        final Mocking m = new Mocking();
+        m.results.putAll(results);
+        return m;
+      }
+
+      private void putOutput(Mocking other) {
+        other.runs.forEach((job, jobRuns) ->
+            jobRuns.forEach((data, n) ->
+                runs.computeIfAbsent(job, j -> new ConcurrentHashMap<>())
+                    .computeIfAbsent(data, d -> new AtomicInteger())
+                    .addAndGet(n.get())));
+      }
+
+      @Override
+      public String toString() {
+        return "Mocking{" +
+            "results=" + results +
+            ", runs=" + runs +
+            '}';
+      }
     }
   }
 
   public static class StorageLookup {
 
     private static final TestContext.Key<StorageLookup.Mocking> MOCK =
-        TestContext.key("storage-lookup-mock", Mocking::new);
+        TestContext.key(StorageLookup.class, "storage-lookup-mock", Mocking::new);
 
     public static Task<URI> of(String key) {
       return Task.named("lookup", key).ofType(URI.class)
@@ -104,7 +136,7 @@ public class Mocks {
       return MOCK.get();
     }
 
-    public static class Mocking {
+    public static class Mocking implements TestContext.Value<Mocking> {
 
       private final ConcurrentMap<String, URI> lookupValues = new ConcurrentHashMap<>();
       private final ConcurrentMap<String, AtomicInteger> lookupOperations = new ConcurrentHashMap<>();
@@ -121,12 +153,43 @@ public class Mocks {
       public int lookups(String bar) {
         return Optional.ofNullable(lookupOperations.get(bar)).map(AtomicInteger::get).orElse(0);
       }
+
+      @Override
+      public Mocking mergedOutput(Mocking other) {
+        final Mocking merged = new Mocking();
+        merged.lookupValues.putAll(this.lookupValues);
+        merged.putOutput(this);
+        merged.putOutput(other);
+        return merged;
+      }
+
+      @Override
+      public Mocking inputOnly() {
+        final Mocking m = new Mocking();
+        m.lookupValues.putAll(lookupValues);
+        return m;
+      }
+
+      public void putOutput(Mocking other) {
+        other.lookupOperations.forEach((key, n) ->
+            lookupOperations.computeIfAbsent(key, k -> new AtomicInteger())
+                .addAndGet(n.get()));
+      }
+
+      @Override
+      public String toString() {
+        return "Mocking{" +
+            "lookupValues=" + lookupValues +
+            ", lookupOperations=" + lookupOperations +
+            '}';
+      }
     }
   }
 
   public static class PublishingContext extends TaskContextStrict<PublishingContext.Value, String> {
 
-    private static final TestContext.Key<Mocking> MOCK = TestContext.key("publishing-context-mock", Mocking::new);
+    private static final TestContext.Key<Mocking> MOCK =
+        TestContext.key(PublishingContext.class, "publishing-context-mock", Mocking::new);
 
     private final String key;
 
@@ -140,7 +203,7 @@ public class Mocks {
 
     @Override
     public Value provide(EvalContext evalContext) {
-      return new Value();
+      return new Value(key);
     }
 
     @Override
@@ -157,7 +220,13 @@ public class Mocks {
       return MOCK.get();
     }
 
-    public class Value {
+    public static class Value {
+
+      private final String key;
+
+      Value(String key) {
+        this.key = key;
+      }
 
       public String publish(String value) {
         if (FloTesting.isTest()) {
@@ -169,7 +238,7 @@ public class Mocks {
       }
     }
 
-    public static class Mocking {
+    public static class Mocking implements TestContext.Value<Mocking> {
 
       private final ConcurrentMap<String, String> lookupValues = new ConcurrentHashMap<>();
       private final ConcurrentMap<String, AtomicInteger> lookupOperations = new ConcurrentHashMap<>();
@@ -202,6 +271,44 @@ public class Mocks {
 
       public void publish(String data, URI result) {
         publishResults.put(data, result);
+      }
+
+      @Override
+      public Mocking mergedOutput(Mocking other) {
+        final Mocking merged = new Mocking();
+        merged.lookupValues.putAll(lookupValues);
+        merged.publishResults.putAll(publishResults);
+        merged.putOutput(this);
+        merged.putOutput(other);
+        return merged;
+      }
+
+      @Override
+      public Mocking inputOnly() {
+        final Mocking m = new Mocking();
+        m.lookupValues.putAll(lookupValues);
+        m.publishResults.putAll(publishResults);
+        return m;
+      }
+
+      private void putOutput(Mocking other) {
+        other.lookupOperations.forEach((key, n) ->
+            lookupOperations.computeIfAbsent(key, k -> new AtomicInteger())
+                .addAndGet(n.get()));
+        other.publishOperations.forEach((key, values) ->
+            publishOperations.computeIfAbsent(key, k -> new ArrayDeque<>())
+                .addAll(values));
+
+      }
+
+      @Override
+      public String toString() {
+        return "Mocking{" +
+            "lookupValues=" + lookupValues +
+            ", lookupOperations=" + lookupOperations +
+            ", publishResults=" + publishResults +
+            ", publishOperations=" + publishOperations +
+            '}';
       }
     }
   }

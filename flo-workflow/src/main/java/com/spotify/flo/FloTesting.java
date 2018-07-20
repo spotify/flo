@@ -28,11 +28,14 @@ public class FloTesting {
   private static final Context.Key<TestContext> CONTEXT = Context.key("test-context");
 
   public static TestScope scope() {
+    return scopeWithContext(new TestContext());
+  }
+
+  public static TestScope scopeWithContext(TestContext testContext) {
     if (isTest()) {
       throw new IllegalStateException("Nested tests not supported");
     }
-    final TestContext tc = new TestContext();
-    return new TestScope(Context.current().withValue(CONTEXT, tc));
+    return new TestScope(Context.current().withValue(CONTEXT, testContext));
   }
 
   public static void run(Runnable r) {
@@ -51,7 +54,7 @@ public class FloTesting {
     return CONTEXT.get() != null;
   }
 
-  static TestContext context() {
+  public static TestContext context() {
     final TestContext context = CONTEXT.get();
     if (context == null) {
       throw new IllegalStateException("Not in test scope");
