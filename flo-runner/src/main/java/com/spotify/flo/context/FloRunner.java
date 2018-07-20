@@ -220,6 +220,7 @@ public final class FloRunner<T> {
     final boolean inDebugger = ManagementFactory.getRuntimeMXBean()
         .getInputArguments().stream().anyMatch(s -> s.contains("-agentlib:jdwp"));
 
+    // We do not currently have a mechanism for transporting mock inputs and outputs into and out of the task process.
     if (FloTesting.isTest()) {
       // TODO: warn or throw IllegalStateException if config.getBoolean(FLO_FORKING) == true ?
       LOG.debug("Test run, forking disabled");
