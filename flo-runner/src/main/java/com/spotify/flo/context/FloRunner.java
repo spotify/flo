@@ -222,13 +222,15 @@ public final class FloRunner<T> {
 
     // We do not currently have a mechanism for transporting mock inputs and outputs into and out of the task process.
     if (FloTesting.isTest()) {
-      // TODO: warn or throw IllegalStateException if config.getBoolean(FLO_FORKING) == true ?
       LOG.debug("Test run, forking disabled");
       return baseContext;
     }
 
     if (hasExplicitConfigValue(FLO_FORKING)) {
       if (config.getBoolean(FLO_FORKING)) {
+        if (FloTesting.isTest()) {
+          throw new IllegalStateException("Forking is not supported in test mode");
+        }
         LOG.debug("Forking enabled (config variable flo.forking=true)");
         return ForkingContext.composeWith(baseContext);
       } else {
