@@ -23,12 +23,14 @@ package com.spotify.flo.contrib.bigquery;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.cloud.WaitForOption;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryError;
@@ -41,7 +43,17 @@ import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.JobStatus;
 import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
+import com.google.common.base.Throwables;
+import com.spotify.flo.Task;
+import com.spotify.flo.context.FloRunner;
+import com.spotify.flo.freezer.PersistingContext;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,7 +87,7 @@ public class BigQueryContextTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void shouldNotCreateDataset() {
-    final BigQueryContext bigQueryContext = BigQueryContext.create(bigQuery, TABLE_ID);
+    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> bigQuery, TABLE_ID);
 
     bigQueryContext.provide(null);
   }
@@ -84,7 +96,7 @@ public class BigQueryContextTest {
   public void shouldCreateStagingDatasetIfDoesNotExist() {
     when(bigQuery.getDataset(DATASET_ID)).thenReturn(dataset);
 
-    final BigQueryContext bigQueryContext = BigQueryContext.create(bigQuery, TABLE_ID);
+    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> bigQuery, TABLE_ID);
 
     bigQueryContext.provide(null);
 
@@ -95,7 +107,7 @@ public class BigQueryContextTest {
   public void shouldProvideStagingTableId() {
     when(bigQuery.getDataset(any(DatasetId.class))).thenReturn(dataset);
 
-    final BigQueryContext bigQueryContext = BigQueryContext.create(bigQuery, TABLE_ID);
+    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> bigQuery, TABLE_ID);
 
     final StagingTableId stagingTableId = bigQueryContext.provide(null);
 
@@ -109,7 +121,7 @@ public class BigQueryContextTest {
     when(job.waitFor(any(WaitForOption.class))).thenReturn(job);
     when(job.getStatus()).thenReturn(mock(JobStatus.class));
 
-    final BigQueryContext bigQueryContext = BigQueryContext.create(bigQuery, TABLE_ID);
+    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> bigQuery, TABLE_ID);
 
     final StagingTableId stagingTableId = bigQueryContext.provide(null);
 
@@ -123,7 +135,7 @@ public class BigQueryContextTest {
     when(bigQuery.getDataset(DATASET_ID)).thenReturn(mock(Dataset.class));
     when(bigQuery.getTable(TABLE_ID)).thenReturn(mock(Table.class));
 
-    final BigQueryContext bigQueryContext = BigQueryContext.create(bigQuery, TABLE_ID);
+    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> bigQuery, TABLE_ID);
 
     final TableId tableId = bigQueryContext.lookup(null).get();
 
@@ -139,7 +151,7 @@ public class BigQueryContextTest {
     when(job.getStatus()).thenReturn(mock(JobStatus.class));
     when(job.getStatus().getError()).thenReturn(new BigQueryError("", "", "job error"));
 
-    BigQueryContext.create(bigQuery, TABLE_ID).provide(null).publish();
+    BigQueryContext.create(() -> bigQuery, TABLE_ID).provide(null).publish();
   }
 
   @Test(expected = RuntimeException.class)
@@ -149,7 +161,7 @@ public class BigQueryContextTest {
     when(bigQuery.create(any(JobInfo.class))).thenReturn(job);
     when(job.waitFor(any(WaitForOption.class))).thenReturn(null);
 
-    BigQueryContext.create(bigQuery, TABLE_ID).provide(null).publish();
+    BigQueryContext.create(() -> bigQuery, TABLE_ID).provide(null).publish();
   }
 
   @Test(expected = BigQueryException.class)
@@ -161,6 +173,45 @@ public class BigQueryContextTest {
     doThrow(new BigQueryException(mock(IOException.class))).when(job)
         .waitFor(any(WaitForOption.class));
 
-    BigQueryContext.create(bigQuery, TABLE_ID).provide(null).publish();
+    BigQueryContext.create(() -> bigQuery, TABLE_ID).provide(null).publish();
+  }
+
+  @Test
+  public void shouldBeSerializable() {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final BigQueryContext context = BigQueryContext.create("foo", "bar", "baz");
+    PersistingContext.serialize(context, baos);
+    final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+    final BigQueryContext deserializedContext = PersistingContext.deserialize(bais);
+    assertThat(deserializedContext, is(notNullValue()));
+  }
+  @Test
+  public void shouldBeRunnable() throws Exception {
+    final String nonExistentProject = UUID.randomUUID().toString();
+    final Task<TableId> task = Task.named("task").ofType(TableId.class)
+        .context(BigQueryContext.create(nonExistentProject, "foo", "bar"))
+        .process(StagingTableId::tableId);
+
+    final Future<TableId> future = FloRunner.runTask(task).future();
+    try {
+      future.get(30, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      final Throwable rootCause = Throwables.getRootCause(e);
+      if (rootCause instanceof GoogleJsonResponseException) {
+        // Seems we managed to make a request, so the lookup context was successfully invoked. We're done here.
+      } else if (rootCause instanceof IllegalArgumentException
+          && rootCause.getMessage().startsWith("A project ID is required")) {
+        // Seems we got as far as to instantiate the BigQuery client. We're done here.
+      } else if (rootCause instanceof IllegalArgumentException &&
+          rootCause.getMessage().startsWith("Dataset does not exist.")) {
+        // Seems we managed to make a request, so the lookup context was successfully invoked. We're done here.
+      } else if (rootCause instanceof BigQueryException &&
+          rootCause.getMessage().equals("The project " + nonExistentProject + " has not enabled BigQuery.")) {
+        // Seems we managed to make a request, so the lookup context was successfully invoked. We're done here.
+      } else {
+        // Not sure what error we got here, might be a serialization problem. Be conservative and fail.
+        throw new AssertionError("Unknown error, might be serialization problem that needs fixing?", e);
+      }
+    }
   }
 }

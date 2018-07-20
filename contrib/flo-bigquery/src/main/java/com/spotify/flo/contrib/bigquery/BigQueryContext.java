@@ -33,6 +33,7 @@ import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.TableId;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
+import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskContextStrict;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
@@ -46,11 +47,13 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
 
   private static final Logger LOG = LoggerFactory.getLogger(BigQueryContext.class);
 
-  private final BigQuery bigQuery;
+  private final F0<BigQuery> bigQuerySupplier;
   private final TableId tableId;
 
-  private BigQueryContext(BigQuery bigQuery, TableId tableId) {
-    this.bigQuery = bigQuery;
+  private transient BigQuery bigQuery;
+
+  private BigQueryContext(F0<BigQuery> bigQuery, TableId tableId) {
+    this.bigQuerySupplier = bigQuery;
     this.tableId = tableId;
   }
 
@@ -59,10 +62,12 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
   }
 
   public static BigQueryContext create(TableId tableId) {
-    return create(BigQueryOptions.getDefaultInstance().getService(), tableId);
+    return create(() -> {
+      return BigQueryOptions.getDefaultInstance().getService();
+    }, tableId);
   }
 
-  static BigQueryContext create(BigQuery bigQuery, TableId tableId) {
+  static BigQueryContext create(F0<BigQuery> bigQuery, TableId tableId) {
     return new BigQueryContext(bigQuery, tableId);
   }
 
@@ -73,7 +78,7 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
   private Dataset getDatasetOrThrow() {
     final DatasetId datasetId = DatasetId.of(tableId.getProject(), tableId.getDataset());
 
-    final Dataset dataset = bigQuery.getDataset(datasetId);
+    final Dataset dataset = bigQuery().getDataset(datasetId);
 
     if (dataset == null) {
       LOG.error("Could not find dataset {}", datasetId);
@@ -90,8 +95,8 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
 
     final DatasetId stagingDatasetId = DatasetId.of(tableId.getProject(), "_incoming_" + location);
 
-    if (bigQuery.getDataset(stagingDatasetId) == null) {
-      bigQuery.create(DatasetInfo
+    if (bigQuery().getDataset(stagingDatasetId) == null) {
+      bigQuery().create(DatasetInfo
           .newBuilder(stagingDatasetId)
           .setLocation(location)
           .setDefaultTableLifetime(Duration.ofDays(1).toMillis())
@@ -111,7 +116,7 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
   public Optional<TableId> lookup(Task<TableId> task) {
     getDatasetOrThrow();
 
-    if (bigQuery.getTable(tableId) == null) {
+    if (bigQuery().getTable(tableId) == null) {
       return Optional.empty();
     }
 
@@ -122,7 +127,7 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
     final TableId staging = stagingTableId.tableId();
     LOG.debug("copying staging table {} to {}", staging, tableId);
     try {
-      final Job job = bigQuery.create(JobInfo.of(CopyJobConfiguration.of(tableId, staging)))
+      final Job job = bigQuery().create(JobInfo.of(CopyJobConfiguration.of(tableId, staging)))
           .waitFor(WaitForOption.timeout(1, TimeUnit.MINUTES));
       throwIfUnsuccessfulJobStatus(job, tableId);
     } catch (BigQueryException e) {
@@ -134,9 +139,16 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
     }
 
     LOG.debug("deleting staging table {}", staging);
-    bigQuery.delete(staging);
+    bigQuery().delete(staging);
 
     return tableId;
+  }
+
+  private BigQuery bigQuery() {
+    if (bigQuery == null) {
+      bigQuery = bigQuerySupplier.get();
+    }
+    return bigQuery;
   }
 
   private static void throwIfUnsuccessfulJobStatus(Job job, TableId tableId) {
