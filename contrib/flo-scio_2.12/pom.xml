@@ -16,7 +16,7 @@
 
   <properties>
     <scala.baseVersion>2.12</scala.baseVersion>
-    <scala.version>2.12.4</scala.version>
+    <scala.version>2.12.6</scala.version>
   </properties>
 
   <dependencies>
@@ -25,7 +25,32 @@
       <artifactId>flo-scala_${scala.baseVersion}</artifactId>
       <version>0.2.14-SNAPSHOT</version>
     </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>scio-core_2.12</artifactId>
+      <version>0.5.6</version>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>scio-test_2.12</artifactId>
+      <version>0.5.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-direct-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
+    </dependency>
 
+
+    <!--test deps-->
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>flo-runner</artifactId>
@@ -34,7 +59,7 @@
     <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${scala.baseVersion}</artifactId>
-      <version>3.0.4</version>
+      <version>3.0.5</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -47,7 +72,7 @@
         <configuration>
           <scalaVersion>${scala.version}</scalaVersion>
           <sendJavaToScalac>false</sendJavaToScalac>
-          <addScalacArgs>-Xexperimental</addScalacArgs>
+          <addScalacArgs>-Xexperimental|-target:jvm-1.8</addScalacArgs>
         </configuration>
       </plugin>
 
