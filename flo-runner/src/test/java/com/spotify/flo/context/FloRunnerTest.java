@@ -40,6 +40,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableMap;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F1;
@@ -47,6 +48,7 @@ import com.spotify.flo.TaskId;
 import com.spotify.flo.TestScope;
 import com.spotify.flo.Tracing;
 import com.spotify.flo.context.FloRunner.Result;
+import com.spotify.flo.context.Jobs.JobOperator;
 import com.spotify.flo.context.Mocks.DataProcessing;
 import com.spotify.flo.context.Mocks.PublishingContext;
 import com.spotify.flo.context.Mocks.StorageLookup;
@@ -474,6 +476,27 @@ public class FloRunnerTest {
         assertThat(e.getMessage(), is("Forking is not supported in test mode"));
       }
     }
+  }
+
+  @Test
+  public void testOperator() throws Exception {
+    final Instant today = Instant.now().truncatedTo(ChronoUnit.DAYS);
+    final Task<String> task = Task.named("task", today).ofType(String.class)
+        .context(JobOperator.create())
+        .process(job -> job
+            .options(() -> ImmutableMap.of("quux", 17))
+            .pipeline(ctx -> ctx.readFrom("foo").map("x + y").writeTo("baz"))
+            .validation(result -> {
+              if (result.records < 5) {
+                throw new AssertionError("Too few records seen!");
+              }
+            })
+            .success(result -> "hdfs://foo/bar"));
+
+    final String result = FloRunner.runTask(task)
+        .future().get(30, SECONDS);
+
+    assertThat(result, is("hdfs://foo/bar"));
   }
 
   private static String jvmName() {
