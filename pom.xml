@@ -47,6 +47,8 @@
     <module>flo-freezer</module>
     <!-- contrib modules -->
     <module>contrib/flo-bigquery</module>
+    <module>contrib/flo-scio_2.11</module>
+    <module>contrib/flo-scio_2.12</module>
     <module>contrib/flo-styx</module>
   </modules>
 
