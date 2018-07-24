@@ -20,10 +20,10 @@
 
 package com.spotify.flo;
 
+import com.spotify.flo.TaskBuilder.F0;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Supplier;
 
 public class TestContext {
 
@@ -33,7 +33,7 @@ public class TestContext {
     return new Key<>(name);
   }
 
-  public static <T> Key<T> key(String name, Supplier<T> initializer) {
+  public static <T> Key<T> key(String name, F0<T> initializer) {
     return new Key<>(name, initializer);
   }
 
@@ -41,21 +41,21 @@ public class TestContext {
     return values.get(key);
   }
 
-  private Object lookup(Key<?> key, Supplier<?> supplier) {
+  private Object lookup(Key<?> key, F0<?> supplier) {
     return values.computeIfAbsent(key, k -> supplier.get());
   }
 
-  public static class Key<T> {
+  static class Key<T> {
 
     private final String name;
-    private final Supplier<T> initializer;
+    private final F0<T> initializer;
 
     public Key(String name) {
       this.name = Objects.requireNonNull(name, "name");
       this.initializer = null;
     }
 
-    public Key(String name, Supplier<T> initializer) {
+    public Key(String name, F0<T> initializer) {
       this.name = Objects.requireNonNull(name, "name");
       this.initializer = Objects.requireNonNull(initializer, "initializer");
     }
@@ -70,7 +70,7 @@ public class TestContext {
     }
 
     @SuppressWarnings("unchecked")
-    public T get(Supplier<T> supplier) {
+    public T get(F0<T> supplier) {
       return (T) FloTesting.context().lookup(this, supplier);
     }
 
