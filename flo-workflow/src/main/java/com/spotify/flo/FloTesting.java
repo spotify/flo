@@ -21,6 +21,7 @@
 package com.spotify.flo;
 
 import io.grpc.Context;
+import java.util.function.Supplier;
 
 public class FloTesting {
 
@@ -40,15 +41,21 @@ public class FloTesting {
     }
   }
 
-  public static TestContext context() {
+  public static <T> T supply(Supplier<T> f) {
+    try (TestScope ts = scope()) {
+      return f.get();
+    }
+  }
+
+  public static boolean isTest() {
+    return CONTEXT.get() != null;
+  }
+
+  static TestContext context() {
     final TestContext context = CONTEXT.get();
     if (context == null) {
       throw new IllegalStateException("Not in test scope");
     }
     return context;
-  }
-
-  public static boolean isTest() {
-    return CONTEXT.get() != null;
   }
 }
