@@ -48,7 +48,7 @@ public class TestContext {
     return values.computeIfAbsent(key, k -> supplier.get());
   }
 
-  static class Key<T> {
+  public static class Key<T> {
 
     private final String name;
     private final F0<T> initializer;
