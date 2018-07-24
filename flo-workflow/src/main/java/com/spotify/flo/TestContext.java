@@ -27,6 +27,9 @@ import java.util.concurrent.ConcurrentMap;
 
 public class TestContext {
 
+  TestContext() {
+  }
+
   private final ConcurrentMap<Key<?>, Object> values = new ConcurrentHashMap<>();
 
   public static <T> Key<T> key(String name) {
