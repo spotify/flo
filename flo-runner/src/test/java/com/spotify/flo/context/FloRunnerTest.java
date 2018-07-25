@@ -70,6 +70,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -480,8 +481,9 @@ public class FloRunnerTest {
 
   @Test
   public void testOperator() throws Exception {
+    final String mainJvm = jvmName();
     final Instant today = Instant.now().truncatedTo(ChronoUnit.DAYS);
-    final Task<String> task = Task.named("task", today).ofType(String.class)
+    final Task<JobResult> task = Task.named("task", today).ofType(JobResult.class)
         .context(JobOperator.create())
         .process(job -> job
             .options(() -> ImmutableMap.of("quux", 17))
@@ -491,15 +493,28 @@ public class FloRunnerTest {
                 throw new AssertionError("Too few records seen!");
               }
             })
-            .success(result -> "hdfs://foo/bar"));
+            .success(result -> new JobResult(jvmName(), "hdfs://foo/bar")));
 
-    final String result = FloRunner.runTask(task)
+    final JobResult result = FloRunner.runTask(task)
         .future().get(30, SECONDS);
 
-    assertThat(result, is("hdfs://foo/bar"));
+    // TODO: this illustrates a major flaw in the current approach of not executing the operator in the process fn.
+    // The user code (and all logging) ends up running in the main process instead of in the task process.
+    assertThat(result.jvmName, is(not(mainJvm)));
+    assertThat(result.uri, is("hdfs://foo/bar"));
   }
 
   private static String jvmName() {
     return ManagementFactory.getRuntimeMXBean().getName();
+  }
+
+  private static class JobResult {
+    private final String jvmName;
+    private final String uri;
+
+    JobResult(String jvmName, String uri) {
+      this.jvmName = jvmName;
+      this.uri = uri;
+    }
   }
 }
