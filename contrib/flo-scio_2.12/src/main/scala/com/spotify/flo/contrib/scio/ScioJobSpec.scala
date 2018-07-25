@@ -25,30 +25,36 @@ import com.spotify.flo.{FloTesting, TaskId}
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 
-class ScioJobSpec(private val taskId: TaskId) extends Serializable {
+class ScioJobSpec[R, S](private val taskId: TaskId) extends Serializable {
 
   private[scio] var _options: Option[F0[PipelineOptions]] = None
-  private[scio] var _pipeline: F1[ScioContext, Any] = _
-  private[scio] var _result: F2[ScioContext, ScioResult, Any] = _
-  private[scio] var _success: F1[Any, _] = _
+  private[scio] var _pipeline: F1[ScioContext, _] = _
+  private[scio] var _result: F2[ScioContext, ScioResult, R] = _
+  private[scio] var _success: F1[R, S] = _
 
-  def options(f: F0[PipelineOptions]): ScioJobSpec = {
+  def options(f: F0[PipelineOptions]): ScioJobSpec[R, S] = {
     _options = Some(f)
     this
   }
 
-  def pipeline(f: F1[ScioContext, Any]): ScioJobSpec = {
+  def pipeline(f: F1[ScioContext, _]): ScioJobSpec[R, S] = {
     _pipeline = f
     this
   }
 
-  def result(f: F2[ScioContext, ScioResult, Any]): ScioJobSpec = {
-    _result = f
-    this
+  def result[RN](f: F2[ScioContext, ScioResult, RN]): ScioJobSpec[RN, S] = {
+    val self = this.asInstanceOf[ScioJobSpec[RN, S]]
+    self._result = f
+    self
   }
 
-  def success[T](f: F1[Any, T]): T = {
-    _success = f
+  def success[SN](f: F1[R, SN]): SN = {
+    val self = this.asInstanceOf[ScioJobSpec[R, SN]]
+    self._success = f
+    self.run()
+  }
+
+  private def run(): S = {
     if (FloTesting.isTest) {
       runTest()
     } else {
@@ -56,11 +62,10 @@ class ScioJobSpec(private val taskId: TaskId) extends Serializable {
     }
   }
 
-  def runTest[U](): U = {
+  private def runTest(): S = {
     val result = ScioOperator.mock().results.get(taskId)
     if (result.isDefined) {
-      val value = _success.apply(result.get)
-      return value.asInstanceOf[U]
+      return _success.apply(result.get.asInstanceOf[R])
     }
 
     val jobTest = ScioOperator.mock().jobTests.get(taskId)
@@ -72,7 +77,7 @@ class ScioJobSpec(private val taskId: TaskId) extends Serializable {
         _pipeline.apply(sc)
         val scioResult = sc.close().waitUntilDone()
         val result = _result.apply(sc, scioResult)
-        return _success.apply(result).asInstanceOf[U]
+        return _success.apply(result)
       } catch {
         case e: Exception => {
           e.printStackTrace()
@@ -94,7 +99,7 @@ class ScioJobSpec(private val taskId: TaskId) extends Serializable {
     ScioContext(opts)
   }
 
-  def runProd[U](): U = {
+  private def runProd[U](): U = {
     val sc = _options match {
       case None => ScioContext()
       case Some(options) => ScioContext(options.get())
