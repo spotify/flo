@@ -25,36 +25,35 @@ import com.spotify.flo.{FloTesting, TaskId}
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 
-class ScioJobSpec[R, S](private val taskId: TaskId) extends Serializable {
+class ScioJobSpec[R, S](private val taskId: TaskId,
+                        private val _options: Option[F0[PipelineOptions]] = None,
+                        private val _pipeline: F1[ScioContext, _] = null,
+                        private val _result: F2[ScioContext, ScioResult, R] = null,
+                        private val _success: F1[R, S] = null
+                       ) extends Serializable {
 
-  private[scio] var _options: Option[F0[PipelineOptions]] = None
-  private[scio] var _pipeline: F1[ScioContext, _] = _
-  private[scio] var _result: F2[ScioContext, ScioResult, R] = _
-  private[scio] var _success: F1[R, S] = _
 
-  def options(f: F0[PipelineOptions]): ScioJobSpec[R, S] = {
-    _options = Some(f)
-    this
+  def options(options: F0[PipelineOptions]): ScioJobSpec[R, S] = {
+    new ScioJobSpec[R, S](taskId, Some(options), _pipeline, _result, _success)
   }
 
-  def pipeline(f: F1[ScioContext, _]): ScioJobSpec[R, S] = {
-    _pipeline = f
-    this
+  def pipeline(pipeline: F1[ScioContext, _]): ScioJobSpec[R, S] = {
+    new ScioJobSpec[R, S](taskId, _options, pipeline, _result, _success)
   }
 
-  def result[RN](f: F2[ScioContext, ScioResult, RN]): ScioJobSpec[RN, S] = {
-    val self = this.asInstanceOf[ScioJobSpec[RN, S]]
-    self._result = f
-    self
+  def result[RN](result: F2[ScioContext, ScioResult, RN]): ScioJobSpec[RN, S] = {
+    new ScioJobSpec[RN, S](taskId, _options, _pipeline, result, null)
   }
 
-  def success[SN](f: F1[R, SN]): SN = {
-    val self = this.asInstanceOf[ScioJobSpec[R, SN]]
-    self._success = f
-    self.run()
+  def success[SN](success: F1[R, SN]): SN = {
+    val spec = new ScioJobSpec[R, SN](taskId, _options, _pipeline, _result, success)
+    spec.run()
   }
 
   private def run(): S = {
+    if (_pipeline == null || _result == null || _success == null) {
+      throw new IllegalStateException()
+    }
     if (FloTesting.isTest) {
       runTest()
     } else {
@@ -99,13 +98,13 @@ class ScioJobSpec[R, S](private val taskId: TaskId) extends Serializable {
     ScioContext(opts)
   }
 
-  private def runProd[U](): U = {
+  private def runProd(): S = {
     val sc = _options match {
       case None => ScioContext()
       case Some(options) => ScioContext(options.get())
     }
     val scioResult = sc.close().waitUntilDone()
     val result = _result.apply(sc, scioResult)
-    _success.apply(result).asInstanceOf[U]
+    _success.apply(result)
   }
 }
