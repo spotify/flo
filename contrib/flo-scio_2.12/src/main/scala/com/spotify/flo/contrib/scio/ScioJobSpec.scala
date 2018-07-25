@@ -21,9 +21,12 @@
 package com.spotify.flo.contrib.scio
 
 import com.spotify.flo.TaskBuilder.{F0, F1, F2}
+import com.spotify.flo.contrib.scio.ScioJobSpec.log
 import com.spotify.flo.{FloTesting, TaskId}
 import com.spotify.scio.{ScioContext, ScioResult}
+import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
+import org.slf4j.{Logger, LoggerFactory}
 
 class ScioJobSpec[R, S](private val taskId: TaskId,
                         private val _options: Option[F0[PipelineOptions]] = None,
@@ -31,7 +34,6 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
                         private val _result: F2[ScioContext, ScioResult, R] = null,
                         private val _success: F1[R, S] = null
                        ) extends Serializable {
-
 
   def options(options: F0[PipelineOptions]): ScioJobSpec[R, S] = {
     new ScioJobSpec[R, S](taskId, Some(options), _pipeline, _result, _success)
@@ -98,8 +100,21 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
       case None => ScioContext()
       case Some(options) => ScioContext(options.get())
     }
-    val scioResult = sc.close().waitUntilDone()
+    val scioResult = sc.close()
+    scioResult.internal match {
+      case job: DataflowPipelineJob => reportDataflowJobId(job.getJobId)
+    }
+    scioResult.waitUntilDone()
     val result = _result.apply(sc, scioResult)
     _success.apply(result)
   }
+
+  def reportDataflowJobId(getJobId: String) {
+    log.info("Started scio job (dataflow): {}")
+    // TODO: have some pluggable mechanism for reporting the job id
+  }
+}
+
+object ScioJobSpec {
+  private val log: Logger = LoggerFactory.getLogger(classOf[ScioJobSpec[_, _]])
 }
