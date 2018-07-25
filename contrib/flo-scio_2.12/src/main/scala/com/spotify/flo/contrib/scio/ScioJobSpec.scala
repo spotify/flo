@@ -77,11 +77,6 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
         val scioResult = sc.close().waitUntilDone()
         val result = _result.apply(sc, scioResult)
         return _success.apply(result)
-      } catch {
-        case e: Exception => {
-          e.printStackTrace()
-          throw e
-        }
       } finally {
         jobTest.get.tearDown()
       }
