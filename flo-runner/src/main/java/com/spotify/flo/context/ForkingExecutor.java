@@ -278,7 +278,7 @@ class ForkingExecutor implements Closeable {
     private static class Watchdog extends Thread {
 
       Watchdog() {
-        setDaemon(false);
+        setDaemon(true);
       }
 
       @Override
