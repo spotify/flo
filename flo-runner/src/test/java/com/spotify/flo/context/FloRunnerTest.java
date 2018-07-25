@@ -515,8 +515,6 @@ public class FloRunnerTest {
     final JobResult result = FloRunner.runTask(task)
         .future().get(30, SECONDS);
 
-    // TODO: this illustrates a major flaw in the current approach of not executing the operator in the process fn.
-    // The user code (and all logging) ends up running in the main process instead of in the task process.
     assertThat(result.jvmName, is(not(mainJvm)));
     assertThat(result.uri, is("hdfs://foo/bar"));
   }

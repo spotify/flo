@@ -21,16 +21,16 @@
 package com.spotify.flo.contrib.scio
 
 import com.spotify.flo.TaskBuilder.{F0, F1, F2}
-import com.spotify.flo.TaskOperator
+import com.spotify.flo.{FloTesting, TaskId}
 import com.spotify.scio.{ScioContext, ScioResult}
-import org.apache.beam.sdk.options.PipelineOptions
+import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 
-class ScioJobSpec extends Serializable {
+class ScioJobSpec(private val taskId: TaskId) extends Serializable {
 
   private[scio] var _options: Option[F0[PipelineOptions]] = None
   private[scio] var _pipeline: F1[ScioContext, Any] = _
   private[scio] var _result: F2[ScioContext, ScioResult, Any] = _
-  private[scio] var _success: F1[Any, Any] = _
+  private[scio] var _success: F1[Any, _] = _
 
   def options(f: F0[PipelineOptions]): ScioJobSpec = {
     _options = Some(f)
@@ -47,8 +47,60 @@ class ScioJobSpec extends Serializable {
     this
   }
 
-  def success[T](f: F1[Any, Any]): T = {
+  def success[T](f: F1[Any, T]): T = {
     _success = f
-    throw new TaskOperator.SpecException(this)
+    if (FloTesting.isTest) {
+      runTest()
+    } else {
+      runProd()
+    }
+  }
+
+  def runTest[U](): U = {
+    val result = ScioOperator.mock().results.get(taskId)
+    if (result.isDefined) {
+      val value = _success.apply(result.get)
+      return value.asInstanceOf[U]
+    }
+
+    val jobTest = ScioOperator.mock().jobTests.get(taskId)
+    if (jobTest.isDefined) {
+      jobTest.get.setUp()
+      try {
+        val sc = scioContextForTest(jobTest.get.testId)
+        sc.options.as(classOf[ApplicationNameOptions]).setAppName(jobTest.get.testId)
+        _pipeline.apply(sc)
+        val scioResult = sc.close().waitUntilDone()
+        val result = _result.apply(sc, scioResult)
+        return _success.apply(result).asInstanceOf[U]
+      } catch {
+        case e: Exception => {
+          e.printStackTrace()
+          throw e
+        }
+      } finally {
+        jobTest.get.tearDown()
+      }
+    }
+
+    throw new AssertionError()
+  }
+
+  private def scioContextForTest[U](testId: String) = {
+    // ScioContext.forTest does not seem to allow specifying testId
+    val opts = PipelineOptionsFactory
+      .fromArgs("--appName=" + testId)
+      .as(classOf[PipelineOptions])
+    ScioContext(opts)
+  }
+
+  def runProd[U](): U = {
+    val sc = _options match {
+      case None => ScioContext()
+      case Some(options) => ScioContext(options.get())
+    }
+    val scioResult = sc.close().waitUntilDone()
+    val result = _result.apply(sc, scioResult)
+    _success.apply(result).asInstanceOf[U]
   }
 }
