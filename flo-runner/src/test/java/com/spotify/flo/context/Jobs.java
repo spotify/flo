@@ -21,10 +21,9 @@
 package com.spotify.flo.context;
 
 import com.spotify.flo.EvalContext;
-import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskBuilder.F1;
-import com.spotify.flo.TaskOperator;
+import com.spotify.flo.TaskContextGeneric;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -36,7 +35,9 @@ class Jobs {
     private F0<Map<String, ?>> options;
     private SerializableConsumer<JobContext> pipelineConfigurator;
     private SerializableConsumer<JobResult> resultValidator;
-    private F1<JobResult, ?> successHandler;
+
+    JobSpec() {
+    }
 
     public JobSpec options(F0<Map<String, ?>> options) {
       this.options = options;
@@ -53,28 +54,20 @@ class Jobs {
       return this;
     }
 
-    @SuppressWarnings("unchecked")
     public <T> T success(F1<JobResult, T> successHandler) {
-      this.successHandler = successHandler;
-      throw new TaskOperator.SpecException(this);
+      final JobContext jobContext = new JobContext(options.get());
+      pipelineConfigurator.accept(jobContext);
+      final JobResult result = jobContext.run();
+      resultValidator.accept(result);
+      return successHandler.apply(result);
     }
   }
 
-  static class JobOperator extends TaskOperator<JobSpec> {
+  static class JobOperator extends TaskContextGeneric<JobSpec> {
 
     @Override
     public JobSpec provide(EvalContext evalContext) {
       return new JobSpec();
-    }
-
-    @Override
-    public <T> T run(Task<?> task, JobSpec spec) {
-      final JobContext jobContext = new JobContext(spec.options.get());
-      spec.pipelineConfigurator.accept(jobContext);
-      final JobResult result = jobContext.run();
-      spec.resultValidator.accept(result);
-      @SuppressWarnings("unchecked") final T value = (T) spec.successHandler.apply(result);
-      return value;
     }
 
     static JobOperator create() {

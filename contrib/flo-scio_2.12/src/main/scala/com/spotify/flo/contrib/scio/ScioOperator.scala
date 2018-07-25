@@ -20,74 +20,16 @@
 
 package com.spotify.flo.contrib.scio
 
-import com.spotify.flo.{EvalContext, FloTesting, Task, TaskId, TaskOperator, TestContext}
-import com.spotify.scio.ScioContext
+import com.spotify.flo.{EvalContext, TaskContextGeneric, TaskId, TestContext}
 import com.spotify.scio.testing.JobTest
 import com.spotify.scio.testing.JobTest.BeamOptions
-import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 
 import scala.collection.mutable
 
-class ScioOperator extends TaskOperator[ScioJobSpec] {
+class ScioOperator extends TaskContextGeneric[ScioJobSpec] {
 
   def provide(evalContext: EvalContext): ScioJobSpec = {
-    new ScioJobSpec()
-  }
-
-  def runTest[U](task: Task[_], spec: ScioJobSpec): U = {
-    val result = ScioOperator.mock().results.get(task.id())
-    if (result.isDefined) {
-      val value = spec._success.apply(result.get)
-      return value.asInstanceOf[U]
-    }
-
-    val jobTest = ScioOperator.mock().jobTests.get(task.id())
-    if (jobTest.isDefined) {
-      jobTest.get.setUp()
-      try {
-        val sc = scioContextForTest(jobTest.get.testId)
-        sc.options.as(classOf[ApplicationNameOptions]).setAppName(jobTest.get.testId)
-        spec._pipeline.apply(sc)
-        val scioResult = sc.close().waitUntilDone()
-        val result = spec._result.apply(sc, scioResult)
-        return spec._success.apply(result).asInstanceOf[U]
-      } catch {
-        case e: Exception => {
-          e.printStackTrace()
-          throw e
-        }
-      } finally {
-        jobTest.get.tearDown()
-      }
-    }
-
-    throw new AssertionError()
-  }
-
-  private def scioContextForTest[U](testId: String) = {
-    // ScioContext.forTest does not seem to allow specifying testId
-    val opts = PipelineOptionsFactory
-      .fromArgs("--appName=" + testId)
-      .as(classOf[PipelineOptions])
-    ScioContext(opts)
-  }
-
-  def runProd[U](task: Task[_], spec: ScioJobSpec): U = {
-    val sc = spec._options match {
-      case None => ScioContext()
-      case Some(options) => ScioContext(options.get())
-    }
-    val scioResult = sc.close().waitUntilDone()
-    val result = spec._result.apply(sc, scioResult)
-    spec._success.apply(result).asInstanceOf[U]
-  }
-
-  def run[U](task: Task[_], spec: ScioJobSpec): U = {
-    if (FloTesting.isTest) {
-      runTest(task, spec)
-    } else {
-      runProd(task, spec)
-    }
+    new ScioJobSpec(evalContext.currentTask().get().id())
   }
 }
 
