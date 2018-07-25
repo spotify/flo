@@ -67,23 +67,18 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
       return _success.apply(result.get.asInstanceOf[R])
     }
 
-    val jobTest = ScioOperator.mock().jobTests.get(taskId)
-    if (jobTest.isDefined) {
-      jobTest.get.setUp()
+    for (jobTestSupplier <- ScioOperator.mock().jobTests.get(taskId)) {
+      val jobTest = jobTestSupplier.get()
+      jobTest.setUp()
       try {
-        val sc = scioContextForTest(jobTest.get.testId)
-        sc.options.as(classOf[ApplicationNameOptions]).setAppName(jobTest.get.testId)
+        val sc = scioContextForTest(jobTest.testId)
+        sc.options.as(classOf[ApplicationNameOptions]).setAppName(jobTest.testId)
         _pipeline.apply(sc)
         val scioResult = sc.close().waitUntilDone()
         val result = _result.apply(sc, scioResult)
         return _success.apply(result)
-      } catch {
-        case e: Exception => {
-          e.printStackTrace()
-          throw e
-        }
       } finally {
-        jobTest.get.tearDown()
+        jobTest.tearDown()
       }
     }
 

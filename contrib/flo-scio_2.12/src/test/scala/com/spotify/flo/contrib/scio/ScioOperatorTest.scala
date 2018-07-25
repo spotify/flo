@@ -43,13 +43,14 @@ class ScioOperatorTest extends PipelineSpec with Matchers {
 
   it should "be able to run a scio job with JobTest" in {
     val result = flo.test(() => {
-      ScioOperator.mock().jobTest(task.id())
-        .input(TextIO("input.txt"), Seq("foo", "bar", "baz"))
-        .output(TextIO("output.txt")) {
-                    actual => {}
-              // TODO: get this output verification working
-//          actual => actual should containInAnyOrder Seq("foo", "bar", "baz")
-        }
+      ScioOperator.mock().jobTest(task.id()) {
+        _.input(TextIO("input.txt"), Seq("foo", "bar", "baz"))
+          .output(TextIO("output.txt")) {
+            actual => {}
+            // TODO: get this output verification working
+            //          actual => actual should containInAnyOrder Seq("foo", "bar", "baz")
+          }
+      }
       FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS)
     })
     result shouldBe "lines: 3"

@@ -20,6 +20,7 @@
 
 package com.spotify.flo.contrib.scio
 
+import com.spotify.flo.TaskBuilder.F0
 import com.spotify.flo.{EvalContext, TaskContextGeneric, TaskId, TestContext}
 import com.spotify.scio.testing.JobTest
 import com.spotify.scio.testing.JobTest.BeamOptions
@@ -34,31 +35,32 @@ class ScioOperator extends TaskContextGeneric[ScioJobSpec[_, _]] {
 }
 
 object ScioOperator {
-  private val MOCK = TestContext.key("mock", () => new Mocking())
+  private val MOCK = TestContext.key(classOf[ScioOperator], "mock", () => new Mocking())
 
   def mock(): Mocking = {
     MOCK.get()
   }
 
-  class Mocking {
+  class Mocking extends TestContext.Value[Mocking] {
     private[scio] val results = mutable.Map[TaskId, Any]()
-    private[scio] val jobTests = mutable.Map[TaskId, JobTest.Builder]()
+    private[scio] val jobTests = mutable.Map[TaskId, F0[JobTest.Builder]]()
 
     def result(id: TaskId, result: Any): Mocking = {
       results(id) = result
       this
     }
 
-    def jobTest(id: TaskId, jobTestBuilder: JobTest.Builder): Mocking = {
-      jobTests(id) = jobTestBuilder
+    def jobTest(id: TaskId)(setup: JobTest.Builder => Unit)(implicit bm: BeamOptions): Mocking = {
+      jobTests(id) = () => {
+        val b = JobTest(id.toString)
+        setup(b)
+        b
+      }
       this
     }
 
-    def jobTest(id: TaskId)(implicit bm: BeamOptions): JobTest.Builder = {
-      val t = JobTest(id.toString)
-      jobTest(id, t)
-      t
-    }
+    override def mergedOutput(other: Mocking): Mocking = this
+    override def inputOnly(): Mocking = this
   }
 
   def apply(): ScioOperator = new ScioOperator()
