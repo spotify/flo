@@ -199,7 +199,9 @@ class ForkingExecutor implements Closeable {
         } catch (Exception e) {
           throw new RuntimeException("Failed to deserialize error", e);
         }
-        if (error instanceof RuntimeException) {
+        if (error instanceof Error) {
+          throw (Error) error;
+        } else if (error instanceof RuntimeException) {
           throw (RuntimeException) error;
         } else {
           throw new RuntimeException(error);
@@ -278,7 +280,7 @@ class ForkingExecutor implements Closeable {
     private static class Watchdog extends Thread {
 
       Watchdog() {
-        setDaemon(false);
+        setDaemon(true);
       }
 
       @Override
@@ -342,7 +344,7 @@ class ForkingExecutor implements Closeable {
       Throwable error = null;
       try {
         result = fn.get();
-      } catch (Exception e) {
+      } catch (Throwable e) {
         error = e;
       }
 

@@ -199,6 +199,23 @@ public class FloRunnerTest {
   }
 
   @Test
+  public void errorsArePassed() throws Exception {
+    final Task<String> task = Task.named("foo").ofType(String.class)
+        .process(() -> {
+          throw new Error("foo");
+        });
+
+    Throwable exception = null;
+    try {
+      runTask(task).value();
+    } catch (ExecutionException e) {
+      exception = e.getCause();
+    }
+    assertThat(exception, is(instanceOf(Error.class)));
+    assertThat(exception.getMessage(), is("foo"));
+  }
+
+  @Test
   public void persistedExitsZero() {
     final Task<Void> task = Task.named("persisted").ofType(Void.class)
         .process(() -> {
