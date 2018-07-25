@@ -35,7 +35,7 @@ class ScioOperatorTest extends PipelineSpec with Matchers {
 
   it should "be able to run a scio job with mocked result" in {
     val result = flo.test(() => {
-      ScioOperator.mock().result(task.id(), "42")
+      ScioOperator.mock().result(task.id(), 42L)
       FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS)
     })
     result shouldBe "lines: 42"
@@ -60,7 +60,7 @@ object ScioOperatorTest {
   val linesCounter: Counter = ScioMetrics.counter[ScioOperatorTest]("count")
 
   val task = defTaskNamed[String]("foobar")
-    .context(new ScioOperator())
+    .context(ScioOperator())
     .process { job =>
       job.pipeline(sc => {
         sc.textFile("input.txt")
