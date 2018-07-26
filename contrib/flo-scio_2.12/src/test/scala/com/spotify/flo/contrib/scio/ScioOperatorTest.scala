@@ -51,9 +51,7 @@ class ScioOperatorTest extends PipelineSpec with Matchers {
       ScioOperator.mock().jobTest(task.id())
         .input(TextIO("input.txt"), Seq("foo", "bar", "baz"))
         .output(TextIO("output.txt")) {
-          actual => {}
-          // TODO: get this output verification working
-          //          actual => actual should containInAnyOrder Seq("foo", "bar", "baz")
+          output => output should containInAnyOrder(Seq("foo", "bar", "baz"))
         }
       FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS)
     })
@@ -82,6 +80,7 @@ object ScioOperatorTest {
             sc.textFile(input)
               .map(line => {
                 linesCounter.inc()
+                line
               })
               .saveAsTextFile(output)
           })
