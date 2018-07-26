@@ -20,7 +20,6 @@
 
 package com.spotify.flo.contrib.scio
 
-import com.spotify.flo.TaskBuilder.{F0, F1, F2}
 import com.spotify.flo.contrib.scio.ScioJobSpec.log
 import com.spotify.flo.{FloTesting, TaskId}
 import com.spotify.scio.{ScioContext, ScioResult}
@@ -29,26 +28,26 @@ import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, Pip
 import org.slf4j.{Logger, LoggerFactory}
 
 class ScioJobSpec[R, S](private val taskId: TaskId,
-                        private val _options: Option[F0[PipelineOptions]] = None,
-                        private val _pipeline: F1[ScioContext, _] = null,
-                        private val _result: F2[ScioContext, ScioResult, R] = null,
-                        private val _success: F1[R, S] = null
+                        private val _options: Option[() => PipelineOptions] = None,
+                        private val _pipeline: ScioContext => Unit = null,
+                        private val _result: (ScioContext, ScioResult) => R = null,
+                        private val _success: R => S = null
                        ) extends Serializable {
 
-  def options(options: F0[PipelineOptions]): ScioJobSpec[R, S] = {
-    new ScioJobSpec[R, S](taskId, Some(options), _pipeline, _result, _success)
+  def options(options: () => PipelineOptions): ScioJobSpec[R, S] = {
+    new ScioJobSpec(taskId, Some(options), _pipeline, _result, _success)
   }
 
-  def pipeline(pipeline: F1[ScioContext, _]): ScioJobSpec[R, S] = {
-    new ScioJobSpec[R, S](taskId, _options, pipeline, _result, _success)
+  def pipeline(pipeline: ScioContext => Unit): ScioJobSpec[R, S] = {
+    new ScioJobSpec(taskId, _options, pipeline, _result, _success)
   }
 
-  def result[RN](result: F2[ScioContext, ScioResult, RN]): ScioJobSpec[RN, S] = {
-    new ScioJobSpec[RN, S](taskId, _options, _pipeline, result, null)
+  def result[RN <: R](result: (ScioContext, ScioResult) => RN): ScioJobSpec[RN, S] = {
+    new ScioJobSpec(taskId, _options, _pipeline, result, _success)
   }
 
-  def success[SN](success: F1[R, SN]): SN = {
-    val spec = new ScioJobSpec[R, SN](taskId, _options, _pipeline, _result, success)
+  def success[SN](success: R => SN): SN = {
+    val spec = new ScioJobSpec(taskId, _options, _pipeline, _result, success)
     spec.run()
   }
 
@@ -66,7 +65,7 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
   private def runTest(): S = {
     val result = ScioOperator.mock().results.get(taskId)
     if (result.isDefined) {
-      return _success.apply(result.get.asInstanceOf[R])
+      return _success(result.get.asInstanceOf[R])
     }
 
     val jobTest = ScioOperator.mock().jobTests.get(taskId)
@@ -75,10 +74,10 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
       try {
         val sc = scioContextForTest(jobTest.get.testId)
         sc.options.as(classOf[ApplicationNameOptions]).setAppName(jobTest.get.testId)
-        _pipeline.apply(sc)
+        _pipeline(sc)
         val scioResult = sc.close().waitUntilDone()
-        val result = _result.apply(sc, scioResult)
-        return _success.apply(result)
+        val result = _result(sc, scioResult)
+        return _success(result)
       } finally {
         jobTest.get.tearDown()
       }
@@ -98,15 +97,17 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
   private def runProd(): S = {
     val sc = _options match {
       case None => ScioContext()
-      case Some(options) => ScioContext(options.get())
+      case Some(options) => ScioContext(options())
     }
+    _pipeline(sc)
     val scioResult = sc.close()
     scioResult.internal match {
       case job: DataflowPipelineJob => reportDataflowJobId(job.getJobId)
+      case _ =>
     }
     scioResult.waitUntilDone()
-    val result = _result.apply(sc, scioResult)
-    _success.apply(result)
+    val result = _result(sc, scioResult)
+    _success(result)
   }
 
   def reportDataflowJobId(getJobId: String) {
@@ -117,4 +118,8 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
 
 object ScioJobSpec {
   private val log: Logger = LoggerFactory.getLogger(classOf[ScioJobSpec[_, _]])
+
+  class Provider(taskId: TaskId) {
+    def apply(): ScioJobSpec[Any, Any] = new ScioJobSpec(taskId)
+  }
 }

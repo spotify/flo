@@ -26,10 +26,10 @@ import com.spotify.scio.testing.JobTest.BeamOptions
 
 import scala.collection.mutable
 
-class ScioOperator extends TaskContextGeneric[ScioJobSpec[_, _]] {
+class ScioOperator extends TaskContextGeneric[ScioJobSpec.Provider] {
 
-  def provide(evalContext: EvalContext): ScioJobSpec[_, _] = {
-    new ScioJobSpec(evalContext.currentTask().get().id())
+  def provide(evalContext: EvalContext): ScioJobSpec.Provider = {
+    new ScioJobSpec.Provider(evalContext.currentTask().get().id())
   }
 }
 
