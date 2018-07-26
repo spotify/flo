@@ -42,22 +42,20 @@ object ScioOperator {
 
   class Mocking {
     private[scio] val results = mutable.Map[TaskId, Any]()
-    private[scio] val jobTests = mutable.Map[TaskId, JobTest.Builder]()
+    private[scio] val jobTests = mutable.Map[TaskId, () => JobTest.Builder]()
 
     def result(id: TaskId, result: Any): Mocking = {
       results(id) = result
       this
     }
 
-    def jobTest(id: TaskId, jobTestBuilder: JobTest.Builder): Mocking = {
-      jobTests(id) = jobTestBuilder
+    def jobTest(id: TaskId)(setup: JobTest.Builder => Unit)(implicit bm: BeamOptions): Mocking = {
+      jobTests(id) = () => {
+        val b = JobTest(id.toString)
+        setup(b)
+        b
+      }
       this
-    }
-
-    def jobTest(id: TaskId)(implicit bm: BeamOptions): JobTest.Builder = {
-      val t = JobTest(id.toString)
-      jobTest(id, t)
-      t
     }
   }
 
