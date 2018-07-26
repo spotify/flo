@@ -20,20 +20,24 @@
 
 package com.spotify.flo.contrib.scio
 
+import java.nio.file.{Files, Paths}
 import java.util.concurrent.TimeUnit
 
 import com.spotify.flo
 import com.spotify.flo._
 import com.spotify.flo.context.FloRunner
-import com.spotify.flo.contrib.scio.ScioOperatorTest._
+import com.spotify.flo.contrib.scio.ScioOperatorTest.lineCountingTask
 import com.spotify.scio.ScioMetrics
 import com.spotify.scio.testing.{PipelineSpec, TextIO}
 import org.apache.beam.sdk.metrics.Counter
 import org.scalatest._
 
+import scala.collection.JavaConverters._
+
 class ScioOperatorTest extends PipelineSpec with Matchers {
 
   it should "be able to run a scio job with mocked result" in {
+    val task = lineCountingTask("input.txt", "output.txt", 3)
     val result = flo.test(() => {
       ScioOperator.mock().result(task.id(), 42L)
       FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS)
@@ -42,16 +46,26 @@ class ScioOperatorTest extends PipelineSpec with Matchers {
   }
 
   it should "be able to run a scio job with JobTest" in {
+    val task = lineCountingTask("input.txt", "output.txt", 3)
     val result = flo.test(() => {
       ScioOperator.mock().jobTest(task.id())
         .input(TextIO("input.txt"), Seq("foo", "bar", "baz"))
         .output(TextIO("output.txt")) {
-                    actual => {}
-              // TODO: get this output verification working
-//          actual => actual should containInAnyOrder Seq("foo", "bar", "baz")
+          actual => {}
+          // TODO: get this output verification working
+          //          actual => actual should containInAnyOrder Seq("foo", "bar", "baz")
         }
       FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS)
     })
+    result shouldBe "lines: 3"
+  }
+
+  it should "be able to run a scio job" in {
+    val input = Files.createTempFile("flo-scio-test-in", ".txt").toAbsolutePath.toString
+    val output = Files.createTempDirectory("flo-scio-test-out").toAbsolutePath.toString
+    val task = lineCountingTask(input, output, 3)
+    Files.write(Paths.get(input), Seq("foo", "baz", "bar").asJava)
+    val result = FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS)
     result shouldBe "lines: 3"
   }
 }
@@ -59,25 +73,27 @@ class ScioOperatorTest extends PipelineSpec with Matchers {
 object ScioOperatorTest {
   val linesCounter: Counter = ScioMetrics.counter[ScioOperatorTest]("count")
 
-  val task = defTaskNamed[String]("foobar")
-    .context(ScioOperator())
-    .process { job =>
-      job.pipeline(sc => {
-        sc.textFile("input.txt")
-          .map(row => {
-            linesCounter.inc()
+  def lineCountingTask(input: String, output: String, minLines: Long) =
+    defTask[String]("foobar")
+      .context(ScioOperator())
+      .process { job =>
+        job()
+          .pipeline(sc => {
+            sc.textFile(input)
+              .map(line => {
+                linesCounter.inc()
+              })
+              .saveAsTextFile(output)
           })
-          .saveAsTextFile("output.txt")
-      })
-        .result((sc, result) => {
-          val lines = result.counter(linesCounter).committed match {
-            case Some(n) => n
-            case _ => 0
-          }
-          if (lines < 3) throw new AssertionError("too few rows") else lines
-        })
-        .success(r => {
-          "lines: " + r.toString
-        })
-    }
+          .result((sc, result) => {
+            val lines = result.counter(linesCounter).committed match {
+              case Some(n) => n
+              case _ => 0
+            }
+            if (lines < minLines) throw new AssertionError("too few lines") else lines
+          })
+          .success(r => {
+            "lines: " + r.toString
+          })
+      }
 }
