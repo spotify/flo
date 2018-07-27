@@ -15,7 +15,7 @@
 
   <properties>
     <scala.baseVersion>2.11</scala.baseVersion>
-    <scala.version>2.11.11</scala.version>
+    <scala.version>2.11.12</scala.version>
   </properties>
 
   <dependencies>
@@ -47,7 +47,7 @@
     <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${scala.baseVersion}</artifactId>
-      <version>3.0.4</version>
+      <version>3.0.5</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -63,7 +63,7 @@
           <sourceDir>../flo-scala_2.12/src/main/scala</sourceDir>
           <scalaVersion>${scala.version}</scalaVersion>
           <sendJavaToScalac>false</sendJavaToScalac>
-          <addScalacArgs>-Xexperimental</addScalacArgs>
+          <addScalacArgs>-Xexperimental|-target:jvm-1.8</addScalacArgs>
         </configuration>
       </plugin>
 
