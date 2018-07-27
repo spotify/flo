@@ -106,8 +106,8 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
     _success(result)
   }
 
-  def reportDataflowJobId(getJobId: String) {
-    log.info("Started scio job (dataflow): {}")
+  def reportDataflowJobId(jobId: String) {
+    log.info("Started scio job (dataflow): {}", jobId)
     // TODO: have some pluggable mechanism for reporting the job id
   }
 }
