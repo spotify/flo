@@ -51,9 +51,11 @@ object ScioOperator {
 
     def jobTest(id: TaskId)(setup: JobTest.Builder => JobTest.Builder)(implicit bm: BeamOptions): Mocking = {
       jobTests(id) = () => {
-        val b = JobTest(id.toString)
-        setup(b)
-        b
+        // JobTest name may not contain dash
+        val name = id.toString.replace("-", "_")
+        val builder = JobTest(name)
+        setup(builder)
+        builder
       }
       this
     }
