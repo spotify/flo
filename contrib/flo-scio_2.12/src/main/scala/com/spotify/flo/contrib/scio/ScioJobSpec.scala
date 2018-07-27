@@ -70,16 +70,13 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
     for (jobTestSupplier <- ScioOperator.mock().jobTests.get(taskId)) {
       val jobTest = jobTestSupplier()
       jobTest.setUp()
-      try {
-        val sc = scioContextForTest(jobTest.testId)
-        sc.options.as(classOf[ApplicationNameOptions]).setAppName(jobTest.testId)
-        _pipeline(sc)
-        val scioResult = sc.close().waitUntilDone()
-        val result = _result(sc, scioResult)
-        return _success(result)
-      } finally {
-        jobTest.tearDown()
-      }
+      val sc = scioContextForTest(jobTest.testId)
+      sc.options.as(classOf[ApplicationNameOptions]).setAppName(jobTest.testId)
+      _pipeline(sc)
+      val scioResult = sc.close().waitUntilDone()
+      val result = _result(sc, scioResult)
+      jobTest.tearDown()
+      return _success(result)
     }
 
     throw new AssertionError()
