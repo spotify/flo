@@ -58,6 +58,16 @@
   <build>
     <sourceDirectory>../flo-scio_2.12/src/main/java</sourceDirectory>
     <testSourceDirectory>../flo-scio_2.12/src/test/scala</testSourceDirectory>
+    <resources>
+      <resource>
+        <directory>../flo-scio_2.12/src/main/resources</directory>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>../flo-scio_2.12/src/test/resources</directory>
+      </testResource>
+    </testResources>
     <plugins>
       <plugin>
         <groupId>net.alchim31.maven</groupId>
