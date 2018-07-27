@@ -23,7 +23,6 @@ package com.spotify.flo.contrib.bigquery;
 import com.google.cloud.WaitForOption;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
-import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.bigquery.CopyJobConfiguration;
 import com.google.cloud.bigquery.Dataset;
 import com.google.cloud.bigquery.DatasetId;
@@ -32,6 +31,7 @@ import com.google.cloud.bigquery.Job;
 import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.TableId;
 import com.spotify.flo.EvalContext;
+import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskContextStrict;
@@ -47,12 +47,12 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
 
   private static final Logger LOG = LoggerFactory.getLogger(BigQueryContext.class);
 
-  private final F0<BigQuery> bigQuerySupplier;
+  private final F0<FloBigQueryClient> bigQuerySupplier;
   private final TableId tableId;
 
-  private transient BigQuery bigQuery;
+  private transient FloBigQueryClient bigQuery;
 
-  private BigQueryContext(F0<BigQuery> bigQuery, TableId tableId) {
+  private BigQueryContext(F0<FloBigQueryClient> bigQuery, TableId tableId) {
     this.bigQuerySupplier = bigQuery;
     this.tableId = tableId;
   }
@@ -62,13 +62,11 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
   }
 
   public static BigQueryContext create(TableId tableId) {
-    return create(() -> {
-      return BigQueryOptions.getDefaultInstance().getService();
-    }, tableId);
+    return create(BigQueryContext::defaultBigQuerySupplier, tableId);
   }
 
-  static BigQueryContext create(F0<BigQuery> bigQuery, TableId tableId) {
-    return new BigQueryContext(bigQuery, tableId);
+  static BigQueryContext create(F0<FloBigQueryClient> bigQuerySupplier, TableId tableId) {
+    return new BigQueryContext(bigQuerySupplier, tableId);
   }
 
   public TableId tableId() {
@@ -144,7 +142,7 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
     return tableId;
   }
 
-  private BigQuery bigQuery() {
+  private FloBigQueryClient bigQuery() {
     if (bigQuery == null) {
       bigQuery = bigQuerySupplier.get();
     }
@@ -164,6 +162,15 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
       LOG.error("Could not copy BigQuery table {} from staging to target with error: {}",
           tableId, error);
       throw new RuntimeException(error);
+    }
+  }
+
+
+  static FloBigQueryClient defaultBigQuerySupplier() {
+    if (FloTesting.isTest()) {
+      return BigQueryMocking.mock().client();
+    } else {
+      return BigQueryClientSingleton.BIGQUERY_CLIENT;
     }
   }
 }

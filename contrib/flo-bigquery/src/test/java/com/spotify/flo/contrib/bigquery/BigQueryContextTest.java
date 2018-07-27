@@ -65,7 +65,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 public class BigQueryContextTest {
 
   @Mock
-  private BigQuery bigQuery;
+  private FloBigQueryClient bigQuery;
 
   @Mock
   private Dataset dataset;
