@@ -63,9 +63,8 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
   }
 
   private def runTest(): S = {
-    val result = ScioOperator.mock().results.get(taskId)
-    if (result.isDefined) {
-      return _success(result.get.asInstanceOf[R])
+    for (result <- ScioOperator.mock().results.get(taskId)) {
+      return _success(result.asInstanceOf[R])
     }
 
     for (jobTestSupplier <- ScioOperator.mock().jobTests.get(taskId)) {
