@@ -49,7 +49,7 @@ object ScioOperator {
       this
     }
 
-    def jobTest(id: TaskId)(setup: JobTest.Builder => Unit)(implicit bm: BeamOptions): Mocking = {
+    def jobTest(id: TaskId)(setup: JobTest.Builder => JobTest.Builder)(implicit bm: BeamOptions): Mocking = {
       jobTests(id) = () => {
         val b = JobTest(id.toString)
         setup(b)
