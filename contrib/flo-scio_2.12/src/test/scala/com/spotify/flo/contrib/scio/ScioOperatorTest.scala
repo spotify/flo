@@ -73,7 +73,7 @@ object ScioOperatorTest {
   val linesCounter: Counter = ScioMetrics.counter[ScioOperatorTest]("count")
 
   def lineCountingTask(input: String, output: String, minLines: Long) =
-    defTask[String]("foobar")
+    defTask[String]("foobar", "2018-01-02")
       .context(ScioOperator())
       .process { job =>
         job()
