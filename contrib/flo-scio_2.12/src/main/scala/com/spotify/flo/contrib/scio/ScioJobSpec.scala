@@ -87,7 +87,11 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
     val opts = PipelineOptionsFactory
       .fromArgs("--appName=" + testId)
       .as(classOf[PipelineOptions])
-    ScioContext(opts)
+    val sc = ScioContext(opts)
+    if (!sc.isTest) {
+      throw new AssertionError(s"Failed to create ScioContext for test with id ${testId}")
+    }
+    sc
   }
 
   private def runProd(): S = {
