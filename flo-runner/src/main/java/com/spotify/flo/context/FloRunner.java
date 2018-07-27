@@ -167,18 +167,20 @@ public final class FloRunner<T> {
       return
           MemoizingContext.composeWith(
               OverridingContext.composeWith(
-                  LoggingContext.composeWith(
-                      persist(baseContext),
-                      logging), logging));
+                  OperatingContext.composeWith(
+                      LoggingContext.composeWith(
+                          persist(baseContext),
+                          logging)), logging));
     } else {
       return
           TracingContext.composeWith(
               forkingContext(
                   MemoizingContext.composeWith(
                       OverridingContext.composeWith(
-                          LoggingContext.composeWith(
-                              baseContext,
-                              logging), logging))));
+                          OperatingContext.composeWith(
+                              LoggingContext.composeWith(
+                                  baseContext,
+                                  logging)), logging))));
     }
   }
 

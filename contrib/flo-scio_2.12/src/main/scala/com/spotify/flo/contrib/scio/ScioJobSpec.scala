@@ -20,7 +20,8 @@
 
 package com.spotify.flo.contrib.scio
 
-import com.spotify.flo.contrib.scio.ScioJobSpec.log
+import com.spotify.flo.TaskOperator.OperationException
+import com.spotify.flo.contrib.scio.ScioJobSpec.{ScioJobOperationException, log}
 import com.spotify.flo.{FloTesting, TaskId}
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
@@ -48,10 +49,10 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
 
   def success[SN](success: R => SN): SN = {
     val spec = new ScioJobSpec(taskId, _options, _pipeline, _result, success)
-    spec.run()
+    throw new ScioJobOperationException(spec)
   }
 
-  private def run(): S = {
+  private[scio] def run(): S = {
     if (_pipeline == null || _result == null || _success == null) {
       throw new IllegalStateException()
     }
@@ -122,4 +123,9 @@ object ScioJobSpec {
   class Provider(taskId: TaskId) {
     def apply(): ScioJobSpec[Any, Any] = new ScioJobSpec(taskId)
   }
+
+  private class ScioJobOperationException(spec: ScioJobSpec[_, _]) extends OperationException {
+    override def run[T](): T = spec.run().asInstanceOf[T]
+  }
+
 }
