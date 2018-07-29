@@ -25,13 +25,6 @@ public interface FloBigQueryClient {
   Dataset create(DatasetInfo datasetInfo);
 
   /**
-   * Get a table by Id
-   * @param tableId the table Id
-   * @param tableOptions other table options
-   */
-  Table getTable(TableId tableId, BigQuery.TableOption... tableOptions);
-
-  /**
    * Create a BigQuery Job with info and options
    * @param jobInfo the job info
    * @param jobOptions other options
@@ -39,9 +32,16 @@ public interface FloBigQueryClient {
   Job create(JobInfo jobInfo, BigQuery.JobOption... jobOptions);
 
   /**
-   * Delete a table by Id
-   * @param tableId
+   * Publish a table by copying from stagingTableId to tableId
+   * @param stagingTableId source table id
+   * @param tableId destination table id
    */
-  boolean delete(TableId tableId);
+  void publish(StagingTableId stagingTableId, TableId tableId);
 
+  /**
+   * Check if a BigQuery table exists
+   * @param tableId
+   * @return true if it exists, otherwise false
+   */
+  boolean tableExists(TableId tableId);
 }
