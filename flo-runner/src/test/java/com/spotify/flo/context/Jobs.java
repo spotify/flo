@@ -20,10 +20,12 @@
 
 package com.spotify.flo.context;
 
+import com.spotify.flo.ControlException;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskBuilder.F1;
 import com.spotify.flo.TaskContextGeneric;
+import com.spotify.flo.TaskOperator.OperationException;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -35,6 +37,7 @@ class Jobs {
     private F0<Map<String, ?>> options;
     private SerializableConsumer<JobContext> pipelineConfigurator;
     private SerializableConsumer<JobResult> resultValidator;
+    private F1<JobResult, ?> successHandler;
 
     JobSpec() {
     }
@@ -55,11 +58,31 @@ class Jobs {
     }
 
     public <T> T success(F1<JobResult, T> successHandler) {
+      this.successHandler = successHandler;
+      throw new JobSpecException(this);
+    }
+
+    @SuppressWarnings("unchecked")
+    <T> T run() {
       final JobContext jobContext = new JobContext(options.get());
       pipelineConfigurator.accept(jobContext);
       final JobResult result = jobContext.run();
       resultValidator.accept(result);
-      return successHandler.apply(result);
+      return (T) successHandler.apply(result);
+    }
+
+    private class JobSpecException extends OperationException {
+
+      private final JobSpec spec;
+
+      JobSpecException(JobSpec spec) {
+        this.spec = spec;
+      }
+
+      @Override
+      public <T> T run() {
+        return spec.run();
+      }
     }
   }
 
