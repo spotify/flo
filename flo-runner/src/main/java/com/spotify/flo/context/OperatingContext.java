@@ -22,9 +22,8 @@ package com.spotify.flo.context;
 
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
-import com.spotify.flo.TaskOperator;
-import com.spotify.flo.TaskOperator.OperationException;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.TaskOperator.OperationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,20 +45,12 @@ public class OperatingContext extends ForwardingEvalContext {
 
   @Override
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
-    final Value<T> v = super.invokeProcessFn(taskId, processFn);
-    final Promise<T> p = promise();
-    v.consume(p::set);
-    v.onFail(t -> {
-      if (t instanceof TaskOperator.OperationException) {
-        final OperationException se = (OperationException) t;
-        final Value<T> value = value(se::run);
-        value.consume(p::set);
-        value.onFail(p::fail);
-      } else {
-        p.fail(t);
+    return super.invokeProcessFn(taskId, () -> {
+      try {
+        return processFn.get();
+      } catch (OperationException e) {
+        return e.run();
       }
     });
-
-    return p.value();
   }
 }
