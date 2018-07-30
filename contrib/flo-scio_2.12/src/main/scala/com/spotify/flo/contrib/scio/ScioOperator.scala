@@ -20,13 +20,13 @@
 
 package com.spotify.flo.contrib.scio
 
-import com.spotify.flo.{EvalContext, TaskContextGeneric, TaskId, TestContext}
+import com.spotify.flo.{EvalContext, TaskId, TaskOperator, TestContext}
 import com.spotify.scio.testing.JobTest
 import com.spotify.scio.testing.JobTest.BeamOptions
 
 import scala.collection.mutable
 
-class ScioOperator extends TaskContextGeneric[ScioJobSpec.Provider] {
+class ScioOperator extends TaskOperator[ScioJobSpec.Provider] {
 
   def provide(evalContext: EvalContext): ScioJobSpec.Provider = {
     new ScioJobSpec.Provider(evalContext.currentTask().get().id())

@@ -20,9 +20,14 @@
 
 package com.spotify.flo;
 
+import com.spotify.flo.context.OperatingContext;
+
 /**
- * An operator controls the execution of a job for a task,
- * e.g. a data processing job on some processing platform.
+ * An operator controls the execution of a job for a task,  e.g. a data processing job on some processing platform.
+ *
+ * <p>The concrete operator implementation should {@link #provide(EvalContext)} the task with some means of constructing
+ * an operation description. The operation description should be thrown out of the process fn using an
+ * {@link OperationException} to be caught and executed by the {@link OperatingContext}.
  */
 public abstract class TaskOperator<T> extends TaskContextGeneric<T> {
 

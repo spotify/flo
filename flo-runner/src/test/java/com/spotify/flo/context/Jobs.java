@@ -25,6 +25,7 @@ import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskBuilder.F1;
 import com.spotify.flo.TaskContextGeneric;
+import com.spotify.flo.TaskOperator;
 import com.spotify.flo.TaskOperator.OperationException;
 import java.io.Serializable;
 import java.util.Map;
@@ -86,7 +87,7 @@ class Jobs {
     }
   }
 
-  static class JobOperator extends TaskContextGeneric<JobSpec> {
+  static class JobOperator extends TaskOperator<JobSpec> {
 
     @Override
     public JobSpec provide(EvalContext evalContext) {
