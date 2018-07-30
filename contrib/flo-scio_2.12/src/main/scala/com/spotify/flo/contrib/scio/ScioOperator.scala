@@ -20,6 +20,7 @@
 
 package com.spotify.flo.contrib.scio
 
+import com.spotify.flo.TaskBuilder.F0
 import com.spotify.flo.{EvalContext, TaskId, TaskOperator, TestContext}
 import com.spotify.scio.testing.JobTest
 import com.spotify.scio.testing.JobTest.BeamOptions
@@ -34,7 +35,10 @@ class ScioOperator extends TaskOperator[ScioJobSpec.Provider] {
 }
 
 object ScioOperator {
-  private val MOCK = TestContext.key("mock", () => new Mocking())
+  private val supplier = new F0[Mocking] {
+    override def get(): Mocking = new Mocking
+  }
+  private val MOCK = TestContext.key("mock", supplier)
 
   def mock(): Mocking = {
     MOCK.get()
