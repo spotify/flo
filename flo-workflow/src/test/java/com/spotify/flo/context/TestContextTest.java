@@ -18,20 +18,27 @@
  * -/-/-
  */
 
-package com.spotify.flo;
+package com.spotify.flo.context;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
+import com.spotify.flo.context.TestContext.Value;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class TestContextTest {
 
-  private final TestContext.Key<String> foo = TestContext.key("foo");
-  private final TestContext.Key<String> bar = TestContext.key("foo", () -> "hello world");
+  private final TestValue BAR = new TestValue("bar");
+  private final TestValue BAZ = new TestValue("baz");
+  private final TestValue QUUX = new TestValue("quux");
+
+  private final TestContext.Key<TestValue> foo =
+      TestContext.key(TestContextTest.class, "foo");
+  private final TestContext.Key<TestValue> bar =
+      TestContext.key(TestContextTest.class, "bar", () -> BAR);
 
   private TestScope testScope;
 
@@ -52,16 +59,35 @@ public class TestContextTest {
 
   @Test
   public void shouldUseGetInitializer() {
-    assertThat(foo.get(() -> "baz"), is("baz"));
-    assertThat(foo.get(), is("baz"));
+    assertThat(foo.get(() -> BAZ), is(BAZ));
+    assertThat(foo.get(), is(BAZ));
 
-    assertThat(bar.get(() -> "quux"), is("quux"));
-    assertThat(bar.get(), is("quux"));
+    assertThat(bar.get(() -> QUUX), is(QUUX));
+    assertThat(bar.get(), is(QUUX));
   }
 
   @Test
   public void shouldUseDefaultInitializer() {
-    assertThat(bar.get(), is("hello world"));
-    assertThat(bar.get(() -> "foobar"), is("hello world"));
+    assertThat(bar.get(), is(BAR));
+    assertThat(bar.get(() -> new TestValue("foobar")), is(BAR));
+  }
+
+  class TestValue implements Value<TestValue> {
+
+    private final String name;
+
+    TestValue(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public TestValue withOutputAdded(TestValue other) {
+      return new TestValue(name);
+    }
+
+    @Override
+    public TestValue asInput() {
+      return new TestValue(name);
+    }
   }
 }

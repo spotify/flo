@@ -2,6 +2,7 @@ package com.spotify
 
 import java.lang.Thread.currentThread
 
+import com.spotify.flo.context.FloTesting
 import com.spotify.flo.dsl.FloTask.named
 import com.spotify.flo.dsl.TaskBuilder0
 

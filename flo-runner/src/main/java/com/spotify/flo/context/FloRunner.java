@@ -24,7 +24,6 @@ import static java.lang.System.getProperty;
 import static java.util.Objects.requireNonNull;
 
 import com.spotify.flo.EvalContext;
-import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskInfo;
 import com.spotify.flo.freezer.Persisted;
@@ -220,17 +219,8 @@ public final class FloRunner<T> {
     final boolean inDebugger = ManagementFactory.getRuntimeMXBean()
         .getInputArguments().stream().anyMatch(s -> s.contains("-agentlib:jdwp"));
 
-    // We do not currently have a mechanism for transporting mock inputs and outputs into and out of the task process.
-    if (FloTesting.isTest()) {
-      LOG.debug("Test run, forking disabled");
-      return baseContext;
-    }
-
     if (hasExplicitConfigValue(FLO_FORKING)) {
       if (config.getBoolean(FLO_FORKING)) {
-        if (FloTesting.isTest()) {
-          throw new IllegalStateException("Forking is not supported in test mode");
-        }
         LOG.debug("Forking enabled (config variable flo.forking=true)");
         return ForkingContext.composeWith(baseContext);
       } else {
