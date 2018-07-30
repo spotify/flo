@@ -51,6 +51,8 @@ class LoggingContext extends ForwardingEvalContext {
 
   @Override
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
+    // Avoid capturing this
+    final Logging logging = this.logging;
     return super.invokeProcessFn(taskId, () -> {
       logging.startEval(taskId);
       final long t0 = System.nanoTime();
