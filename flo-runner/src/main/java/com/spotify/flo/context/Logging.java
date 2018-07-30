@@ -22,6 +22,7 @@ package com.spotify.flo.context;
 
 import static org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS;
 
+import com.spotify.flo.ControlException;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskInfo;
 import com.spotify.flo.freezer.Persisted;
@@ -70,7 +71,7 @@ public class Logging {
     if (valueError instanceof TaskStatusException) {
       final String exception = valueError.getClass().getSimpleName();
       LOG.warn("{} Signalled {} after {}", taskId, exception, hms);
-    } else if (valueError instanceof Persisted) {
+    } else if (valueError instanceof Persisted || valueError instanceof ControlException) {
       // ignore
     } else {
       LOG.warn("{} Failed after {}", taskId, hms, valueError);

@@ -40,6 +40,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableMap;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F1;
@@ -47,6 +48,7 @@ import com.spotify.flo.TaskId;
 import com.spotify.flo.TestScope;
 import com.spotify.flo.Tracing;
 import com.spotify.flo.context.FloRunner.Result;
+import com.spotify.flo.context.Jobs.JobOperator;
 import com.spotify.flo.context.Mocks.DataProcessing;
 import com.spotify.flo.context.Mocks.PublishingContext;
 import com.spotify.flo.context.Mocks.StorageLookup;
@@ -68,6 +70,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -493,7 +496,40 @@ public class FloRunnerTest {
     }
   }
 
+  @Test
+  public void testOperator() throws Exception {
+    final String mainJvm = jvmName();
+    final Instant today = Instant.now().truncatedTo(ChronoUnit.DAYS);
+    final Task<JobResult> task = Task.named("task", today).ofType(JobResult.class)
+        .context(JobOperator.create())
+        .process(job -> job
+            .options(() -> ImmutableMap.of("quux", 17))
+            .pipeline(ctx -> ctx.readFrom("foo").map("x + y").writeTo("baz"))
+            .validation(result -> {
+              if (result.records < 5) {
+                throw new AssertionError("Too few records seen!");
+              }
+            })
+            .success(result -> new JobResult(jvmName(), "hdfs://foo/bar")));
+
+    final JobResult result = FloRunner.runTask(task)
+        .future().get(30, SECONDS);
+
+    assertThat(result.jvmName, is(not(mainJvm)));
+    assertThat(result.uri, is("hdfs://foo/bar"));
+  }
+
   private static String jvmName() {
     return ManagementFactory.getRuntimeMXBean().getName();
+  }
+
+  private static class JobResult {
+    private final String jvmName;
+    private final String uri;
+
+    JobResult(String jvmName, String uri) {
+      this.jvmName = jvmName;
+      this.uri = uri;
+    }
   }
 }
