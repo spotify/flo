@@ -50,6 +50,8 @@ public class OperatingContext extends ForwardingEvalContext {
 
   @Override
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
+    // Avoid capturing this in closure
+    final Listener listener = this.listener;
     return super.invokeProcessFn(taskId, () -> {
       try {
         return processFn.get();
