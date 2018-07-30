@@ -1,6 +1,7 @@
 package com.spotify
 
 import java.lang.Thread.currentThread
+import java.util.function.Supplier
 
 import com.spotify.flo.dsl.FloTask.named
 import com.spotify.flo.dsl.TaskBuilder0
@@ -26,6 +27,12 @@ package object flo {
   }
 
   def $[T]: TaskBuilder0[T] = currentBuilder
+
+  def test[T](f: () => T) = {
+    FloTesting.supply(new Supplier[T] {
+      override def get(): T = f.apply()
+    })
+  }
 
   private def currentBuilder[T]: TaskBuilder0[T] = {
     val builder = dynamicBuilder.value

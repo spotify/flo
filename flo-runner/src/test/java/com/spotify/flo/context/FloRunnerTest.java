@@ -25,6 +25,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
@@ -34,20 +35,34 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableMap;
+import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
+import com.spotify.flo.TaskBuilder.F1;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.TestScope;
 import com.spotify.flo.Tracing;
 import com.spotify.flo.context.FloRunner.Result;
+import com.spotify.flo.context.Jobs.JobOperator;
+import com.spotify.flo.context.Mocks.DataProcessing;
+import com.spotify.flo.context.Mocks.PublishingContext;
+import com.spotify.flo.context.Mocks.StorageLookup;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
 import com.spotify.flo.status.NotRetriable;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValueFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -55,6 +70,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -65,6 +81,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -388,7 +405,131 @@ public class FloRunnerTest {
     assertThat(uniqueJvms, not(contains(mainJvm)));
   }
 
+  @Test
+  public void isTestShouldBeTrueInTestScope() throws Exception {
+    assertThat(FloTesting.isTest(), is(false));
+    try (TestScope ts = FloTesting.scope()) {
+      assertThat(FloTesting.isTest(), is(true));
+      final Task<Boolean> isTest = Task.named("task").ofType(Boolean.class)
+          .process(FloTesting::isTest);
+      assertThat(runTask(isTest).future().get(30, SECONDS), is(true));
+    }
+    assertThat(FloTesting.isTest(), is(false));
+  }
+
+  @Test
+  public void mockingInputsOutputsAndContextShouldBePossibleInTestScope() throws Exception {
+
+    // Mock input, data processing results and verify lookups and publishing after the fact
+    try (TestScope ts = FloTesting.scope()) {
+      final URI barInput = URI.create("gs://bar/4711/");
+      final String jobResult = "42";
+      final URI publishResult = URI.create("meta://bar/4711/");
+
+      PublishingContext.mock().publish(jobResult, publishResult);
+      StorageLookup.mock().data("bar", barInput);
+      DataProcessing.mock().result("quux.baz", barInput, jobResult);
+
+      final Task<String> task = Task.named("task").ofType(String.class)
+          .input(() -> StorageLookup.of("bar"))
+          .context(PublishingContext.of("foo"))
+          .process((bar, publisher) -> {
+            // Run a data processing job and publish the result
+            final String result = DataProcessing.runJob("quux.baz", bar);
+            return publisher.publish(result);
+          });
+
+      assertThat(runTask(task).future().get(30, SECONDS), is(jobResult));
+
+      assertThat(DataProcessing.mock().jobRuns("quux.baz", barInput), is(1));
+      assertThat(StorageLookup.mock().lookups("bar"), is(1));
+      assertThat(PublishingContext.mock().lookups("foo"), is(1));
+      assertThat(PublishingContext.mock().published("foo"), contains(jobResult));
+    }
+
+    // Verify that all mocks are cleared when leaving scope
+    try (TestScope ts = FloTesting.scope()) {
+      assertThat(PublishingContext.mock().published("foo"), is(empty()));
+      assertThat(PublishingContext.mock().lookups("foo"), is(0));
+    }
+  }
+
+  @Test
+  public void mockingContextExistsShouldMakeProcessFnNotRunInTestScope() throws Exception {
+
+    // Mock a context lookup and verify that the process fn does not run
+    try (TestScope ts = FloTesting.scope()) {
+      PublishingContext.mock().value("foo", "17");
+
+      @SuppressWarnings("unchecked") final F1<PublishingContext.Value, String> mockProcessFn = Mockito.mock(F1.class);
+      when(mockProcessFn.apply(any())).thenThrow(new AssertionError());
+
+      final Task<String> task = Task.named("task").ofType(String.class)
+          .context(PublishingContext.of("foo"))
+          .process(mockProcessFn);
+
+      assertThat(runTask(task).future().get(30, SECONDS), is("17"));
+
+      verify(mockProcessFn, never()).apply(any());
+
+      assertThat(PublishingContext.mock().lookups("foo"), is(1));
+      assertThat(PublishingContext.mock().published("foo"), is(empty()));
+    }
+  }
+
+  @Test
+  public void shouldThrowIfForkingIsExplicitlyEnabledInTestMode() {
+    final Task<String> task = Task.named("task").ofType(String.class)
+        .process(() -> {
+          throw new AssertionError();
+        });
+
+    final Config config = ConfigFactory.load("flo")
+        .withValue("flo.forking", ConfigValueFactory.fromAnyRef(true));
+
+    try (TestScope ts = FloTesting.scope()) {
+      try {
+        FloRunner.runTask(task, config);
+      } catch (IllegalStateException e) {
+        assertThat(e.getMessage(), is("Forking is not supported in test mode"));
+      }
+    }
+  }
+
+  @Test
+  public void testOperator() throws Exception {
+    final String mainJvm = jvmName();
+    final Instant today = Instant.now().truncatedTo(ChronoUnit.DAYS);
+    final Task<JobResult> task = Task.named("task", today).ofType(JobResult.class)
+        .context(JobOperator.create())
+        .process(job -> job
+            .options(() -> ImmutableMap.of("quux", 17))
+            .pipeline(ctx -> ctx.readFrom("foo").map("x + y").writeTo("baz"))
+            .validation(result -> {
+              if (result.records < 5) {
+                throw new AssertionError("Too few records seen!");
+              }
+            })
+            .success(result -> new JobResult(jvmName(), "hdfs://foo/bar")));
+
+    final JobResult result = FloRunner.runTask(task)
+        .future().get(30, SECONDS);
+
+    assertThat(result.jvmName, is(not(mainJvm)));
+    assertThat(result.uri, is("hdfs://foo/bar"));
+  }
+
   private static String jvmName() {
     return ManagementFactory.getRuntimeMXBean().getName();
+  }
+
+  private static class JobResult {
+    private final String jvmName;
+    private final String uri;
+
+    JobResult(String jvmName, String uri) {
+      this.jvmName = jvmName;
+      this.uri = uri;
+    }
   }
 }
