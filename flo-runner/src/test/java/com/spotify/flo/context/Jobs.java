@@ -20,13 +20,12 @@
 
 package com.spotify.flo.context;
 
-import com.spotify.flo.ControlException;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskBuilder.F1;
-import com.spotify.flo.TaskContextGeneric;
 import com.spotify.flo.TaskOperator;
 import com.spotify.flo.TaskOperator.OperationException;
+import com.spotify.flo.context.InstrumentedContext.Listener;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -64,7 +63,7 @@ class Jobs {
     }
 
     @SuppressWarnings("unchecked")
-    <T> T run() {
+    <T> T run(Listener listener) {
       final JobContext jobContext = new JobContext(options.get());
       pipelineConfigurator.accept(jobContext);
       final JobResult result = jobContext.run();
@@ -81,8 +80,8 @@ class Jobs {
       }
 
       @Override
-      public <T> T run() {
-        return spec.run();
+      public <T> T run(Listener listener) {
+        return spec.run(listener);
       }
     }
   }

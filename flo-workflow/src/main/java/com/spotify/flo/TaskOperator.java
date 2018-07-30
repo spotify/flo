@@ -33,6 +33,19 @@ public abstract class TaskOperator<T> extends TaskContextGeneric<T> {
 
   public abstract static class OperationException extends ControlException {
 
-    public abstract <T> T run();
+    public abstract <T> T run(Listener listener);
+  }
+
+  public interface Listener {
+
+    /**
+     * Called to report some piece of task metadata.
+     *
+     * @param task The task that is being evaluated
+     * @param key The metadata key.
+     * @param value The metadata value.
+     */
+    void meta(TaskId task, String key, String value);
+
   }
 }

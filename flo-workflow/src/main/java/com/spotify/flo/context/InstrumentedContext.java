@@ -26,6 +26,7 @@ import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -51,7 +52,7 @@ public class InstrumentedContext extends ForwardingEvalContext {
   /**
    * A listener for instrumented evaluation. See {@link InstrumentedContext} for more details.
    */
-  public interface Listener extends Closeable {
+  public interface Listener extends Closeable, Serializable {
 
     /**
      * Called when a {@link Task} is discovered.
@@ -68,6 +69,16 @@ public class InstrumentedContext extends ForwardingEvalContext {
      * @param phase  The phase of evaluation
      */
     void status(TaskId task, Phase phase);
+
+    /**
+     * Called to report some piece of task metadata.
+     *
+     * @param task   The task that is being evaluated
+     * @param key  The metadata key.
+     * @param value  The metadata value.
+     */
+    default void meta(TaskId task, String key, String value) {
+    }
 
     /**
      * Called to close resources or connections used by the implementing class.

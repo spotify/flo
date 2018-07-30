@@ -33,6 +33,7 @@ import com.spotify.flo.EvalContext.Value;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskOperator;
+import com.spotify.flo.TaskOperator.Listener;
 import com.spotify.flo.TaskOperator.OperationException;
 import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
@@ -48,8 +49,9 @@ public class OperatingContextTest {
   @Mock OperationException operationException;
   @Mock F0<String> spec;
   @Mock TaskOperator<F0<String>> operator;
+  @Mock Listener listener;
 
-  private final EvalContext operatingContext = OperatingContext.composeWith(EvalContext.sync());
+  private EvalContext operatingContext;
 
   private Task<String> task;
 
@@ -60,15 +62,16 @@ public class OperatingContextTest {
         .ofType(String.class)
         .context(operator)
         .process(F0::get);
+    operatingContext = OperatingContext.composeWith(EvalContext.sync(), listener);
   }
 
   @Test
   public void shouldRunOperationException() throws Exception {
     when(spec.get()).thenThrow(operationException);
-    when(operationException.run()).thenReturn("foo");
+    when(operationException.run(listener)).thenReturn("foo");
     final String result = future(operatingContext.evaluate(task)).get(30, SECONDS);
     assertThat(result, is("foo"));
-    verify(operationException).run();
+    verify(operationException).run(listener);
   }
 
   @Test
@@ -76,7 +79,7 @@ public class OperatingContextTest {
     when(spec.get()).thenReturn("bar");
     final String result = future(operatingContext.evaluate(task)).get(30, SECONDS);
     assertThat(result, is("bar"));
-    verify(operationException, never()).run();
+    verify(operationException, never()).run(listener);
   }
 
   private CompletableFuture<String> future(Value<String> v) {
