@@ -59,6 +59,14 @@ public class DefaultBigQueryClient implements FloBigQueryClient {
   }
 
   @Override
+  public StagingTableId createStagingTableId(BigQueryContext context, TableId tableId) {
+    return StagingTableId.of(
+        context,
+        TableId.of(tableId.getProject(), "_incoming_", tableId.getTable())
+    );
+  }
+
+  @Override
   public void publish(StagingTableId stagingTableId, TableId tableId) {
     final TableId staging = stagingTableId.tableId();
     LOG.debug("copying staging table {} to {}", staging, tableId);

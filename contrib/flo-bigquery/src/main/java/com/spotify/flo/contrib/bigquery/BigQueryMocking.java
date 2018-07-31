@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class BigQueryMocking {
 
@@ -38,6 +39,7 @@ public class BigQueryMocking {
       TestContext.key("bigquery-mocking", BigQueryMocking::new);
   private final ConcurrentMap<DatasetId, ConcurrentSkipListSet<String>> mockedTables = new ConcurrentHashMap<>();
   private final ConcurrentMap<DatasetId, ConcurrentSkipListSet<String>> publishedTables = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, TableId> stagingTableIds = new ConcurrentHashMap<>();
 
   private BigQueryMocking() {
   }
@@ -56,7 +58,9 @@ public class BigQueryMocking {
   }
 
   public boolean tableExists(TableId tableId) {
-    return tableExists(publishedTables, tableId) || tableExists(mockedTables, tableId);
+    return tableExists(publishedTables, tableId)
+        || tableExists(mockedTables, tableId)
+        || stagingTableIds.containsValue(tableId);
   }
 
   private boolean tableExists(ConcurrentMap<DatasetId, ConcurrentSkipListSet<String>> datasets,
@@ -98,8 +102,17 @@ public class BigQueryMocking {
     mockedTables.get(datasetIdOf(tableId)).add(tableId.getTable());
   }
 
+  public void stagingTableId(TableId finalTableId, TableId stagingTableId) {
+    // simply store the preferred stagingTableId (because we need EvalContext to create a proper StagingTableId)
+    stagingTableIds.putIfAbsent(formatTableIdKey(finalTableId), stagingTableId);
+  }
+
   private static DatasetId datasetIdOf(TableId tableId) {
     return DatasetId.of(tableId.getProject(), tableId.getDataset());
+  }
+
+  private static String formatTableIdKey(TableId tableId) {
+    return String.format("%s.%s.%s", tableId.getProject(), tableId.getDataset(), tableId.getTable());
   }
 
   /**
@@ -126,7 +139,25 @@ public class BigQueryMocking {
     }
 
     @Override
+    public StagingTableId createStagingTableId(BigQueryContext context, TableId tableId) {
+      return Optional.ofNullable(stagingTableIds.get(formatTableIdKey(tableId)))
+          //read from mocked stagingTableIds if exists
+          .map(stagingTableId -> StagingTableId.of(context, stagingTableId))
+          //create a new StagingTableId
+          .orElse(StagingTableId.of(
+              context,
+              TableId.of(
+                  tableId.getProject(),
+                  "_incoming_test",
+                  "_" + tableId.getTable() + "_" + ThreadLocalRandom.current().nextLong(10_000_000))
+              )
+          );
+    }
+
+    @Override
     public void publish(StagingTableId stagingTableId, TableId tableId) {
+      stagingTableIds.remove(formatTableIdKey(tableId));
+
       final DatasetId datasetId = datasetIdOf(tableId);
       publishedTables.computeIfAbsent(datasetId, k -> new ConcurrentSkipListSet<>())
           .add(tableId.getTable());
