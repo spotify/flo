@@ -35,10 +35,9 @@ class ScioOperator extends TaskOperator[ScioJobSpec.Provider] {
 }
 
 object ScioOperator {
-  private val supplier = new F0[Mocking] {
+  private val MOCK = TestContext.key("mock", new F0[Mocking](){
     override def get(): Mocking = new Mocking
-  }
-  private val MOCK = TestContext.key("mock", supplier)
+  })
 
   def mock(): Mocking = {
     MOCK.get()
