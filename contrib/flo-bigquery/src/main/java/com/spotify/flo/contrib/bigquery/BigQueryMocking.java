@@ -112,11 +112,6 @@ public class BigQueryMocking {
     }
 
     @Override
-    public Job create(JobInfo jobInfo, JobOption... jobOptions) {
-      return null;
-    }
-
-    @Override
     public void publish(StagingTableId stagingTableId, TableId tableId) {
       //remove from 'staging' map
       final DatasetId datasetId = datasetIdOf(stagingTableId.tableId());

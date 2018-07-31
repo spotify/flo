@@ -45,13 +45,6 @@ public interface FloBigQueryClient {
   Dataset create(DatasetInfo datasetInfo);
 
   /**
-   * Create a BigQuery Job with info and options
-   * @param jobInfo the job info
-   * @param jobOptions other options
-   */
-  Job create(JobInfo jobInfo, BigQuery.JobOption... jobOptions);
-
-  /**
    * Publish a table by copying from stagingTableId to tableId
    * @param stagingTableId source table id
    * @param tableId destination table id

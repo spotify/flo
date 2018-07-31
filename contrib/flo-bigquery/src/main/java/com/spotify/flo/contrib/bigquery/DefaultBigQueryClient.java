@@ -61,11 +61,6 @@ public class DefaultBigQueryClient implements FloBigQueryClient {
   }
 
   @Override
-  public Job create(JobInfo jobInfo, JobOption... jobOptions) {
-    return client.create(jobInfo, jobOptions);
-  }
-
-  @Override
   public void publish(StagingTableId stagingTableId, TableId tableId) {
     final TableId staging = stagingTableId.tableId();
     LOG.debug("copying staging table {} to {}", staging, tableId);
