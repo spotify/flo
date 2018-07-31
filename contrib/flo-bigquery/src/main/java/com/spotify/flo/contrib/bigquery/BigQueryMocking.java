@@ -36,7 +36,8 @@ public class BigQueryMocking {
 
   private static final TestContext.Key<BigQueryMocking> INSTANCE =
       TestContext.key("bigquery-mocking", BigQueryMocking::new);
-  private final ConcurrentMap<DatasetId, ConcurrentSkipListSet<String>> productionTables = new ConcurrentHashMap<>();
+  private final ConcurrentMap<DatasetId, ConcurrentSkipListSet<String>> mockedTables = new ConcurrentHashMap<>();
+  private final ConcurrentMap<DatasetId, ConcurrentSkipListSet<String>> publishedTables = new ConcurrentHashMap<>();
 
   private BigQueryMocking() {
   }
@@ -55,13 +56,24 @@ public class BigQueryMocking {
   }
 
   public boolean tableExists(TableId tableId) {
-    return Optional.ofNullable(productionTables.get(datasetIdOf(tableId)))
-        .map(tables -> tables.contains(tableId.getTable()))
-        .orElse(false);
+    return tableExists(publishedTables, tableId) || tableExists(mockedTables, tableId);
+  }
+
+  private boolean tableExists(ConcurrentMap<DatasetId, ConcurrentSkipListSet<String>> datasets, TableId tableId) {
+    return Optional.ofNullable(datasets.get(datasetIdOf(tableId)))
+        .map(tables -> tables.contains(tableId.getTable())).orElse(false);
   }
 
   public boolean tableExists(String project, String dataset, String table) {
     return tableExists(TableId.of(project, dataset, table));
+  }
+
+  public boolean tablePublished(String project, String dataset, String table) {
+    return tablePublished(TableId.of(project, dataset, table));
+  }
+
+  public boolean tablePublished(TableId tableId) {
+    return tableExists(publishedTables, tableId);
   }
 
   public void dataset(String project, String dataset) {
@@ -73,7 +85,7 @@ public class BigQueryMocking {
   }
 
   public void dataset(DatasetId datasetId) {
-    productionTables.putIfAbsent(datasetId, new ConcurrentSkipListSet<>());
+    mockedTables.putIfAbsent(datasetId, new ConcurrentSkipListSet<>());
   }
 
   public void table(String project, String dataset, String table) {
@@ -82,7 +94,7 @@ public class BigQueryMocking {
 
   public void table(TableId tableId) {
     dataset(tableId);
-    productionTables.get(datasetIdOf(tableId)).add(tableId.getTable());
+    mockedTables.get(datasetIdOf(tableId)).add(tableId.getTable());
   }
 
   private static DatasetId datasetIdOf(TableId tableId) {
@@ -115,7 +127,7 @@ public class BigQueryMocking {
     @Override
     public void publish(StagingTableId stagingTableId, TableId tableId) {
       final DatasetId datasetId = datasetIdOf(tableId);
-      productionTables.computeIfAbsent(datasetId, k -> new ConcurrentSkipListSet<>())
+      publishedTables.computeIfAbsent(datasetId, k -> new ConcurrentSkipListSet<>())
           .add(tableId.getTable());
     }
   }

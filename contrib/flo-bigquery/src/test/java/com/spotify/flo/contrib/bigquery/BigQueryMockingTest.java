@@ -37,9 +37,15 @@ public class BigQueryMockingTest {
   public void lookupShouldReturnMockedTable() throws Exception {
     final Task<TableId> lookup = BigQueryTasks.lookup("foo", "bar", "tab");
     try (TestScope scope = FloTesting.scope()) {
+      assertThat(BigQueryMocking.mock().tablePublished("foo", "bar", "tab"), is(false));
+      assertThat(BigQueryMocking.mock().tableExists("foo", "bar", "tab"), is(false));
       BigQueryMocking.mock().table("foo", "bar", "tab");
+      assertThat(BigQueryMocking.mock().tablePublished("foo", "bar", "tab"), is(false));
+      assertThat(BigQueryMocking.mock().tableExists("foo", "bar", "tab"), is(true));
       final TableId tableId = FloRunner.runTask(lookup).future().get(30, TimeUnit.SECONDS);
       assertThat(tableId, is(TableId.of("foo","bar","tab")));
+      assertThat(BigQueryMocking.mock().tablePublished("foo", "bar", "tab"), is(false));
+      assertThat(BigQueryMocking.mock().tableExists("foo", "bar", "tab"), is(true));
     }
   }
 
@@ -56,9 +62,15 @@ public class BigQueryMockingTest {
         });
 
     try (TestScope scope = FloTesting.scope()) {
+      assertThat(BigQueryMocking.mock().tablePublished(expected), is(false));
+      assertThat(BigQueryMocking.mock().tableExists(expected), is(false));
       BigQueryMocking.mock().table(expected);
+      assertThat(BigQueryMocking.mock().tablePublished(expected), is(false));
+      assertThat(BigQueryMocking.mock().tableExists(expected), is(true));
       final TableId tableId = FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS);
       assertThat(tableId, is(expected));
+      assertThat(BigQueryMocking.mock().tablePublished(expected), is(false));
+      assertThat(BigQueryMocking.mock().tableExists(expected), is(true));
     }
   }
 
@@ -73,9 +85,12 @@ public class BigQueryMockingTest {
         .process(StagingTableId::publish);
 
     try (TestScope scope = FloTesting.scope()) {
+      assertThat(BigQueryMocking.mock().tableExists(expected), is(false));
+      assertThat(BigQueryMocking.mock().tablePublished(expected), is(false));
       final TableId tableId = FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS);
       assertThat(tableId, is(expected));
       assertThat(BigQueryMocking.mock().tableExists(expected), is(true));
+      assertThat(BigQueryMocking.mock().tablePublished(expected), is(true));
     }
   }
 }
