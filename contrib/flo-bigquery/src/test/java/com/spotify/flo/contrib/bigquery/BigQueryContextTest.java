@@ -27,6 +27,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -69,7 +70,7 @@ public class BigQueryContextTest {
 
   @Mock
   private Dataset dataset;
-  
+
   @Mock
   private Job job;
 
@@ -78,16 +79,20 @@ public class BigQueryContextTest {
   private static final DatasetId DATASET_ID = DatasetId.of(PROJECT, "dataset");
   private static final TableId TABLE_ID = TableId.of(PROJECT, DATASET_ID.getDataset(), "table");
 
+  private FloBigQueryClient floBigQueryClient;
+
   @Before
   public void setup() {
     when(dataset.getLocation()).thenReturn(LOCATION);
     when(bigQuery.create(any(DatasetInfo.class))).thenReturn(dataset);
     when(bigQuery.create(any(JobInfo.class))).thenReturn(mock(Job.class));
+
+    floBigQueryClient = spy(new DefaultBigQueryClient(bigQuery));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void shouldNotCreateDataset() {
-    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> bigQuery, TABLE_ID);
+    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> floBigQueryClient, TABLE_ID);
 
     bigQueryContext.provide(null);
   }
@@ -96,7 +101,7 @@ public class BigQueryContextTest {
   public void shouldCreateStagingDatasetIfDoesNotExist() {
     when(bigQuery.getDataset(DATASET_ID)).thenReturn(dataset);
 
-    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> bigQuery, TABLE_ID);
+    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> floBigQueryClient, TABLE_ID);
 
     bigQueryContext.provide(null);
 
@@ -107,7 +112,7 @@ public class BigQueryContextTest {
   public void shouldProvideStagingTableId() {
     when(bigQuery.getDataset(any(DatasetId.class))).thenReturn(dataset);
 
-    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> bigQuery, TABLE_ID);
+    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> floBigQueryClient, TABLE_ID);
 
     final StagingTableId stagingTableId = bigQueryContext.provide(null);
 
@@ -121,7 +126,7 @@ public class BigQueryContextTest {
     when(job.waitFor(any(WaitForOption.class))).thenReturn(job);
     when(job.getStatus()).thenReturn(mock(JobStatus.class));
 
-    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> bigQuery, TABLE_ID);
+    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> floBigQueryClient, TABLE_ID);
 
     final StagingTableId stagingTableId = bigQueryContext.provide(null);
 
@@ -135,7 +140,7 @@ public class BigQueryContextTest {
     when(bigQuery.getDataset(DATASET_ID)).thenReturn(mock(Dataset.class));
     when(bigQuery.getTable(TABLE_ID)).thenReturn(mock(Table.class));
 
-    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> bigQuery, TABLE_ID);
+    final BigQueryContext bigQueryContext = BigQueryContext.create(() -> floBigQueryClient, TABLE_ID);
 
     final TableId tableId = bigQueryContext.lookup(null).get();
 
@@ -151,7 +156,7 @@ public class BigQueryContextTest {
     when(job.getStatus()).thenReturn(mock(JobStatus.class));
     when(job.getStatus().getError()).thenReturn(new BigQueryError("", "", "job error"));
 
-    BigQueryContext.create(() -> bigQuery, TABLE_ID).provide(null).publish();
+    BigQueryContext.create(() -> floBigQueryClient, TABLE_ID).provide(null).publish();
   }
 
   @Test(expected = RuntimeException.class)
@@ -161,7 +166,7 @@ public class BigQueryContextTest {
     when(bigQuery.create(any(JobInfo.class))).thenReturn(job);
     when(job.waitFor(any(WaitForOption.class))).thenReturn(null);
 
-    BigQueryContext.create(() -> bigQuery, TABLE_ID).provide(null).publish();
+    BigQueryContext.create(() -> floBigQueryClient, TABLE_ID).provide(null).publish();
   }
 
   @Test(expected = BigQueryException.class)
@@ -173,7 +178,7 @@ public class BigQueryContextTest {
     doThrow(new BigQueryException(mock(IOException.class))).when(job)
         .waitFor(any(WaitForOption.class));
 
-    BigQueryContext.create(() -> bigQuery, TABLE_ID).provide(null).publish();
+    BigQueryContext.create(() -> floBigQueryClient, TABLE_ID).provide(null).publish();
   }
 
   @Test
@@ -185,6 +190,7 @@ public class BigQueryContextTest {
     final BigQueryContext deserializedContext = PersistingContext.deserialize(bais);
     assertThat(deserializedContext, is(notNullValue()));
   }
+
   @Test
   public void shouldBeRunnable() throws Exception {
     final String nonExistentProject = UUID.randomUUID().toString();

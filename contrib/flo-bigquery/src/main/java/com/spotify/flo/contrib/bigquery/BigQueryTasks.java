@@ -20,19 +20,13 @@
 
 package com.spotify.flo.contrib.bigquery;
 
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.BigQueryOptions;
-import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.status.NotReady;
 import com.spotify.flo.util.Date;
 import com.spotify.flo.util.DateHour;
-
-import java.util.Optional;
 
 public final class BigQueryTasks {
 
@@ -41,17 +35,20 @@ public final class BigQueryTasks {
   }
 
   @VisibleForTesting
-  static Task<TableId> lookup(F0<BigQuery> bigQuery, TableId tableId) {
+  static Task<TableId> lookup(F0<FloBigQueryClient> bigQuerySupplier, TableId tableId) {
     return Task.named(tableId.getProject(), tableId.getDataset(), tableId.getTable())
         .ofType(TableId.class)
-        .process(() ->
-            Optional.ofNullable(bigQuery.get().getTable(tableId))
-                .map(Table::getTableId)
-                .orElseThrow(NotReady::new));
+        .process(() -> {
+          if (bigQuerySupplier.get().tableExists(tableId)) {
+            return tableId;
+          } else {
+            throw new NotReady();
+          }
+        });
   }
 
   public static Task<TableId> lookup(TableId tableId) {
-    return lookup(() -> BigQueryOptions.getDefaultInstance().getService(), tableId);
+    return lookup(BigQueryContext::defaultBigQuerySupplier, tableId);
   }
 
   public static Task<TableId> lookup(String project, String dataset, String table) {

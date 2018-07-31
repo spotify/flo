@@ -20,25 +20,16 @@
 
 package com.spotify.flo.contrib.bigquery;
 
-import com.google.cloud.WaitForOption;
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.BigQueryException;
-import com.google.cloud.bigquery.BigQueryOptions;
-import com.google.cloud.bigquery.CopyJobConfiguration;
-import com.google.cloud.bigquery.Dataset;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
-import com.google.cloud.bigquery.Job;
-import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.TableId;
 import com.spotify.flo.EvalContext;
+import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskContextStrict;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.threeten.bp.Duration;
@@ -47,12 +38,12 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
 
   private static final Logger LOG = LoggerFactory.getLogger(BigQueryContext.class);
 
-  private final F0<BigQuery> bigQuerySupplier;
+  private final F0<FloBigQueryClient> bigQuerySupplier;
   private final TableId tableId;
 
-  private transient BigQuery bigQuery;
+  private transient FloBigQueryClient bigQuery;
 
-  private BigQueryContext(F0<BigQuery> bigQuery, TableId tableId) {
+  BigQueryContext(F0<FloBigQueryClient> bigQuery, TableId tableId) {
     this.bigQuerySupplier = bigQuery;
     this.tableId = tableId;
   }
@@ -62,23 +53,21 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
   }
 
   public static BigQueryContext create(TableId tableId) {
-    return create(() -> {
-      return BigQueryOptions.getDefaultInstance().getService();
-    }, tableId);
+    return create(BigQueryContext::defaultBigQuerySupplier, tableId);
   }
 
-  static BigQueryContext create(F0<BigQuery> bigQuery, TableId tableId) {
-    return new BigQueryContext(bigQuery, tableId);
+  static BigQueryContext create(F0<FloBigQueryClient> bigQuerySupplier, TableId tableId) {
+    return new BigQueryContext(bigQuerySupplier, tableId);
   }
 
   public TableId tableId() {
     return tableId;
   }
 
-  private Dataset getDatasetOrThrow() {
+  private DatasetInfo getDatasetOrThrow() {
     final DatasetId datasetId = DatasetId.of(tableId.getProject(), tableId.getDataset());
 
-    final Dataset dataset = bigQuery().getDataset(datasetId);
+    final DatasetInfo dataset = bigQuery().getDataset(datasetId);
 
     if (dataset == null) {
       LOG.error("Could not find dataset {}", datasetId);
@@ -116,54 +105,35 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
   public Optional<TableId> lookup(Task<TableId> task) {
     getDatasetOrThrow();
 
-    if (bigQuery().getTable(tableId) == null) {
+    if (!bigQuery().tableExists(tableId)) {
       return Optional.empty();
     }
 
     return Optional.of(tableId);
   }
 
+  public static BigQueryMocking mock() {
+    return BigQueryMocking.mock();
+  }
+
   TableId publish(StagingTableId stagingTableId) {
-    final TableId staging = stagingTableId.tableId();
-    LOG.debug("copying staging table {} to {}", staging, tableId);
-    try {
-      final Job job = bigQuery().create(JobInfo.of(CopyJobConfiguration.of(tableId, staging)))
-          .waitFor(WaitForOption.timeout(1, TimeUnit.MINUTES));
-      throwIfUnsuccessfulJobStatus(job, tableId);
-    } catch (BigQueryException e) {
-      LOG.error("Could not copy BigQuery table {} from staging to target", tableId, e);
-      throw e;
-    } catch (InterruptedException | TimeoutException e) {
-      LOG.error("Could not copy BigQuery table {} from staging to target", tableId, e);
-      throw new RuntimeException(e);
-    }
-
-    LOG.debug("deleting staging table {}", staging);
-    bigQuery().delete(staging);
-
+    bigQuery().publish(stagingTableId, tableId);
     return tableId;
   }
 
-  private BigQuery bigQuery() {
+  private FloBigQueryClient bigQuery() {
     if (bigQuery == null) {
       bigQuery = bigQuerySupplier.get();
     }
     return bigQuery;
   }
 
-  private static void throwIfUnsuccessfulJobStatus(Job job, TableId tableId) {
-    if (job != null && job.getStatus().getError() == null) {
-      LOG.info("successfully published table {}", tableId);
+
+  static FloBigQueryClient defaultBigQuerySupplier() {
+    if (FloTesting.isTest()) {
+      return BigQueryMocking.mock().client();
     } else {
-      String error;
-      if (job == null) {
-        error = "job no longer exists";
-      } else {
-        error = job.getStatus().getError().toString();
-      }
-      LOG.error("Could not copy BigQuery table {} from staging to target with error: {}",
-          tableId, error);
-      throw new RuntimeException(error);
+      return BigQueryClientSingleton.BIGQUERY_CLIENT;
     }
   }
 }
