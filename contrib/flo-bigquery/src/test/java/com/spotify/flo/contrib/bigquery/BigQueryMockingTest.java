@@ -43,7 +43,7 @@ public class BigQueryMockingTest {
       assertThat(BigQueryMocking.mock().tablePublished("foo", "bar", "tab"), is(false));
       assertThat(BigQueryMocking.mock().tableExists("foo", "bar", "tab"), is(true));
       final TableId tableId = FloRunner.runTask(lookup).future().get(30, TimeUnit.SECONDS);
-      assertThat(tableId, is(TableId.of("foo","bar","tab")));
+      assertThat(tableId, is(TableId.of("foo", "bar", "tab")));
       assertThat(BigQueryMocking.mock().tablePublished("foo", "bar", "tab"), is(false));
       assertThat(BigQueryMocking.mock().tableExists("foo", "bar", "tab"), is(true));
     }

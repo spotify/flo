@@ -28,7 +28,7 @@ public class BigQueryClientSingleton {
   public static final BigQuery BIGQUERY_INTERNAL;
   public static final FloBigQueryClient BIGQUERY_CLIENT;
 
-  static{
+  static {
     BIGQUERY_INTERNAL = BigQueryOptions.getDefaultInstance().getService();
     BIGQUERY_CLIENT = new DefaultBigQueryClient(BIGQUERY_INTERNAL);
   }

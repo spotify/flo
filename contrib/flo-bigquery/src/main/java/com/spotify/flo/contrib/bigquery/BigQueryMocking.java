@@ -59,7 +59,8 @@ public class BigQueryMocking {
     return tableExists(publishedTables, tableId) || tableExists(mockedTables, tableId);
   }
 
-  private boolean tableExists(ConcurrentMap<DatasetId, ConcurrentSkipListSet<String>> datasets, TableId tableId) {
+  private boolean tableExists(ConcurrentMap<DatasetId, ConcurrentSkipListSet<String>> datasets,
+      TableId tableId) {
     return Optional.ofNullable(datasets.get(datasetIdOf(tableId)))
         .map(tables -> tables.contains(tableId.getTable())).orElse(false);
   }

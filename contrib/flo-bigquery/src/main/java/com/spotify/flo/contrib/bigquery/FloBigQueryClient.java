@@ -41,6 +41,7 @@ public interface FloBigQueryClient {
 
   /**
    * Publish a table by copying from stagingTableId to tableId
+   *
    * @param stagingTableId source table id
    * @param tableId destination table id
    */
@@ -48,7 +49,7 @@ public interface FloBigQueryClient {
 
   /**
    * Check if a BigQuery table exists
-   * @param tableId
+   *
    * @return true if it exists, otherwise false
    */
   boolean tableExists(TableId tableId);

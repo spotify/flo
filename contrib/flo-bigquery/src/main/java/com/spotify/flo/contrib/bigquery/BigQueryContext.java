@@ -129,7 +129,6 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
   }
 
 
-
   static FloBigQueryClient defaultBigQuerySupplier() {
     if (FloTesting.isTest()) {
       return BigQueryMocking.mock().client();

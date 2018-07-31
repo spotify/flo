@@ -53,9 +53,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BigQueryTasksTest {
 
-  @Rule public ExpectedException exception = ExpectedException.none();
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
 
-  @Mock FloBigQueryClient bq;
+  @Mock
+  FloBigQueryClient bq;
 
   public static final Config NO_FORKING_CONFIG = ConfigFactory.load("flo")
       .withValue("flo.forking", ConfigValueFactory.fromAnyRef(false));

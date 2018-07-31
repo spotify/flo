@@ -190,6 +190,7 @@ public class BigQueryContextTest {
     final BigQueryContext deserializedContext = PersistingContext.deserialize(bais);
     assertThat(deserializedContext, is(notNullValue()));
   }
+
   @Test
   public void shouldBeRunnable() throws Exception {
     final String nonExistentProject = UUID.randomUUID().toString();
