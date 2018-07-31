@@ -46,7 +46,7 @@ public class BigQueryMocking {
    * Get a {@link BigQueryMocking} instance to be used for mocking bigquery tables and checking
    * tables outputed by a task output. Must be called in a flo test scope.
    */
-  static BigQueryMocking mock() {
+  public static BigQueryMocking mock() {
     return INSTANCE.get();
   }
 
