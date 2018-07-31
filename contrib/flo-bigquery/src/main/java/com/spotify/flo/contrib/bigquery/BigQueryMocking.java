@@ -95,11 +95,9 @@ public class BigQueryMocking {
 
     @Override
     public DatasetInfo getDataset(DatasetId datasetId) {
-      return Optional.ofNullable(productionTables.get(datasetId))
-          .map(tables -> Dataset.newBuilder(datasetId)
-              .setLocation("test") // TOOD: make mockable?
-              .build())
-          .orElse(null);
+      return Dataset.newBuilder(datasetId)
+          .setLocation("test") // TOOD: make mockable?
+          .build();
     }
 
     @Override
@@ -114,7 +112,7 @@ public class BigQueryMocking {
 
     @Override
     public void publish(StagingTableId stagingTableId, TableId tableId) {
-      final DatasetId datasetId = datasetIdOf(stagingTableId.tableId());
+      final DatasetId datasetId = datasetIdOf(tableId);
       productionTables.computeIfAbsent(datasetId, k -> new ConcurrentSkipListSet<>())
           .add(tableId.getTable());
     }

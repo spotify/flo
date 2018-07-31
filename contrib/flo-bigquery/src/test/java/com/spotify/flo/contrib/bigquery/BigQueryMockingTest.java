@@ -65,4 +65,22 @@ public class BigQueryMockingTest {
       assertThat(tableId, is(expected));
     }
   }
+
+  @Test
+  public void contextShouldCreateTable() throws Exception {
+
+    final TableId expected = TableId.of("foo", "bar", "baz");
+
+    final Task<TableId> task = Task.named("task")
+        .ofType(TableId.class)
+        .context(BigQueryContext.create(expected))
+        .process(StagingTableId::publish);
+
+    try (TestScope scope = FloTesting.scope()) {
+      final TableId tableId = FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS);
+      assertThat(tableId, is(expected));
+      assertThat(BigQueryMocking.mock().tableExists(expected), is(true));
+    }
+  }
+
 }
