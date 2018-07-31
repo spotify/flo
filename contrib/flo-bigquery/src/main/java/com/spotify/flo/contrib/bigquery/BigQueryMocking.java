@@ -32,6 +32,8 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 public class BigQueryMocking {
 
+  // TODO: should be possible for tests to distinguish between tables mocked by user and tables created by task
+
   private static final TestContext.Key<BigQueryMocking> INSTANCE =
       TestContext.key("bigquery-mocking", BigQueryMocking::new);
   private final ConcurrentMap<DatasetId, ConcurrentSkipListSet<String>> productionTables = new ConcurrentHashMap<>();
