@@ -84,7 +84,10 @@
           <sourceDir>../flo-scio_2.12/src/main/scala</sourceDir>
           <scalaVersion>${scala.version}</scalaVersion>
           <sendJavaToScalac>false</sendJavaToScalac>
-          <addScalacArgs>-Xexperimental|-target:jvm-1.8</addScalacArgs>
+          <args>
+            <arg>-Xexperimental</arg>
+            <arg>-target:jvm-1.8</arg>
+          </args>
         </configuration>
       </plugin>
 
