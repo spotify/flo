@@ -35,14 +35,10 @@ public class BigQueryMockingTest {
 
   @Test
   public void lookupShouldReturnMockedTable() throws Exception {
-
     final Task<TableId> lookup = BigQueryTasks.lookup("foo", "bar", "tab");
-
     try (TestScope scope = FloTesting.scope()) {
       BigQueryMocking.mock().table("foo", "bar", "tab");
-
       final TableId tableId = FloRunner.runTask(lookup).future().get(30, TimeUnit.SECONDS);
-
       assertThat(tableId, is(TableId.of("foo","bar","tab")));
     }
   }
@@ -82,5 +78,4 @@ public class BigQueryMockingTest {
       assertThat(BigQueryMocking.mock().tableExists(expected), is(true));
     }
   }
-
 }
