@@ -121,6 +121,10 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
     return Optional.of(tableId);
   }
 
+  public static BigQueryMocking mock() {
+    return BigQueryMocking.mock();
+  }
+
   TableId publish(StagingTableId stagingTableId) {
     bigQuery().publish(stagingTableId, tableId);
     return tableId;
