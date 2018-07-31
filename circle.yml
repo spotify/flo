@@ -13,6 +13,6 @@ dependencies:
 
 test:
   override:
-    - mvn verify --batch-mode -Pcoverage
+    - mvn verify scala:doc-jar --batch-mode -Pcoverage
   post:
     - bash <(curl -s https://codecov.io/bash)
