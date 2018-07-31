@@ -27,7 +27,6 @@ import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.status.NotReady;
 import com.spotify.flo.util.Date;
 import com.spotify.flo.util.DateHour;
-import java.util.Optional;
 
 public final class BigQueryTasks {
 
@@ -39,10 +38,13 @@ public final class BigQueryTasks {
   static Task<TableId> lookup(F0<FloBigQueryClient> bigQuerySupplier, TableId tableId) {
     return Task.named(tableId.getProject(), tableId.getDataset(), tableId.getTable())
         .ofType(TableId.class)
-        .process(() ->
-            Optional.of(bigQuerySupplier.get().tableExists(tableId))
-                .map(x -> tableId)
-                .orElseThrow(NotReady::new));
+        .process(() -> {
+          if (bigQuerySupplier.get().tableExists(tableId)) {
+            return tableId;
+          } else {
+            throw new NotReady();
+          }
+        });
   }
 
   public static Task<TableId> lookup(TableId tableId) {
