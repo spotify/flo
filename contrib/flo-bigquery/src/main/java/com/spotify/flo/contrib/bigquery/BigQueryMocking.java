@@ -26,7 +26,6 @@ import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
 import com.google.cloud.bigquery.Job;
 import com.google.cloud.bigquery.JobInfo;
-import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
 import com.spotify.flo.TestContext;
 import java.util.concurrent.ConcurrentHashMap;
@@ -119,15 +118,13 @@ public class BigQueryMocking {
 
     @Override
     public void publish(StagingTableId stagingTableId, TableId tableId) {
-      stagingTables.computeIfPresent(datasetIdOf(stagingTableId.tableId()), (key, value) -> {
-        //add to 'production' map
-        productionTables.putIfAbsent(key, new ConcurrentSkipListSet<>());
-        productionTables.get(key).add(tableId.getTable());
+      //remove from 'staging' map
+      final DatasetId datasetId = datasetIdOf(stagingTableId.tableId());
+      stagingTables.get(datasetId).remove(stagingTableId.tableId().getTable());
 
-        //remove from 'staging' map
-        stagingTables.get(key).remove(stagingTableId.tableId().getTable());
-        return stagingTables.get(key);
-      });
+      //add to 'production' map
+      productionTables.computeIfAbsent(datasetId, k -> new ConcurrentSkipListSet<>())
+          .add(tableId.getTable());
     }
   }
 }
