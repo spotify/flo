@@ -20,15 +20,8 @@
 
 package com.spotify.flo.contrib.bigquery;
 
-import com.google.cloud.WaitForOption;
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.BigQueryException;
-import com.google.cloud.bigquery.CopyJobConfiguration;
-import com.google.cloud.bigquery.Dataset;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
-import com.google.cloud.bigquery.Job;
-import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.TableId;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.FloTesting;
@@ -37,8 +30,6 @@ import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskContextStrict;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.threeten.bp.Duration;
