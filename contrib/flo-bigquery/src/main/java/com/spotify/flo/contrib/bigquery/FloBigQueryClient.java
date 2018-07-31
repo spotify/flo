@@ -37,12 +37,12 @@ public interface FloBigQueryClient {
   /**
    * Get a dataset by Id
    */
-  Dataset getDataset(DatasetId datasetId);
+  DatasetInfo getDataset(DatasetId datasetId);
 
   /**
    * Create a dataset and return a reference to it.
    */
-  Dataset create(DatasetInfo datasetInfo);
+  DatasetInfo create(DatasetInfo datasetInfo);
 
   /**
    * Publish a table by copying from stagingTableId to tableId

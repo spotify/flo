@@ -46,12 +46,12 @@ public class DefaultBigQueryClient implements FloBigQueryClient {
   }
 
   @Override
-  public Dataset getDataset(DatasetId datasetId) {
+  public DatasetInfo getDataset(DatasetId datasetId) {
     return client.getDataset(datasetId);
   }
 
   @Override
-  public Dataset create(DatasetInfo datasetInfo) {
+  public DatasetInfo create(DatasetInfo datasetInfo) {
     return client.create(datasetInfo);
   }
 

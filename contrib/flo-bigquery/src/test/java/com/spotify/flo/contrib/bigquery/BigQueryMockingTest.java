@@ -34,7 +34,7 @@ import org.junit.Test;
 public class BigQueryMockingTest {
 
   @Test
-  public void shouldReturnMockedTable() throws Exception {
+  public void lookupShouldReturnMockedTable() throws Exception {
 
     final Task<TableId> lookup = BigQueryTasks.lookup("foo", "bar", "tab");
 
@@ -47,5 +47,22 @@ public class BigQueryMockingTest {
     }
   }
 
+  @Test
+  public void contextShouldLookupMockedTableAndNotRunProcessFn() throws Exception {
 
+    final TableId expected = TableId.of("foo", "bar", "baz");
+
+    final Task<TableId> task = Task.named("task")
+        .ofType(TableId.class)
+        .context(BigQueryContext.create(expected))
+        .process(table -> {
+          throw new AssertionError();
+        });
+
+    try (TestScope scope = FloTesting.scope()) {
+      BigQueryMocking.mock().table(expected);
+      final TableId tableId = FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS);
+      assertThat(tableId, is(expected));
+    }
+  }
 }

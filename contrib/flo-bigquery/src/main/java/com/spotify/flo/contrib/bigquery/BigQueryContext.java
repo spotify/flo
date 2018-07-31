@@ -73,10 +73,10 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
     return tableId;
   }
 
-  private Dataset getDatasetOrThrow() {
+  private DatasetInfo getDatasetOrThrow() {
     final DatasetId datasetId = DatasetId.of(tableId.getProject(), tableId.getDataset());
 
-    final Dataset dataset = bigQuery().getDataset(datasetId);
+    final DatasetInfo dataset = bigQuery().getDataset(datasetId);
 
     if (dataset == null) {
       LOG.error("Could not find dataset {}", datasetId);

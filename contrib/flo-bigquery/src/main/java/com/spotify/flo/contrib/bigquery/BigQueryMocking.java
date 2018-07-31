@@ -20,14 +20,12 @@
 
 package com.spotify.flo.contrib.bigquery;
 
-import com.google.cloud.bigquery.BigQuery.JobOption;
 import com.google.cloud.bigquery.Dataset;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
-import com.google.cloud.bigquery.Job;
-import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.TableId;
 import com.spotify.flo.TestContext;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -37,7 +35,6 @@ public class BigQueryMocking {
   private static final TestContext.Key<BigQueryMocking> INSTANCE =
       TestContext.key("bigquery-mocking", BigQueryMocking::new);
   private final ConcurrentMap<DatasetId, ConcurrentSkipListSet<String>> productionTables = new ConcurrentHashMap<>();
-  private final ConcurrentMap<DatasetId, ConcurrentSkipListSet<String>> stagingTables = new ConcurrentHashMap<>();
 
   private BigQueryMocking() {
   }
@@ -56,8 +53,9 @@ public class BigQueryMocking {
   }
 
   public boolean tableExists(TableId tableId) {
-    final ConcurrentSkipListSet<String> tableIds = productionTables.get(datasetIdOf(tableId));
-    return tableIds != null && tableIds.contains(tableId.getTable());
+    return Optional.ofNullable(productionTables.get(datasetIdOf(tableId)))
+        .map(tables -> tables.contains(tableId.getTable()))
+        .orElse(false);
   }
 
   public boolean tableExists(String project, String dataset, String table) {
@@ -96,28 +94,27 @@ public class BigQueryMocking {
   private class MockBigQueryClient implements FloBigQueryClient {
 
     @Override
-    public Dataset getDataset(DatasetId datasetId) {
-      return null;
+    public DatasetInfo getDataset(DatasetId datasetId) {
+      return Optional.ofNullable(productionTables.get(datasetId))
+          .map(tables -> Dataset.newBuilder(datasetId)
+              .setLocation("test") // TOOD: make mockable?
+              .build())
+          .orElse(null);
     }
 
     @Override
-    public Dataset create(DatasetInfo datasetInfo) {
-      return null;
+    public DatasetInfo create(DatasetInfo datasetInfo) {
+      return datasetInfo;
     }
 
     @Override
     public boolean tableExists(TableId tableId) {
-      return productionTables.getOrDefault(datasetIdOf(tableId), new ConcurrentSkipListSet<>())
-          .contains(tableId.getTable());
+      return BigQueryMocking.this.tableExists(tableId);
     }
 
     @Override
     public void publish(StagingTableId stagingTableId, TableId tableId) {
-      //remove from 'staging' map
       final DatasetId datasetId = datasetIdOf(stagingTableId.tableId());
-      stagingTables.get(datasetId).remove(stagingTableId.tableId().getTable());
-
-      //add to 'production' map
       productionTables.computeIfAbsent(datasetId, k -> new ConcurrentSkipListSet<>())
           .add(tableId.getTable());
     }
