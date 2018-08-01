@@ -27,6 +27,8 @@ import com.spotify.flo.EvalContext;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskInfo;
+import com.spotify.flo.TaskOperator;
+import com.spotify.flo.context.InstrumentedContext.Listener;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
@@ -161,7 +163,10 @@ public final class FloRunner<T> {
   }
 
   private EvalContext createContext() {
-    final EvalContext baseContext = instrument(createRootContext());
+    final Listener listener = resolveListener();
+    closeables.add(listener);
+
+    final EvalContext baseContext = InstrumentedContext.composeWith(createRootContext(), listener);
 
     if (isMode("persist")) {
       return
@@ -179,7 +184,7 @@ public final class FloRunner<T> {
                           OverridingContext.composeWith(
                               LoggingContext.composeWith(
                                   baseContext,
-                                  logging), logging)))));
+                                  logging), logging))), listener::meta));
     }
   }
 
@@ -202,19 +207,17 @@ public final class FloRunner<T> {
     }
   }
 
-  private EvalContext instrument(EvalContext delegate) {
+  private Listener resolveListener() {
     final ServiceLoader<FloListenerFactory> factories =
         ServiceLoader.load(FloListenerFactory.class);
 
-    InstrumentedContext.Listener listener = new NoopListener();
+    Listener listener = new NoopListener();
     for (FloListenerFactory factory : factories) {
-      final InstrumentedContext.Listener newListener =
+      final Listener newListener =
           requireNonNull(factory.createListener(config));
       listener = new ChainedListener(newListener, listener, logging);
     }
-
-    closeables.add(listener);
-    return InstrumentedContext.composeWith(delegate, listener);
+    return listener;
   }
 
   private EvalContext forkingContext(EvalContext baseContext) {

@@ -23,7 +23,9 @@ package com.spotify.flo.context;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.TaskOperator.Listener;
 import com.spotify.flo.TaskOperator.OperationException;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,22 +36,27 @@ import org.slf4j.LoggerFactory;
 public class OperatingContext extends ForwardingEvalContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(OperatingContext.class);
+  private final Listener listener;
 
-  private OperatingContext(EvalContext delegate) {
+  private OperatingContext(EvalContext delegate, Listener listener) {
     super(delegate);
+    this.listener = Objects.requireNonNull(listener, "listener");
   }
 
-  public static EvalContext composeWith(EvalContext baseContext) {
-    return new OperatingContext(baseContext);
+  public static EvalContext composeWith(EvalContext baseContext,
+      Listener listener) {
+    return new OperatingContext(baseContext, listener);
   }
 
   @Override
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
+    // Avoid capturing this in closure
+    final Listener listener = this.listener;
     return super.invokeProcessFn(taskId, () -> {
       try {
         return processFn.get();
       } catch (OperationException e) {
-        return e.run();
+        return e.run(listener);
       }
     });
   }

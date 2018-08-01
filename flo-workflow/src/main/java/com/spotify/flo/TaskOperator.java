@@ -21,6 +21,7 @@
 package com.spotify.flo;
 
 import com.spotify.flo.context.OperatingContext;
+import java.io.Serializable;
 
 /**
  * An operator controls the execution of a job for a task,  e.g. a data processing job on some processing platform.
@@ -33,6 +34,18 @@ public abstract class TaskOperator<T> extends TaskContextGeneric<T> {
 
   public abstract static class OperationException extends ControlException {
 
-    public abstract <T> T run();
+    public abstract <T> T run(Listener listener);
+  }
+
+  public interface Listener extends Serializable {
+
+    /**
+     * Called to report some piece of task metadata.
+     *
+     * @param task The task that is being evaluated
+     * @param key The metadata key.
+     * @param value The metadata value.
+     */
+    void meta(TaskId task, String key, String value);
   }
 }

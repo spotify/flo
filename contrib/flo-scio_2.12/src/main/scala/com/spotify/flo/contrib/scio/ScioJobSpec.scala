@@ -21,8 +21,9 @@
 package com.spotify.flo.contrib.scio
 
 import com.spotify.flo.TaskOperator.OperationException
+import com.spotify.flo.context.InstrumentedContext
 import com.spotify.flo.contrib.scio.ScioJobSpec.{ScioJobOperationException, log}
-import com.spotify.flo.{FloTesting, TaskId}
+import com.spotify.flo.{FloTesting, TaskId, TaskOperator}
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
@@ -52,14 +53,14 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
     throw new ScioJobOperationException(spec)
   }
 
-  private[scio] def run(): S = {
+  private[scio] def run(listener: TaskOperator.Listener): S = {
     if (_pipeline == null || _result == null || _success == null) {
       throw new IllegalStateException()
     }
     if (FloTesting.isTest) {
       runTest()
     } else {
-      runProd()
+      runProd(listener)
     }
   }
 
@@ -95,7 +96,7 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
     sc
   }
 
-  private def runProd(): S = {
+  private def runProd(listener: TaskOperator.Listener): S = {
     val sc = _options match {
       case None => ScioContext()
       case Some(options) => ScioContext(options())
@@ -103,7 +104,7 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
     _pipeline(sc)
     val scioResult = sc.close()
     scioResult.internal match {
-      case job: DataflowPipelineJob => reportDataflowJobId(job.getJobId)
+      case job: DataflowPipelineJob => reportDataflowJobId(job.getJobId, listener)
       case _ =>
     }
     scioResult.waitUntilDone()
@@ -111,9 +112,9 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
     _success(result)
   }
 
-  def reportDataflowJobId(jobId: String) {
+  def reportDataflowJobId(jobId: String, listener: TaskOperator.Listener) {
     log.info("Started scio job (dataflow): {}", jobId)
-    // TODO: have some pluggable mechanism for reporting the job id
+    listener.meta(taskId, "dataflow-job-id", jobId);
   }
 }
 
@@ -125,7 +126,7 @@ object ScioJobSpec {
   }
 
   private class ScioJobOperationException(spec: ScioJobSpec[_, _]) extends OperationException {
-    override def run[T](): T = spec.run().asInstanceOf[T]
+    override def run[T](listener: TaskOperator.Listener): T = spec.run(listener).asInstanceOf[T]
   }
 
 }
