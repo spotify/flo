@@ -24,7 +24,6 @@ import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
 import com.google.cloud.bigquery.TableId;
 import com.spotify.flo.EvalContext;
-import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskContextStrict;
@@ -52,7 +51,7 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
   }
 
   public static BigQueryContext create(TableId tableId) {
-    return create(BigQueryContext::defaultBigQuerySupplier, tableId);
+    return create(BigQueryClientSingleton::bq, tableId);
   }
 
   static BigQueryContext create(F0<FloBigQueryClient> bigQuerySupplier, TableId tableId) {
@@ -124,11 +123,4 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
   }
 
 
-  static FloBigQueryClient defaultBigQuerySupplier() {
-    if (FloTesting.isTest()) {
-      return BigQueryMocking.mock().client();
-    } else {
-      return BigQueryClientSingleton.BIGQUERY_CLIENT;
-    }
-  }
 }

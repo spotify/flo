@@ -22,10 +22,11 @@ package com.spotify.flo.contrib.bigquery;
 
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryOptions;
+import com.spotify.flo.FloTesting;
 
 class BigQueryClientSingleton {
 
-  private static final BigQuery BIGQUERY_INTERNAL;
+  static final BigQuery BIGQUERY_INTERNAL;
   static final FloBigQueryClient BIGQUERY_CLIENT;
 
   static {
@@ -40,5 +41,13 @@ class BigQueryClientSingleton {
     }
     BIGQUERY_INTERNAL = bigquery.build().getService();
     BIGQUERY_CLIENT = new DefaultBigQueryClient(BIGQUERY_INTERNAL);
+  }
+
+  static FloBigQueryClient bq() {
+    if (FloTesting.isTest()) {
+      return BigQueryMocking.mock().client();
+    } else {
+      return BIGQUERY_CLIENT;
+    }
   }
 }

@@ -24,14 +24,23 @@ import static com.spotify.flo.contrib.bigquery.FloBigQueryClient.randomStagingTa
 
 import com.google.cloud.WaitForOption;
 import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQuery.JobOption;
+import com.google.cloud.bigquery.BigQueryError;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.CopyJobConfiguration;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
+import com.google.cloud.bigquery.FieldValue;
 import com.google.cloud.bigquery.Job;
 import com.google.cloud.bigquery.JobInfo;
+import com.google.cloud.bigquery.QueryRequest;
+import com.google.cloud.bigquery.QueryResponse;
+import com.google.cloud.bigquery.Schema;
 import com.google.cloud.bigquery.TableId;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
@@ -67,6 +76,44 @@ class DefaultBigQueryClient implements FloBigQueryClient {
   }
 
   @Override
+  public BigQueryResult query(QueryRequest queryRequest) {
+    QueryResponse response = client.query(queryRequest);
+    while (!response.jobCompleted()) {
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      }
+      response = client.getQueryResults(response.getJobId());
+    }
+    if (response.hasErrors()) {
+      throw new RuntimeException("BigQuery query failed: " + response.getExecutionErrors());
+    }
+    return DefaultQueryResult.of(response);
+
+  }
+
+  @Override
+  public JobInfo job(JobInfo jobInfo, JobOption... options) {
+    Job job = client.create(jobInfo, options);
+    while (!job.isDone()) {
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      }
+      job = job.reload();
+    }
+    final BigQueryError error = job.getStatus().getError();
+    if (error != null) {
+      throw new BigQueryException(0, "BigQuery job failed: " + error);
+    }
+    return job;
+  }
+
+  @Override
   public void publish(StagingTableId stagingTableId, TableId tableId) {
     final TableId staging = stagingTableId.tableId();
     LOG.debug("copying staging table {} to {}", staging, tableId);
@@ -99,6 +146,44 @@ class DefaultBigQueryClient implements FloBigQueryClient {
       LOG.error("Could not copy BigQuery table {} from staging to target with error: {}",
           tableId, error);
       throw new RuntimeException(error);
+    }
+  }
+
+  private static class DefaultQueryResult implements BigQueryResult {
+
+    private final QueryResponse response;
+
+    private DefaultQueryResult(QueryResponse response) {
+      this.response = Objects.requireNonNull(response, "response");
+    }
+
+    @Override
+    public boolean cacheHit() {
+      return response.getResult().cacheHit();
+    }
+
+    @Override
+    public Schema schema() {
+      return response.getResult().getSchema();
+    }
+
+    @Override
+    public long totalBytesProcessed() {
+      return response.getResult().getTotalBytesProcessed();
+    }
+
+    @Override
+    public long totalRows() {
+      return response.getResult().getTotalRows();
+    }
+
+    @Override
+    public Iterator<List<FieldValue>> iterator() {
+      return response.getResult().iterateAll().iterator();
+    }
+
+    public static DefaultQueryResult of(QueryResponse response) {
+      return new DefaultQueryResult(response);
     }
   }
 }
