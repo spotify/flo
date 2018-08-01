@@ -53,4 +53,9 @@ public interface FloBigQueryClient {
    * @return true if it exists, otherwise false
    */
   boolean tableExists(TableId tableId);
+
+  /**
+   * Create a {@link StagingTableId} for {@param tableId}
+   */
+  StagingTableId createStagingTableId(BigQueryContext context, TableId tableId);
 }

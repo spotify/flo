@@ -29,7 +29,6 @@ import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskContextStrict;
 import java.util.Optional;
-import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.threeten.bp.Duration;
@@ -82,7 +81,8 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
   public StagingTableId provide(EvalContext evalContext) {
     final String location = getDatasetOrThrow().getLocation();
 
-    final DatasetId stagingDatasetId = DatasetId.of(tableId.getProject(), "_incoming_" + location);
+    final StagingTableId stagingTableId = bigQuery().createStagingTableId(this, tableId);
+    final DatasetId stagingDatasetId = DatasetId.of(stagingTableId.tableId().getProject(), stagingTableId.tableId().getDataset());
 
     if (bigQuery().getDataset(stagingDatasetId) == null) {
       bigQuery().create(DatasetInfo
@@ -93,12 +93,7 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
       LOG.info("created staging dataset: {}", stagingDatasetId);
     }
 
-    final TableId stagingTableId = TableId.of(
-        stagingDatasetId.getProject(),
-        stagingDatasetId.getDataset(),
-        "_" + tableId.getTable() + "_" + ThreadLocalRandom.current().nextLong(10_000_000));
-
-    return StagingTableId.of(this, stagingTableId);
+    return stagingTableId;
   }
 
   @Override
