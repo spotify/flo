@@ -81,8 +81,8 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
   public StagingTableId provide(EvalContext evalContext) {
     final String location = getDatasetOrThrow().getLocation();
 
-    final StagingTableId stagingTableId = bigQuery().createStagingTableId(this, tableId);
-    final DatasetId stagingDatasetId = DatasetId.of(stagingTableId.tableId().getProject(), stagingTableId.tableId().getDataset());
+    final TableId stagingTableId = bigQuery().createStagingTableId(tableId, location);
+    final DatasetId stagingDatasetId = DatasetId.of(stagingTableId.getProject(), stagingTableId.getDataset());
 
     if (bigQuery().getDataset(stagingDatasetId) == null) {
       bigQuery().create(DatasetInfo
@@ -93,7 +93,7 @@ public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> 
       LOG.info("created staging dataset: {}", stagingDatasetId);
     }
 
-    return stagingTableId;
+    return StagingTableId.of(this, stagingTableId);
   }
 
   @Override

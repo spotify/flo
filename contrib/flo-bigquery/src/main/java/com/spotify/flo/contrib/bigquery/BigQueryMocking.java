@@ -29,7 +29,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class BigQueryMocking {
 
@@ -53,7 +52,7 @@ public class BigQueryMocking {
   }
 
 
-  public FloBigQueryClient client() {
+  FloBigQueryClient client() {
     return new MockBigQueryClient();
   }
 
@@ -139,19 +138,9 @@ public class BigQueryMocking {
     }
 
     @Override
-    public StagingTableId createStagingTableId(BigQueryContext context, TableId tableId) {
+    public TableId createStagingTableId(TableId tableId, String location) {
       return Optional.ofNullable(stagingTableIds.get(formatTableIdKey(tableId)))
-          //read from mocked stagingTableIds if exists
-          .map(stagingTableId -> StagingTableId.of(context, stagingTableId))
-          //create a new StagingTableId
-          .orElse(StagingTableId.of(
-              context,
-              TableId.of(
-                  tableId.getProject(),
-                  "_incoming_test",
-                  "_" + tableId.getTable() + "_" + ThreadLocalRandom.current().nextLong(10_000_000))
-              )
-          );
+          .orElseGet(() -> FloBigQueryClient.randomStagingTableId(tableId, location));
     }
 
     @Override

@@ -23,11 +23,12 @@ package com.spotify.flo.contrib.bigquery;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
 import com.google.cloud.bigquery.TableId;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * An interface to BigQuery utilities.
  */
-public interface FloBigQueryClient {
+interface FloBigQueryClient {
 
   /**
    * Get a dataset by Id
@@ -55,7 +56,16 @@ public interface FloBigQueryClient {
   boolean tableExists(TableId tableId);
 
   /**
-   * Create a {@link StagingTableId} for {@param tableId}
+   * Create a staging {@link TableId} for {@param tableId}
    */
-  StagingTableId createStagingTableId(BigQueryContext context, TableId tableId);
+  TableId createStagingTableId(TableId tableId, String location);
+
+  /**
+   * Create a random staging table id.
+   */
+  static TableId randomStagingTableId(TableId tableId, String location) {
+    final DatasetId stagingDatasetId = DatasetId.of(tableId.getProject(), "_incoming_" + location);
+    final String table = "_" + tableId.getTable() + "_" + ThreadLocalRandom.current().nextLong(10_000_000);
+    return TableId.of(stagingDatasetId.getProject(), stagingDatasetId.getDataset(), table);
+  }
 }
