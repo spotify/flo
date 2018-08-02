@@ -20,6 +20,8 @@
 
 package com.spotify.flo.contrib.bigquery;
 
+import static com.spotify.flo.contrib.bigquery.FloBigQueryClient.randomStagingTableId;
+
 import com.google.cloud.WaitForOption;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
@@ -29,12 +31,13 @@ import com.google.cloud.bigquery.DatasetInfo;
 import com.google.cloud.bigquery.Job;
 import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.TableId;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultBigQueryClient implements FloBigQueryClient {
+class DefaultBigQueryClient implements FloBigQueryClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultBigQueryClient.class);
   private final BigQuery client;
@@ -59,11 +62,8 @@ public class DefaultBigQueryClient implements FloBigQueryClient {
   }
 
   @Override
-  public StagingTableId createStagingTableId(BigQueryContext context, TableId tableId) {
-    return StagingTableId.of(
-        context,
-        TableId.of(tableId.getProject(), "_incoming_", tableId.getTable())
-    );
+  public TableId createStagingTableId(TableId tableId, String location) {
+    return randomStagingTableId(tableId, location);
   }
 
   @Override

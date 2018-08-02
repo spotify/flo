@@ -51,6 +51,7 @@ import com.spotify.flo.freezer.PersistingContext;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -59,20 +60,18 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BigQueryContextTest {
 
-  @Mock
-  private BigQuery bigQuery;
-
-  @Mock
-  private Dataset dataset;
-
-  @Mock
-  private Job job;
+  @Mock private BigQuery bigQuery;
+  @Mock private Dataset dataset;
+  @Mock private Job job;
+  @Captor private ArgumentCaptor<DatasetInfo> datasetInfoCaptor = ArgumentCaptor.forClass(DatasetInfo.class);
 
   private static final String PROJECT = "project";
   private static final String LOCATION = "EU";
@@ -84,7 +83,7 @@ public class BigQueryContextTest {
   @Before
   public void setup() {
     when(dataset.getLocation()).thenReturn(LOCATION);
-    when(bigQuery.create(any(DatasetInfo.class))).thenReturn(dataset);
+    when(bigQuery.create(datasetInfoCaptor.capture())).thenReturn(dataset);
     when(bigQuery.create(any(JobInfo.class))).thenReturn(mock(Job.class));
 
     floBigQueryClient = spy(new DefaultBigQueryClient(bigQuery));
@@ -106,6 +105,11 @@ public class BigQueryContextTest {
     bigQueryContext.provide(null);
 
     verify(bigQuery).create(any(DatasetInfo.class));
+    final DatasetInfo createdStagingDataset = datasetInfoCaptor.getValue();
+    final DatasetId expectedDatasetId = DatasetId.of(DATASET_ID.getProject(), "_incoming_" + LOCATION);
+    assertThat(createdStagingDataset.getDatasetId(), is(expectedDatasetId));
+    assertThat(createdStagingDataset.getLocation(), is(LOCATION));
+    assertThat(createdStagingDataset.getDefaultTableLifetime(), is(Duration.ofDays(1).toMillis()));
   }
 
   @Test
