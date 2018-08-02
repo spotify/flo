@@ -20,12 +20,11 @@
 
 package com.spotify.flo.context;
 
-import static com.spotify.flo.Tracing.TASK_ID;
-
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.Tracing;
 import io.grpc.Context;
 
 /**
@@ -42,16 +41,6 @@ public class TracingContext extends ForwardingEvalContext {
   }
   @Override
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
-    return super.invokeProcessFn(taskId, () -> {
-      try {
-        return Context.current()
-            .withValue(TASK_ID, taskId)
-            .call(processFn::get);
-      } catch (RuntimeException e) {
-        throw e;
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
+    return super.invokeProcessFn(taskId, Tracing.trace(taskId, processFn));
   }
 }

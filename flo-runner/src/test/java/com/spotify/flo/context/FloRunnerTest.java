@@ -70,7 +70,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -344,7 +343,7 @@ public class FloRunnerTest {
   @Test
   public void taskIdIsInContext() throws Exception {
     final Task<TaskId> task = Task.named("task").ofType(TaskId.class)
-        .process(() -> Tracing.TASK_ID.get());
+        .process(() -> Tracing.currentTaskId());
 
     final Result<TaskId> result = runTask(task);
 
