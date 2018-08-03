@@ -88,7 +88,7 @@ object Fib extends App {
     } else {
       $ input fib(n - 1) input fib(n - 2) process (_ + _)
     }
-    )
+  )
 
   val fib92 = fib(92)
   val evalContext = MemoizingContext.composeWith(EvalContext.sync)
