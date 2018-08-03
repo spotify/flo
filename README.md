@@ -83,8 +83,8 @@ object Fib extends App {
     if (n < 2)
       $ process n
     else
-      $ in      fib(n - 1)
-        in      fib(n - 2)
+      $ input      fib(n - 1)
+        input      fib(n - 2)
         process (_ + _)
   )
 
@@ -121,8 +121,8 @@ Here's a simple example of a `flo` task depending on two other tasks:
 ```java
 Task<Integer> myTask(String arg) {
   return Task.named("MyTask", arg).ofType(Integer.class)
-      .in(() -> otherTask(arg))
-      .in(() -> yetATask(arg))
+      .input(() -> otherTask(arg))
+      .input(() -> yetATask(arg))
       .process((otherResult, yetAResult) -> /* ... */);
 }
 ```
@@ -169,8 +169,8 @@ class SomeExistingClass {
 
   Task<Integer> task() {
     return Task.named("EmbeddedTask", arg).ofType(Integer.class)
-        .in(() -> otherTask(arg))
-        .in(() -> yetATask(arg))
+        .input(() -> otherTask(arg))
+        .input(() -> yetATask(arg))
         .process(this::process);
   }
 
@@ -201,7 +201,7 @@ construction might be.
 ```java
 Task<String> endless() {
   return Task.named("Endless").ofType(String.class)
-      .in(() -> endless())
+      .input(() -> endless())
       .process((impossible) -> impossible);
 }
 ```
@@ -225,7 +225,7 @@ Task<String> first(String arg) {
 
 Task<String> second(String arg) {
   return Task.named("Second", arg).ofType(String.class)
-      .in(() -> first(arg))
+      .input(() -> first(arg))
       .process((firstResult) -> "well, " + firstResult);
 }
 
