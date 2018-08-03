@@ -111,9 +111,10 @@ class ForkingExecutor implements Closeable {
     private final Path resultFile = tempdir.resolve("result");
     private final Path errorFile = tempdir.resolve("error");
 
-    private final String home = System.getProperty("java.home");
+    private final String userHome = System.getProperty("user.home");
+    private final String javaHome = System.getProperty("java.home");
     private final String classPath = System.getProperty("java.class.path");
-    private final Path java = Paths.get(home, "bin", "java").toAbsolutePath().normalize();
+    private final Path java = Paths.get(javaHome, "bin", "java").toAbsolutePath().normalize();
 
     private final Fn<T> f;
 
@@ -149,6 +150,7 @@ class ForkingExecutor implements Closeable {
       // Custom jvm args
       javaArgs.forEach(processBuilder.command()::add);
 
+      processBuilder.command().add("-Duser.home="+userHome);
       // Trampoline arguments
       processBuilder.command().add(Trampoline.class.getName());
       processBuilder.command().add(closureFile.toString());
