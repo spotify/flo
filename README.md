@@ -75,24 +75,29 @@ class Fib {
 Scala equivalent
 
 ```scala
+import java.util.function.Consumer
+
 import com.spotify.flo._
+import com.spotify.flo.context.MemoizingContext
 
 object Fib extends App {
 
   def fib(n: Long): Task[Long] = defTask[Long](n) dsl (
-    if (n < 2)
+    if (n < 2) {
       $ process n
-    else
-      $ input      fib(n - 1)
-        input      fib(n - 2)
-        process (_ + _)
-  )
+    } else {
+      $ input fib(n - 1) input fib(n - 2) process (_ + _)
+    }
+    )
 
   val fib92 = fib(92)
   val evalContext = MemoizingContext.composeWith(EvalContext.sync)
   val value = evalContext.evaluate(fib92)
 
-  value.consume((f92:Long) => println("fib(92) = " + f92))
+  value.consume(new Consumer[Long] {
+    //noinspection ScalaStyle
+    override def accept(t: Long): Unit = Console.println(s"fib(92) = ${t}")
+  })
 }
 ```
 
