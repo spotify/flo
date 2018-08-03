@@ -56,8 +56,8 @@ class Fib {
           .process(() -> n);
     } else {
       return builder
-          .in(() -> fib(n - 1))
-          .in(() -> fib(n - 2))
+          .input(() -> fib(n - 1))
+          .input(() -> fib(n - 2))
           .process((a, b) -> a + b);
     }
   }
@@ -75,24 +75,29 @@ class Fib {
 Scala equivalent
 
 ```scala
+import java.util.function.Consumer
+
 import com.spotify.flo._
+import com.spotify.flo.context.MemoizingContext
 
 object Fib extends App {
 
   def fib(n: Long): Task[Long] = defTask[Long](n) dsl (
-    if (n < 2)
+    if (n < 2) {
       $ process n
-    else
-      $ in      fib(n - 1)
-        in      fib(n - 2)
-        process (_ + _)
+    } else {
+      $ input fib(n - 1) input fib(n - 2) process (_ + _)
+    }
   )
 
   val fib92 = fib(92)
   val evalContext = MemoizingContext.composeWith(EvalContext.sync)
   val value = evalContext.evaluate(fib92)
 
-  value.consume((f92:Long) => println("fib(92) = " + f92))
+  value.consume(new Consumer[Long] {
+    //noinspection ScalaStyle
+    override def accept(t: Long): Unit = Console.println(s"fib(92) = ${t}")
+  })
 }
 ```
 
@@ -121,8 +126,8 @@ Here's a simple example of a `flo` task depending on two other tasks:
 ```java
 Task<Integer> myTask(String arg) {
   return Task.named("MyTask", arg).ofType(Integer.class)
-      .in(() -> otherTask(arg))
-      .in(() -> yetATask(arg))
+      .input(() -> otherTask(arg))
+      .input(() -> yetATask(arg))
       .process((otherResult, yetAResult) -> /* ... */);
 }
 ```
@@ -169,8 +174,8 @@ class SomeExistingClass {
 
   Task<Integer> task() {
     return Task.named("EmbeddedTask", arg).ofType(Integer.class)
-        .in(() -> otherTask(arg))
-        .in(() -> yetATask(arg))
+        .input(() -> otherTask(arg))
+        .input(() -> yetATask(arg))
         .process(this::process);
   }
 
@@ -201,7 +206,7 @@ construction might be.
 ```java
 Task<String> endless() {
   return Task.named("Endless").ofType(String.class)
-      .in(() -> endless())
+      .input(() -> endless())
       .process((impossible) -> impossible);
 }
 ```
@@ -225,7 +230,7 @@ Task<String> first(String arg) {
 
 Task<String> second(String arg) {
   return Task.named("Second", arg).ofType(String.class)
-      .in(() -> first(arg))
+      .input(() -> first(arg))
       .process((firstResult) -> "well, " + firstResult);
 }
 
@@ -256,7 +261,7 @@ The `id` and `inputs` fields should be pretty self explanatory. `isReference` is
 signals if some task has already been materialized earlier in the tree, given a depth first,
 post-order traversal.
 
-Recall that the DAG expansion can chose inputs arbitrarily based on the arguments. In workflow
+Recall that the DAG expansion can choose inputs arbitrarily based on the arguments. In workflow
 libraries where expansion is coupled with evaluation, it's hard to know what will be evaluated
 beforehand. Evaluation planning and result caching/memoizing becomes integral parts of such
 libraries. `flo` aims to expose useful information together with flexible evaluation apis to make
