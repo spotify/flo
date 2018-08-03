@@ -261,7 +261,7 @@ The `id` and `inputs` fields should be pretty self explanatory. `isReference` is
 signals if some task has already been materialized earlier in the tree, given a depth first,
 post-order traversal.
 
-Recall that the DAG expansion can chose inputs arbitrarily based on the arguments. In workflow
+Recall that the DAG expansion can choose inputs arbitrarily based on the arguments. In workflow
 libraries where expansion is coupled with evaluation, it's hard to know what will be evaluated
 beforehand. Evaluation planning and result caching/memoizing becomes integral parts of such
 libraries. `flo` aims to expose useful information together with flexible evaluation apis to make
