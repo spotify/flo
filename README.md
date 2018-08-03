@@ -56,8 +56,8 @@ class Fib {
           .process(() -> n);
     } else {
       return builder
-          .in(() -> fib(n - 1))
-          .in(() -> fib(n - 2))
+          .input(() -> fib(n - 1))
+          .input(() -> fib(n - 2))
           .process((a, b) -> a + b);
     }
   }
