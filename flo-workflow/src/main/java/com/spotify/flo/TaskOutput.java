@@ -38,4 +38,11 @@ public abstract class TaskOutput<T, S> implements TaskContext<T, S> {
   public Optional<S> lookup(Task<S> task) {
     return Optional.empty();
   }
+
+  public static Optional<? extends TaskOutput<?, ?>> output(Task<?> task) {
+    return task.contexts().stream()
+        .filter(ctx -> ctx instanceof TaskOutput)
+        .map(ctx -> (TaskOutput<?, ?>) ctx)
+        .findAny();
+  }
 }

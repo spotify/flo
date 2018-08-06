@@ -20,16 +20,26 @@
 
 package com.spotify.flo.context;
 
+import com.google.common.collect.ImmutableMap;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskBuilder.F1;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskOperator;
+import com.spotify.flo.TaskOperator.Listener;
+import com.spotify.flo.TaskOperator.Operation;
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class Jobs {
+
+  private static final Logger log = LoggerFactory.getLogger(Jobs.class);
 
   static class JobSpec<T> implements Serializable {
 
@@ -79,13 +89,90 @@ class Jobs {
     }
 
     @Override
-    public T perform(JobSpec<T> spec, Listener listener) {
+    public JobOperation<T> start(JobSpec<T> spec, Listener listener) {
       final JobContext jobContext = new JobContext(spec.options.get());
-      listener.meta(spec.taskId, Collections.singletonMap("task-id", spec.taskId.toString()));
       spec.pipelineConfigurator.accept(jobContext);
-      final JobResult result = jobContext.run();
-      spec.resultValidator.accept(result);
-      return spec.successHandler.apply(result);
+      final Job job = jobContext.run();
+      listener.meta(spec.taskId, ImmutableMap.of(
+          "task-id", spec.taskId.toString(),
+          "job-id", job.id));
+      log.info("started job: {}", job.id);
+      return new JobOperation<>(spec, job);
+    }
+
+  }
+
+  private static class JobOperation<T> implements Operation<T, JobOperationState> {
+
+    private static final long serialVersionUID = 1L;
+
+    private final JobSpec<T> spec;
+    private final Job job;
+
+    public JobOperation(JobSpec<T> spec, Job job) {
+      this.spec = spec;
+      this.job = job;
+    }
+
+    @Override
+    public Result<T, JobOperationState> perform(Optional<JobOperationState> prevState, Listener listener) {
+      JobOperationState nextState = prevState.map(JobOperationState::increment)
+          .orElseGet(JobOperationState::new);
+
+      log.info("checking job completion: {}", job.id);
+
+      // Not yet done?
+      if (nextState.invocations < 3) {
+        log.info("job {} not yet completed", job.id);
+        return Result.ofContinuation(Duration.ofSeconds((long) Math.pow(2, nextState.invocations)), nextState);
+      }
+
+      // Done!
+      final JobResult result = new JobResult(4711);
+
+      // Validate
+      log.info("validating job {} result", job.id);
+      try {
+        spec.resultValidator.accept(result);
+      } catch (Throwable t) {
+        return Result.ofFailure(t);
+      }
+
+      // Return output
+      log.info("job {} successfully completed", job.id);
+      final T output = spec.successHandler.apply(result);
+      return Result.ofSuccess(output);
+    }
+
+    @Override
+    public String toString() {
+      return "JobOperation{" + job.id + '}';
+    }
+  }
+
+  private static class JobOperationState implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    final int invocations;
+
+    JobOperationState() {
+      this(1);
+    }
+
+    JobOperationState(int invocations) {
+      this.invocations = invocations;
+    }
+
+    JobOperationState increment() {
+      return new JobOperationState(invocations + 1);
+    }
+
+    @Override
+    public String toString() {
+      return "JobOperationState{" +
+          "invocations=" + invocations +
+          '}';
     }
   }
 
@@ -107,12 +194,32 @@ class Jobs {
       return this;
     }
 
-    public JobResult run() {
-      return new JobResult(4711);
+    public Job run() {
+      return new Job();
     }
   }
 
-  static class JobResult {
+  static class Job implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private final String id;
+
+    public Job() {
+      this.id = UUID.randomUUID().toString();
+    }
+
+    @Override
+    public String toString() {
+      return "Job{" +
+          "id='" + id + '\'' +
+          '}';
+    }
+  }
+
+  static class JobResult implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     final int records;
 

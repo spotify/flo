@@ -28,6 +28,8 @@ import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.ForwardingEvalContext;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -81,7 +83,7 @@ public class PersistingContext extends ForwardingEvalContext {
     try {
       serialize(task, file);
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
 
     return super.evaluateInternal(task, context);
@@ -103,12 +105,22 @@ public class PersistingContext extends ForwardingEvalContext {
     }
   }
 
+  public static byte[] serialize(Object object) {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    serialize(object, baos);
+    return baos.toByteArray();
+  }
+
   public static void serialize(Object object, OutputStream outputStream) {
     try (ObjectOutputStream oos = new ObjectOutputStream(outputStream)) {
       oos.writeObject(object);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static <T> T deserialize(byte[] bytes) {
+    return deserialize(new ByteArrayInputStream(bytes));
   }
 
   public static <T> T deserialize(Path filePath) throws IOException {

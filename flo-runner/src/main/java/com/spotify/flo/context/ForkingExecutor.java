@@ -199,6 +199,7 @@ class ForkingExecutor implements Closeable {
         } catch (Exception e) {
           throw new RuntimeException("Failed to deserialize error", e);
         }
+        error.addSuppressed(new RuntimeException("Forking execution stacktrace"));
         if (error instanceof Error) {
           throw (Error) error;
         } else if (error instanceof RuntimeException) {
