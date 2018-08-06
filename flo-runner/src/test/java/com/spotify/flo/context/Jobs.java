@@ -21,6 +21,7 @@
 package com.spotify.flo.context;
 
 import com.spotify.flo.EvalContext;
+import com.spotify.flo.Operation;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskBuilder.F1;
 import com.spotify.flo.TaskOperator;
@@ -32,7 +33,7 @@ import java.util.function.Consumer;
 
 class Jobs {
 
-  static class JobSpec implements Serializable {
+  static class JobSpec implements Operation {
 
     private F0<Map<String, ?>> options;
     private SerializableConsumer<JobContext> pipelineConfigurator;
@@ -77,6 +78,11 @@ class Jobs {
 
       JobSpecException(JobSpec spec) {
         this.spec = spec;
+      }
+
+      @Override
+      public Operation operation() {
+        return spec;
       }
 
       @Override

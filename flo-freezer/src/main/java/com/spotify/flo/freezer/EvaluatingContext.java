@@ -23,10 +23,12 @@ package com.spotify.flo.freezer;
 import static com.spotify.flo.freezer.PersistingContext.cleanForFilename;
 
 import com.spotify.flo.EvalContext;
+import com.spotify.flo.EvalContext.Value;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.ForwardingEvalContext;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -79,7 +81,16 @@ public class EvaluatingContext {
     return basePath.resolve(fileName);
   }
 
-  private <T> void persist(TaskId taskId, T output) {
+  public boolean isEvaluated(TaskId taskId) {
+    return Files.exists(resolveExistingOutput(taskId));
+  }
+
+  public <T> T readExistingOutput(TaskId taskId) throws IOException {
+    final Path path = resolveExistingOutput(taskId);
+    return PersistingContext.deserialize(path);
+  }
+
+  public <T> void persist(TaskId taskId, T output) {
     final Path outputPath = basePath.resolve(cleanForFilename(taskId) + OUTPUT_SUFFIX);
 
     try {

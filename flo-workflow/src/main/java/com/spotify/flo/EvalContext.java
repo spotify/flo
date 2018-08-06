@@ -25,6 +25,7 @@ import static com.spotify.flo.EvalContextWithTask.withTask;
 import com.spotify.flo.context.AsyncContext;
 import com.spotify.flo.context.SyncContext;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -188,6 +189,13 @@ public interface EvalContext {
      * @return A new value with a different type
      */
     <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> fn);
+
+    default CompletableFuture<T> toFuture() {
+      final CompletableFuture<T> f = new CompletableFuture<>();
+      consume(f::complete);
+      onFail(f::completeExceptionally);
+      return f;
+    }
   }
 
   /**

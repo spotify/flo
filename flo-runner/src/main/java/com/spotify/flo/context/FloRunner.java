@@ -134,11 +134,7 @@ public final class FloRunner<T> {
 
     final EvalContext evalContext = createContext();
     final long t0 = System.nanoTime();
-    final EvalContext.Value<T> value = evalContext.evaluate(task);
-    final CompletableFuture<T> future = new CompletableFuture<>();
-
-    value.consume(future::complete);
-    value.onFail(future::completeExceptionally);
+    final CompletableFuture<T> future = evalContext.evaluate(task).toFuture();
 
     return future.handle((v, throwable) -> {
       new Thread(() ->

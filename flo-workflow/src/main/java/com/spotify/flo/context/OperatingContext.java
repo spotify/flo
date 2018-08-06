@@ -22,7 +22,9 @@ package com.spotify.flo.context;
 
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
+import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.TaskOperator;
 import com.spotify.flo.TaskOperator.Listener;
 import com.spotify.flo.TaskOperator.OperationException;
 import java.util.Objects;

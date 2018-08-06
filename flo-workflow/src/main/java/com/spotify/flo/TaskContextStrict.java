@@ -52,4 +52,11 @@ public abstract class TaskContextStrict<T, S> implements TaskContext<T> {
   public Optional<S> lookup(Task<S> task) {
     return Optional.empty();
   }
+
+  public static Optional<? extends TaskContextStrict<?, ?>> taskContextStrict(Task<?> task) {
+    return task.contexts().stream()
+        .filter(ctx -> ctx instanceof TaskContextStrict)
+        .map(ctx -> (TaskContextStrict<?, ?>) ctx)
+        .findAny();
+  }
 }

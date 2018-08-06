@@ -83,7 +83,7 @@ public class PersistingContext extends ForwardingEvalContext {
     try {
       serialize(task, file);
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
 
     return super.evaluateInternal(task, context);
@@ -113,7 +113,7 @@ public class PersistingContext extends ForwardingEvalContext {
     }
   }
 
-  public static <T> T deserialize(Path filePath) throws Exception {
+  public static <T> T deserialize(Path filePath) throws IOException {
     return deserialize(Files.newInputStream(filePath));
   }
 

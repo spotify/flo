@@ -34,6 +34,8 @@ public abstract class TaskOperator<T> extends TaskContextGeneric<T> {
 
   public abstract static class OperationException extends ControlException {
 
+    public abstract Operation operation();
+
     public abstract <T> T run(Listener listener);
   }
 

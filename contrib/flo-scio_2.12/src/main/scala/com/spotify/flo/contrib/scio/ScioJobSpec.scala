@@ -23,7 +23,7 @@ package com.spotify.flo.contrib.scio
 import com.spotify.flo.TaskOperator.OperationException
 import com.spotify.flo.context.InstrumentedContext
 import com.spotify.flo.contrib.scio.ScioJobSpec.{ScioJobOperationException, log}
-import com.spotify.flo.{FloTesting, TaskId, TaskOperator}
+import com.spotify.flo.{FloTesting, Operation, TaskId, TaskOperator}
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
@@ -34,7 +34,7 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
                         private val _pipeline: ScioContext => Unit = null,
                         private val _result: (ScioContext, ScioResult) => R = null,
                         private val _success: R => S = null
-                       ) extends Serializable {
+                       ) extends Operation {
 
   def options(options: () => PipelineOptions): ScioJobSpec[R, S] = {
     new ScioJobSpec(taskId, Some(options), _pipeline, _result, _success)
@@ -126,6 +126,8 @@ object ScioJobSpec {
   }
 
   private class ScioJobOperationException(spec: ScioJobSpec[_, _]) extends OperationException {
+    override def operation(): Operation = spec
+
     override def run[T](listener: TaskOperator.Listener): T = spec.run(listener).asInstanceOf[T]
   }
 
