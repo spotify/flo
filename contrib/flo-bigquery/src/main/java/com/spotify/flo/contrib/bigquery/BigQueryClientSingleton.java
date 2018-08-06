@@ -35,6 +35,7 @@ class BigQueryClientSingleton {
     // Work around a bug in ServiceOptions.getDefaultProjectId() where it will use the project
     // returned by the GCE metadata server instead of the service account project
     // https://github.com/GoogleCloudPlatform/google-cloud-java/pull/2304/files#diff-966eb51fcb59c92eb46ebd5f532d8e52R404
+    // https://github.com/GoogleCloudPlatform/google-cloud-java/issues/3533
     final String serviceAccountProjectId = getServiceAccountProjectId();
     if (serviceAccountProjectId != null) {
       bigquery.setProjectId(serviceAccountProjectId);
