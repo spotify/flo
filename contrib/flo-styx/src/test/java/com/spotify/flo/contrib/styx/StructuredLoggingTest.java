@@ -104,7 +104,7 @@ public class StructuredLoggingTest {
     final String styx_docker_image = "test_docker_image-" + UUID.randomUUID();
     final String styx_commit_sha = "test_commit_sha-" + UUID.randomUUID();
     final String styx_parameter = "test_parameter-" + UUID.randomUUID();
-    final String styx_execution_id = "test_execution_id-" + UUID.randomUUID();
+    final String styx_execution_id = "styx-run-" + UUID.randomUUID();
     final String styx_trigger_id = "test_trigger_id-" + UUID.randomUUID();
     final String styx_trigger_type = "test_trigger_type-" + UUID.randomUUID();
 
@@ -186,7 +186,7 @@ public class StructuredLoggingTest {
   @Test
   public void testStructuredLoggingWithNoMetadata() throws IOException {
     // Trigger structured logging
-    final String executionId = UUID.randomUUID().toString();
+    final String executionId = "styx-run-" + UUID.randomUUID().toString();
     env.set("STYX_EXECUTION_ID", executionId);
 
     configureLogbackFromFile();

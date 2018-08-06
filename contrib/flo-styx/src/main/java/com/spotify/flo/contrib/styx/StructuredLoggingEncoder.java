@@ -50,7 +50,9 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
   private static final byte[] LINE_SEPARATOR_BYTES = LINE_SEPARATOR.getBytes();
 
-  private final boolean isStyxExecution = System.getenv().containsKey("STYX_EXECUTION_ID");
+  private final boolean isStyxExecution = Optional.ofNullable(System.getenv("STYX_EXECUTION_ID"))
+      .map(x -> x.startsWith("styx-run-"))
+      .orElse(false);
   private final StyxBuilder template = createTemplate();
 
   private final TaskId envTaskId;
