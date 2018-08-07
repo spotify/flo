@@ -20,9 +20,7 @@
 
 package com.spotify.flo.contrib.scio
 
-import com.spotify.flo.TaskOperator.OperationException
-import com.spotify.flo.context.InstrumentedContext
-import com.spotify.flo.contrib.scio.ScioJobSpec.{ScioJobOperationException, log}
+import com.spotify.flo.contrib.scio.ScioJobSpec.log
 import com.spotify.flo.{FloTesting, TaskId, TaskOperator}
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
@@ -48,9 +46,8 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
     new ScioJobSpec(taskId, _options, _pipeline, result, _success)
   }
 
-  def success[SN](success: R => SN): SN = {
-    val spec = new ScioJobSpec(taskId, _options, _pipeline, _result, success)
-    throw new ScioJobOperationException(spec)
+  def success[SN](success: R => SN): ScioJobSpec[R, SN] = {
+    new ScioJobSpec(taskId, _options, _pipeline, _result, success)
   }
 
   private[scio] def run(listener: TaskOperator.Listener): S = {
@@ -124,9 +121,4 @@ object ScioJobSpec {
   class Provider(taskId: TaskId) {
     def apply(): ScioJobSpec[Any, Any] = new ScioJobSpec(taskId)
   }
-
-  private class ScioJobOperationException(spec: ScioJobSpec[_, _]) extends OperationException {
-    override def run[T](listener: TaskOperator.Listener): T = spec.run(listener).asInstanceOf[T]
-  }
-
 }

@@ -74,7 +74,7 @@ object ScioOperatorTest {
 
   def lineCountingTask(input: String, output: String, minLines: Long) =
     defTask[String]("foobar", "2018-01-02")
-      .context(ScioOperator())
+      .operator(ScioOperator())
       .process { job =>
         job()
           .pipeline(sc => {

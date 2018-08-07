@@ -4,28 +4,19 @@ import java.util.List;
 
 import javax.annotation.Generated;
 
-import com.spotify.flo.BuilderUtils.ChainingEval;
 import com.spotify.flo.EvalContext.Value;
 import com.spotify.flo.TaskBuilder.*;
 
 import static com.spotify.flo.BuilderUtils.appendToList;
+import static com.spotify.flo.BuilderUtils.contextArg;
+import static com.spotify.flo.BuilderUtils.inputArg;
+import static com.spotify.flo.BuilderUtils.inputsArg;
 import static com.spotify.flo.BuilderUtils.lazyFlatten;
 import static com.spotify.flo.BuilderUtils.lazyList;
-import static com.spotify.flo.BuilderUtils.leafEvalFn;
 import static com.spotify.flo.Values.toValueList;
 
 /**
  * Package local implementation of the {@link TaskBuilder} tree.
- *
- * These classes tackle the exponential growth of paths that can be taken through the
- * {@link {{interfaceName}}} interfaces by linearizing the implementation through composing functions.
- *
- * The linearization is implemented by letting the next builder in the chain take a
- * {@link ChainingEval}. This evaluator allows the builder to chain onto the evaluation by
- * including more input tasks. The evaluator will finally be used to terminate the builder by
- * enclosing a function into an {@link EvalClosure} for a {@link Task}.
- *
- * See https://github.com/spotify/flo/blob/master/doc/chain.md
  */
 @Generated("com.spotify.flo.gen.ApiGeneratorProcessor")
 final class {{implClassName}} {
@@ -42,63 +33,45 @@ final class {{implClassName}} {
 
     @Override
     public Task<Z> process(F0<Z> code) {
-      // local ref to drop ref to Builder instance, b/c serialization
-      TaskId taskId = this.taskId;
-      EvalClosure<Z> closure = ec -> ec.invokeProcessFn(taskId, code::get);
-      return Task.create(inputs, taskContexts, type, closure, taskId);
+      return Task.create(inputs, taskContexts, type, taskId, code, args);
     }
 
     @Override
-    public <A> TaskBuilder1<A, Z> context(TaskContextGeneric<A> taskContext) {
+    public <A> TaskBuilder1<A, Z, Z> context(TaskContextGeneric<A> taskContext) {
       return context_(taskContext);
     }
 
     @Override
-    public <A> TaskBuilder1<A, Z> context(TaskContextStrict<A, Z> taskContext) {
+    public <A> TaskBuilder1<A, Z, Z> context(TaskContextStrict<A, Z> taskContext) {
       return context_(taskContext);
     }
 
-    private <A> TaskBuilder1<A, Z> context_(TaskContext<A> taskContext) {
+    @Override
+    public <A, Y> TaskBuilder1<A, Y, Z> context(TaskOperator<A, Y, Z> operator) {
+      return context_(operator);
+    }
+
+    private <A, Y> TaskBuilder1<A, Y, Z> context_(TaskContext<A> taskContext) {
       return new Builder1<>(
           inputs, appendToList(taskContexts, taskContext), taskId, type,
-          leafEvalFn(ec -> {
-            A aTc = taskContext.provide(ec);
-            return ec.immediateValue(f1 -> {
-              // call lifecycle methods on context
-              Task<?> task = ec.currentTask().get();
-              taskContext.preRun(task);
-              Value<Z> zValue = f1.apply(aTc);
-              zValue.consume(z -> taskContext.onSuccess(task, z));
-              zValue.onFail(throwable -> taskContext.onFail(task, throwable));
-
-              return zValue;
-            });
-          }));
+          appendToList(args, contextArg(taskContext)));
     }
 
     @Override
-    public <A> {{interfaceName}}1<A, Z> input(Fn<Task<A>> aTask) {
-      Fn<Task<A>> aTaskSingleton = Singleton.create(aTask);
+    public <A> {{interfaceName}}1<A, Z, Z> input(Fn<Task<A>> aTask) {
+      final Fn<Task<A>> aTaskSingleton = Singleton.create(aTask);
       return new Builder1<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
-          taskContexts, taskId, type,
-          leafEvalFn(ec -> {
-            Value<A> aValue = ec.evaluate(aTaskSingleton.get());
-            return aValue.map(a -> f1 -> f1.apply(a));
-          }));
+          taskContexts, taskId, type, appendToList(args, inputArg(aTaskSingleton)));
     }
 
     @Override
-    public <A> {{interfaceName}}1<List<A>, Z> inputs(Fn<List<Task<A>>> aTasks) {
+    public <A> {{interfaceName}}1<List<A>, Z, Z> inputs(Fn<List<Task<A>>> aTasks) {
       Fn<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
       return new Builder1<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskContexts, taskId, type,
-          leafEvalFn(ec -> {
-            Value<List<A>> aListValue = aTasksSingleton.get()
-                .stream().map(ec::evaluate).collect(toValueList(ec));
-            return aListValue.map(a -> f1 -> f1.apply(a));
-          }));
+          appendToList(args, inputsArg(aTasksSingleton)));
     }
   }
 
@@ -106,111 +79,77 @@ final class {{implClassName}} {
   // #############################################################################################
   // {{arity}}<{{typeArgs}}, Z>
 
-  private static class Builder{{arity}}<{{typeArgs}}, Z> extends BaseRefs<Z> implements {{interfaceName}}{{arity}}<{{typeArgs}}, Z> {
-
-    private final ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator;
+  private static class Builder{{arity}}<{{typeArgs}}, Y, Z> extends BaseRefs<Z> implements {{interfaceName}}{{arity}}<{{typeArgs}}, Y, Z> {
 
     Builder{{arity}}(
         Fn<List<Task<?>>> inputs,
         List<TaskContext<?>> taskContexts,
         TaskId taskId,
         Class<Z> type,
-        ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator) {
-      super(inputs, taskContexts, taskId, type);
-      this.evaluator = evaluator;
+        List<ProcessFnArg> args) {
+      super(inputs, taskContexts, args, taskId, type);
     }
 
     @Override
-    public Task<Z> process(F{{arity}}<{{typeArgs}}, Z> code) {
-      // local ref to drop ref to Builder instance, b/c serialization
-      TaskId taskId = this.taskId;
-      ChainingEval<F{{arity}}<{{typeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
-
-      EvalClosure<Z> closure = ec -> evaluator.enclose(
-          ({{arguments}}) -> ec.invokeProcessFn(taskId, () -> code.apply({{arguments}}))
-      ).eval(ec);
-      return Task.create(inputs, taskContexts, type, closure, taskId);
+    public Task<Z> process(F{{arity}}<{{typeArgs}}, Y> code) {
+      return Task.create(inputs, taskContexts, type, taskId, code, args);
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> context(TaskContextGeneric<{{nextArg}}> taskContext) {
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextGeneric<{{nextArg}}> taskContext) {
       return context_(taskContext);
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> context(TaskContextStrict<{{nextArg}}, Z> taskContext) {
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextStrict<{{nextArg}}, Z> taskContext) {
       return context_(taskContext);
     }
 
-    private <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> context_(TaskContext<{{nextArg}}> taskContext) {
+    @Override
+    public <{{nextArg}}, YN> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, YN, Z> context(TaskOperator<{{nextArg}}, YN, Z> operator) {
+      return context_(operator);
+    }
+
+    private <{{nextArg}}, YN> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, YN, Z> context_(TaskContext<{{nextArg}}> taskContext) {
       return new Builder{{arityPlus}}<>(
           inputs, appendToList(taskContexts, taskContext), taskId, type,
-          evaluator.chain(ec -> {
-            {{nextArg}} {{nextArgLow}}Tc = taskContext.provide(ec);
-            return ec.immediateValue(f{{arityPlus}} -> ({{arguments}}) -> {
-              // call lifecycle methods on context
-              Task<?> task = ec.currentTask().get();
-              taskContext.preRun(task);
-              Value<Z> zValue = f{{arityPlus}}.apply({{arguments}}, {{nextArgLow}}Tc);
-              zValue.consume(z -> taskContext.onSuccess(task, z));
-              zValue.onFail(throwable -> taskContext.onFail(task, throwable));
-
-              return zValue;
-            });
-          }));
+          appendToList(args, contextArg(taskContext)));
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> input(Fn<Task<{{nextArg}}>> nextTask) {
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> input(Fn<Task<{{nextArg}}>> nextTask) {
       Fn<Task<{{nextArg}}>> nextTaskSingleton = Singleton.create(nextTask);
       return new Builder{{arityPlus}}<>(
           lazyFlatten(inputs, lazyList(nextTaskSingleton)),
           taskContexts, taskId, type,
-          evaluator.chain(ec -> {
-            Value<{{nextArg}}> nextValue = ec.evaluate(nextTaskSingleton.get());
-            return nextValue.map(next -> f{{arityPlus}} -> ({{arguments}}) -> f{{arityPlus}}.apply({{arguments}}, next));
-          }));
+          appendToList(args, inputArg(nextTaskSingleton)));
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Z> inputs(Fn<List<Task<{{nextArg}}>>> nextTasks) {
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Y, Z> inputs(Fn<List<Task<{{nextArg}}>>> nextTasks) {
       Fn<List<Task<{{nextArg}}>>> nextTasksSingleton = Singleton.create(nextTasks);
       return new Builder{{arityPlus}}<>(
           lazyFlatten(inputs, lazyFlatten(nextTasksSingleton)),
           taskContexts, taskId, type,
-          evaluator.chain(ec -> {
-            Value<List<{{nextArg}}>> nextValue = nextTasksSingleton.get()
-                .stream().map(ec::evaluate).collect(toValueList(ec));
-            return nextValue.map(next -> f{{arityPlus}} -> ({{arguments}}) -> f{{arityPlus}}.apply({{arguments}}, next));
-          }));
+          appendToList(args, inputsArg(nextTasksSingleton)));
     }
   }
 {{/genBuilder}}
 
-  private static class Builder{{lastArity}}<{{lastTypeArgs}}, Z> extends BaseRefs<Z> implements {{interfaceName}}{{lastArity}}<{{lastTypeArgs}}, Z> {
-
-    private final ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator;
+  private static class Builder{{lastArity}}<{{lastTypeArgs}}, Y, Z> extends BaseRefs<Z> implements {{interfaceName}}{{lastArity}}<{{lastTypeArgs}}, Y, Z> {
 
     Builder{{lastArity}}(
         Fn<List<Task<?>>> inputs,
         List<TaskContext<?>> taskContexts,
         TaskId taskId,
         Class<Z> type,
-        ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator) {
-      super(inputs, taskContexts, taskId, type);
-      this.evaluator = evaluator;
+        List<ProcessFnArg> args) {
+      super(inputs, taskContexts, args, taskId, type);
     }
 
     @Override
-    public Task<Z> process(F{{lastArity}}<{{lastTypeArgs}}, Z> code) {
-      // local ref to drop ref to Builder instance, b/c serialization
-      TaskId taskId = this.taskId;
-      ChainingEval<F{{lastArity}}<{{lastTypeArgs}}, Value<Z>>, Z> evaluator = this.evaluator;
-
-      EvalClosure<Z> closure = ec -> evaluator.enclose(
-          ({{lastArguments}}) -> ec.invokeProcessFn(taskId, () -> code.apply({{lastArguments}}))
-      ).eval(ec);
-      return Task.create(inputs, taskContexts, type, closure, taskId);
+    public Task<Z> process(F{{lastArity}}<{{lastTypeArgs}}, Y> code) {
+      return Task.create(inputs, taskContexts, type, taskId, code, args);
     }
   }
 }

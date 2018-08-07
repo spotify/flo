@@ -22,9 +22,13 @@ package com.spotify.flo;
 
 import static com.spotify.flo.EvalContextWithTask.withTask;
 
+import com.spotify.flo.TaskOperator.Listener;
 import com.spotify.flo.context.AsyncContext;
 import com.spotify.flo.context.SyncContext;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -67,8 +71,42 @@ public interface EvalContext {
    * @param <T>      The type of the task result
    * @return A value of the task result
    */
+  @SuppressWarnings("unchecked")
   default <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
-    return task.code().eval(context);
+    // Get the process fn input arguments
+    final Value<List<Object>> args = task.args().stream()
+        .map(arg -> arg.get(context))
+        .map(value -> value.map(v -> (Object) v))
+        .collect(Values.toValueList(context));
+
+    return args.flatMap(as -> {
+
+      // Call preRun on task contexts after all args are evaluated
+      task.contexts().forEach(tc -> tc.preRun(task));
+
+      final Optional<TaskOperator> operator = task.contexts().stream()
+          .filter(c -> c instanceof TaskOperator)
+          .map(c -> (TaskOperator) c)
+          .findAny();
+
+      // Run the process fn
+      final Listener listener = listener();
+      final Invokable processFn = task.processFn();
+      final Value<Object> value = context.invokeProcessFn(task.id(), () ->  {
+        final Object result = processFn.invoke(as.toArray());
+
+        // Run operator
+        return operator
+            .map(o -> o.perform(result, listener))
+            .orElse(result);
+      });
+
+      // Let the task contexts know the result
+      value.consume(t -> task.contexts().forEach(tc -> tc.onSuccess(task, t)));
+      value.onFail(t -> task.contexts().forEach(tc -> tc.onFail(task, t)));
+
+      return (Value<T>) value;
+    });
   }
 
   /**
@@ -134,6 +172,13 @@ public interface EvalContext {
   <T> Promise<T> promise();
 
   /**
+   * Used to report task metadata.
+   */
+  default Listener listener() {
+    return Listener.NOP;
+  }
+
+  /**
    * A wrapped value with additional semantics for how the enclosed value becomes available and
    * how computations on that value are executed.
    *
@@ -188,6 +233,25 @@ public interface EvalContext {
      * @return A new value with a different type
      */
     <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> fn);
+
+
+    default CompletableFuture<T> toFuture() {
+      CompletableFuture<T> f = new CompletableFuture<>();
+      consume(f::complete);
+      onFail(f::completeExceptionally);
+      return f;
+    }
+
+    default T get() {
+      try {
+        return toFuture().get();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      } catch (ExecutionException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   /**

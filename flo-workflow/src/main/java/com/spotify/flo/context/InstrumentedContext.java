@@ -24,6 +24,7 @@ import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.TaskOperator;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
@@ -139,5 +140,10 @@ public class InstrumentedContext extends ForwardingEvalContext {
         throw t;
       }
     });
+  }
+
+  @Override
+  public TaskOperator.Listener listener() {
+    return super.listener().composeWith(listener::meta);
   }
 }

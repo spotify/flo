@@ -19,25 +19,31 @@ private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) exten
   override def process(fn: => Z): Task[Z] =
     builder.process(f0(fn))
 
-  override def context[A1](taskContextGeneric: TaskContextGeneric[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
+  override def context[A1](taskContextGeneric: TaskContextGeneric[A1]): TaskBuilder1[A1, Z, Z] = new Builder1[A1, Z, Z] {
     type J1 = A1
     val c1: J1 => A1 = identity
     val builder = self.builder.context(taskContextGeneric)
   }
 
-  override def context[A1](taskContextStrict: TaskContextStrict[A1, Z]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
+  override def context[A1](taskContextStrict: TaskContextStrict[A1, Z]): TaskBuilder1[A1, Z, Z] = new Builder1[A1, Z, Z] {
     type J1 = A1
     val c1: J1 => A1 = identity
     val builder = self.builder.context(taskContextStrict)
   }
 
-  override def input[A1](task: => Task[A1]): TaskBuilder1[A1, Z] = new Builder1[A1, Z] {
+  override def operator[A1, Y](taskOperator: TaskOperator[A1, Y, Z]): TaskBuilder1[A1, Y, Z] = new Builder1[A1, Y, Z] {
+    type J1 = A1
+    val c1: J1 => A1 = identity
+    val builder = self.builder.context(taskOperator)
+  }
+
+  override def input[A1](task: => Task[A1]): TaskBuilder1[A1, Z, Z] = new Builder1[A1, Z, Z] {
     type J1 = A1
     val c1: J1 => A1 = identity
     val builder = self.builder.input(fn(task))
   }
 
-  override def inputs[A1](tasks: => List[Task[A1]]) = new Builder1[List[A1], Z] {
+  override def inputs[A1](tasks: => List[Task[A1]]) = new Builder1[List[A1], Z, Z] {
     type J1 = java.util.List[A1]
     val c1: J1 => List[A1] = JavaConversions.iterableAsScalaIterable(_).toList
     val builder = self.builder.inputs(javaList(tasks))
@@ -45,50 +51,58 @@ private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) exten
 }
 {{#genBuilder}}
 
-private[dsl] trait Builder{{arity}}[{{typeArgsNumA}}, Z] extends TaskBuilder{{arity}}[{{typeArgsNumA}}, Z] {
+private[dsl] trait Builder{{arity}}[{{typeArgsNumA}}, Y, Z] extends TaskBuilder{{arity}}[{{typeArgsNumA}}, Y, Z] {
   self =>
   {{^iter.isFirst}}
 
   // previous builder
-  val p: Builder{{arityMinus}}[{{typeArgsNumAMinus}},Z]
+  val p: Builder{{arityMinus}}[{{typeArgsNumAMinus}},_,Z]
   {{/iter.isFirst}}
 
   type J{{arity}}
   val c{{arity}}: J{{arity}} => A{{arity}}
-  val builder: TaskBuilder.TaskBuilder{{arity}}[{{typeArgsPsJ}}, Z]
+  val builder: TaskBuilder.TaskBuilder{{arity}}[{{typeArgsPsJ}}, Y, Z]
 
-  override def process(fn: ({{typeArgsNumA}}) => Z): Task[Z] =
+  override def process(fn: ({{typeArgsNumA}}) => Y): Task[Z] =
     builder.process(f{{arity}}(
       ({{argumentsNum}}) => fn({{argumentsPsConv}})
     ))
   {{^iter.isLast}}
 
-  override def context[A{{arityPlus}}](taskContextGeneric: TaskContextGeneric[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
-    new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] {
+  override def context[A{{arityPlus}}](taskContextGeneric: TaskContextGeneric[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Y, Z] =
+    new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Y, Z] {
       type J{{arityPlus}} = A{{arityPlus}}
       val c{{arityPlus}}: J{{arityPlus}} => A{{arityPlus}} = identity
       val p: self.type = self
       val builder = self.builder.context(taskContextGeneric)
     }
 
-  override def context[A{{arityPlus}}](taskContextStrict: TaskContextStrict[A{{arityPlus}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
-    new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] {
+  override def context[A{{arityPlus}}](taskContextStrict: TaskContextStrict[A{{arityPlus}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Y, Z] =
+    new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Y, Z] {
       type J{{arityPlus}} = A{{arityPlus}}
       val c{{arityPlus}}: J{{arityPlus}} => A{{arityPlus}} = identity
       val p: self.type = self
       val builder = self.builder.context(taskContextStrict)
     }
 
-  override def input[A{{arityPlus}}](task: => Task[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] =
-    new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Z] {
+  override def operator[A{{arityPlus}}, YN](taskOperator: TaskOperator[A{{arityPlus}}, YN, Z]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, YN, Z] =
+    new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, YN, Z] {
+      type J{{arityPlus}} = A{{arityPlus}}
+      val c{{arityPlus}}: J{{arityPlus}} => A{{arityPlus}} = identity
+      val p: self.type = self
+      val builder = self.builder.context(taskOperator)
+    }
+
+  override def input[A{{arityPlus}}](task: => Task[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Y, Z] =
+    new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Y, Z] {
       type J{{arityPlus}} = A{{arityPlus}}
       val c{{arityPlus}}: J{{arityPlus}} => A{{arityPlus}} = identity
       val p: self.type = self
       val builder = self.builder.input(fn(task))
     }
 
-  override def inputs[A{{arityPlus}}](tasks: => List[Task[A{{arityPlus}}]]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, List[A{{arityPlus}}], Z] =
-    new Builder{{arityPlus}}[{{typeArgsNumA}}, List[A{{arityPlus}}], Z] {
+  override def inputs[A{{arityPlus}}](tasks: => List[Task[A{{arityPlus}}]]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, List[A{{arityPlus}}], Y, Z] =
+    new Builder{{arityPlus}}[{{typeArgsNumA}}, List[A{{arityPlus}}], Y, Z] {
       type J{{arityPlus}} = java.util.List[A{{arityPlus}}]
       val c{{arityPlus}}: J{{arityPlus}} => List[A{{arityPlus}}] = JavaConversions.iterableAsScalaIterable(_).toList
       val p: self.type = self

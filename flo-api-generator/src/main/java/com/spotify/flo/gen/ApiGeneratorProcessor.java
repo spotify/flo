@@ -239,13 +239,24 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
         "arity", n,
         "typeArgs", typeArgs(n),
         "jdkInterface", jdkInterface(n),
+        "args", args(n),
         "parameters", parameters(n)
     );
   }
 
+  private String args(int n) {
+    return IntStream.range(0, n)
+        .mapToObj(i -> String.format("(%s) args[%d]", letter(i), i))
+        .collect(Collectors.joining(", "));
+  }
+
   private Stream<String> letters(int n) {
     return IntStream.range(0, n)
-        .mapToObj(i -> Character.toString((char) ('A' + i)));
+        .mapToObj(this::letter);
+  }
+
+  private String letter(int i) {
+    return Character.toString((char) ('A' + i));
   }
 
   private Stream<String> numbers(int n, String letter) {

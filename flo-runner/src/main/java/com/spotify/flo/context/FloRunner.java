@@ -178,13 +178,12 @@ public final class FloRunner<T> {
     } else {
       return
           TracingContext.composeWith(
-              OperatingContext.composeWith(
                   forkingContext(
                       MemoizingContext.composeWith(
                           OverridingContext.composeWith(
                               LoggingContext.composeWith(
                                   baseContext,
-                                  logging), logging))), listener::meta));
+                                  logging), logging))));
     }
   }
 

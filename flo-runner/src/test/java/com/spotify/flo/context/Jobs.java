@@ -25,7 +25,6 @@ import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskBuilder.F1;
 import com.spotify.flo.TaskOperator;
 import com.spotify.flo.TaskOperator.Listener;
-import com.spotify.flo.TaskOperator.OperationException;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -57,9 +56,9 @@ class Jobs {
       return this;
     }
 
-    public <T> T success(F1<JobResult, T> successHandler) {
+    public <T> JobSpec success(F1<JobResult, T> successHandler) {
       this.successHandler = successHandler;
-      throw new JobSpecException(this);
+      return this;
     }
 
     @SuppressWarnings("unchecked")
@@ -70,31 +69,22 @@ class Jobs {
       resultValidator.accept(result);
       return (T) successHandler.apply(result);
     }
-
-    private class JobSpecException extends OperationException {
-
-      private final JobSpec spec;
-
-      JobSpecException(JobSpec spec) {
-        this.spec = spec;
-      }
-
-      @Override
-      public <T> T run(Listener listener) {
-        return spec.run(listener);
-      }
-    }
   }
 
-  static class JobOperator extends TaskOperator<JobSpec> {
+  static class JobOperator<T> extends TaskOperator<JobSpec, JobSpec, T> {
 
     @Override
     public JobSpec provide(EvalContext evalContext) {
       return new JobSpec();
     }
 
-    static JobOperator create() {
-      return new JobOperator();
+    static <T> JobOperator<T> create() {
+      return new JobOperator<>();
+    }
+
+    @Override
+    public T perform(JobSpec spec, Listener listener) {
+      return spec.run(listener);
     }
   }
 

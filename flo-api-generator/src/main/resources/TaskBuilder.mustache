@@ -23,22 +23,24 @@ public interface {{interfaceName}}<Z> {
 
   Task<Z> process(F0<Z> code);
 
-  <A> {{interfaceName}}1<A, Z> context(TaskContextGeneric<A> taskContextGeneric);
-  <A> {{interfaceName}}1<A, Z> context(TaskContextStrict<A, Z> taskContextStrict);
+  <A> {{interfaceName}}1<A, Z, Z> context(TaskContextGeneric<A> taskContextGeneric);
+  <A> {{interfaceName}}1<A, Z, Z> context(TaskContextStrict<A, Z> taskContextStrict);
+  <A, Y> {{interfaceName}}1<A, Y, Z> context(TaskOperator<A, Y, Z> operator);
 
-  <A> {{interfaceName}}1<A, Z> input(Fn<Task<A>> task);
-  <A> {{interfaceName}}1<List<A>, Z> inputs(Fn<List<Task<A>>> tasks);
+  <A> {{interfaceName}}1<A, Z, Z> input(Fn<Task<A>> task);
+  <A> {{interfaceName}}1<List<A>, Z, Z> inputs(Fn<List<Task<A>>> tasks);
 {{#genBuilder}}
 
-  interface {{interfaceName}}{{arity}}<{{typeArgs}}, Z> {
-    Task<Z> process(F{{arity}}<{{typeArgs}}, Z> code);
+  interface {{interfaceName}}{{arity}}<{{typeArgs}}, Y, Z> {
+    Task<Z> process(F{{arity}}<{{typeArgs}}, Y> code);
   {{^iter.isLast}}
 
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> context(TaskContextGeneric<{{nextArg}}> taskContextGeneric);
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> context(TaskContextStrict<{{nextArg}}, Z> taskContextStrict);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextGeneric<{{nextArg}}> taskContextGeneric);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextStrict<{{nextArg}}, Z> taskContextStrict);
+    <{{nextArg}}, YN> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, YN, Z> context(TaskOperator<{{nextArg}}, YN, Z> operator);
 
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Z> input(Fn<Task<{{nextArg}}>> task);
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Z> inputs(Fn<List<Task<{{nextArg}}>>> tasks);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> input(Fn<Task<{{nextArg}}>> task);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Y, Z> inputs(Fn<List<Task<{{nextArg}}>>> tasks);
   {{/iter.isLast}}
   }
 {{/genBuilder}}
@@ -46,14 +48,26 @@ public interface {{interfaceName}}<Z> {
 
   {{#iter.isFirst}}
   @FunctionalInterface
-  interface F{{arity}}<Z> extends {{{jdkInterface}}}Serializable {
+  interface F{{arity}}<Z> extends {{{jdkInterface}}}Serializable, Invokable {
     Z get();
+    default Object invoke(Object... args) {
+      if (args.length != 0) {
+        throw new IllegalArgumentException("wrong number of arguments");
+      }
+      return get();
+    }
   }
   {{/iter.isFirst}}
   {{^iter.isFirst}}
   @FunctionalInterface
-  interface F{{arity}}<{{typeArgs}}, Z> extends {{{jdkInterface}}}Serializable {
+  interface F{{arity}}<{{typeArgs}}, Z> extends {{{jdkInterface}}}Serializable, Invokable {
     Z apply({{parameters}});
+    default Object invoke(Object... args) {
+      if (args.length != {{arity}}) {
+        throw new IllegalArgumentException("wrong number of arguments");
+      }
+      return apply({{args}});
+    }
   }
   {{/iter.isFirst}}
 {{/genFn}}
