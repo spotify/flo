@@ -23,12 +23,8 @@ package com.spotify.flo.context;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 /**
  * A {@link EvalContext} that evaluates tasks immediately.
@@ -59,84 +55,14 @@ public class SyncContext implements EvalContext {
 
   @Override
   public <T> Promise<T> promise() {
-    return new ValuePromise<>();
+    return new FuturePromise<>(this, new SameThreadExecutor(), new CompletableFuture<>());
   }
 
-  private final class DirectValue<T> implements Value<T> {
-
-    private final Semaphore setLatch;
-    private final List<Consumer<T>> valueConsumers = new ArrayList<>();
-    private final List<Consumer<Throwable>> failureConsumers = new ArrayList<>();
-    private final AtomicReference<Consumer<Consumer<T>>> valueReceiver;
-    private final AtomicReference<Consumer<Consumer<Throwable>>> failureReceiver;
-
-    private DirectValue() {
-      valueReceiver = new AtomicReference<>(valueConsumers::add);
-      failureReceiver = new AtomicReference<>(failureConsumers::add);
-      this.setLatch = new Semaphore(1);
-    }
+  private static class SameThreadExecutor implements Executor {
 
     @Override
-    public EvalContext context() {
-      return SyncContext.this;
-    }
-
-    @Override
-    public <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> fn) {
-      Promise<U> promise = promise();
-      consume(t -> {
-        final Value<? extends U> apply = fn.apply(t);
-        apply.consume(promise::set);
-        apply.onFail(promise::fail);
-      });
-      onFail(promise::fail);
-      return promise.value();
-    }
-
-    @Override
-    public synchronized void consume(Consumer<T> consumer) {
-      valueReceiver.get().accept(consumer);
-    }
-
-    @Override
-    public synchronized void onFail(Consumer<Throwable> errorConsumer) {
-      failureReceiver.get().accept(errorConsumer);
-    }
-  }
-
-  private final class ValuePromise<T> implements Promise<T> {
-
-    private final DirectValue<T> value = new DirectValue<>();
-
-    @Override
-    public Value<T> value() {
-      return value;
-    }
-
-    @Override
-    public void set(T t) {
-      final boolean completed = value.setLatch.tryAcquire();
-      if (!completed) {
-        throw new IllegalStateException("Promise was already completed");
-      } else {
-        synchronized (value) {
-          value.valueReceiver.set(c -> c.accept(t));
-          value.valueConsumers.forEach(c -> c.accept(t));
-        }
-      }
-    }
-
-    @Override
-    public synchronized void fail(Throwable throwable) {
-      final boolean completed = value.setLatch.tryAcquire();
-      if (!completed) {
-        throw new IllegalStateException("Promise was already completed");
-      } else {
-        synchronized (value) {
-          value.failureReceiver.set(c -> c.accept(throwable));
-          value.failureConsumers.forEach(c -> c.accept(throwable));
-        }
-      }
+    public void execute(Runnable command) {
+      command.run();
     }
   }
 }
