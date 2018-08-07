@@ -184,6 +184,7 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     data.put("lastTypeArgs", typeArgs(n));
     data.put("lastTypeArg", letters(n + 1).skip(n).findFirst().get());
     data.put("lastArguments", arguments(n));
+    data.put("lastProcessArgs", processArgs(n));
     final String output = engine.getMustache("TaskBuilderImpl").render(data);
     final String outputScala = engine.getMustache("ScalaApiImpl").render(data);
 
@@ -215,6 +216,7 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     map.put("typeArgsNumAMinus", typeArgsNum(n - 1, "A"));
     map.put("arguments", arguments(n));
     map.put("argumentsNum", arguments(n, "a"));
+    map.put("processArgs", processArgs(n));
 
     // p.p.p.J1, p.p.J2, p.J3, J4
     map.put("typeArgsPsJ", pSquared(n, "%pJ%n"));
@@ -239,14 +241,13 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
         "arity", n,
         "typeArgs", typeArgs(n),
         "jdkInterface", jdkInterface(n),
-        "args", args(n),
         "parameters", parameters(n)
     );
   }
 
-  private String args(int n) {
+  private String processArgs(int n) {
     return IntStream.range(0, n)
-        .mapToObj(i -> String.format("(%s) args[%d]", letter(i), i))
+        .mapToObj(i -> String.format("(%s) a[%d]", letter(i), i))
         .collect(Collectors.joining(", "));
   }
 

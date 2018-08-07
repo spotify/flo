@@ -20,7 +20,9 @@
 
 package com.spotify.flo;
 
-public interface Invokable {
+import java.io.Serializable;
+
+public interface Invokable extends Serializable {
 
   Object invoke(Object... args);
 }

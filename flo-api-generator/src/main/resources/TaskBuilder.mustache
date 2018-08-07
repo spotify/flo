@@ -48,26 +48,14 @@ public interface {{interfaceName}}<Z> {
 
   {{#iter.isFirst}}
   @FunctionalInterface
-  interface F{{arity}}<Z> extends {{{jdkInterface}}}Serializable, Invokable {
+  interface F{{arity}}<Z> extends {{{jdkInterface}}}Serializable {
     Z get();
-    default Object invoke(Object... args) {
-      if (args.length != 0) {
-        throw new IllegalArgumentException("wrong number of arguments");
-      }
-      return get();
-    }
   }
   {{/iter.isFirst}}
   {{^iter.isFirst}}
   @FunctionalInterface
-  interface F{{arity}}<{{typeArgs}}, Z> extends {{{jdkInterface}}}Serializable, Invokable {
+  interface F{{arity}}<{{typeArgs}}, Z> extends {{{jdkInterface}}}Serializable {
     Z apply({{parameters}});
-    default Object invoke(Object... args) {
-      if (args.length != {{arity}}) {
-        throw new IllegalArgumentException("wrong number of arguments");
-      }
-      return apply({{args}});
-    }
   }
   {{/iter.isFirst}}
 {{/genFn}}

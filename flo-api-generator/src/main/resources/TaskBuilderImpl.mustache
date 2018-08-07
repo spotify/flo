@@ -32,7 +32,8 @@ final class {{implClassName}} {
     }
 
     @Override
-    public Task<Z> process(F0<Z> code) {
+    public Task<Z> process(F0<Z> f) {
+      final Invokable code = a -> f.get();
       return Task.create(inputs, taskContexts, type, taskId, code, args);
     }
 
@@ -91,7 +92,8 @@ final class {{implClassName}} {
     }
 
     @Override
-    public Task<Z> process(F{{arity}}<{{typeArgs}}, Y> code) {
+    public Task<Z> process(F{{arity}}<{{typeArgs}}, Y> f) {
+      final Invokable code = a -> f.apply({{processArgs}});
       return Task.create(inputs, taskContexts, type, taskId, code, args);
     }
 
@@ -148,7 +150,8 @@ final class {{implClassName}} {
     }
 
     @Override
-    public Task<Z> process(F{{lastArity}}<{{lastTypeArgs}}, Y> code) {
+    public Task<Z> process(F{{lastArity}}<{{lastTypeArgs}}, Y> f) {
+      final Invokable code = a -> f.apply({{lastProcessArgs}});
       return Task.create(inputs, taskContexts, type, taskId, code, args);
     }
   }
