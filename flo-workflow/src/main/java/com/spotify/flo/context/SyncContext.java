@@ -94,12 +94,12 @@ public class SyncContext implements EvalContext {
     }
 
     @Override
-    public void consume(Consumer<T> consumer) {
+    public synchronized void consume(Consumer<T> consumer) {
       valueReceiver.get().accept(consumer);
     }
 
     @Override
-    public void onFail(Consumer<Throwable> errorConsumer) {
+    public synchronized void onFail(Consumer<Throwable> errorConsumer) {
       failureReceiver.get().accept(errorConsumer);
     }
   }
@@ -119,19 +119,23 @@ public class SyncContext implements EvalContext {
       if (!completed) {
         throw new IllegalStateException("Promise was already completed");
       } else {
-        value.valueReceiver.set(c -> c.accept(t));
-        value.valueConsumers.forEach(c -> c.accept(t));
+        synchronized (value) {
+          value.valueReceiver.set(c -> c.accept(t));
+          value.valueConsumers.forEach(c -> c.accept(t));
+        }
       }
     }
 
     @Override
-    public void fail(Throwable throwable) {
+    public synchronized void fail(Throwable throwable) {
       final boolean completed = value.setLatch.tryAcquire();
       if (!completed) {
         throw new IllegalStateException("Promise was already completed");
       } else {
-        value.failureReceiver.set(c -> c.accept(throwable));
-        value.failureConsumers.forEach(c -> c.accept(throwable));
+        synchronized (value) {
+          value.failureReceiver.set(c -> c.accept(throwable));
+          value.failureConsumers.forEach(c -> c.accept(throwable));
+        }
       }
     }
   }

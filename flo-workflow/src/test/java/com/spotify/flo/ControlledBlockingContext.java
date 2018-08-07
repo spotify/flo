@@ -23,17 +23,14 @@ package com.spotify.flo;
 import static org.junit.Assert.fail;
 
 import com.spotify.flo.TaskBuilder.F1;
-import java.util.ArrayList;
+import com.spotify.flo.context.ForwardingEvalContext;
+import com.spotify.flo.context.SyncContext;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * A {@link EvalContext} used for testing the concurrency behavior of task graphs.
@@ -41,13 +38,17 @@ import java.util.function.Function;
  * This context is not thread safe. The control methods (those not part of the {@link EvalContext}
  * interface) should not be used from multiple threads at the same time.
  */
-class ControlledBlockingContext implements EvalContext {
+class ControlledBlockingContext extends ForwardingEvalContext {
 
   private static final int MAX_WAIT_MILLIS = 5000;
 
   private final Map<TaskId, Interceptor<?>> interceptors = new HashMap<>();
   private final Map<TaskId, CountDownLatch> awaiting = new HashMap<>();
   private final AtomicInteger activeCount = new AtomicInteger(0);
+
+  ControlledBlockingContext() {
+    super(SyncContext.create());
+  }
 
   /**
    * Blocks until {@code n} concurrent tasks are awaiting execution.
@@ -92,7 +93,7 @@ class ControlledBlockingContext implements EvalContext {
    *
    * @param task  the task to release
    */
-  void release(Task<?> task) throws InterruptedException {
+  void release(Task<?> task) {
     awaiting.get(task.id()).countDown();
   }
 
@@ -128,7 +129,7 @@ class ControlledBlockingContext implements EvalContext {
   public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
     TaskId taskId = task.id();
     CountDownLatch latch = new CountDownLatch(1);
-    SettableValue<T> value = new SettableValue<>();
+    Promise<T> promise = promise();
 
     synchronized (activeCount) {
       awaiting.put(taskId, latch);
@@ -143,8 +144,8 @@ class ControlledBlockingContext implements EvalContext {
         fail("interrupted");
       }
 
-      EvalContext.super.evaluateInternal(task, context).consume(v -> {
-        value.setValue(v);
+      delegate.evaluateInternal(task, context).consume(v -> {
+        promise.set(v);
         synchronized (activeCount) {
           awaiting.remove(taskId);
           activeCount.decrementAndGet();
@@ -155,7 +156,7 @@ class ControlledBlockingContext implements EvalContext {
     thread.setDaemon(true);
     thread.start();
 
-    return value;
+    return promise.value();
   }
 
   @Override
@@ -168,92 +169,6 @@ class ControlledBlockingContext implements EvalContext {
     }
 
     return value(processFn);
-  }
-
-  @Override
-  public <T> Value<T> value(Fn<T> value) {
-    return new SettableValue<>(value.get());
-  }
-
-  @Override
-  public <T> Promise<T> promise() {
-    return new ValuePromise<>();
-  }
-
-  class SettableValue<T> implements Value<T> {
-
-    private T value;
-    private List<Consumer<T>> consumeQueue = new ArrayList<>();
-
-    SettableValue() {
-    }
-
-    SettableValue(T value) {
-      setValue(value);
-    }
-
-    @Override
-    public EvalContext context() {
-      return ControlledBlockingContext.this;
-    }
-
-    @Override
-    public void consume(Consumer<T> consumer) {
-      if (value == null) {
-        consumeQueue.add(consumer);
-      } else {
-        consumer.accept(value);
-      }
-    }
-
-    /**
-     * Does nothing. Value can not fail, see {@link ValuePromise#fail(Throwable)}.
-     */
-    @Override
-    public void onFail(Consumer<Throwable> errorConsumer) {
-    }
-
-    @Override
-    public <U> Value<U> flatMap(Function<? super T, ? extends Value<? extends U>> fn) {
-      SettableValue<U> uValue = new SettableValue<>();
-      consume(t -> fn.apply(t).consume(uValue::setValue));
-      return uValue;
-    }
-
-    void setValue(T value) {
-      if (this.value != null) {
-        throw new IllegalStateException(
-            "Value set more than once. Was " + this.value + ", set " + value);
-      }
-      this.value = Objects.requireNonNull(value);
-
-      List<Consumer<T>> consumers = consumeQueue;
-      consumeQueue = null;
-
-      for (Consumer<T> consumer : consumers) {
-        consumer.accept(value);
-      }
-    }
-  }
-
-  class ValuePromise<T> implements Promise<T> {
-
-    private final SettableValue<T> value = new SettableValue<>();
-
-    @Override
-    public Value<T> value() {
-      return value;
-    }
-
-    @Override
-    public void set(T t) {
-      value.setValue(t);
-    }
-
-    @Override
-    public void fail(Throwable throwable) {
-      throw new UnsupportedOperationException();
-    }
   }
 
   @FunctionalInterface
