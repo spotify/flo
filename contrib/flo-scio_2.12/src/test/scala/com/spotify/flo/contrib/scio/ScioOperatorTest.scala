@@ -40,7 +40,7 @@ class ScioOperatorTest extends PipelineSpec with Matchers {
     val task = lineCountingTask("input.txt", "output.txt", 3)
     val result = flo.test(() => {
       ScioOperator.mock().result(task.id(), 42L)
-      FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS)
+      FloRunner.runTask(task).future().get(1, TimeUnit.MINUTES)
     })
     result shouldBe "lines: 42"
   }
@@ -54,7 +54,7 @@ class ScioOperatorTest extends PipelineSpec with Matchers {
             output => output should containInAnyOrder(Seq("foo", "bar", "baz"))
           }
       }
-      FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS)
+      FloRunner.runTask(task).future().get(1, TimeUnit.MINUTES)
     })
     result shouldBe "lines: 3"
   }
@@ -64,7 +64,7 @@ class ScioOperatorTest extends PipelineSpec with Matchers {
     val output = Files.createTempDirectory("flo-scio-test-out").toAbsolutePath.toString
     val task = lineCountingTask(input, output, 3)
     Files.write(Paths.get(input), Seq("foo", "baz", "bar").asJava)
-    val result = FloRunner.runTask(task).future().get(30, TimeUnit.SECONDS)
+    val result = FloRunner.runTask(task).future().get(1, TimeUnit.MINUTES)
     result shouldBe "lines: 3"
   }
 }
