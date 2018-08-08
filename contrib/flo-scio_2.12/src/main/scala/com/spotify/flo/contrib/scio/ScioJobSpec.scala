@@ -32,7 +32,7 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
                         private val _pipeline: ScioContext => Unit = null,
                         private val _result: (ScioContext, ScioResult) => R = null,
                         private val _success: R => S = null
-                       ) extends Serializable {
+                       ) extends TaskOperator.OperatorSpec[S] with Serializable {
 
   def options(options: () => PipelineOptions): ScioJobSpec[R, S] = {
     new ScioJobSpec(taskId, Some(options), _pipeline, _result, _success)
@@ -50,7 +50,7 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
     new ScioJobSpec(taskId, _options, _pipeline, _result, success)
   }
 
-  private[scio] def run(listener: TaskOperator.Listener): S = {
+  private[scio] override def run(listener: TaskOperator.Listener): S = {
     if (_pipeline == null || _result == null || _success == null) {
       throw new IllegalStateException()
     }

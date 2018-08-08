@@ -31,51 +31,51 @@ import java.util.function.Consumer;
 
 class Jobs {
 
-  static class JobSpec implements Serializable {
+  static class JobSpec<T> implements TaskOperator.OperatorSpec<T>, Serializable {
 
     private F0<Map<String, ?>> options;
     private SerializableConsumer<JobContext> pipelineConfigurator;
     private SerializableConsumer<JobResult> resultValidator;
-    private F1<JobResult, ?> successHandler;
+    private F1<JobResult, T> successHandler;
 
     JobSpec() {
     }
 
-    public JobSpec options(F0<Map<String, ?>> options) {
+    public JobSpec<T> options(F0<Map<String, ?>> options) {
       this.options = options;
       return this;
     }
 
-    public JobSpec pipeline(SerializableConsumer<JobContext> pipeline) {
+    public JobSpec<T> pipeline(SerializableConsumer<JobContext> pipeline) {
       this.pipelineConfigurator = pipeline;
       return this;
     }
 
-    public JobSpec validation(SerializableConsumer<JobResult> validator) {
+    public JobSpec<T> validation(SerializableConsumer<JobResult> validator) {
       this.resultValidator = validator;
       return this;
     }
 
-    public <T> JobSpec success(F1<JobResult, T> successHandler) {
+    public JobSpec<T> success(F1<JobResult, T> successHandler) {
       this.successHandler = successHandler;
       return this;
     }
 
-    @SuppressWarnings("unchecked")
-    <T> T run(Listener listener) {
+    @Override
+    public T run(Listener listener) {
       final JobContext jobContext = new JobContext(options.get());
       pipelineConfigurator.accept(jobContext);
       final JobResult result = jobContext.run();
       resultValidator.accept(result);
-      return (T) successHandler.apply(result);
+      return successHandler.apply(result);
     }
   }
 
-  static class JobOperator<T> extends TaskOperator<JobSpec, JobSpec, T> {
+  static class JobOperator<T> extends TaskOperator<JobSpec<T>, JobSpec<T>, T> {
 
     @Override
-    public JobSpec provide(EvalContext evalContext) {
-      return new JobSpec();
+    public JobSpec<T> provide(EvalContext evalContext) {
+      return new JobSpec<>();
     }
 
     static <T> JobOperator<T> create() {
@@ -83,7 +83,7 @@ class Jobs {
     }
 
     @Override
-    public T perform(JobSpec spec, Listener listener) {
+    public T perform(JobSpec<T> spec, Listener listener) {
       return spec.run(listener);
     }
   }

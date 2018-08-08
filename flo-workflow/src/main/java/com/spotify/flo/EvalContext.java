@@ -23,6 +23,7 @@ package com.spotify.flo;
 import static com.spotify.flo.EvalContextWithTask.withTask;
 
 import com.spotify.flo.TaskOperator.Listener;
+import com.spotify.flo.TaskOperator.OperatorSpec;
 import com.spotify.flo.context.AsyncContext;
 import com.spotify.flo.context.SyncContext;
 import java.util.List;
@@ -97,7 +98,7 @@ public interface EvalContext {
 
         // Run operator
         return operator
-            .map(o -> o.perform(result, listener))
+            .map(o -> o.perform((OperatorSpec<T>) result, listener))
             .orElse(result);
       });
 
