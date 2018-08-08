@@ -35,7 +35,7 @@ private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) exten
   override def operator[A1, Y <: OperatorSpec[Z]](taskOperator: TaskOperator[A1, Y, Z]): TaskBuilder1[A1, Y, Z] = new Builder1[A1, Y, Z] {
     type J1 = A1
     val c1: J1 => A1 = identity
-    val builder = self.builder.context(taskOperator)
+    val builder = self.builder.operator(taskOperator)
   }
 
   override def input[A1](task: => Task[A1]): TaskBuilder1[A1, Z, Z] = new Builder1[A1, Z, Z] {
@@ -91,7 +91,7 @@ private[dsl] trait Builder{{arity}}[{{typeArgsNumA}}, Y, Z] extends TaskBuilder{
       type J{{arityPlus}} = A{{arityPlus}}
       val c{{arityPlus}}: J{{arityPlus}} => A{{arityPlus}} = identity
       val p: self.type = self
-      val builder = self.builder.context(taskOperator)
+      val builder = self.builder.operator(taskOperator)
     }
 
   override def input[A{{arityPlus}}](task: => Task[A{{arityPlus}}]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, Y, Z] =
