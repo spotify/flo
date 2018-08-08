@@ -82,11 +82,22 @@ class ForkingContext extends ForwardingEvalContext {
     // We do not currently have a mechanism for transporting mock inputs and outputs into and out of the task process.
     LOG.debug("Test run, forking disabled - testing serialization");
     return () -> {
-      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      PersistingContext.serialize(fn, baos);
-      final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-      final Fn<T> deserialized = PersistingContext.deserialize(bais);
-      return deserialized.get();
+      // Serialize & deserialize fn
+      final ByteArrayOutputStream fnBaos = new ByteArrayOutputStream();
+      PersistingContext.serialize(fn, fnBaos);
+      final ByteArrayInputStream fnBais = new ByteArrayInputStream(fnBaos.toByteArray());
+      final Fn<T> deserializedFn = PersistingContext.deserialize(fnBais);
+
+      // Run the fn
+      final T result = deserializedFn.get();
+
+      // Serialize & deserialize the result
+      final ByteArrayOutputStream resultBaos = new ByteArrayOutputStream();
+      PersistingContext.serialize(result, resultBaos);
+      final ByteArrayInputStream resultBais = new ByteArrayInputStream(resultBaos.toByteArray());
+      final T deserializedResult = PersistingContext.deserialize(resultBais);
+
+      return deserializedResult;
     };
   }
 
