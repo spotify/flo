@@ -29,16 +29,16 @@ import java.io.Serializable;
  * <p>The concrete operator implementation should {@link #provide(EvalContext)} the task with some means of constructing
  * an operation description. The operation description should be returned from the process fn.
  */
-public abstract class TaskOperator<ContextT, SpecT extends OperationSpec<ResultT>, ResultT>
-    implements TaskContext<ContextT> {
+public interface TaskOperator<ContextT, SpecT extends OperationSpec<ResultT>, ResultT>
+    extends TaskContext<ContextT> {
 
-  public abstract ResultT perform(SpecT spec, Listener listener);
+  ResultT perform(SpecT spec, Listener listener);
 
-  public interface OperationSpec<ZZ> {
+  interface OperationSpec<ZZ> {
     ZZ run(Listener listener);
   }
 
-  public interface Listener extends Serializable {
+  interface Listener extends Serializable {
 
     /**
      * Called to report some piece of task metadata.

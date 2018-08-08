@@ -72,7 +72,7 @@ class Jobs {
     }
   }
 
-  static class JobOperator<T> extends TaskOperator<JobSpec<T>, JobSpec<T>, T> {
+  static class JobOperator<T> implements TaskOperator<JobSpec<T>, JobSpec<T>, T> {
 
     @Override
     public JobSpec<T> provide(EvalContext evalContext) {
