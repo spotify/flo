@@ -224,17 +224,8 @@ public final class FloRunner<T> {
     final boolean inDebugger = ManagementFactory.getRuntimeMXBean()
         .getInputArguments().stream().anyMatch(s -> s.contains("-agentlib:jdwp"));
 
-    // We do not currently have a mechanism for transporting mock inputs and outputs into and out of the task process.
-    if (FloTesting.isTest()) {
-      LOG.debug("Test run, forking disabled");
-      return baseContext;
-    }
-
     if (hasExplicitConfigValue(FLO_FORKING)) {
       if (config.getBoolean(FLO_FORKING)) {
-        if (FloTesting.isTest()) {
-          throw new IllegalStateException("Forking is not supported in test mode");
-        }
         LOG.debug("Forking enabled (config variable flo.forking=true)");
         return ForkingContext.composeWith(baseContext);
       } else {
@@ -242,9 +233,9 @@ public final class FloRunner<T> {
         return baseContext;
       }
     } else if (inDebugger) {
-      LOG.debug("Debugger detected, forking disabled by default "
-          + "(enable by setting config variable flo.forking=true)");
-      return baseContext;
+      LOG.debug("Debugger detected, dry-running forking "
+          + "(enable full forking by setting config variable flo.forking=true)");
+      return ForkingContext.dryComposeWith(baseContext);
     } else {
       LOG.debug("Debugger not detected, forking enabled by default "
           + "(disable by setting config variable flo.forking=false)");
