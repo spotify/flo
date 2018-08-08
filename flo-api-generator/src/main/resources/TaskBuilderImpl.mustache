@@ -6,7 +6,6 @@ import javax.annotation.Generated;
 
 import com.spotify.flo.EvalContext.Value;
 import com.spotify.flo.TaskBuilder.*;
-import com.spotify.flo.TaskOperator.OperationSpec;
 
 import static com.spotify.flo.BuilderUtils.appendToList;
 import static com.spotify.flo.BuilderUtils.contextArg;
@@ -49,7 +48,7 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <A, Y extends OperationSpec<Z>> TaskBuilder1<A, Y, Z> operator(TaskOperator<A, Y, Z> operator) {
+    public <A, Y> TaskBuilder1<A, Y, Z> operator(TaskOperator<A, Y, Z> operator) {
       return context_(operator);
     }
 
@@ -109,7 +108,7 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <{{nextArg}}, YN extends OperationSpec<Z>> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, YN, Z> operator(TaskOperator<{{nextArg}}, YN, Z> operator) {
+    public <{{nextArg}}, YN> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, YN, Z> operator(TaskOperator<{{nextArg}}, YN, Z> operator) {
       return context_(operator);
     }
 

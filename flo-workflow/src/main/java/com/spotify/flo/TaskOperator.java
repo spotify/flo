@@ -20,7 +20,6 @@
 
 package com.spotify.flo;
 
-import com.spotify.flo.TaskOperator.OperationSpec;
 import java.io.Serializable;
 
 /**
@@ -29,14 +28,10 @@ import java.io.Serializable;
  * <p>The concrete operator implementation should {@link #provide(EvalContext)} the task with some means of constructing
  * an operation description. The operation description should be returned from the process fn.
  */
-public interface TaskOperator<ContextT, SpecT extends OperationSpec<ResultT>, ResultT>
+public interface TaskOperator<ContextT, SpecT, ResultT>
     extends TaskContext<ContextT> {
 
   ResultT perform(SpecT spec, Listener listener);
-
-  interface OperationSpec<ZZ> {
-    ZZ run(Listener listener);
-  }
 
   interface Listener extends Serializable {
 

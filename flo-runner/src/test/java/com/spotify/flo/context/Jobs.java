@@ -24,15 +24,13 @@ import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskBuilder.F1;
 import com.spotify.flo.TaskOperator;
-import com.spotify.flo.TaskOperator.Listener;
-import com.spotify.flo.TaskOperator.OperationSpec;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
 
 class Jobs {
 
-  static class JobSpec<T> implements OperationSpec<T>, Serializable {
+  static class JobSpec<T> implements Serializable {
 
     private F0<Map<String, ?>> options;
     private SerializableConsumer<JobContext> pipelineConfigurator;
@@ -61,15 +59,6 @@ class Jobs {
       this.successHandler = successHandler;
       return this;
     }
-
-    @Override
-    public T run(Listener listener) {
-      final JobContext jobContext = new JobContext(options.get());
-      pipelineConfigurator.accept(jobContext);
-      final JobResult result = jobContext.run();
-      resultValidator.accept(result);
-      return successHandler.apply(result);
-    }
   }
 
   static class JobOperator<T> implements TaskOperator<JobSpec<T>, JobSpec<T>, T> {
@@ -85,7 +74,11 @@ class Jobs {
 
     @Override
     public T perform(JobSpec<T> spec, Listener listener) {
-      return spec.run(listener);
+      final JobContext jobContext = new JobContext(spec.options.get());
+      spec.pipelineConfigurator.accept(jobContext);
+      final JobResult result = jobContext.run();
+      spec.resultValidator.accept(result);
+      return spec.successHandler.apply(result);
     }
   }
 

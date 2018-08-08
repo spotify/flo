@@ -20,20 +20,16 @@
 
 package com.spotify.flo.contrib.scio
 
-import com.spotify.flo.TaskOperator.OperationSpec
-import com.spotify.flo.contrib.scio.ScioJobSpec.log
-import com.spotify.flo.{FloTesting, TaskId, TaskOperator}
+import com.spotify.flo.TaskId
 import com.spotify.scio.{ScioContext, ScioResult}
-import org.apache.beam.runners.dataflow.DataflowPipelineJob
-import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
-import org.slf4j.{Logger, LoggerFactory}
+import org.apache.beam.sdk.options.PipelineOptions
 
-class ScioJobSpec[R, S](private val taskId: TaskId,
-                        private val _options: Option[() => PipelineOptions] = None,
-                        private val _pipeline: ScioContext => Unit = null,
-                        private val _result: (ScioContext, ScioResult) => R = null,
-                        private val _success: R => S = null
-                       ) extends OperationSpec[S] with Serializable {
+class ScioJobSpec[R, S](private[scio] val taskId: TaskId,
+                        private[scio] val _options: Option[() => PipelineOptions] = None,
+                        private[scio] val _pipeline: ScioContext => Unit = null,
+                        private[scio] val _result: (ScioContext, ScioResult) => R = null,
+                        private[scio] val _success: R => S = null
+                       ) extends Serializable {
 
   def options(options: () => PipelineOptions): ScioJobSpec[R, S] = {
     new ScioJobSpec(taskId, Some(options), _pipeline, _result, _success)
@@ -50,75 +46,9 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
   def success[SN](success: R => SN): ScioJobSpec[R, SN] = {
     new ScioJobSpec(taskId, _options, _pipeline, _result, success)
   }
-
-  private[scio] override def run(listener: TaskOperator.Listener): S = {
-    if (_pipeline == null || _result == null || _success == null) {
-      throw new IllegalStateException()
-    }
-    if (FloTesting.isTest) {
-      runTest()
-    } else {
-      runProd(listener)
-    }
-  }
-
-  private def runTest(): S = {
-    for (result <- ScioOperator.mock().results.get(taskId)) {
-      return _success(result.asInstanceOf[R])
-    }
-
-    for (jobTestSupplier <- ScioOperator.mock().jobTests.get(taskId)) {
-      val jobTest = jobTestSupplier()
-      jobTest.setUp()
-      val sc = scioContextForTest(jobTest.testId)
-      sc.options.as(classOf[ApplicationNameOptions]).setAppName(jobTest.testId)
-      _pipeline(sc)
-      val scioResult = sc.close().waitUntilDone()
-      val result = _result(sc, scioResult)
-      jobTest.tearDown()
-      return _success(result)
-    }
-
-    throw new AssertionError()
-  }
-
-  private def scioContextForTest[U](testId: String) = {
-    // ScioContext.forTest does not seem to allow specifying testId
-    val opts = PipelineOptionsFactory
-      .fromArgs("--appName=" + testId)
-      .as(classOf[PipelineOptions])
-    val sc = ScioContext(opts)
-    if (!sc.isTest) {
-      throw new AssertionError(s"Failed to create ScioContext for test with id ${testId}")
-    }
-    sc
-  }
-
-  private def runProd(listener: TaskOperator.Listener): S = {
-    val sc = _options match {
-      case None => ScioContext()
-      case Some(options) => ScioContext(options())
-    }
-    _pipeline(sc)
-    val scioResult = sc.close()
-    scioResult.internal match {
-      case job: DataflowPipelineJob => reportDataflowJobId(job.getJobId, listener)
-      case _ =>
-    }
-    scioResult.waitUntilDone()
-    val result = _result(sc, scioResult)
-    _success(result)
-  }
-
-  def reportDataflowJobId(jobId: String, listener: TaskOperator.Listener) {
-    log.info("Started scio job (dataflow): {}", jobId)
-    listener.meta(taskId, "dataflow-job-id", jobId);
-  }
 }
 
 object ScioJobSpec {
-  private val log: Logger = LoggerFactory.getLogger(classOf[ScioJobSpec[_, _]])
-
   class Provider[Z](taskId: TaskId) {
     def apply(): ScioJobSpec[Any, Z] = new ScioJobSpec(taskId)
   }
