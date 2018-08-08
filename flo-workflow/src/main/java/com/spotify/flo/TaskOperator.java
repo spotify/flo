@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,8 @@ import java.io.Serializable;
  * <p>The concrete operator implementation should {@link #provide(EvalContext)} the task with some means of constructing
  * an operation description. The operation description should be returned from the process fn.
  */
-public abstract class TaskOperator<T, Y extends TaskOperator.OperatorSpec<Z>, Z> implements TaskContext<T> {
+public abstract class TaskOperator<ContextT, SpecT extends TaskOperator.OperatorSpec<ResultT>, ResultT>
+    implements TaskContext<ContextT> {
 
   public interface OperatorSpec<ZZ> {
     ZZ run(Listener listener);
@@ -55,5 +56,5 @@ public abstract class TaskOperator<T, Y extends TaskOperator.OperatorSpec<Z>, Z>
     }
   }
 
-  public abstract Z perform(Y o, Listener listener);
+  public abstract ResultT perform(SpecT o, Listener listener);
 }
