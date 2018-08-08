@@ -20,6 +20,7 @@
 
 package com.spotify.flo.contrib.bigquery;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.cloud.ServiceOptions;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -50,7 +51,8 @@ class GcpOptions {
   }
 
   /**
-   * {@link ServiceOptions#getServiceAccountProjectId()}
+   * {@link ServiceOptions#getServiceAccountProjectId()} reimplemented here to avoid breaking if users use a version
+   * of google-api-client that does not have {@link GoogleCredential#getServiceAccountProjectId()}.
    */
   private static String getServiceAccountProjectId() {
     String project = null;
