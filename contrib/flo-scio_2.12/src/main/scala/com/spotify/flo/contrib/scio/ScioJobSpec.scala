@@ -20,6 +20,7 @@
 
 package com.spotify.flo.contrib.scio
 
+import com.spotify.flo.TaskOperator.OperationSpec
 import com.spotify.flo.contrib.scio.ScioJobSpec.log
 import com.spotify.flo.{FloTesting, TaskId, TaskOperator}
 import com.spotify.scio.{ScioContext, ScioResult}
@@ -32,7 +33,7 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
                         private val _pipeline: ScioContext => Unit = null,
                         private val _result: (ScioContext, ScioResult) => R = null,
                         private val _success: R => S = null
-                       ) extends TaskOperator.OperatorSpec[S] with Serializable {
+                       ) extends OperationSpec[S] with Serializable {
 
   def options(options: () => PipelineOptions): ScioJobSpec[R, S] = {
     new ScioJobSpec(taskId, Some(options), _pipeline, _result, _success)

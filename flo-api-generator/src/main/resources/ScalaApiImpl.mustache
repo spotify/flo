@@ -3,7 +3,7 @@ package com.spotify.flo.dsl
 import com.spotify.flo.EvalContext.Value
 import com.spotify.flo.Task
 import com.spotify.flo.TaskBuilder
-import com.spotify.flo.TaskOperator.OperatorSpec
+import com.spotify.flo.TaskOperator.OperationSpec
 import com.spotify.flo._
 import com.spotify.flo.dsl.Util._
 
@@ -32,7 +32,7 @@ private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) exten
     val builder = self.builder.context(taskContextStrict)
   }
 
-  override def operator[A1, Y <: OperatorSpec[Z]](taskOperator: TaskOperator[A1, Y, Z]): TaskBuilder1[A1, Y, Z] = new Builder1[A1, Y, Z] {
+  override def operator[A1, Y <: OperationSpec[Z]](taskOperator: TaskOperator[A1, Y, Z]): TaskBuilder1[A1, Y, Z] = new Builder1[A1, Y, Z] {
     type J1 = A1
     val c1: J1 => A1 = identity
     val builder = self.builder.operator(taskOperator)
@@ -86,7 +86,7 @@ private[dsl] trait Builder{{arity}}[{{typeArgsNumA}}, Y, Z] extends TaskBuilder{
       val builder = self.builder.context(taskContextStrict)
     }
 
-  override def operator[A{{arityPlus}}, YN <: OperatorSpec[Z]](taskOperator: TaskOperator[A{{arityPlus}}, YN, Z]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, YN, Z] =
+  override def operator[A{{arityPlus}}, YN <: OperationSpec[Z]](taskOperator: TaskOperator[A{{arityPlus}}, YN, Z]): TaskBuilder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, YN, Z] =
     new Builder{{arityPlus}}[{{typeArgsNumA}}, A{{arityPlus}}, YN, Z] {
       type J{{arityPlus}} = A{{arityPlus}}
       val c{{arityPlus}}: J{{arityPlus}} => A{{arityPlus}} = identity

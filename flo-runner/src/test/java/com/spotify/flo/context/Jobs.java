@@ -25,13 +25,14 @@ import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskBuilder.F1;
 import com.spotify.flo.TaskOperator;
 import com.spotify.flo.TaskOperator.Listener;
+import com.spotify.flo.TaskOperator.OperationSpec;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
 
 class Jobs {
 
-  static class JobSpec<T> implements TaskOperator.OperatorSpec<T>, Serializable {
+  static class JobSpec<T> implements OperationSpec<T>, Serializable {
 
     private F0<Map<String, ?>> options;
     private SerializableConsumer<JobContext> pipelineConfigurator;

@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 import javax.annotation.Generated;
 
 import com.spotify.flo.EvalContext.Value;
-import com.spotify.flo.TaskOperator.OperatorSpec;
+import com.spotify.flo.TaskOperator.OperationSpec;
 
 /**
  * Types for the fluent task setup API
@@ -26,7 +26,7 @@ public interface {{interfaceName}}<Z> {
 
   <A> {{interfaceName}}1<A, Z, Z> context(TaskContextGeneric<A> taskContextGeneric);
   <A> {{interfaceName}}1<A, Z, Z> context(TaskContextStrict<A, Z> taskContextStrict);
-  <A, Y extends OperatorSpec<Z>> {{interfaceName}}1<A, Y, Z> operator(TaskOperator<A, Y, Z> operator);
+  <A, Y extends OperationSpec<Z>> {{interfaceName}}1<A, Y, Z> operator(TaskOperator<A, Y, Z> operator);
 
   <A> {{interfaceName}}1<A, Z, Z> input(Fn<Task<A>> task);
   <A> {{interfaceName}}1<List<A>, Z, Z> inputs(Fn<List<Task<A>>> tasks);
@@ -38,7 +38,7 @@ public interface {{interfaceName}}<Z> {
 
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextGeneric<{{nextArg}}> taskContextGeneric);
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextStrict<{{nextArg}}, Z> taskContextStrict);
-    <{{nextArg}}, YN extends OperatorSpec<Z>> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, YN, Z> operator(TaskOperator<{{nextArg}}, YN, Z> operator);
+    <{{nextArg}}, YN extends OperationSpec<Z>> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, YN, Z> operator(TaskOperator<{{nextArg}}, YN, Z> operator);
 
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> input(Fn<Task<{{nextArg}}>> task);
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Y, Z> inputs(Fn<List<Task<{{nextArg}}>>> tasks);

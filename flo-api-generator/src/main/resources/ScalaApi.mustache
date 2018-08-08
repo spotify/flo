@@ -2,7 +2,7 @@ package com.spotify.flo.dsl
 
 import com.spotify.flo.EvalContext.Value
 import com.spotify.flo.Task
-import com.spotify.flo.TaskOperator.OperatorSpec
+import com.spotify.flo.TaskOperator.OperationSpec
 import com.spotify.flo._
 
 import scala.reflect.ClassTag
@@ -18,7 +18,7 @@ trait TaskBuilder0[Z] {
 
   def context[A](taskContextGeneric: TaskContextGeneric[A]): TaskBuilder1[A, Z, Z]
   def context[A](taskContextStrict: TaskContextStrict[A, Z]): TaskBuilder1[A, Z, Z]
-  def operator[A, Y <: OperatorSpec[Z]](taskOperator: TaskOperator[A, Y, Z]): TaskBuilder1[A, Y, Z]
+  def operator[A, Y <: OperationSpec[Z]](taskOperator: TaskOperator[A, Y, Z]): TaskBuilder1[A, Y, Z]
 }
 {{#genBuilder}}
 
@@ -28,7 +28,7 @@ trait TaskBuilder{{arity}}[{{typeArgs}}, Y, Z] {
 
   def context[{{nextArg}}](taskContextGeneric: TaskContextGeneric[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Y, Z]
   def context[{{nextArg}}](taskContextStrict: TaskContextStrict[{{nextArg}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Y, Z]
-  def operator[{{nextArg}}, YN <: OperatorSpec[Z]](taskOperator: TaskOperator[{{nextArg}}, YN, Z]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, YN, Z]
+  def operator[{{nextArg}}, YN <: OperationSpec[Z]](taskOperator: TaskOperator[{{nextArg}}, YN, Z]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, YN, Z]
 
   def input[{{nextArg}}](task: => Task[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Y, Z]
 
