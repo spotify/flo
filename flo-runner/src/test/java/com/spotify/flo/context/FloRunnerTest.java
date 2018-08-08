@@ -22,7 +22,6 @@ package com.spotify.flo.context;
 
 import static com.spotify.flo.context.FloRunner.runTask;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.contains;
@@ -71,7 +70,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -440,7 +438,7 @@ public class FloRunnerTest {
             return publisher.publish(result);
           });
 
-      assertThat(runTask(task).future().get(30, DAYS), is(jobResult));
+      assertThat(runTask(task).future().get(30, SECONDS), is(jobResult));
 
       assertThat(DataProcessing.mock().jobRuns("quux.baz", barInput), is(1));
       assertThat(StorageLookup.mock().lookups("bar"), is(1));
