@@ -31,6 +31,8 @@ import java.io.Serializable;
 public abstract class TaskOperator<ContextT, SpecT extends TaskOperator.OperatorSpec<ResultT>, ResultT>
     implements TaskContext<ContextT> {
 
+  public abstract ResultT perform(SpecT spec, Listener listener);
+
   public interface OperatorSpec<ZZ> {
     ZZ run(Listener listener);
   }
@@ -55,6 +57,4 @@ public abstract class TaskOperator<ContextT, SpecT extends TaskOperator.Operator
       };
     }
   }
-
-  public abstract ResultT perform(SpecT o, Listener listener);
 }
