@@ -118,7 +118,7 @@ class ScioJobSpec[R, S](private val taskId: TaskId,
 object ScioJobSpec {
   private val log: Logger = LoggerFactory.getLogger(classOf[ScioJobSpec[_, _]])
 
-  class Provider(taskId: TaskId) {
-    def apply(): ScioJobSpec[Any, Any] = new ScioJobSpec(taskId)
+  class Provider[Z](taskId: TaskId) {
+    def apply(): ScioJobSpec[Any, Z] = new ScioJobSpec(taskId)
   }
 }
