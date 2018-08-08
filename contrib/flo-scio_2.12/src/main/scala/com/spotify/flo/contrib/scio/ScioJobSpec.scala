@@ -43,7 +43,7 @@ class ScioJobSpec[R, S](private[scio] val taskId: TaskId,
     new ScioJobSpec(taskId, options, pipeline, result, success)
   }
 
-  def success[SN](success: R => SN): ScioJobSpec[R, SN] = {
+  def success(success: R => S): ScioJobSpec[R, S] = {
     new ScioJobSpec(taskId, options, pipeline, result, success)
   }
 }
