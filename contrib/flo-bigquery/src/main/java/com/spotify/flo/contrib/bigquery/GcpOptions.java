@@ -20,12 +20,17 @@
 
 package com.spotify.flo.contrib.bigquery;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.cloud.ServiceOptions;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 class GcpOptions {
 
+  private static final String CREDENTIAL_ENV_NAME = "GOOGLE_APPLICATION_CREDENTIALS";
   private static final String LEGACY_PROJECT_ENV_NAME = "GCLOUD_PROJECT";
   private static final String PROJECT_ENV_NAME = "GOOGLE_CLOUD_PROJECT";
 
@@ -44,11 +49,20 @@ class GcpOptions {
     return (projectId != null) ? projectId : ServiceOptions.getDefaultProjectId();
   }
 
+  /**
+   * {@link ServiceOptions#getServiceAccountProjectId()}
+   */
   private static String getServiceAccountProjectId() {
-    try {
-      return GoogleCredential.getApplicationDefault().getServiceAccountProjectId();
-    } catch (IOException e) {
-      return null;
+    String project = null;
+    String credentialsPath = System.getenv(CREDENTIAL_ENV_NAME);
+    if (credentialsPath != null) {
+      try (InputStream credentialsStream = new FileInputStream(credentialsPath)) {
+        JSONObject json = new JSONObject(new JSONTokener(credentialsStream));
+        project = json.getString("project_id");
+      } catch (IOException | JSONException ex) {
+        // ignore
+      }
     }
+    return project;
   }
 }
