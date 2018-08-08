@@ -23,8 +23,6 @@ package com.spotify.flo.context;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.TaskId;
-import com.spotify.flo.Tracing;
-import io.grpc.Context;
 import java.io.IOException;
 import java.util.Collections;
 
@@ -61,17 +59,7 @@ class ForkingContext extends ForwardingEvalContext {
     return () -> {
       try (final ForkingExecutor executor = new ForkingExecutor()) {
         executor.environment(Collections.singletonMap("FLO_TASK_ID", taskId.toString()));
-        return executor.execute(() -> {
-          try {
-            return Context.current()
-                .withValue(Tracing.TASK_ID, taskId)
-                .call(fn::get);
-          } catch (RuntimeException e) {
-            throw e;
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        });
+        return executor.execute(fn);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
