@@ -28,7 +28,7 @@ import java.io.Serializable;
  * <p>The concrete operator implementation should {@link #provide(EvalContext)} the task with some means of constructing
  * an operation description. The operation description should be returned from the process fn.
  */
-public abstract class TaskOperator<T, Y extends TaskOperator.OperatorSpec<Z>, Z> extends TaskContextGeneric<T> {
+public abstract class TaskOperator<T, Y extends TaskOperator.OperatorSpec<Z>, Z> implements TaskContext<T> {
 
   public interface OperatorSpec<ZZ> {
     ZZ run(Listener listener);
