@@ -25,26 +25,26 @@ import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.sdk.options.PipelineOptions
 
 class ScioJobSpec[R, S](private[scio] val taskId: TaskId,
-                        private[scio] val _options: Option[() => PipelineOptions] = None,
-                        private[scio] val _pipeline: ScioContext => Unit = null,
-                        private[scio] val _result: (ScioContext, ScioResult) => R = null,
-                        private[scio] val _success: R => S = null
+                        private[scio] val options: Option[() => PipelineOptions] = None,
+                        private[scio] val pipeline: ScioContext => Unit = null,
+                        private[scio] val result: (ScioContext, ScioResult) => R = null,
+                        private[scio] val success: R => S = null
                        ) extends Serializable {
 
   def options(options: () => PipelineOptions): ScioJobSpec[R, S] = {
-    new ScioJobSpec(taskId, Some(options), _pipeline, _result, _success)
+    new ScioJobSpec(taskId, Some(options), pipeline, result, success)
   }
 
   def pipeline(pipeline: ScioContext => Unit): ScioJobSpec[R, S] = {
-    new ScioJobSpec(taskId, _options, pipeline, _result, _success)
+    new ScioJobSpec(taskId, options, pipeline, result, success)
   }
 
   def result[RN <: R](result: (ScioContext, ScioResult) => RN): ScioJobSpec[RN, S] = {
-    new ScioJobSpec(taskId, _options, _pipeline, result, _success)
+    new ScioJobSpec(taskId, options, pipeline, result, success)
   }
 
   def success[SN](success: R => SN): ScioJobSpec[R, SN] = {
-    new ScioJobSpec(taskId, _options, _pipeline, _result, success)
+    new ScioJobSpec(taskId, options, pipeline, result, success)
   }
 }
 

@@ -38,7 +38,7 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
   }
 
   override def perform(spec: ScioJobSpec[_, T], listener: TaskOperator.Listener): T = {
-    if (spec._pipeline == null || spec._result == null || spec._success == null) {
+    if (spec.pipeline == null || spec.result == null || spec.success == null) {
       throw new IllegalStateException()
     }
     if (FloTesting.isTest) {
@@ -50,7 +50,7 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
 
   private def runTest[R](spec: ScioJobSpec[R, T]): T = {
     for (result <- ScioOperator.mock().results.get(spec.taskId)) {
-      return spec._success(result.asInstanceOf[R])
+      return spec.success(result.asInstanceOf[R])
     }
 
     for (jobTestSupplier <- ScioOperator.mock().jobTests.get(spec.taskId)) {
@@ -58,11 +58,11 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
       jobTest.setUp()
       val sc = scioContextForTest(jobTest.testId)
       sc.options.as(classOf[ApplicationNameOptions]).setAppName(jobTest.testId)
-      spec._pipeline(sc)
+      spec.pipeline(sc)
       val scioResult = sc.close().waitUntilDone()
-      val result = spec._result(sc, scioResult)
+      val result = spec.result(sc, scioResult)
       jobTest.tearDown()
-      return spec._success(result)
+      return spec.success(result)
     }
 
     throw new AssertionError()
@@ -81,19 +81,19 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
   }
 
   private def runProd[R](spec: ScioJobSpec[R, T], listener: TaskOperator.Listener): T = {
-    val sc = spec._options match {
+    val sc = spec.options match {
       case None => ScioContext()
       case Some(options) => ScioContext(options())
     }
-    spec._pipeline(sc)
+    spec.pipeline(sc)
     val scioResult = sc.close()
     scioResult.internal match {
       case job: DataflowPipelineJob => reportDataflowJobId(spec.taskId, job.getJobId, listener)
       case _ =>
     }
     scioResult.waitUntilDone()
-    val result = spec._result(sc, scioResult)
-    spec._success(result)
+    val result = spec.result(sc, scioResult)
+    spec.success(result)
   }
 
   private def reportDataflowJobId(taskId: TaskId, jobId: String, listener: TaskOperator.Listener) {
