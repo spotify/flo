@@ -133,7 +133,7 @@ public class PersistingContext extends ForwardingEvalContext {
     try {
       scalaKryoInstantiatorClass = Class.forName("com.twitter.chill.ScalaKryoInstantiator");
     } catch (ClassNotFoundException e) {
-      LOG.debug("Could not find com.twitter.chill.ScalaKryoInstantiator: {}", e);
+      LOG.debug("Could not find com.twitter.chill.ScalaKryoInstantiator: {}", e.toString());
     }
 
     final Kryo kryo;
