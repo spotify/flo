@@ -50,7 +50,7 @@
               <relocations>
                 <relocation>
                   <pattern>io.grpc</pattern>
-                  <shadedPattern>com.spotify.flo.shaded.io.grpc</shadedPattern>
+                  <shadedPattern>com.spotify.flo.workflow.shaded.io.grpc</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
