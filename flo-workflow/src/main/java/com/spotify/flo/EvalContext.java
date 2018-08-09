@@ -89,10 +89,13 @@ public interface EvalContext {
           .map(c -> (TaskOperator) c)
           .findAny();
 
-      // Run the process fn
       final Listener listener = listener();
       final Invokable processFn = task.processFn();
       final Value<Object> value = context.invokeProcessFn(task.id(), () ->  {
+
+        // Run the process fn
+        // If the task is using an operator, the return type will be the SpecT of the TaskOperator.
+        // Otherwise, the return type will be the T of this task.
         final Object result = processFn.invoke(as.toArray());
 
         // Run operator
