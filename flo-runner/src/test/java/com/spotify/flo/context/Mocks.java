@@ -140,7 +140,7 @@ public class Mocks {
 
     @Override
     public Value provide(EvalContext evalContext) {
-      return new Value();
+      return new Value(key);
     }
 
     @Override
@@ -157,7 +157,13 @@ public class Mocks {
       return MOCK.get();
     }
 
-    public class Value {
+    public static class Value {
+
+      private final String key;
+
+      Value(String key) {
+        this.key = key;
+      }
 
       public String publish(String value) {
         if (FloTesting.isTest()) {

@@ -21,8 +21,12 @@
 package com.spotify.flo.context;
 
 import com.spotify.flo.EvalContext;
+import com.spotify.flo.FloTesting;
 import com.spotify.flo.Fn;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.freezer.PersistingContext;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 
@@ -35,12 +39,19 @@ import java.util.Collections;
  */
 class ForkingContext extends ForwardingEvalContext {
 
-  private ForkingContext(EvalContext delegate) {
+  private final boolean dry;
+
+  private ForkingContext(EvalContext delegate, boolean dry) {
     super(delegate);
+    this.dry = dry;
   }
 
   static EvalContext composeWith(EvalContext baseContext) {
-    return new ForkingContext(baseContext);
+    return new ForkingContext(baseContext, false);
+  }
+
+  static EvalContext dryComposeWith(EvalContext baseContext) {
+    return new ForkingContext(baseContext, true);
   }
 
   @Override
@@ -56,6 +67,41 @@ class ForkingContext extends ForwardingEvalContext {
   }
 
   private <T> Fn<T> fork(TaskId taskId, Fn<T> fn) {
+    if (dry) {
+      LOG.debug("Dry run, forking disabled - testing serialization");
+      return testFork(fn);
+    } else if (FloTesting.isTest()) {
+      LOG.debug("Test run, forking disabled - testing serialization");
+      return testFork(fn);
+    } else {
+      return realFork(taskId, fn);
+    }
+  }
+
+  private <T> Fn<T> testFork(Fn<T> fn) {
+    // We do not currently have a mechanism for transporting mock inputs and outputs into and out of the task process.
+    LOG.debug("Test run, forking disabled - testing serialization");
+    return () -> {
+      // Serialize & deserialize fn
+      final ByteArrayOutputStream fnBaos = new ByteArrayOutputStream();
+      PersistingContext.serialize(fn, fnBaos);
+      final ByteArrayInputStream fnBais = new ByteArrayInputStream(fnBaos.toByteArray());
+      final Fn<T> deserializedFn = PersistingContext.deserialize(fnBais);
+
+      // Run the fn
+      final T result = deserializedFn.get();
+
+      // Serialize & deserialize the result
+      final ByteArrayOutputStream resultBaos = new ByteArrayOutputStream();
+      PersistingContext.serialize(result, resultBaos);
+      final ByteArrayInputStream resultBais = new ByteArrayInputStream(resultBaos.toByteArray());
+      final T deserializedResult = PersistingContext.deserialize(resultBais);
+
+      return deserializedResult;
+    };
+  }
+
+  private <T> Fn<T> realFork(TaskId taskId, Fn<T> fn) {
     return () -> {
       try (final ForkingExecutor executor = new ForkingExecutor()) {
         executor.environment(Collections.singletonMap("FLO_TASK_ID", taskId.toString()));
