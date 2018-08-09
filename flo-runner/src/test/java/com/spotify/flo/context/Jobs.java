@@ -24,77 +24,61 @@ import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskBuilder.F1;
 import com.spotify.flo.TaskOperator;
-import com.spotify.flo.TaskOperator.Listener;
-import com.spotify.flo.TaskOperator.OperationException;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
 
 class Jobs {
 
-  static class JobSpec implements Serializable {
+  static class JobSpec<T> implements Serializable {
 
     private F0<Map<String, ?>> options;
     private SerializableConsumer<JobContext> pipelineConfigurator;
     private SerializableConsumer<JobResult> resultValidator;
-    private F1<JobResult, ?> successHandler;
+    private F1<JobResult, T> successHandler;
 
     JobSpec() {
     }
 
-    public JobSpec options(F0<Map<String, ?>> options) {
+    public JobSpec<T> options(F0<Map<String, ?>> options) {
       this.options = options;
       return this;
     }
 
-    public JobSpec pipeline(SerializableConsumer<JobContext> pipeline) {
+    public JobSpec<T> pipeline(SerializableConsumer<JobContext> pipeline) {
       this.pipelineConfigurator = pipeline;
       return this;
     }
 
-    public JobSpec validation(SerializableConsumer<JobResult> validator) {
+    public JobSpec<T> validation(SerializableConsumer<JobResult> validator) {
       this.resultValidator = validator;
       return this;
     }
 
-    public <T> T success(F1<JobResult, T> successHandler) {
+    public JobSpec<T> success(F1<JobResult, T> successHandler) {
       this.successHandler = successHandler;
-      throw new JobSpecException(this);
-    }
-
-    @SuppressWarnings("unchecked")
-    <T> T run(Listener listener) {
-      final JobContext jobContext = new JobContext(options.get());
-      pipelineConfigurator.accept(jobContext);
-      final JobResult result = jobContext.run();
-      resultValidator.accept(result);
-      return (T) successHandler.apply(result);
-    }
-
-    private class JobSpecException extends OperationException {
-
-      private final JobSpec spec;
-
-      JobSpecException(JobSpec spec) {
-        this.spec = spec;
-      }
-
-      @Override
-      public <T> T run(Listener listener) {
-        return spec.run(listener);
-      }
+      return this;
     }
   }
 
-  static class JobOperator extends TaskOperator<JobSpec> {
+  static class JobOperator<T> implements TaskOperator<JobSpec<T>, JobSpec<T>, T> {
 
     @Override
-    public JobSpec provide(EvalContext evalContext) {
-      return new JobSpec();
+    public JobSpec<T> provide(EvalContext evalContext) {
+      return new JobSpec<>();
     }
 
-    static JobOperator create() {
-      return new JobOperator();
+    static <T> JobOperator<T> create() {
+      return new JobOperator<>();
+    }
+
+    @Override
+    public T perform(JobSpec<T> spec, Listener listener) {
+      final JobContext jobContext = new JobContext(spec.options.get());
+      spec.pipelineConfigurator.accept(jobContext);
+      final JobResult result = jobContext.run();
+      spec.resultValidator.accept(result);
+      return spec.successHandler.apply(result);
     }
   }
 

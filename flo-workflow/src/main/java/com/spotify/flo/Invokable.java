@@ -2,7 +2,7 @@
  * -\-\-
  * Flo Workflow Definition
  * --
- * Copyright (C) 2016 - 2017 Spotify AB
+ * Copyright (C) 2016 - 2018 Spotify AB
  * --
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,22 +20,9 @@
 
 package com.spotify.flo;
 
-import com.spotify.flo.EvalContext.Value;
 import java.io.Serializable;
 
-/**
- * A function that evaluates some {@link Value} in a given {@link EvalContext}
- */
-@FunctionalInterface
-interface EvalClosure<T> extends Serializable {
+public interface Invokable extends Serializable {
 
-  /**
-   * Produces a {@link Value} in a given {@link EvalContext}.
-   *
-   * The produced {@link Value} should follow the semantics defined by the used {@link EvalContext}.
-   *
-   * @param evalContext  The context to evaluate in
-   * @return a value
-   */
-  Value<T> eval(EvalContext evalContext);
+  Object invoke(Object... args);
 }

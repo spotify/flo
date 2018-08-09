@@ -70,6 +70,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -477,22 +478,27 @@ public class FloRunnerTest {
   }
 
   @Test
-  public void shouldThrowIfForkingIsExplicitlyEnabledInTestMode() {
-    final Task<String> task = Task.named("task").ofType(String.class)
-        .process(() -> {
-          throw new AssertionError();
-        });
+  public void shouldDryForkInTestMode() throws Exception {
+    final String mainJvmName = jvmName();
+    final Object value = new Object();
+
+    final Task<Rock> task = Task.named("task").ofType(Rock.class)
+        .process(() -> new Rock(value));
 
     final Config config = ConfigFactory.load("flo")
         .withValue("flo.forking", ConfigValueFactory.fromAnyRef(true));
 
+    final Rock result;
+
     try (TestScope ts = FloTesting.scope()) {
-      try {
-        FloRunner.runTask(task, config);
-      } catch (IllegalStateException e) {
-        assertThat(e.getMessage(), is("Forking is not supported in test mode"));
-      }
+      result = FloRunner.runTask(task, config).future().get(30, SECONDS);
     }
+
+    // Check that the identity of the value changed due to serialization (dry fork)
+    assertThat(result.value, is(not(value)));
+
+    // Check that the process fn ran in the main jvm
+    assertThat(result.jvmName, is(mainJvmName));
   }
 
   @Test
@@ -500,7 +506,7 @@ public class FloRunnerTest {
     final String mainJvm = jvmName();
     final Instant today = Instant.now().truncatedTo(ChronoUnit.DAYS);
     final Task<JobResult> task = Task.named("task", today).ofType(JobResult.class)
-        .context(JobOperator.create())
+        .operator(JobOperator.create())
         .process(job -> job
             .options(() -> ImmutableMap.of("quux", 17))
             .pipeline(ctx -> ctx.readFrom("foo").map("x + y").writeTo("baz"))
@@ -529,6 +535,16 @@ public class FloRunnerTest {
     JobResult(String jvmName, String uri) {
       this.jvmName = jvmName;
       this.uri = uri;
+    }
+  }
+
+  private static class Rock {
+
+    final String jvmName = jvmName();
+    final Object value;
+
+    public Rock(Object value) {
+      this.value = Objects.requireNonNull(value);
     }
   }
 }

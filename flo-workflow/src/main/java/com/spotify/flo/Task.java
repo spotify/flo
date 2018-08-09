@@ -43,11 +43,13 @@ public abstract class Task<T> implements Serializable {
 
   public abstract Class<T> type();
 
-  abstract EvalClosure<T> code();
-
   abstract Fn<List<Task<?>>> lazyInputs();
 
   public abstract List<TaskContext<?>> contexts();
+
+  abstract Invokable processFn();
+
+  abstract List<ProcessFnArg> args();
 
   public List<Task<?>> inputs() {
     return lazyInputs().get();
@@ -61,17 +63,19 @@ public abstract class Task<T> implements Serializable {
     return create(
         Collections::emptyList, Collections.emptyList(),
         type,
-        ec -> ec.value(code),
-        TaskId.create(taskName, args));
+        TaskId.create(taskName, args),
+        a -> code.get(),
+        Collections.emptyList());
   }
 
   static <T> Task<T> create(
       Fn<List<Task<?>>> inputs,
       List<TaskContext<?>> contexts,
       Class<T> type,
-      EvalClosure<T> code,
-      TaskId taskId) {
-    return new AutoValue_Task<>(taskId, type, code, inputs, contexts);
+      TaskId taskId,
+      Invokable processFn,
+      List<ProcessFnArg> args) {
+    return new AutoValue_Task<>(taskId, type, inputs, contexts, processFn, args);
   }
 
   /**

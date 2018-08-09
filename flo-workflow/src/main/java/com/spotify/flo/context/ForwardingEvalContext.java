@@ -24,6 +24,7 @@ import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.TaskOperator.Listener;
 import java.util.Objects;
 
 /**
@@ -60,5 +61,10 @@ public abstract class ForwardingEvalContext implements EvalContext {
   @Override
   public <T> Promise<T> promise() {
     return delegate.promise();
+  }
+
+  @Override
+  public Listener listener() {
+    return delegate.listener();
   }
 }

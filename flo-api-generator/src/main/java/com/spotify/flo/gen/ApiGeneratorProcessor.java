@@ -184,6 +184,7 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     data.put("lastTypeArgs", typeArgs(n));
     data.put("lastTypeArg", letters(n + 1).skip(n).findFirst().get());
     data.put("lastArguments", arguments(n));
+    data.put("lastProcessArgs", processArgs(n));
     final String output = engine.getMustache("TaskBuilderImpl").render(data);
     final String outputScala = engine.getMustache("ScalaApiImpl").render(data);
 
@@ -215,6 +216,7 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     map.put("typeArgsNumAMinus", typeArgsNum(n - 1, "A"));
     map.put("arguments", arguments(n));
     map.put("argumentsNum", arguments(n, "a"));
+    map.put("processArgs", processArgs(n));
 
     // p.p.p.J1, p.p.J2, p.J3, J4
     map.put("typeArgsPsJ", pSquared(n, "%pJ%n"));
@@ -243,9 +245,19 @@ public class ApiGeneratorProcessor extends AbstractProcessor {
     );
   }
 
+  private String processArgs(int n) {
+    return IntStream.range(0, n)
+        .mapToObj(i -> String.format("(%s) a[%d]", letter(i), i))
+        .collect(Collectors.joining(", "));
+  }
+
   private Stream<String> letters(int n) {
     return IntStream.range(0, n)
-        .mapToObj(i -> Character.toString((char) ('A' + i)));
+        .mapToObj(this::letter);
+  }
+
+  private String letter(int i) {
+    return Character.toString((char) ('A' + i));
   }
 
   private Stream<String> numbers(int n, String letter) {

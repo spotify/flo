@@ -31,16 +31,19 @@ class BaseRefs<Z> {
 
   final Fn<List<Task<?>>> inputs;
   final List<TaskContext<?>> taskContexts;
+  final List<ProcessFnArg> args;
   final TaskId taskId;
   protected final Class<Z> type;
 
   BaseRefs(TaskId taskId, Class<Z> type) {
-    this(Collections::emptyList, Collections.emptyList(), taskId, type);
+    this(Collections::emptyList, Collections.emptyList(), Collections.emptyList(), taskId, type);
   }
 
-  BaseRefs(Fn<List<Task<?>>> inputs, List<TaskContext<?>> taskContexts, TaskId taskId, Class<Z> type) {
+  BaseRefs(Fn<List<Task<?>>> inputs, List<TaskContext<?>> taskContexts, List<ProcessFnArg> args,
+      TaskId taskId, Class<Z> type) {
     this.inputs = inputs;
     this.taskContexts = taskContexts;
+    this.args = args;
     this.taskId = taskId;
     this.type = type;
   }

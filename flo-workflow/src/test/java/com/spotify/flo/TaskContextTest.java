@@ -30,6 +30,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import com.spotify.flo.TaskBuilder.F0;
 import org.junit.Test;
 import org.mockito.InOrder;
 
@@ -82,9 +83,9 @@ public class TaskContextTest {
     inOrder.verify(tc1).preRun(task);
     inOrder.verify(tc2).preRun(task);
     inOrder.verify(tc1).mark();
+    inOrder.verify(tc1).onSuccess(task, "foobar");
     inOrder.verify(tc2).onSuccess(task, "foobar");
     inOrder.verify(injected).doSomething("foobar");
-    inOrder.verify(tc1).onSuccess(task, "foobar");
   }
 
   @Test
@@ -106,8 +107,8 @@ public class TaskContextTest {
     inOrder.verify(tc1).preRun(task);
     inOrder.verify(tc2).preRun(task);
     inOrder.verify(tc1).mark();
-    inOrder.verify(tc2).onFail(task, throwable);
     inOrder.verify(tc1).onFail(task, throwable);
+    inOrder.verify(tc2).onFail(task, throwable);
     assertThat(throwable.getMessage(), is("force fail"));
   }
 
@@ -131,10 +132,11 @@ public class TaskContextTest {
         });
 
     evalAndGet(task);
+
     InOrder inOrder = inOrder(t1Fn, t2Fn, tc1);
-    inOrder.verify(t2Fn).get();
-    inOrder.verify(tc1).provide(any());
     inOrder.verify(t1Fn).get();
+    inOrder.verify(tc1).provide(any());
+    inOrder.verify(t2Fn).get();
     inOrder.verify(tc1).preRun(task);
     inOrder.verify(tc1).mark();
     inOrder.verify(tc1).onSuccess(task, "hejfoohej");
@@ -143,7 +145,7 @@ public class TaskContextTest {
   @Test
   public void lifecycleMethodsNotCalledIfInputsFail() throws Exception {
     //noinspection unchecked
-    TaskBuilder.F0<String> t1Fn = mock(TaskBuilder.F0.class);
+    TaskBuilder.F0<String> t1Fn = mock(F0.class);
     when(t1Fn.get()).thenThrow(new RuntimeException("Fail"));
     BasicTaskContext tc1 = spy(new BasicTaskContext("foo"));
 
@@ -157,9 +159,10 @@ public class TaskContextTest {
 
     Throwable throwable = evalAndGetException(task);
     assertThat(throwable.getMessage(), is("Fail"));
+
     InOrder inOrder = inOrder(t1Fn, tc1);
-    inOrder.verify(t1Fn).get();
     inOrder.verify(tc1).provide(any());
+    inOrder.verify(t1Fn).get();
     inOrder.verifyNoMoreInteractions();
   }
 

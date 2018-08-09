@@ -5,7 +5,7 @@
   <parent>
     <artifactId>flo</artifactId>
     <groupId>com.spotify</groupId>
-    <version>0.2.17-SNAPSHOT</version>
+    <version>0.3.1-SNAPSHOT</version>
   </parent>
 
   <name>Flo Runner</name>
