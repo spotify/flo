@@ -12,24 +12,26 @@ object FloTask {
 
 trait TaskBuilder0[Z] {
   def process(fn: => Z): Task[Z]
-  def input[A](task: => Task[A]): TaskBuilder1[A, Z]
-  def inputs[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z]
+  def input[A](task: => Task[A]): TaskBuilder1[A, Z, Z]
+  def inputs[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z, Z]
 
-  def context[A](taskContextGeneric: TaskContextGeneric[A]): TaskBuilder1[A, Z]
-  def context[A](taskContextStrict: TaskContextStrict[A, Z]): TaskBuilder1[A, Z]
+  def context[A](taskContextGeneric: TaskContextGeneric[A]): TaskBuilder1[A, Z, Z]
+  def context[A](taskContextStrict: TaskContextStrict[A, Z]): TaskBuilder1[A, Z, Z]
+  def operator[A, Y](taskOperator: TaskOperator[A, Y, Z]): TaskBuilder1[A, Y, Z]
 }
 {{#genBuilder}}
 
-trait TaskBuilder{{arity}}[{{typeArgs}}, Z] {
-  def process(fn: ({{typeArgs}}) => Z): Task[Z]
+trait TaskBuilder{{arity}}[{{typeArgs}}, Y, Z] {
+  def process(fn: ({{typeArgs}}) => Y): Task[Z]
   {{^iter.isLast}}
 
-  def context[{{nextArg}}](taskContextGeneric: TaskContextGeneric[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
-  def context[{{nextArg}}](taskContextStrict: TaskContextStrict[{{nextArg}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
+  def context[{{nextArg}}](taskContextGeneric: TaskContextGeneric[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Y, Z]
+  def context[{{nextArg}}](taskContextStrict: TaskContextStrict[{{nextArg}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Y, Z]
+  def operator[{{nextArg}}, YN](taskOperator: TaskOperator[{{nextArg}}, YN, Z]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, YN, Z]
 
-  def input[{{nextArg}}](task: => Task[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Z]
+  def input[{{nextArg}}](task: => Task[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Y, Z]
 
-  def inputs[{{nextArg}}](tasks: => List[Task[{{nextArg}}]]): TaskBuilder{{arityPlus}}[{{typeArgs}}, List[{{nextArg}}], Z]
+  def inputs[{{nextArg}}](tasks: => List[Task[{{nextArg}}]]): TaskBuilder{{arityPlus}}[{{typeArgs}}, List[{{nextArg}}], Y, Z]
   {{/iter.isLast}}
 }
 {{/genBuilder}}

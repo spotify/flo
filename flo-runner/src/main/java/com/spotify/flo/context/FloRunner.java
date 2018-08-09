@@ -27,7 +27,6 @@ import com.spotify.flo.EvalContext;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskInfo;
-import com.spotify.flo.TaskOperator;
 import com.spotify.flo.context.InstrumentedContext.Listener;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.freezer.PersistingContext;
@@ -178,13 +177,12 @@ public final class FloRunner<T> {
     } else {
       return
           TracingContext.composeWith(
-              OperatingContext.composeWith(
-                  forkingContext(
-                      MemoizingContext.composeWith(
-                          OverridingContext.composeWith(
-                              LoggingContext.composeWith(
-                                  baseContext,
-                                  logging), logging))), listener::meta));
+              forkingContext(
+                  MemoizingContext.composeWith(
+                      OverridingContext.composeWith(
+                          LoggingContext.composeWith(
+                              baseContext,
+                              logging), logging))));
     }
   }
 

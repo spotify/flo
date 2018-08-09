@@ -20,24 +20,20 @@
 
 package com.spotify.flo;
 
-import com.spotify.flo.context.OperatingContext;
 import java.io.Serializable;
 
 /**
  * An operator controls the execution of a job for a task,  e.g. a data processing job on some processing platform.
  *
  * <p>The concrete operator implementation should {@link #provide(EvalContext)} the task with some means of constructing
- * an operation description. The operation description should be thrown out of the process fn using an
- * {@link OperationException} to be caught and executed by the {@link OperatingContext}.
+ * an operation description. The operation description should be returned from the process fn.
  */
-public abstract class TaskOperator<T> extends TaskContextGeneric<T> {
+public interface TaskOperator<ContextT, SpecT, ResultT>
+    extends TaskContext<ContextT> {
 
-  public abstract static class OperationException extends ControlException {
+  ResultT perform(SpecT spec, Listener listener);
 
-    public abstract <T> T run(Listener listener);
-  }
-
-  public interface Listener extends Serializable {
+  interface Listener extends Serializable {
 
     /**
      * Called to report some piece of task metadata.
@@ -47,5 +43,14 @@ public abstract class TaskOperator<T> extends TaskContextGeneric<T> {
      * @param value The metadata value.
      */
     void meta(TaskId task, String key, String value);
+
+    Listener NOP = (Listener) (task, key, value) -> { };
+
+    default Listener composeWith(Listener listener) {
+      return (task, key, value) -> {
+        meta(task, key, value);
+        listener.meta(task, key, value);
+      };
+    }
   }
 }

@@ -25,6 +25,7 @@ import static com.spotify.flo.context.InstrumentedContext.Listener.Phase.FAILURE
 import static com.spotify.flo.context.InstrumentedContext.Listener.Phase.START;
 import static com.spotify.flo.context.InstrumentedContext.Listener.Phase.SUCCESS;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 
 import com.spotify.flo.EvalContext;
@@ -62,12 +63,12 @@ public class InstrumentedContextTest {
 
     assertThat(calls, contains(
         "task:" + example7,
-        "task:" + upstream8,
-        "status:" + upstream8 + ":" + START,
-        "status:" + upstream8 + ":" + SUCCESS,
         "task:" + upstream7,
         "status:" + upstream7 + ":" + START,
         "status:" + upstream7 + ":" + SUCCESS,
+        "task:" + upstream8,
+        "status:" + upstream8 + ":" + START,
+        "status:" + upstream8 + ":" + SUCCESS,
         "status:" + example7 + ":" + START,
         "status:" + example7 + ":" + SUCCESS
     ));

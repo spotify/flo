@@ -20,12 +20,14 @@
 
 package com.spotify.flo;
 
+import static com.spotify.flo.Values.toValueList;
 import static java.util.stream.Collectors.toList;
 
 import com.spotify.flo.EvalContext.Value;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -34,10 +36,6 @@ import java.util.stream.Stream;
 class BuilderUtils {
 
   private BuilderUtils() {
-  }
-
-  static <F, Z> ChainingEval<F, Z> leafEvalFn(EvalClosure<Fn1<F, Value<Z>>> fClosure) {
-    return new ChainingEval<>(fClosure);
   }
 
   /**
@@ -71,26 +69,17 @@ class BuilderUtils {
     return newList;
   }
 
-  static final class ChainingEval<F, Z> implements Serializable {
+  static <T> ProcessFnArg contextArg(TaskContext<T> taskContext) {
+    return ec -> ec.value(() -> taskContext.provide(ec));
+  }
 
-    private final EvalClosure<Fn1<F, Value<Z>>> fClosure;
+  static <T> ProcessFnArg inputArg(Fn<Task<T>> task) {
+    return ec -> ec.evaluate(task.get());
+  }
 
-    ChainingEval(EvalClosure<Fn1<F, Value<Z>>> fClosure) {
-      this.fClosure = fClosure;
-    }
-
-    EvalClosure<Z> enclose(F f) {
-      return taskContext -> fClosure.eval(taskContext).flatMap(ff -> ff.apply(f));
-    }
-
-    <G> ChainingEval<G, Z> chain(EvalClosure<Fn1<G, F>> mapClosure) {
-      EvalClosure<Fn1<G, Value<Z>>> continuation = ec -> {
-        Value<Fn1<G, F>> gv = mapClosure.eval(ec);
-        Value<Fn1<F, Value<Z>>> fv = fClosure.eval(ec);
-
-        return Values.mapBoth(ec, gv, fv, (gc, fc) -> g -> fc.apply(gc.apply(g)));
-      };
-      return new ChainingEval<>(continuation);
-    }
+  static <T> ProcessFnArg inputsArg(Fn<List<Task<T>>> task) {
+    return ec -> task.get().stream()
+        .map(ec::evaluate)
+        .collect(toValueList(ec));
   }
 }

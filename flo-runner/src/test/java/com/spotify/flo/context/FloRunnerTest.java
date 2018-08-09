@@ -506,7 +506,7 @@ public class FloRunnerTest {
     final String mainJvm = jvmName();
     final Instant today = Instant.now().truncatedTo(ChronoUnit.DAYS);
     final Task<JobResult> task = Task.named("task", today).ofType(JobResult.class)
-        .context(JobOperator.create())
+        .operator(JobOperator.create())
         .process(job -> job
             .options(() -> ImmutableMap.of("quux", 17))
             .pipeline(ctx -> ctx.readFrom("foo").map("x + y").writeTo("baz"))

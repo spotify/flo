@@ -103,11 +103,11 @@ public class InputSyncCompletionTest {
     Throwable throwable = eval.awaitAndGet();
 
     assertThat(throwable, instanceOf(RuntimeException.class));
-    assertThat(throwable.getMessage(), is("failed 2"));
+    assertThat(throwable.getMessage(), is("failed 1"));
     assertThat(throwable.getSuppressed().length, is(1));
 
     throwable = throwable.getSuppressed()[0];
-    assertThat(throwable.getMessage(), is("failed 1"));
+    assertThat(throwable.getMessage(), is("failed 2"));
   }
 
   @Test
@@ -128,15 +128,10 @@ public class InputSyncCompletionTest {
     Throwable throwable = eval.awaitAndGet();
 
     assertThat(throwable, instanceOf(RuntimeException.class));
-    assertThat(throwable.getMessage(), is("failed 3"));
-    assertThat(throwable.getSuppressed().length, is(1));
-
-    throwable = throwable.getSuppressed()[0];
-    assertThat(throwable.getMessage(), is("failed 2"));
-    assertThat(throwable.getSuppressed().length, is(1));
-
-    throwable = throwable.getSuppressed()[0];
     assertThat(throwable.getMessage(), is("failed 1"));
+    assertThat(throwable.getSuppressed().length, is(2));
+    assertThat(throwable.getSuppressed()[0].getMessage(), is("failed 2"));
+    assertThat(throwable.getSuppressed()[1].getMessage(), is("failed 3"));
   }
 
   private void awaitBlocked(Task<String> task) throws InterruptedException {
