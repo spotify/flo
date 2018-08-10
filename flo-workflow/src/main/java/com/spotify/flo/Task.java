@@ -75,6 +75,12 @@ public abstract class Task<T> implements Serializable {
       TaskId taskId,
       Invokable processFn,
       List<ProcessFnArg> args) {
+    if (contexts.stream().filter(c -> c instanceof TaskContextStrict).count() > 1) {
+      throw new IllegalArgumentException("A task can have at most one TaskContextStrict");
+    }
+    if (contexts.stream().filter(c -> c instanceof TaskOperator).count() > 1) {
+      throw new IllegalArgumentException("A task can have at most one TaskOperator");
+    }
     return new AutoValue_Task<>(taskId, type, inputs, contexts, processFn, args);
   }
 
