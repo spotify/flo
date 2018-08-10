@@ -21,12 +21,13 @@
 package com.spotify.flo.contrib.scio
 
 import java.nio.file.{Files, Paths}
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{ExecutionException, TimeUnit}
 
 import com.spotify.flo
 import com.spotify.flo._
 import com.spotify.flo.context.FloRunner
-import com.spotify.flo.contrib.scio.ScioOperatorTest.lineCountingTask
+import com.spotify.flo.contrib.scio.ScioOperatorTest.{JobError, lineCountingTask}
+import com.spotify.flo.status.NotRetriable
 import com.spotify.scio.ScioMetrics
 import com.spotify.scio.testing.{PipelineSpec, TextIO}
 import org.apache.beam.sdk.metrics.Counter
@@ -59,6 +60,46 @@ class ScioOperatorTest extends PipelineSpec with Matchers {
     result shouldBe "lines: 3"
   }
 
+  it should "be able to run a scio job with JobTest and handle job failure" in {
+    val task = lineCountingTask("input.txt", "output.txt", 3, fail = true)
+    val result = flo.test(() => {
+      ScioOperator.mock().jobTest(task.id()) {
+        _.input(TextIO("input.txt"), Seq("foo", "bar", "baz"))
+          .output(TextIO("output.txt")) { _ => }
+      }
+      intercept[ExecutionException](FloRunner.runTask(task).future().get(1, TimeUnit.MINUTES))
+    })
+    val cause = result.getCause
+    cause.getClass shouldBe classOf[JobError]
+  }
+
+  it should "fail in test mode if missing mocks" in {
+    val task = lineCountingTask("input.txt", "output.txt", 3)
+    val result = flo.test(() => {
+      intercept[ExecutionException](FloRunner.runTask(task).future().get(1, TimeUnit.MINUTES))
+    })
+    val cause = result.getCause
+    cause.getClass shouldBe classOf[AssertionError]
+    cause.getMessage shouldBe "Missing either mocked scio job result or JobTest, please set them up using either " +
+      "ScioOperator.mock().result(...) or ScioOperator.mock().result().jobTest(...) before running the workflow"
+  }
+
+  it should "be able to run a scio job with JobTest and handle validation failure" in {
+    val task = lineCountingTask("input.txt", "output.txt", 10)
+    val result = flo.test(() => {
+      ScioOperator.mock().jobTest(task.id()) {
+        _.input(TextIO("input.txt"), Seq("foo", "bar", "baz"))
+          .output(TextIO("output.txt")) {
+            output => output should containInAnyOrder(Seq("foo", "bar", "baz"))
+          }
+      }
+      intercept[ExecutionException](FloRunner.runTask(task).future().get(1, TimeUnit.MINUTES))
+    })
+    val cause = result.getCause
+    cause.getClass shouldBe classOf[NotRetriable]
+    cause.getMessage shouldBe "too few lines"
+  }
+
   it should "be able to run a scio job" in {
     val input = Files.createTempFile("flo-scio-test-in", ".txt").toAbsolutePath.toString
     val output = Files.createTempDirectory("flo-scio-test-out").toAbsolutePath.toString
@@ -67,12 +108,33 @@ class ScioOperatorTest extends PipelineSpec with Matchers {
     val result = FloRunner.runTask(task).future().get(1, TimeUnit.MINUTES)
     result shouldBe "lines: 3"
   }
+
+  it should "be able to run a scio job and handle validation failure" in {
+    val input = Files.createTempFile("flo-scio-test-in", ".txt").toAbsolutePath.toString
+    val output = Files.createTempDirectory("flo-scio-test-out").toAbsolutePath.toString
+    val task = lineCountingTask(input, output, 10)
+    Files.write(Paths.get(input), Seq("foo", "baz", "bar").asJava)
+    val result = intercept[ExecutionException](FloRunner.runTask(task).future().get(1, TimeUnit.MINUTES))
+    val cause = result.getCause
+    cause.getClass shouldBe classOf[NotRetriable]
+    cause.getMessage shouldBe "too few lines"
+  }
+
+  it should "be able to run a scio job and handle job failure" in {
+    val input = Files.createTempFile("flo-scio-test-in", ".txt").toAbsolutePath.toString
+    val output = Files.createTempDirectory("flo-scio-test-out").toAbsolutePath.toString
+    val task = lineCountingTask(input, output, 10, fail = true)
+    Files.write(Paths.get(input), Seq("foo", "baz", "bar").asJava)
+    val result = intercept[ExecutionException](FloRunner.runTask(task).future().get(1, TimeUnit.MINUTES))
+    val cause = result.getCause
+    cause.getClass shouldBe classOf[JobError]
+  }
 }
 
 object ScioOperatorTest {
   val linesCounter: Counter = ScioMetrics.counter[ScioOperatorTest]("count")
 
-  def lineCountingTask(input: String, output: String, minLines: Long) =
+  def lineCountingTask(input: String, output: String, minLines: Long, fail: Boolean = false) =
     defTask[String]("foobar", "2018-01-02")
       .operator(ScioOperator())
       .process { job =>
@@ -80,6 +142,9 @@ object ScioOperatorTest {
           .pipeline(sc => {
             sc.textFile(input)
               .map(line => {
+                if (fail) {
+                  throw new Exception("Error!")
+                }
                 linesCounter.inc()
                 line
               })
@@ -90,10 +155,17 @@ object ScioOperatorTest {
               case Some(n) => n
               case _ => 0
             }
-            if (lines < minLines) throw new AssertionError("too few lines") else lines
+            if (lines < minLines) throw ValidationError("too few lines") else lines
           })
           .success(r => {
             "lines: " + r.toString
           })
+          .failure(t => t match {
+            case ValidationError(msg) => throw new NotRetriable(msg)
+            case _ => throw JobError(t)
+          })
       }
+
+  case class ValidationError(msg: String) extends RuntimeException(msg)
+  case class JobError(cause: Throwable) extends RuntimeException(cause)
 }

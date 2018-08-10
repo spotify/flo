@@ -28,23 +28,40 @@ class ScioJobSpec[R, S](private[scio] val taskId: TaskId,
                         private[scio] val options: Option[() => PipelineOptions] = None,
                         private[scio] val pipeline: ScioContext => Unit = null,
                         private[scio] val result: (ScioContext, ScioResult) => R = null,
-                        private[scio] val success: R => S = null
+                        private[scio] val success: R => S = null,
+                        private[scio] val failure: Throwable => S = (t: Throwable) => { throw t }
                        ) extends Serializable {
 
   def options(options: () => PipelineOptions): ScioJobSpec[R, S] = {
-    new ScioJobSpec(taskId, Some(options), pipeline, result, success)
+    require(options != null)
+    new ScioJobSpec(taskId, Some(options), pipeline, result, success, failure)
   }
 
   def pipeline(pipeline: ScioContext => Unit): ScioJobSpec[R, S] = {
-    new ScioJobSpec(taskId, options, pipeline, result, success)
+    require(pipeline != null)
+    new ScioJobSpec(taskId, options, pipeline, result, success, failure)
   }
 
   def result[RN <: R](result: (ScioContext, ScioResult) => RN): ScioJobSpec[RN, S] = {
-    new ScioJobSpec(taskId, options, pipeline, result, success)
+    require(result != null)
+    new ScioJobSpec(taskId, options, pipeline, result, success, failure)
   }
 
   def success(success: R => S): ScioJobSpec[R, S] = {
-    new ScioJobSpec(taskId, options, pipeline, result, success)
+    require(success != null)
+    new ScioJobSpec(taskId, options, pipeline, result, success, failure)
+  }
+
+  def failure(failure: Throwable => S): ScioJobSpec[R, S] = {
+    require(failure != null)
+    new ScioJobSpec(taskId, options, pipeline, result, success, failure)
+  }
+
+  private[scio] def validate(): Unit = {
+    require(pipeline != null)
+    require(result != null)
+    require(success != null)
+    require(failure != null)
   }
 }
 

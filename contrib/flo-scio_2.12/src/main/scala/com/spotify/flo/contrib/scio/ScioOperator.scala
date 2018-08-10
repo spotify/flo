@@ -30,6 +30,7 @@ import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, Pip
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
+import scala.util.{Failure, Try}
 
 class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[_, T], T] {
 
@@ -38,9 +39,7 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
   }
 
   override def perform(spec: ScioJobSpec[_, T], listener: TaskOperator.Listener): T = {
-    if (spec.pipeline == null || spec.result == null || spec.success == null) {
-      throw new IllegalStateException()
-    }
+    spec.validate()
     if (FloTesting.isTest) {
       runTest(spec)
     } else {
@@ -54,18 +53,42 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
     }
 
     for (jobTestSupplier <- ScioOperator.mock().jobTests.get(spec.taskId)) {
+
+      // Set up pipeline
       val jobTest = jobTestSupplier()
       jobTest.setUp()
       val sc = scioContextForTest(jobTest.testId)
       sc.options.as(classOf[ApplicationNameOptions]).setAppName(jobTest.testId)
       spec.pipeline(sc)
-      val scioResult = sc.close().waitUntilDone()
-      val result = spec.result(sc, scioResult)
+
+      // Start job
+      val scioResult = Try(sc.close())
+      scioResult match {
+        case Failure(t) => return spec.failure(t)
+        case _ =>
+      }
+
+      // Wait for job to complete
+      val done = Try(scioResult.get.waitUntilDone())
+      done match {
+        case Failure(t) => return spec.failure(t)
+        case _ =>
+      }
+
+      // Handle result
+      val result = Try(spec.result(sc, scioResult.get))
+      result match {
+        case Failure(t) => return spec.failure(t)
+        case _ =>
+      }
+
+      // Success!
       jobTest.tearDown()
-      return spec.success(result)
+      return spec.success(result.get)
     }
 
-    throw new AssertionError()
+    throw new AssertionError("Missing either mocked scio job result or JobTest, please set them up using either " +
+      "ScioOperator.mock().result(...) or ScioOperator.mock().result().jobTest(...) before running the workflow")
   }
 
   private def scioContextForTest[U](testId: String) = {
@@ -81,19 +104,43 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
   }
 
   private def runProd[R](spec: ScioJobSpec[R, T], listener: TaskOperator.Listener): T = {
+
+    // Set up pipeline
     val sc = spec.options match {
       case None => ScioContext()
       case Some(options) => ScioContext(options())
     }
     spec.pipeline(sc)
-    val scioResult = sc.close()
-    scioResult.internal match {
+
+    // Start job
+    val scioResult = Try(sc.close())
+    scioResult match {
+      case Failure(t) => return spec.failure(t)
+      case _ =>
+    }
+
+    // Report job id
+    scioResult.get.internal match {
       case job: DataflowPipelineJob => reportDataflowJobId(spec.taskId, job.getJobId, listener)
       case _ =>
     }
-    scioResult.waitUntilDone()
-    val result = spec.result(sc, scioResult)
-    spec.success(result)
+
+    // Wait for job to complete
+    val done = Try(scioResult.get.waitUntilDone())
+    done match {
+      case Failure(t) => return spec.failure(t)
+      case _ =>
+    }
+
+    // Handle result
+    val result = Try(spec.result(sc, scioResult.get))
+    result match {
+      case Failure(t) => return spec.failure(t)
+      case _ =>
+    }
+
+    // Success!
+    spec.success(result.get)
   }
 
   private def reportDataflowJobId(taskId: TaskId, jobId: String, listener: TaskOperator.Listener) {
