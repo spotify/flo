@@ -24,4 +24,11 @@ package com.spotify.flo.status;
  * Signals that a task has failed and should not be retried.
  */
 public class NotRetriable extends TaskStatusException {
+
+  public NotRetriable() {
+  }
+
+  public NotRetriable(String message) {
+    super(message);
+  }
 }
