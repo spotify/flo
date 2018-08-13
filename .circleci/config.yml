@@ -45,7 +45,8 @@ workflows:
           filters:
             branches:
               ignore: gh-pages
-      - test_jdk10:
-          filters:
-            branches:
-              ignore: gh-pages
+# FIXME
+#      - test_jdk10:
+#          filters:
+#            branches:
+#              ignore: gh-pages
