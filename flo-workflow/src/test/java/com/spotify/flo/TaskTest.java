@@ -31,8 +31,17 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class TaskTest {
+
+  @Mock TaskOperator<String, String, String> operator1;
+  @Mock TaskOperator<String, String, String> operator2;
+  @Mock TaskContextStrict<String, String> tcs1;
+  @Mock TaskContextStrict<String, String> tcs2;
 
   @Test
   public void shouldHaveListOfInputs() throws Exception {
@@ -58,6 +67,24 @@ public class TaskTest {
         .process((a, b) -> "constant");
 
     assertThat(task.contexts(), contains(tc1, tc2));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldDisallowMultipleTaskOperators() {
+    Task.named("task")
+        .ofType(String.class)
+        .operator(operator1)
+        .operator(operator2)
+        .process((a, b) -> { throw new AssertionError(); });
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldDisallowMultipleTaskContextStricts() {
+    Task.named("task")
+        .ofType(String.class)
+        .context(tcs1)
+        .context(tcs2)
+        .process((a, b) -> { throw new AssertionError(); });
   }
 
   //  Naming convention for tests
