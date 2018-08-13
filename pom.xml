@@ -97,7 +97,7 @@
       <dependency>
         <groupId>com.google.auto.value</groupId>
         <artifactId>auto-value</artifactId>
-        <version>1.4</version>
+        <version>1.5.3</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -142,14 +142,13 @@
       <dependency>
         <groupId>com.google.truth</groupId>
         <artifactId>truth</artifactId>
-        <version>0.24</version>
+        <version>0.37</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>com.google.testing.compile</groupId>
         <artifactId>compile-testing</artifactId>
-        <version>0.6</version>
-        <scope>test</scope>
+        <version>0.15</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -209,8 +208,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <!-- higher version has compatibility issue-->
-        <version>23.0</version>
+        <version>23.5-jre</version>
       </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
