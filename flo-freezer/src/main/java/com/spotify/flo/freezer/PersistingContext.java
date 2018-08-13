@@ -59,6 +59,10 @@ import org.slf4j.LoggerFactory;
  */
 public class PersistingContext extends ForwardingEvalContext {
 
+  private static class Lazy {
+    private static final Kryo KRYO = getKryo0();
+  }
+
   private static final Logger LOG = LoggerFactory.getLogger(PersistingContext.class);
 
   private final Path basePath;
@@ -126,6 +130,10 @@ public class PersistingContext extends ForwardingEvalContext {
   }
 
   private static Kryo getKryo() {
+    return Lazy.KRYO;
+  }
+
+  private static Kryo getKryo0() {
 
     // Look up chill-scala using reflection to avoid having a hard dependency on the
     // chill-scala library and allow this to work with multiple scala versions.
