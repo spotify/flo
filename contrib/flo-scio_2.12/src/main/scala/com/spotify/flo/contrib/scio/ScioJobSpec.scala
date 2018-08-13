@@ -58,6 +58,7 @@ class ScioJobSpec[R, S](private[scio] val taskId: TaskId,
   }
 
   private[scio] def validate(): Unit = {
+    require(options != null)
     require(pipeline != null)
     require(result != null)
     require(success != null)
