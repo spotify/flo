@@ -169,12 +169,6 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>com.github.stefanbirkner</groupId>
-        <artifactId>system-rules</artifactId>
-        <version>1.18.0</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
         <groupId>io.norberg</groupId>
         <artifactId>auto-matter-jackson</artifactId>
         <version>0.15.0</version>

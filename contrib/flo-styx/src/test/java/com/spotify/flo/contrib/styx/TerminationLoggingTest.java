@@ -27,10 +27,11 @@ import com.spotify.flo.context.TerminationHook;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Stream;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -43,25 +44,22 @@ public class TerminationLoggingTest {
   private static final String STYX_PARAMETER = "STYX_PARAMETER";
   private static final String STYX_EXECUTION_ID = "STYX_EXECUTION_ID";
 
-  @Rule
-  public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
-
-  private TerminationHook terminationHook;
+  private final Map<String, String> environmentVariables = new HashMap<>();
 
   @Before
   public void setUp() {
-    environmentVariables.set(STYX_COMPONENT_ID, "foo");
-    environmentVariables.set(STYX_WORKFLOW_ID, "bar");
-    environmentVariables.set(STYX_PARAMETER, "2018-01-01");
-    environmentVariables.set(STYX_EXECUTION_ID, "foobar");
-
-    terminationHook = new TerminationLogging();
+    environmentVariables.put(STYX_COMPONENT_ID, "foo");
+    environmentVariables.put(STYX_WORKFLOW_ID, "bar");
+    environmentVariables.put(STYX_PARAMETER, "2018-01-01");
+    environmentVariables.put(STYX_EXECUTION_ID, "foobar");
   }
 
   @Test
   public void shouldNotWriteFileIfNoTerminationLog() throws IOException {
     final Path tempFile = Files.createTempFile("termination-log-", "");
     tempFile.toFile().deleteOnExit();
+
+    final TerminationHook terminationHook = new TerminationLogging(environmentVariables);
 
     terminationHook.accept(20);
 
@@ -74,7 +72,7 @@ public class TerminationLoggingTest {
     final Path tempFile = Files.createTempFile("termination-log-", "");
     tempFile.toFile().deleteOnExit();
 
-    environmentVariables.set(STYX_TERMINATION_LOG, tempFile.toString());
+    environmentVariables.put(STYX_TERMINATION_LOG, tempFile.toString());
 
     final String expected = "{\"component_id\": \"foo\","
                             + "\"workflow_id\": \"bar\","
@@ -82,6 +80,8 @@ public class TerminationLoggingTest {
                             + "\"execution_id\": \"foobar\","
                             + "\"event\": \"exited\","
                             + "\"exit_code\": 20}";
+
+    final TerminationHook terminationHook = new TerminationLogging(environmentVariables);
 
     terminationHook.accept(20);
 
@@ -94,9 +94,9 @@ public class TerminationLoggingTest {
     final Path tempFile = Files.createTempFile("termination-log-", "");
     tempFile.toFile().deleteOnExit();
 
-    environmentVariables.set(STYX_TERMINATION_LOG, tempFile.toString());
-    environmentVariables
-        .clear(STYX_COMPONENT_ID, STYX_WORKFLOW_ID, STYX_PARAMETER, STYX_EXECUTION_ID);
+    environmentVariables.put(STYX_TERMINATION_LOG, tempFile.toString());
+    Stream.of(STYX_COMPONENT_ID, STYX_WORKFLOW_ID, STYX_PARAMETER, STYX_EXECUTION_ID)
+        .forEach(environmentVariables::remove);
 
     final String expected = "{\"component_id\": \"UNKNOWN_COMPONENT_ID\","
                             + "\"workflow_id\": \"UNKNOWN_WORKFLOW_ID\","
@@ -104,6 +104,8 @@ public class TerminationLoggingTest {
                             + "\"execution_id\": \"UNKNOWN_EXECUTION_ID\","
                             + "\"event\": \"exited\","
                             + "\"exit_code\": 20}";
+
+    final TerminationHook terminationHook = new TerminationLogging(environmentVariables);
 
     terminationHook.accept(20);
 
@@ -113,7 +115,14 @@ public class TerminationLoggingTest {
   
   @Test(expected = RuntimeException.class)
   public void shouldFailToWriteTerminationLog() {
-    environmentVariables.set(STYX_TERMINATION_LOG, ".");
+    final TerminationHook terminationHook = new TerminationLogging(environmentVariables);
+    environmentVariables.put(STYX_TERMINATION_LOG, ".");
     terminationHook.accept(20);
+  }
+
+  @Test
+  public void shouldUseSystemEnv() {
+    final TerminationLogging terminationHook = new TerminationLogging();
+    assertThat(terminationHook.env == System.getenv(), is(true));
   }
 }

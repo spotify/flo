@@ -30,14 +30,22 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TerminationLogging implements TerminationHook {
+class TerminationLogging implements TerminationHook {
 
   private static final Logger LOG = LoggerFactory.getLogger(TerminationLogging.class);
 
+  final Map<String, String> env;
+
+  TerminationLogging() {
+    this(System.getenv());
+  }
+
+  TerminationLogging(Map<String, String> env) {
+    this.env = env;
+  }
+
   @Override
   public void accept(Integer exitCode) {
-    final Map<String, String> env = System.getenv();
-
     final String terminationLog = env.get("STYX_TERMINATION_LOG");
 
     // make termination logging optional

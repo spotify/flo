@@ -31,13 +31,18 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spotify.flo.Task;
 import com.spotify.flo.context.FloRunner;
+import com.spotify.flo.context.TestForkingExecutor;
+import com.spotify.flo.context.TestForkingExecutor.Result;
 import io.norberg.automatter.jackson.AutoMatterModule;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import junitparams.JUnitParamsRunner;
@@ -45,8 +50,7 @@ import junitparams.Parameters;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
-import org.junit.contrib.java.lang.system.SystemErrRule;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,16 +59,16 @@ import org.slf4j.event.Level;
 @RunWith(JUnitParamsRunner.class)
 public class StructuredLoggingTest {
 
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   private static final ObjectMapper MAPPER = new ObjectMapper()
       .registerModule(new AutoMatterModule());
 
-  @Rule public final SystemErrRule stderr = new SystemErrRule().enableLog();
-  @Rule public final EnvironmentVariables env = new EnvironmentVariables();
+  private final Map<String, String> env = new HashMap<>();
 
   @Before
   public void setUp() {
-    stderr.clearLog();
-    env.set("FLO_LOGGING_LEVEL", "DEBUG");
+    env.put("FLO_LOGGING_LEVEL", "DEBUG");
   }
 
   private void configureLogbackFromFile() {
@@ -97,7 +101,7 @@ public class StructuredLoggingTest {
     verifyStructuredLogging(this::configureLogbackFromFile);
   }
 
-  private void verifyStructuredLogging(Runnable setupLogging) throws Exception {
+  private void verifyStructuredLogging(SerializableRunnable setupLogging) throws Exception {
     final String styx_component_id = "test_component_id-" + UUID.randomUUID();
     final String styx_workflow_id = "test_workflow_id-" + UUID.randomUUID();
     final String styx_docker_args = "test_docker_args-" + UUID.randomUUID();
@@ -108,32 +112,29 @@ public class StructuredLoggingTest {
     final String styx_trigger_id = "test_trigger_id-" + UUID.randomUUID();
     final String styx_trigger_type = "test_trigger_type-" + UUID.randomUUID();
 
-    env.set("STYX_COMPONENT_ID", styx_component_id);
-    env.set("STYX_WORKFLOW_ID", styx_workflow_id);
-    env.set("STYX_DOCKER_ARGS", styx_docker_args);
-    env.set("STYX_DOCKER_IMAGE", styx_docker_image);
-    env.set("STYX_COMMIT_SHA", styx_commit_sha);
-    env.set("STYX_PARAMETER", styx_parameter);
-    env.set("STYX_EXECUTION_ID", styx_execution_id);
-    env.set("STYX_TRIGGER_ID", styx_trigger_id);
-    env.set("STYX_TRIGGER_TYPE", styx_trigger_type);
-
-    setupLogging.run();
+    env.put("STYX_COMPONENT_ID", styx_component_id);
+    env.put("STYX_WORKFLOW_ID", styx_workflow_id);
+    env.put("STYX_DOCKER_ARGS", styx_docker_args);
+    env.put("STYX_DOCKER_IMAGE", styx_docker_image);
+    env.put("STYX_COMMIT_SHA", styx_commit_sha);
+    env.put("STYX_PARAMETER", styx_parameter);
+    env.put("STYX_EXECUTION_ID", styx_execution_id);
+    env.put("STYX_TRIGGER_ID", styx_trigger_id);
+    env.put("STYX_TRIGGER_TYPE", styx_trigger_type);
 
     final String infoMessageText = "hello world " + UUID.randomUUID();
     final String errorMessageText = "danger danger! " + UUID.randomUUID();
-
     final Task<String> task = loggingTask(infoMessageText, errorMessageText);
 
-    final String exceptionStackTrace = FloRunner.runTask(task)
-        .future().get(30, TimeUnit.SECONDS);
+    final Result<String> result = TestForkingExecutor.execute(env, () -> {
+      setupLogging.run();
+      return FloRunner.runTask(task)
+          .future().get(30, TimeUnit.SECONDS);
+    });
 
-    // Wait for log messages to flush
-    Thread.sleep(1000);
-
-    final String output = stderr.getLog();
+    final String exceptionStackTrace = result.result;
     final List<StructuredLogMessage> messages = MAPPER.readerFor(StructuredLogMessage.class)
-        .<StructuredLogMessage>readValues(output)
+        .<StructuredLogMessage>readValues(result.errUtf8())
         .readAll();
 
     final StructuredLogMessage infoMessage = messages.stream()
@@ -171,30 +172,30 @@ public class StructuredLoggingTest {
   @Test
   public void testTextLoggingProgrammaticSetup(boolean forking) throws Exception {
     configureForking(forking);
-    StructuredLogging.configureStructuredLogging();
-    verifyTextLogging();
+    verifyTextLogging(StructuredLogging::configureStructuredLogging);
   }
 
   @Parameters({"true", "false"})
   @Test
   public void testTextLoggingFileSetup(boolean forking) throws Exception {
     configureForking(forking);
-    configureLogbackFromFile();
-    verifyTextLogging();
+    verifyTextLogging(this::configureLogbackFromFile);
   }
 
   @Test
-  public void testStructuredLoggingWithNoMetadata() throws IOException {
+  public void testStructuredLoggingWithNoMetadata() throws Exception {
     // Trigger structured logging
     final String executionId = UUID.randomUUID().toString();
-    env.set("STYX_EXECUTION_ID", executionId);
+    env.put("STYX_EXECUTION_ID", executionId);
 
-    configureLogbackFromFile();
-    final Logger logger = LoggerFactory.getLogger("test");
-    logger.info("hello world!");
-    final String output = stderr.getLog();
+    final Result<String> result = TestForkingExecutor.execute(env, () -> {
+      configureLogbackFromFile();
+      final Logger logger = LoggerFactory.getLogger("test");
+      logger.info("hello world!");
+      return "";
+    });
 
-    final StructuredLogMessage message = MAPPER.readValue(output, StructuredLogMessage.class);
+    final StructuredLogMessage message = MAPPER.readValue(result.err, StructuredLogMessage.class);
 
     assertThat(message.message(), is("hello world!"));
 
@@ -213,21 +214,27 @@ public class StructuredLoggingTest {
     assertThat(message.workflow().task().args(), is(""));
   }
 
-  private void verifyTextLogging() throws Exception {
+  private void verifyTextLogging(SerializableRunnable setupLogging) throws Exception {
 
     final String infoMessageText = "hello world " + UUID.randomUUID();
     final String errorMessageText = "danger danger! " + UUID.randomUUID();
 
     final Task<String> task = loggingTask(infoMessageText, errorMessageText);
-    final String exceptionStackTrace = FloRunner.runTask(task)
-        .future().get(30, TimeUnit.SECONDS);
+
+    final Result<String> result = TestForkingExecutor.execute(env, () -> {
+      setupLogging.run();
+      return FloRunner.runTask(task)
+          .future().get(30, TimeUnit.SECONDS);
+    });
+
+    final String exceptionStackTrace = result.result;
 
     // Wait for log messages to flush
     Thread.sleep(1000);
 
-    final String output = stderr.getLog();
+    final String err = result.errUtf8();
     final String lineSeparator = System.getProperty("line.separator");
-    final List<String> lines = Arrays.asList(output.split(lineSeparator));
+    final List<String> lines = Arrays.asList(err.split(lineSeparator));
 
     lines.stream()
         .filter(s -> s.contains("[" + task.id() + "]"))
@@ -240,7 +247,7 @@ public class StructuredLoggingTest {
         .filter(s -> s.contains("ERROR"))
         .filter(s -> s.contains(errorMessageText))
         .findAny().orElseThrow(AssertionError::new);
-    assertThat(output, containsString(exceptionStackTrace));
+    assertThat(err, containsString(exceptionStackTrace));
   }
 
   private Task<String> loggingTask(String infoMessage, String errorMessage) {
@@ -270,6 +277,8 @@ public class StructuredLoggingTest {
   }
 
   private void configureForking(boolean forking) {
-    env.set("FLO_FORKING", Boolean.toString(forking));
+    env.put("FLO_FORKING", Boolean.toString(forking));
   }
+
+  interface SerializableRunnable extends java.lang.Runnable, Serializable { }
 }

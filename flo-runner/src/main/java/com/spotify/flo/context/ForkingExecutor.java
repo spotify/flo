@@ -63,6 +63,8 @@ class ForkingExecutor implements Closeable {
 
   private Map<String, String> environment = Collections.emptyMap();
   private List<String> javaArgs = Collections.emptyList();
+  private PrintStream out = System.out;
+  private PrintStream err = System.err;
 
   ForkingExecutor environment(Map<String, String> environment) {
     this.environment = new HashMap<>(environment);
@@ -75,6 +77,16 @@ class ForkingExecutor implements Closeable {
 
   ForkingExecutor javaArgs(List<String> javaArgs) {
     this.javaArgs = new ArrayList<>(javaArgs);
+    return this;
+  }
+
+  ForkingExecutor out(PrintStream out) {
+    this.out = out;
+    return this;
+  }
+
+  ForkingExecutor err(PrintStream err) {
+    this.err = err;
     return this;
   }
 
@@ -166,8 +178,8 @@ class ForkingExecutor implements Closeable {
       }
 
       // Copy std{err,out} line by line to avoid interleaving and corrupting line contents.
-      executor.submit(() -> copyLines(process.getInputStream(), System.out));
-      executor.submit(() -> copyLines(process.getErrorStream(), System.err));
+      executor.submit(() -> copyLines(process.getInputStream(), out));
+      executor.submit(() -> copyLines(process.getErrorStream(), err));
     }
 
     T waitFor() {

@@ -47,11 +47,6 @@
 
     <!--test deps-->
     <dependency>
-      <groupId>com.github.stefanbirkner</groupId>
-      <artifactId>system-rules</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>io.norberg</groupId>
       <artifactId>auto-matter-jackson</artifactId>
       <scope>test</scope>
