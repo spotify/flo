@@ -458,25 +458,6 @@
 
   <profiles>
     <profile>
-      <id>java-9+</id>
-      <activation>
-        <jdk>[9,)</jdk>
-      </activation>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <artifactId>maven-surefire-plugin</artifactId>
-              <version>2.21.0</version>
-              <configuration>
-                <argLine>--illegal-access=deny</argLine>
-              </configuration>
-            </plugin>
-          </plugins>
-        </pluginManagement>
-      </build>
-    </profile>
-    <profile>
       <id>coverage</id>
       <build>
         <plugins>

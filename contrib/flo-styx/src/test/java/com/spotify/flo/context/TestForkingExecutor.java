@@ -41,9 +41,6 @@ public class TestForkingExecutor {
           final PrintStream perr = new PrintStream(err)) {
         executor.out(pout);
         executor.err(perr);
-        if (isJava9OrGreater()) {
-          executor.javaArgs("--illegal-access=deny");
-        }
         executor.environment(env);
         result = executor.execute(() -> {
           try {
@@ -56,15 +53,6 @@ public class TestForkingExecutor {
         });
       }
       return new Result(result, out.toByteArray(), err.toByteArray());
-    }
-  }
-
-  private static boolean isJava9OrGreater() {
-    try {
-      Class.forName("java.lang.ProcessHandle");
-      return true;
-    } catch (ClassNotFoundException e) {
-      return false;
     }
   }
 
