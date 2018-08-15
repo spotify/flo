@@ -122,16 +122,16 @@ public class BigQueryTasksTest {
   }
 
   @Test
-  public void shouldHaveNameAndId() {
-    {
-      final TaskId id = BigQueryTasks.lookup("foo", "bar", "baz").id();
-      assertThat(id.name(), is("bigquery.lookup"));
-      assertThat(id.toString(), startsWith("bigquery.lookup(foo,bar,baz)#"));
-    }
-    {
-      final TaskId id = BigQueryTasks.lookup(TableId.of("foo", "bar", "baz")).id();
-      assertThat(id.name(), is("bigquery.lookup"));
-      assertThat(id.toString(), startsWith("bigquery.lookup(foo,bar,baz)#"));
-    }
+  public void lookupShouldHaveNameAndId() {
+    final TaskId id = BigQueryTasks.lookup("foo", "bar", "baz").id();
+    assertThat(id.name(), is("bigquery.lookup"));
+    assertThat(id.toString(), startsWith("bigquery.lookup(foo,bar,baz)#"));
+  }
+
+  @Test
+  public void lookupOfTableIdShouldHaveNameAndId() {
+    final TaskId id = BigQueryTasks.lookup(TableId.of("foo", "bar", "baz")).id();
+    assertThat(id.name(), is("bigquery.lookup"));
+    assertThat(id.toString(), startsWith("bigquery.lookup(foo,bar,baz)#"));
   }
 }
