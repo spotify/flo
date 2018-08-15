@@ -36,7 +36,7 @@ public final class BigQueryTasks {
 
   @VisibleForTesting
   static Task<TableId> lookup(F0<FloBigQueryClient> bigQuerySupplier, TableId tableId) {
-    return Task.named(tableId.getProject(), tableId.getDataset(), tableId.getTable())
+    return Task.named("bigquery.lookup", tableId.getProject(), tableId.getDataset(), tableId.getTable())
         .ofType(TableId.class)
         .process(() -> {
           if (bigQuerySupplier.get().tableExists(tableId)) {

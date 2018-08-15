@@ -23,6 +23,7 @@ package com.spotify.flo.contrib.bigquery;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -32,6 +33,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.cloud.bigquery.TableId;
 import com.google.common.base.Throwables;
 import com.spotify.flo.Task;
+import com.spotify.flo.TaskId;
 import com.spotify.flo.context.FloRunner;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
@@ -117,5 +119,19 @@ public class BigQueryTasksTest {
     final TableId tableId = FloRunner.runTask(lookup, NO_FORKING_CONFIG)
         .future().get(30, TimeUnit.SECONDS);
     assertThat(tableId, is(expected));
+  }
+
+  @Test
+  public void lookupShouldHaveNameAndId() {
+    final TaskId id = BigQueryTasks.lookup("foo", "bar", "baz").id();
+    assertThat(id.name(), is("bigquery.lookup"));
+    assertThat(id.toString(), startsWith("bigquery.lookup(foo,bar,baz)#"));
+  }
+
+  @Test
+  public void lookupOfTableIdShouldHaveNameAndId() {
+    final TaskId id = BigQueryTasks.lookup(TableId.of("foo", "bar", "baz")).id();
+    assertThat(id.name(), is("bigquery.lookup"));
+    assertThat(id.toString(), startsWith("bigquery.lookup(foo,bar,baz)#"));
   }
 }
