@@ -50,7 +50,7 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
   private static final byte[] LINE_SEPARATOR_BYTES = LINE_SEPARATOR.getBytes();
 
-  private final boolean isStyxExecution = System.getenv().containsKey("STYX_EXECUTION_ID");
+  private final boolean structuredLogging = "structured".equals(System.getenv("STYX_LOGGING"));
   private final StyxBuilder template = createTemplate();
 
   private final TaskId envTaskId;
@@ -63,7 +63,7 @@ public class StructuredLoggingEncoder extends EncoderBase<ILoggingEvent> {
 
   @Override
   public byte[] encode(ILoggingEvent event) {
-    if (isStyxExecution) {
+    if (structuredLogging) {
       return encodeStructured(event);
     } else {
       return encodeText(event);

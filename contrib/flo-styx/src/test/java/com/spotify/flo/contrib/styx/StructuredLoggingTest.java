@@ -117,6 +117,7 @@ public class StructuredLoggingTest {
     env.set("STYX_EXECUTION_ID", styx_execution_id);
     env.set("STYX_TRIGGER_ID", styx_trigger_id);
     env.set("STYX_TRIGGER_TYPE", styx_trigger_type);
+    env.set("STYX_LOGGING", "structured");
 
     setupLogging.run();
 
@@ -185,9 +186,11 @@ public class StructuredLoggingTest {
 
   @Test
   public void testStructuredLoggingWithNoMetadata() throws IOException {
-    // Trigger structured logging
     final String executionId = UUID.randomUUID().toString();
     env.set("STYX_EXECUTION_ID", executionId);
+
+    // Trigger structured logging
+    env.set("STYX_LOGGING", "structured");
 
     configureLogbackFromFile();
     final Logger logger = LoggerFactory.getLogger("test");
