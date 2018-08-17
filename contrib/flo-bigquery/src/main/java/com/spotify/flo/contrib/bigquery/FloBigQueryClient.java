@@ -20,8 +20,12 @@
 
 package com.spotify.flo.contrib.bigquery;
 
+import com.google.cloud.bigquery.BigQuery.JobOption;
+import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
+import com.google.cloud.bigquery.JobInfo;
+import com.google.cloud.bigquery.QueryRequest;
 import com.google.cloud.bigquery.TableId;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -54,6 +58,20 @@ interface FloBigQueryClient {
    * @return true if it exists, otherwise false
    */
   boolean tableExists(TableId tableId);
+
+  /**
+   * Run a BigQuery query. Blocks until the query completes.
+   *
+   * @throws BigQueryException if the query fails.
+   */
+  BigQueryResult query(QueryRequest queryRequest);
+
+  /**
+   * Run a BiqQuery job. Blocks until the job completes.
+   *
+   * @throws BigQueryException if the job fails.
+   */
+  JobInfo job(JobInfo jobInfo, JobOption... options);
 
   /**
    * Create a staging {@link TableId} for {@param tableId}

@@ -48,7 +48,7 @@ public final class BigQueryTasks {
   }
 
   public static Task<TableId> lookup(TableId tableId) {
-    return lookup(BigQueryContext::defaultBigQuerySupplier, tableId);
+    return lookup(BigQueryClientSingleton::bq, tableId);
   }
 
   public static Task<TableId> lookup(String project, String dataset, String table) {
