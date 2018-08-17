@@ -344,7 +344,7 @@ public class FloRunnerTest {
   @Test
   public void taskIdIsInContext() throws Exception {
     final Task<TaskId> task = Task.named("task").ofType(TaskId.class)
-        .process(() -> Tracing.TASK_ID.get());
+        .process(() -> Tracing.currentTaskId());
 
     final Result<TaskId> result = runTask(task);
 
