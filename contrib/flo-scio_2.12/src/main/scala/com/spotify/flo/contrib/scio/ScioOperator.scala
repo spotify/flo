@@ -23,7 +23,6 @@ package com.spotify.flo.contrib.scio
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.spotify.flo.contrib.scio.ScioOperator.log
 import com.spotify.flo.{EvalContext, FloTesting, TaskId, TaskOperator, TestContext}
 import com.spotify.scio.ScioContext
@@ -33,6 +32,7 @@ import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.{Failure, Try}
 
@@ -156,8 +156,7 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
       "monitoring-page-url" -> url
     )
     log.info("Started scio job (dataflow): {}", jobMeta)
-    val jobMetaJson = new ObjectMapper().writeValueAsString(jobMeta)
-    listener.meta(taskId, "dataflow-job", jobMetaJson)
+    listener.meta(taskId, jobMeta.asJava)
   }
 
   /**
