@@ -92,6 +92,7 @@ final class {{implClassName}} {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Task<Z> process(F{{arity}}<{{typeArgs}}, Y> f) {
       final Invokable code = a -> f.apply({{processArgs}});
       return Task.create(inputs, taskContexts, type, taskId, code, args);
@@ -150,6 +151,7 @@ final class {{implClassName}} {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Task<Z> process(F{{lastArity}}<{{lastTypeArgs}}, Y> f) {
       final Invokable code = a -> f.apply({{lastProcessArgs}});
       return Task.create(inputs, taskContexts, type, taskId, code, args);
