@@ -28,6 +28,7 @@ import com.spotify.flo.TaskOperator;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -79,6 +80,19 @@ public class InstrumentedContext extends ForwardingEvalContext {
      * @param value  The metadata value.
      */
     default void meta(TaskId task, String key, String value) {
+    }
+
+    /**
+     * Called to report some piece of task metadata.
+     *
+     * By default this methods calls <code>meta(TaskId task, String key, String value)</code>
+     * for each key-value pair.
+     *
+     * @param task The task that is being evaluated
+     * @param data The key-value metadata
+     */
+    default void meta(TaskId task, Map<String, String> data) {
+      data.forEach((key, value) -> meta(task, key, value));
     }
 
     /**
@@ -144,6 +158,16 @@ public class InstrumentedContext extends ForwardingEvalContext {
 
   @Override
   public TaskOperator.Listener listener() {
-    return super.listener().composeWith(listener::meta);
+    return super.listener().composeWith(new TaskOperator.Listener() {
+      @Override
+      public void meta(TaskId task, String key, String value) {
+        listener.meta(task, key, value);
+      }
+
+      @Override
+      public void meta(TaskId task, Map<String, String> data) {
+        listener.meta(task, data);
+      }
+    });
   }
 }
