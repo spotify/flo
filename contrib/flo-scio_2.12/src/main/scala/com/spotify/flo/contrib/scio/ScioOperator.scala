@@ -20,6 +20,9 @@
 
 package com.spotify.flo.contrib.scio
 
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets.UTF_8
+
 import com.spotify.flo.contrib.scio.ScioOperator.log
 import com.spotify.flo.{EvalContext, FloTesting, TaskId, TaskOperator, TestContext}
 import com.spotify.scio.ScioContext
@@ -29,6 +32,7 @@ import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.{Failure, Try}
 
@@ -121,7 +125,7 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
 
     // Report job id
     scioResult.get.internal match {
-      case job: DataflowPipelineJob => reportDataflowJobId(spec.taskId, job.getJobId, listener)
+      case job: DataflowPipelineJob => reportDataflowJob(spec.taskId, job, listener)
       case _ =>
     }
 
@@ -143,10 +147,27 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
     spec.success(result.get)
   }
 
-  private def reportDataflowJobId(taskId: TaskId, jobId: String, listener: TaskOperator.Listener) {
-    log.info("Started scio job (dataflow): {}", jobId)
-    listener.meta(taskId, "dataflow-job-id", jobId);
+  private def reportDataflowJob(taskId: TaskId, job: DataflowPipelineJob, listener: TaskOperator.Listener) {
+    val url = dataflowJobMonitoringPageURL(job)
+    val jobMeta = Map(
+      "job-id" -> job.getJobId,
+      "project-id" -> job.getProjectId,
+      "region" -> job.getRegion,
+      "monitoring-page-url" -> url
+    )
+    log.info("Started scio job (dataflow): {}", jobMeta)
+    listener.meta(taskId, jobMeta.asJava)
   }
+
+  /**
+    * From https://github.com/apache/beam/blob/master/runners/google-cloud-dataflow-java/src/main/java/org/apache/beam/runners/dataflow/util/MonitoringUtil.java
+    */
+  private def dataflowJobMonitoringPageURL(job: DataflowPipelineJob): String =
+    String.format("https://console.cloud.google.com/dataflow/jobsDetail/locations/%s/jobs/%s?project=%s",
+      URLEncoder.encode(job.getRegion, UTF_8.name),
+      URLEncoder.encode(job.getJobId, UTF_8.name),
+      URLEncoder.encode(job.getProjectId, UTF_8.name))
+
 }
 
 object ScioOperator {

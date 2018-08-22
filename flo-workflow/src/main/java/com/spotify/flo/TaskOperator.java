@@ -21,6 +21,7 @@
 package com.spotify.flo;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * An operator controls the execution of a job for a task,  e.g. a data processing job on some processing platform.
@@ -44,12 +45,34 @@ public interface TaskOperator<ContextT, SpecT, ResultT>
      */
     void meta(TaskId task, String key, String value);
 
+    /**
+     * Called to report some piece of task metadata.
+     *
+     * By default this methods calls <code>meta(TaskId task, String key, String value)</code>
+     * for each key-value pair.
+     *
+     * @param task The task that is being evaluated
+     * @param data The key-value metadata
+     */
+    default void meta(TaskId task, Map<String, String> data) {
+      data.forEach((key, value) -> meta(task, key, value));
+    }
+
     Listener NOP = (Listener) (task, key, value) -> { };
 
     default Listener composeWith(Listener listener) {
-      return (task, key, value) -> {
-        meta(task, key, value);
-        listener.meta(task, key, value);
+      return new Listener() {
+        @Override
+        public void meta(TaskId task, String key, String value) {
+          Listener.this.meta(task, key, value);
+          listener.meta(task, key, value);
+        }
+
+        @Override
+        public void meta(TaskId task, Map<String, String> data) {
+          Listener.this.meta(task, data);
+          listener.meta(task, data);
+        }
       };
     }
   }
