@@ -150,7 +150,7 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
   private def reportDataflowJob(taskId: TaskId, job: DataflowPipelineJob, listener: TaskOperator.Listener) {
     val url = dataflowJobMonitoringPageURL(job)
     val jobMeta = Map(
-      "job-type" → "dataflow",
+      "job-type" -> "dataflow",
       "job-id" -> job.getJobId,
       "project-id" -> job.getProjectId,
       "region" -> job.getRegion,
