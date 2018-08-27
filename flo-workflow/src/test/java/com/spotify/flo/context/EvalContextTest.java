@@ -20,12 +20,9 @@
 
 package com.spotify.flo.context;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
@@ -33,8 +30,6 @@ import com.spotify.flo.TaskOperator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -45,27 +40,25 @@ public class EvalContextTest {
   @Mock private TaskOperator<String, String, String> operator;
   private Task<String> task;
 
-  @Captor
-  private ArgumentCaptor<TaskOperator.Listener> opListenerCaptor;
-
   @Before
   public void setup() {
     task = Task.named("test")
         .ofType(String.class)
         .operator(operator)
-        .process((oprtr) -> oprtr + " result");
+        .process(x -> x);
   }
 
   @Test
   public void listenerIsCalled() {
     final EvalContext baseContext = EvalContext.sync();
-    final EvalContext targetContext = spy(EvalContext.sync());
-    when(targetContext.listener()).thenReturn(listener);
+    final EvalContext targetContext = new ForwardingEvalContext(EvalContext.sync()) {
+      @Override
+      public TaskOperator.Listener listener() {
+        return listener;
+      }
+    };
 
     baseContext.evaluateInternal(task, targetContext).get();
-
-    verify(targetContext, times(1)).listener();
-    verify(operator, times(1)).perform(anyObject(), opListenerCaptor.capture());
-    assertEquals(opListenerCaptor.getValue(), listener);
+    verify(operator).perform(anyObject(), same(listener));
   }
 }
