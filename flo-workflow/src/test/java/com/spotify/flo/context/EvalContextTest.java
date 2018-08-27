@@ -22,39 +22,50 @@ package com.spotify.flo.context;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskOperator;
-import com.spotify.flo.context.InstrumentedContext.Listener;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class EvalContextTest {
 
-  private Listener listener = mock(Listener.class);
-  private TaskOperator operator = mock(TaskOperator.class);
-  private Task task = Task.named("test")
-      .ofType(String.class)
-      .operator(operator)
-      .process((op) -> "result");
+  @Mock private TaskOperator.Listener listener;
+  @Mock private TaskOperator<String, String, String> operator;
+  private Task<String> task;
 
-  private ArgumentCaptor<TaskOperator.Listener> opListenerCaptor = ArgumentCaptor
-      .forClass(TaskOperator.Listener.class);
+  @Captor
+  private ArgumentCaptor<TaskOperator.Listener> opListenerCaptor;
+
+  @Before
+  public void setup() {
+    task = Task.named("test")
+        .ofType(String.class)
+        .operator(operator)
+        .process((oprtr) -> oprtr + " result");
+  }
 
   @Test
   public void listenerIsCalled() {
-    final EvalContext syncContext = EvalContext.sync();
-    final EvalContext composedContext = spy(InstrumentedContext.composeWith(syncContext, listener));
+    final EvalContext baseContext = EvalContext.sync();
+    final EvalContext targetContext = spy(EvalContext.sync());
+    when(targetContext.listener()).thenReturn(listener);
 
-    syncContext.evaluateInternal(task, composedContext).get();
+    baseContext.evaluateInternal(task, targetContext).get();
 
-    verify(composedContext, times(1)).listener();
+    verify(targetContext, times(1)).listener();
     verify(operator, times(1)).perform(anyObject(), opListenerCaptor.capture());
-    assertEquals(opListenerCaptor.getValue(), composedContext.listener());
+    assertEquals(opListenerCaptor.getValue(), listener);
   }
 }
