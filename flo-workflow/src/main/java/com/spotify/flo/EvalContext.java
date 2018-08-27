@@ -89,7 +89,7 @@ public interface EvalContext {
           .map(c -> (TaskOperator) c)
           .findAny();
 
-      final Listener listener = listener();
+      final Listener listener = context.listener();
       final Invokable processFn = task.processFn();
       final Value<Object> value = context.invokeProcessFn(task.id(), () ->  {
 

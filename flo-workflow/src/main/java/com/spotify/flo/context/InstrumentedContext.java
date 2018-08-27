@@ -25,6 +25,7 @@ import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskOperator;
+import com.spotify.flo.TaskOperator.Listener;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
@@ -125,10 +126,22 @@ public class InstrumentedContext extends ForwardingEvalContext {
   }
 
   private final Listener listener;
+  private TaskOperator.Listener taskOperatorListener;
 
   private InstrumentedContext(EvalContext baseContext, Listener listener) {
     super(baseContext);
     this.listener = Objects.requireNonNull(listener);
+    this.taskOperatorListener = super.listener().composeWith(new TaskOperator.Listener() {
+      @Override
+      public void meta(TaskId task, String key, String value) {
+        InstrumentedContext.this.listener.meta(task, key, value);
+      }
+
+      @Override
+      public void meta(TaskId task, Map<String, String> data) {
+        InstrumentedContext.this.listener.meta(task, data);
+      }
+    });
   }
 
   public static EvalContext composeWith(EvalContext baseContext, Listener listener) {
@@ -158,16 +171,6 @@ public class InstrumentedContext extends ForwardingEvalContext {
 
   @Override
   public TaskOperator.Listener listener() {
-    return super.listener().composeWith(new TaskOperator.Listener() {
-      @Override
-      public void meta(TaskId task, String key, String value) {
-        listener.meta(task, key, value);
-      }
-
-      @Override
-      public void meta(TaskId task, Map<String, String> data) {
-        listener.meta(task, data);
-      }
-    });
+    return taskOperatorListener;
   }
 }
