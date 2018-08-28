@@ -20,9 +20,12 @@
 
 package com.spotify.flo;
 
+import static com.spotify.flo.BuilderUtils.guardedCall;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * An operator controls the execution of a job for a task,  e.g. a data processing job on some processing platform.
@@ -62,8 +65,8 @@ public interface TaskOperator<ContextT, SpecT, ResultT>
 
     default Listener composeWith(Listener listener) {
       return (task, data) -> {
-        Listener.this.meta(task, data);
-        listener.meta(task, data);
+        guardedCall(() -> Listener.this.meta(task, data));
+        guardedCall(() -> listener.meta(task, data));
       };
     }
   }

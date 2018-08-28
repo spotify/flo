@@ -29,11 +29,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Internal utility functions for the {@link TaskBuilder} api implementation
  */
 class BuilderUtils {
+
+  private static final Logger log = LoggerFactory.getLogger(BuilderUtils.class);
 
   private BuilderUtils() {
   }
@@ -81,5 +85,13 @@ class BuilderUtils {
     return ec -> task.get().stream()
         .map(ec::evaluate)
         .collect(toValueList(ec));
+  }
+
+  static void guardedCall(Runnable call) {
+    try {
+      call.run();
+    } catch (Throwable t) {
+      log.warn("Exception", t);
+    }
   }
 }
