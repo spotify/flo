@@ -23,9 +23,7 @@ package com.spotify.flo;
 import static com.spotify.flo.BuilderUtils.guardedCall;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * An operator controls the execution of a job for a task,  e.g. a data processing job on some processing platform.
@@ -38,20 +36,8 @@ public interface TaskOperator<ContextT, SpecT, ResultT>
 
   ResultT perform(SpecT spec, Listener listener);
 
+  @FunctionalInterface
   interface Listener extends Serializable {
-
-    /**
-     * Called to report some piece of task metadata.
-     *
-     * By default this methods calls {@link #meta(TaskId, Map)} with a single entry.
-     *
-     * @param task The task that is being evaluated
-     * @param key The metadata key.
-     * @param value The metadata value.
-     */
-    default void meta(TaskId task, String key, String value) {
-      meta(task, Collections.singletonMap(key, value));
-    }
 
     /**
      * Called to report some piece of task metadata.
