@@ -20,9 +20,8 @@
 
 package com.spotify.flo.context;
 
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
@@ -36,8 +35,13 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EvalContextTest {
 
+  private static final String PROVIDED = "provided";
+  private static final String SPEC = "spec";
+  private static final String RESULT = "result";
+
   @Mock private TaskOperator.Listener listener;
   @Mock private TaskOperator<String, String, String> operator;
+
   private Task<String> task;
 
   @Before
@@ -45,11 +49,11 @@ public class EvalContextTest {
     task = Task.named("test")
         .ofType(String.class)
         .operator(operator)
-        .process(x -> x);
+        .process(provided -> SPEC);
   }
 
   @Test
-  public void listenerIsCalled() {
+  public void evaluateInternalShouldInvokeOperatorWithListener() {
     final EvalContext baseContext = EvalContext.sync();
     final EvalContext targetContext = new ForwardingEvalContext(EvalContext.sync()) {
       @Override
@@ -58,7 +62,10 @@ public class EvalContextTest {
       }
     };
 
+    when(operator.provide(targetContext)).thenReturn(PROVIDED);
+    when(operator.perform(SPEC, listener)).thenReturn(RESULT);
+
     baseContext.evaluateInternal(task, targetContext).get();
-    verify(operator).perform(anyObject(), same(listener));
+    verify(operator).perform(SPEC, listener);
   }
 }

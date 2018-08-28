@@ -125,27 +125,10 @@ public class InstrumentedContext extends ForwardingEvalContext {
   }
 
   private final Listener listener;
-  private TaskOperator.Listener taskOperatorListener;
 
   private InstrumentedContext(EvalContext baseContext, Listener listener) {
     super(baseContext);
     this.listener = Objects.requireNonNull(listener);
-    this.taskOperatorListener = super.listener().composeWith(wrapListener(listener));
-  }
-
-  // this is static to avoid capturing "this" in the anonymous class
-  private static TaskOperator.Listener wrapListener(Listener listener) {
-    return new TaskOperator.Listener() {
-      @Override
-      public void meta(TaskId task, String key, String value) {
-        listener.meta(task, key, value);
-      }
-
-      @Override
-      public void meta(TaskId task, Map<String, String> data) {
-        listener.meta(task, data);
-      }
-    };
   }
 
   public static EvalContext composeWith(EvalContext baseContext, Listener listener) {
@@ -175,6 +158,7 @@ public class InstrumentedContext extends ForwardingEvalContext {
 
   @Override
   public TaskOperator.Listener listener() {
-    return taskOperatorListener;
+    // Method reference to avoid capturing this
+    return listener::meta;
   }
 }
