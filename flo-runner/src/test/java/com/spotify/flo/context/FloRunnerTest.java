@@ -71,6 +71,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -540,14 +541,13 @@ public class FloRunnerTest {
   @Test
   public void tasksAreObservedByInstrumentedContext()
       throws InterruptedException, ExecutionException, TimeoutException, IOException {
-    Task<String> fooTask = Task.named("foo")
-        .ofType(String.class)
+    final Task<String> fooTask = Task.named("foo").ofType(String.class)
         .process(() -> "foo");
 
-    Task<String> barTask = Task.named("bar")
-        .ofType(String.class)
+    final Task<String> barTask = Task.named("bar").ofType(String.class)
+        .operator(JobOperator.create())
         .input(() -> fooTask)
-        .process(bar -> "foo" + bar);
+        .process((op, bar) -> op.success(res -> "foo" + bar));
 
     FloRunner.runTask(barTask).future().get(30, SECONDS);
 
@@ -559,6 +559,7 @@ public class FloRunnerTest {
     verify(listener).status(fooTask.id(), Phase.SUCCESS);
     verify(listener).status(barTask.id(), Phase.START);
     verify(listener).status(barTask.id(), Phase.SUCCESS);
+    verify(listener).meta(barTask.id(), Collections.singletonMap("task-id", barTask.id().toString()));
     verifyNoMoreInteractions(listener);
   }
 
