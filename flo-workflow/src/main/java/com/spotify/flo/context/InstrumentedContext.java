@@ -75,24 +75,10 @@ public class InstrumentedContext extends ForwardingEvalContext {
     /**
      * Called to report some piece of task metadata.
      *
-     * @param task   The task that is being evaluated
-     * @param key  The metadata key.
-     * @param value  The metadata value.
-     */
-    default void meta(TaskId task, String key, String value) {
-    }
-
-    /**
-     * Called to report some piece of task metadata.
-     *
-     * By default this methods calls <code>meta(TaskId task, String key, String value)</code>
-     * for each key-value pair.
-     *
      * @param task The task that is being evaluated
      * @param data The key-value metadata
      */
     default void meta(TaskId task, Map<String, String> data) {
-      data.forEach((key, value) -> meta(task, key, value));
     }
 
     /**

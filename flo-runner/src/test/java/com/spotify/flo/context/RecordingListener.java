@@ -69,11 +69,6 @@ public class RecordingListener implements FloListenerFactory {
     }
 
     @Override
-    public void meta(TaskId task, String key, String value) {
-      record(listener -> listener.meta(task, key, value));
-    }
-
-    @Override
     public void meta(TaskId task, Map<String, String> data) {
       record(listener -> listener.meta(task, data));
     }
