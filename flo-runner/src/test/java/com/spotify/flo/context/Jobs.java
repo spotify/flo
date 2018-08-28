@@ -26,7 +26,6 @@ import com.spotify.flo.TaskBuilder.F1;
 import com.spotify.flo.TaskOperator;
 import java.io.Serializable;
 import java.util.Map;
-import java.util.function.Consumer;
 
 class Jobs {
 
@@ -112,10 +111,5 @@ class Jobs {
     public JobResult(int records) {
       this.records = records;
     }
-  }
-
-
-  interface SerializableConsumer<T> extends Consumer<T>, Serializable {
-
   }
 }

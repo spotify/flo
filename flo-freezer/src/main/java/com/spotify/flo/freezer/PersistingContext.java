@@ -113,7 +113,7 @@ public class PersistingContext extends ForwardingEvalContext {
     }
   }
 
-  public static <T> T deserialize(Path filePath) throws Exception {
+  public static <T> T deserialize(Path filePath) throws IOException {
     return deserialize(Files.newInputStream(filePath));
   }
 
