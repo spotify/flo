@@ -41,6 +41,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 import com.google.common.collect.ImmutableMap;
 import com.spotify.flo.FloTesting;
@@ -88,7 +89,7 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -475,16 +476,11 @@ public class FloRunnerTest {
     try (TestScope ts = FloTesting.scope()) {
       PublishingContext.mock().value("foo", "17");
 
-      @SuppressWarnings("unchecked") final F1<PublishingContext.Value, String> mockProcessFn = Mockito.mock(F1.class);
-      when(mockProcessFn.apply(any())).thenThrow(new AssertionError());
-
       final Task<String> task = Task.named("task").ofType(String.class)
           .context(PublishingContext.of("foo"))
-          .process(mockProcessFn);
+          .process(v -> { throw new AssertionError(); });
 
       assertThat(runTask(task).future().get(30, SECONDS), is("17"));
-
-      verify(mockProcessFn, never()).apply(any());
 
       assertThat(PublishingContext.mock().lookups("foo"), is(1));
       assertThat(PublishingContext.mock().published("foo"), is(empty()));
@@ -553,8 +549,8 @@ public class FloRunnerTest {
 
     RecordingListener.replay(listener);
 
-    verify(listener).task(argThat(TaskMatchers.isTaskWithId(fooTask.id())));
-    verify(listener).task(argThat(TaskMatchers.isTaskWithId(barTask.id())));
+    verify(listener).task(argThat(task -> fooTask.id().equals(task.id())));
+    verify(listener).task(argThat(task -> barTask.id().equals(task.id())));
     verify(listener).status(fooTask.id(), Phase.START);
     verify(listener).status(fooTask.id(), Phase.SUCCESS);
     verify(listener).status(barTask.id(), Phase.START);
