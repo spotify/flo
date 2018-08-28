@@ -26,6 +26,7 @@ import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -57,6 +58,12 @@ class ChainedListener implements InstrumentedContext.Listener {
   public void status(TaskId taskId, Phase phase) {
     guardedCall(() -> first.status(taskId, phase));
     guardedCall(() -> second.status(taskId, phase));
+  }
+
+  @Override
+  public void meta(TaskId taskId, Map<String, String> data) {
+    guardedCall(() -> first.meta(taskId, data));
+    guardedCall(() -> second.meta(taskId, data));
   }
 
   private void guardedCall(Runnable call) {

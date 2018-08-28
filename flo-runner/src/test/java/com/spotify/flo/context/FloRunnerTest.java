@@ -31,6 +31,7 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -38,6 +39,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableMap;
@@ -48,6 +50,7 @@ import com.spotify.flo.TaskId;
 import com.spotify.flo.TestScope;
 import com.spotify.flo.Tracing;
 import com.spotify.flo.context.FloRunner.Result;
+import com.spotify.flo.context.InstrumentedContext.Listener.Phase;
 import com.spotify.flo.context.Jobs.JobOperator;
 import com.spotify.flo.context.Mocks.DataProcessing;
 import com.spotify.flo.context.Mocks.PublishingContext;
@@ -68,6 +71,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -81,15 +85,21 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@RunWith(MockitoJUnitRunner.class)
 public class FloRunnerTest {
 
   private static final Logger log = LoggerFactory.getLogger(FloRunnerTest.class);
 
-  final Task<String> FOO_TASK = Task.named("task").ofType(String.class)
+  static volatile String listenerOutputDir;
+
+  private final Task<String> FOO_TASK = Task.named("task").ofType(String.class)
       .process(() -> "foo");
 
   private TerminationHook validTerminationHook;
@@ -97,8 +107,12 @@ public class FloRunnerTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  @Mock InstrumentedContext.Listener listener;
+
   @Before
-  public void setUp() {
+  public void setUp() throws IOException {
+    listenerOutputDir = temporaryFolder.newFolder().getAbsolutePath();
+
     exceptionalTerminationHook = mock(TerminationHook.class);
     doThrow(new RuntimeException("hook exception")).when(exceptionalTerminationHook).accept(any());
 
@@ -522,6 +536,31 @@ public class FloRunnerTest {
 
     assertThat(result.jvmName, is(not(mainJvm)));
     assertThat(result.uri, is("hdfs://foo/bar"));
+  }
+
+  @Test
+  public void tasksAreObservedByInstrumentedContext()
+      throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    final Task<String> fooTask = Task.named("foo").ofType(String.class)
+        .process(() -> "foo");
+
+    final Task<String> barTask = Task.named("bar").ofType(String.class)
+        .operator(JobOperator.create())
+        .input(() -> fooTask)
+        .process((op, bar) -> op.success(res -> "foo" + bar));
+
+    FloRunner.runTask(barTask).future().get(30, SECONDS);
+
+    RecordingListener.replay(listener);
+
+    verify(listener).task(argThat(TaskMatchers.isTaskWithId(fooTask.id())));
+    verify(listener).task(argThat(TaskMatchers.isTaskWithId(barTask.id())));
+    verify(listener).status(fooTask.id(), Phase.START);
+    verify(listener).status(fooTask.id(), Phase.SUCCESS);
+    verify(listener).status(barTask.id(), Phase.START);
+    verify(listener).status(barTask.id(), Phase.SUCCESS);
+    verify(listener).meta(barTask.id(), Collections.singletonMap("task-id", barTask.id().toString()));
+    verifyNoMoreInteractions(listener);
   }
 
   private static String jvmName() {

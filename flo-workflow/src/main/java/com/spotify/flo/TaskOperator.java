@@ -20,6 +20,8 @@
 
 package com.spotify.flo;
 
+import static com.spotify.flo.BuilderUtils.guardedCall;
+
 import java.io.Serializable;
 import java.util.Map;
 
@@ -34,45 +36,23 @@ public interface TaskOperator<ContextT, SpecT, ResultT>
 
   ResultT perform(SpecT spec, Listener listener);
 
+  @FunctionalInterface
   interface Listener extends Serializable {
 
     /**
      * Called to report some piece of task metadata.
      *
      * @param task The task that is being evaluated
-     * @param key The metadata key.
-     * @param value The metadata value.
-     */
-    void meta(TaskId task, String key, String value);
-
-    /**
-     * Called to report some piece of task metadata.
-     *
-     * By default this methods calls <code>meta(TaskId task, String key, String value)</code>
-     * for each key-value pair.
-     *
-     * @param task The task that is being evaluated
      * @param data The key-value metadata
      */
-    default void meta(TaskId task, Map<String, String> data) {
-      data.forEach((key, value) -> meta(task, key, value));
-    }
+    void meta(TaskId task, Map<String, String> data);
 
-    Listener NOP = (Listener) (task, key, value) -> { };
+    Listener NOP = (task, data) -> { };
 
     default Listener composeWith(Listener listener) {
-      return new Listener() {
-        @Override
-        public void meta(TaskId task, String key, String value) {
-          Listener.this.meta(task, key, value);
-          listener.meta(task, key, value);
-        }
-
-        @Override
-        public void meta(TaskId task, Map<String, String> data) {
-          Listener.this.meta(task, data);
-          listener.meta(task, data);
-        }
+      return (task, data) -> {
+        guardedCall(() -> Listener.this.meta(task, data));
+        guardedCall(() -> listener.meta(task, data));
       };
     }
   }

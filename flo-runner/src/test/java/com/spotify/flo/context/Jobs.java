@@ -23,21 +23,25 @@ package com.spotify.flo.context;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskBuilder.F0;
 import com.spotify.flo.TaskBuilder.F1;
+import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskOperator;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Map;
-import java.util.function.Consumer;
 
 class Jobs {
 
   static class JobSpec<T> implements Serializable {
 
-    private F0<Map<String, ?>> options;
-    private SerializableConsumer<JobContext> pipelineConfigurator;
-    private SerializableConsumer<JobResult> resultValidator;
+    private final TaskId taskId;
+
+    private F0<Map<String, ?>> options = Collections::emptyMap;
+    private SerializableConsumer<JobContext> pipelineConfigurator = ctx -> {};
+    private SerializableConsumer<JobResult> resultValidator = result -> {};
     private F1<JobResult, T> successHandler;
 
-    JobSpec() {
+    JobSpec(TaskId taskId) {
+      this.taskId = taskId;
     }
 
     public JobSpec<T> options(F0<Map<String, ?>> options) {
@@ -65,7 +69,7 @@ class Jobs {
 
     @Override
     public JobSpec<T> provide(EvalContext evalContext) {
-      return new JobSpec<>();
+      return new JobSpec<>(evalContext.currentTask().get().id());
     }
 
     static <T> JobOperator<T> create() {
@@ -75,6 +79,7 @@ class Jobs {
     @Override
     public T perform(JobSpec<T> spec, Listener listener) {
       final JobContext jobContext = new JobContext(spec.options.get());
+      listener.meta(spec.taskId, Collections.singletonMap("task-id", spec.taskId.toString()));
       spec.pipelineConfigurator.accept(jobContext);
       final JobResult result = jobContext.run();
       spec.resultValidator.accept(result);
@@ -112,10 +117,5 @@ class Jobs {
     public JobResult(int records) {
       this.records = records;
     }
-  }
-
-
-  interface SerializableConsumer<T> extends Consumer<T>, Serializable {
-
   }
 }
