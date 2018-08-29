@@ -22,10 +22,10 @@ package com.spotify.flo.contrib.scio
 
 import com.spotify.flo.TaskId
 import com.spotify.scio.{ScioContext, ScioResult}
-import org.apache.beam.sdk.options.PipelineOptions
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 
 class ScioJobSpec[R, S](private[scio] val taskId: TaskId,
-                        private[scio] val options: Option[() => PipelineOptions] = None,
+                        private[scio] val options: () => PipelineOptions = () => PipelineOptionsFactory.create(),
                         private[scio] val pipeline: ScioContext => Unit = null,
                         private[scio] val result: (ScioContext, ScioResult) => R = null,
                         private[scio] val success: R => S = null,
@@ -34,7 +34,7 @@ class ScioJobSpec[R, S](private[scio] val taskId: TaskId,
 
   def options(options: () => PipelineOptions): ScioJobSpec[R, S] = {
     require(options != null)
-    new ScioJobSpec(taskId, Some(options), pipeline, result, success, failure)
+    new ScioJobSpec(taskId, options, pipeline, result, success, failure)
   }
 
   def pipeline(pipeline: ScioContext => Unit): ScioJobSpec[R, S] = {
