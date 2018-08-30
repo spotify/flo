@@ -24,7 +24,10 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
+import com.google.cloud.bigquery.CopyJobConfiguration;
+import com.google.cloud.bigquery.ExtractJobConfiguration;
 import com.google.cloud.bigquery.JobInfo;
+import com.google.cloud.bigquery.LoadJobConfiguration;
 import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.TableId;
 import com.spotify.flo.FloTesting;
@@ -52,7 +55,7 @@ public class BigQueryOperatorTest {
 
   @Test
   public void shouldRunQueryJobInTestMode() throws Exception {
-    TableId table = TableId.of("foo", "bar", "baz");
+    final TableId table = TableId.of("foo", "bar", "baz");
 
     final Task<TableId> task = Task.named("task")
         .ofType(TableId.class)
@@ -72,6 +75,70 @@ public class BigQueryOperatorTest {
       assertThat(result, is(table));
       assertThat(BigQueryMocking.mock().tablePublished(table), is(true));
       assertThat(BigQueryMocking.mock().tableExists(table), is(true));
+    }
+  }
+
+  @Test
+  public void shouldRunCopyJobInTestMode() throws Exception {
+    final TableId srcTable = TableId.of("foo", "bar", "src");
+    final TableId dstTable = TableId.of("foo", "bar", "dst");
+
+    final Task<TableId> task = Task.named("task")
+        .ofType(TableId.class)
+        .operator(BigQueryOperator.create())
+        .process(bq -> bq.job(
+            JobInfo.of(CopyJobConfiguration.of(dstTable, srcTable)))
+            .success(response -> dstTable));
+
+    try (TestScope scope = FloTesting.scope()) {
+
+      final TableId result = FloRunner.runTask(task).future()
+          .get(30, SECONDS);
+
+      assertThat(result, is(dstTable));
+    }
+  }
+
+  @Test
+  public void shouldRunLoadJobInTestMode() throws Exception {
+    final TableId dstTable = TableId.of("foo", "bar", "baz");
+    final String srcUri = "gs://foo/bar";
+
+    final Task<TableId> task = Task.named("task")
+        .ofType(TableId.class)
+        .operator(BigQueryOperator.create())
+        .process(bq -> bq.job(
+            JobInfo.of(LoadJobConfiguration.of(dstTable, srcUri)))
+            .success(response -> dstTable));
+
+    try (TestScope scope = FloTesting.scope()) {
+
+      final TableId result = FloRunner.runTask(task).future()
+          .get(30, SECONDS);
+
+      assertThat(result, is(dstTable));
+    }
+  }
+
+  @Test
+  public void shouldRunExtractJobInTestMode() throws Exception {
+    final TableId srcTable = TableId.of("foo", "bar", "baz");
+
+    final String destinationUri = "gs://foo/bar";
+
+    final Task<String> task = Task.named("task")
+        .ofType(String.class)
+        .operator(BigQueryOperator.create())
+        .process(bq -> bq.job(
+            JobInfo.of(ExtractJobConfiguration.of(srcTable, destinationUri)))
+            .success(response -> destinationUri));
+
+    try (TestScope scope = FloTesting.scope()) {
+
+      final String result = FloRunner.runTask(task).future()
+          .get(30, SECONDS);
+
+      assertThat(result, is(destinationUri));
     }
   }
 }
