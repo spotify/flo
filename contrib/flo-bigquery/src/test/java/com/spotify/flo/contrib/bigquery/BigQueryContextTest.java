@@ -63,7 +63,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BigQueryContextTest {
@@ -84,7 +84,6 @@ public class BigQueryContextTest {
   public void setup() {
     when(dataset.getLocation()).thenReturn(LOCATION);
     when(bigQuery.create(datasetInfoCaptor.capture())).thenReturn(dataset);
-    when(bigQuery.create(any(JobInfo.class))).thenReturn(mock(Job.class));
 
     floBigQueryClient = spy(new DefaultBigQueryClient(bigQuery));
   }
