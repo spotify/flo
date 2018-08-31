@@ -30,6 +30,7 @@ import com.spotify.scio.testing.JobTest
 import com.spotify.scio.testing.JobTest.BeamOptions
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
+import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -61,8 +62,7 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
       // Set up pipeline
       val jobTest = jobTestSupplier()
       jobTest.setUp()
-      val sc = scioContextForTest(jobTest.testId)
-      sc.options.as(classOf[ApplicationNameOptions]).setAppName(jobTest.testId)
+      val sc = scioContextForTest(spec.options(), jobTest.testId)
       spec.pipeline(sc)
 
       // Start job
@@ -95,12 +95,14 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
       "ScioOperator.mock().result(...) or ScioOperator.mock().result().jobTest(...) before running the workflow")
   }
 
-  private def scioContextForTest[U](testId: String) = {
+  private def scioContextForTest[U](options: PipelineOptions, testId: String) = {
     // ScioContext.forTest does not seem to allow specifying testId
-    val opts = PipelineOptionsFactory
-      .fromArgs("--appName=" + testId)
-      .as(classOf[PipelineOptions])
-    val sc = ScioContext(opts)
+    // always use DirectRunner on test mode
+    val runner = Class.forName("org.apache.beam.runners.direct.DirectRunner")
+      .asInstanceOf[Class[_ <: PipelineRunner[_ <: PipelineResult]]]
+    options.setRunner(runner)
+    options.as(classOf[ApplicationNameOptions]).setAppName(testId)
+    val sc = ScioContext(options)
     if (!sc.isTest) {
       throw new AssertionError(s"Failed to create ScioContext for test with id ${testId}")
     }
@@ -110,10 +112,7 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
   private def runProd[R](spec: ScioJobSpec[R, T], listener: TaskOperator.Listener): T = {
 
     // Set up pipeline
-    val sc = spec.options match {
-      case None => ScioContext()
-      case Some(options) => ScioContext(options())
-    }
+    val sc = ScioContext(spec.options())
     spec.pipeline(sc)
 
     // Start job
