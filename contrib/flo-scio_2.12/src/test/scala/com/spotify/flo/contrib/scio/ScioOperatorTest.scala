@@ -150,8 +150,8 @@ object ScioOperatorTest {
               })
               .saveAsTextFile(output)
           })
-          .result((sc, result) => {
-            val lines = result.counter(linesCounter).committed match {
+          .result(sr => {
+            val lines = sr.counter(linesCounter).committed match {
               case Some(n) => n
               case _ => 0
             }
