@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.spotify</groupId>
     <artifactId>flo</artifactId>
-    <version>0.3.4</version>
+    <version>0.3.5-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
 
@@ -23,7 +23,7 @@
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>flo-scala_2.11</artifactId>
-      <version>0.3.4</version>
+      <version>0.3.5-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.spotify</groupId>
