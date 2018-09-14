@@ -124,12 +124,14 @@ public final class FloRunner<T> {
   private Future<T> run(Task<T> task) {
     logging.header();
 
+    final TaskInfo taskInfo = TaskInfo.ofTask(task);
+
     if (isMode("tree")) {
-      logging.tree(TaskInfo.ofTask(task));
+      logging.tree(taskInfo);
       return CompletableFuture.completedFuture(null);
     }
 
-    logging.printPlan(TaskInfo.ofTask(task));
+    logging.printPlan(taskInfo);
 
     final EvalContext evalContext = createContext();
     final long t0 = System.nanoTime();
@@ -151,11 +153,11 @@ public final class FloRunner<T> {
 
       if (throwable != null) {
         logging.exception(throwable);
-        logging.complete(task.id(), Duration.ofNanos(System.nanoTime() - t0));
+        logging.complete(taskInfo, Duration.ofNanos(System.nanoTime() - t0));
         throw new CompletionException(throwable);
       }
 
-      logging.complete(task.id(), Duration.ofNanos(System.nanoTime() - t0));
+      logging.complete(taskInfo, Duration.ofNanos(System.nanoTime() - t0));
 
       return v;
     });

@@ -22,17 +22,23 @@ package com.spotify.flo.context;
 
 import static org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS;
 
+import com.google.auto.value.AutoValue;
 import com.spotify.flo.ControlException;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskInfo;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.status.TaskStatusException;
 import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 
-public class Logging {
+class Logging {
 
   private final Logger LOG;
+
+  private final ConcurrentMap<TaskId, Status> statuses = new ConcurrentHashMap<>();
 
   private Logging(Logger logger) {
     LOG = logger;
@@ -54,6 +60,7 @@ public class Logging {
   }
 
   <T> void completedValue(TaskId taskId, T value, Duration elapsed) {
+    statuses.put(taskId, Status.ofSuccess());
     LOG.info("{} Completed in {} -> {}",
         taskId, formatDurationHMS(elapsed.toMillis()), value);
   }
@@ -67,6 +74,7 @@ public class Logging {
   }
 
   void failedValue(TaskId taskId, Throwable valueError, Duration elapsed) {
+    statuses.put(taskId, Status.ofFailure(valueError));
     final String hms = formatDurationHMS(elapsed.toMillis());
     if (valueError instanceof TaskStatusException) {
       final String exception = valueError.getClass().getSimpleName();
@@ -78,8 +86,22 @@ public class Logging {
     }
   }
 
-  void complete(TaskId taskId, Duration elapsed) {
+  void complete(TaskInfo taskInfo, Duration elapsed) {
     LOG.info("Total time {}", formatDurationHMS(elapsed.toMillis()));
+
+    LOG.info("Executed {} out of {} tasks:", statuses.size(), PrintUtils.tree(taskInfo).size());
+    PrintUtils.traverseTree(taskInfo, (taskId, s) -> {
+      final Status status = statuses.get(taskId);
+      final String statusLine;
+      if (status == null) {
+        statusLine = "Pending";
+      } else if (status.success()) {
+        statusLine = "Success";
+      } else {
+        statusLine = "Failure: " + status.failure().map(Throwable::toString).orElse("Unknown Error");
+      }
+      LOG.info("{}: {}", s, statusLine);
+    });
   }
 
   void exception(Throwable throwable) {
@@ -100,5 +122,18 @@ public class Logging {
     LOG.info("Evaluation plan:");
     PrintUtils.tree(taskInfo).forEach(LOG::info);
     LOG.info("");
+  }
+
+  @AutoValue
+  static abstract class Status {
+    abstract boolean success();
+    abstract Optional<Throwable> failure();
+
+    static Status ofSuccess() {
+      return new AutoValue_Logging_Status(true, Optional.empty());
+    }
+    static Status ofFailure(Throwable t) {
+      return new AutoValue_Logging_Status(false, Optional.of(t));
+    }
   }
 }
