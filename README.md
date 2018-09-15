@@ -195,7 +195,7 @@ inputs are declared using a `Supplier<T>`, utilizing their properties for deferr
 someLibrary.maybeNeedsValue(() -> expensiveCalculation());
 ```
 
-This pattern is on its way to become an idiom for achieving lazyness in Java 8. A good example is
+This pattern is on its way to become an idiom for achieving laziness in Java 8. A good example is
 the additions to the [Java 8 Logger] class which lets the logger decide if the log line for a
 certain log level should be computed or not.
 
