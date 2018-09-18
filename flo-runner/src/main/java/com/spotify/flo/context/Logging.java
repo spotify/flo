@@ -126,14 +126,16 @@ class Logging {
 
   @AutoValue
   static abstract class Status {
-    abstract boolean success();
+    boolean success() {
+      return !failure().isPresent();
+    }
     abstract Optional<Throwable> failure();
 
     static Status ofSuccess() {
-      return new AutoValue_Logging_Status(true, Optional.empty());
+      return new AutoValue_Logging_Status(Optional.empty());
     }
     static Status ofFailure(Throwable t) {
-      return new AutoValue_Logging_Status(false, Optional.of(t));
+      return new AutoValue_Logging_Status(Optional.of(t));
     }
   }
 }
