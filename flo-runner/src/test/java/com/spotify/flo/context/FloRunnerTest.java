@@ -559,6 +559,25 @@ public class FloRunnerTest {
     verifyNoMoreInteractions(listener);
   }
 
+  @Test
+  public void evaluatesTaskOnce() throws ExecutionException, InterruptedException {
+    final AtomicInteger fooRuns = new AtomicInteger();
+    Task<String> foo = Task.named("foo").ofType(String.class)
+        .process(() -> String.valueOf(fooRuns.incrementAndGet()));
+
+    Task<String> bar = Task.named("bar").ofType(String.class)
+        .input(() -> foo)
+        .input(() -> foo)
+        .process((foo1, foo2) -> foo1 + foo2);
+
+    final Config config = ConfigFactory.load("flo")
+        .withValue("flo.forking", ConfigValueFactory.fromAnyRef(false));
+
+    FloRunner.runTask(bar, config).future().get();
+
+    assertThat(fooRuns.get(), is(1));
+  }
+
   private static String jvmName() {
     return ManagementFactory.getRuntimeMXBean().getName();
   }
