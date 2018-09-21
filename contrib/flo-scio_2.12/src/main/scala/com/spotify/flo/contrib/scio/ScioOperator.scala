@@ -80,7 +80,7 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
       }
 
       // Handle result
-      val result = Try(spec.result(scioResult.get))
+      val result = Try(spec.result(scioResult.get, sc.options))
       result match {
         case Failure(t) => return spec.failure(t)
         case _ =>
@@ -136,7 +136,7 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
     }
 
     // Handle result
-    val result = Try(spec.result(scioResult.get))
+    val result = Try(spec.result(scioResult.get, sc.options))
     result match {
       case Failure(t) => return spec.failure(t)
       case _ =>

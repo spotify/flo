@@ -27,7 +27,7 @@ import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 class ScioJobSpec[R, S](private[scio] val taskId: TaskId,
                         private[scio] val options: () => PipelineOptions = () => PipelineOptionsFactory.create(),
                         private[scio] val pipeline: ScioContext => Unit = null,
-                        private[scio] val result: ScioResult => R = null,
+                        private[scio] val result: (ScioResult, PipelineOptions) => R = null,
                         private[scio] val success: R => S = null,
                         private[scio] val failure: Throwable => S = (t: Throwable) => { throw t }
                        ) extends Serializable {
@@ -42,7 +42,7 @@ class ScioJobSpec[R, S](private[scio] val taskId: TaskId,
     new ScioJobSpec(taskId, options, pipeline, result, success, failure)
   }
 
-  def result[RN <: R](result: ScioResult => RN): ScioJobSpec[RN, S] = {
+  def result[RN <: R](result: (ScioResult, PipelineOptions) => RN): ScioJobSpec[RN, S] = {
     require(result != null)
     new ScioJobSpec(taskId, options, pipeline, result, success, failure)
   }
