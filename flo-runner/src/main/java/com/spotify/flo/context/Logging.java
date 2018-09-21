@@ -49,8 +49,6 @@ class Logging {
   }
 
   void header() {
-    LOG.info("Runner v{}", getClass().getPackage().getImplementationVersion());
-    LOG.info("");
   }
 
   void willEval(TaskId id) { }

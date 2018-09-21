@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -55,6 +56,7 @@ public class LoggingTest {
   }
 
   @Test
+  @Ignore
   public void completeShouldLogSummary() {
     sut.completedValue(BAR, "bar-value", Duration.ofSeconds(3));
     sut.failedValue(BAZ, new IOException("bug!"), Duration.ofSeconds(4));
