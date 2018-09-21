@@ -22,10 +22,12 @@ package com.spotify.flo.context;
 
 import static java.util.stream.Collectors.joining;
 
+import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import java.util.function.BiConsumer;
 
 /**
  * Utilities for printing the task tree
@@ -37,14 +39,16 @@ final class PrintUtils {
 
   static List<String> tree(TaskInfo taskInfo) {
     final List<String> lines = new ArrayList<>();
-
-    lines.add(taskInfo.id().toString());
-    popSubTree(taskInfo.inputs(), lines, new Stack<>());
-
+    traverseTree(taskInfo, (taskId, s) -> lines.add(s));
     return lines;
   }
 
-  private static void popSubTree(List<TaskInfo> inputs, List<String> list, Stack<Boolean> indents) {
+  static void traverseTree(TaskInfo taskInfo, BiConsumer<TaskId, String> consumer) {
+    consumer.accept(taskInfo.id(), taskInfo.id().toString());
+    popSubTree(taskInfo.inputs(), consumer, new Stack<>());
+  }
+
+  private static void popSubTree(List<TaskInfo> inputs, BiConsumer<TaskId, String> consumer, Stack<Boolean> indents) {
     for (int i = 0; i < inputs.size(); i++) {
       final TaskInfo taskInfo = inputs.get(i);
       final String indent = indents.stream()
@@ -56,10 +60,10 @@ final class PrintUtils {
           ? " ⤴"
           : "";
 
-      list.add(prefix + taskInfo.id() + refArrow);
+      consumer.accept(taskInfo.id(), prefix + taskInfo.id() + refArrow);
 
       indents.push(i == inputs.size() - 1);
-      popSubTree(taskInfo.inputs(), list, indents);
+      popSubTree(taskInfo.inputs(), consumer, indents);
       indents.pop();
     }
   }
