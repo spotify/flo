@@ -32,7 +32,7 @@ import java.util.Map;
  * an operation description. The operation description should be returned from the process fn.
  */
 public interface TaskOperator<ContextT, SpecT, ResultT>
-    extends TaskContext<ContextT> {
+    extends TaskContext<ContextT, ResultT> {
 
   ResultT perform(SpecT spec, Listener listener);
 

@@ -26,7 +26,7 @@ import static org.hamcrest.Matchers.is;
 
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContextStrict;
+import com.spotify.flo.TaskOutput;
 import com.spotify.flo.TaskId;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,7 +47,7 @@ public class OverridingContextTest {
 
   Map<TaskId, Integer> lookup = new HashMap<>();
 
-  TaskContextStrict<String, Integer> taskContext = new TaskContextStrict<String, Integer>() {
+  TaskOutput<String, Integer> output = new TaskOutput<String, Integer>() {
 
     @Override
     public String provide(EvalContext evalContext) {
@@ -120,7 +120,7 @@ public class OverridingContextTest {
 
   Task<Integer> rootTaskWithUpstreams(Task<Integer>... upstreams) {
     return Task.named("rootTask", "foo").ofType(Integer.class)
-        .context(taskContext)
+        .output(output)
         .inputs(() -> Arrays.asList(upstreams))
         .process((context, inputs) -> {
           countRootRuns++;
@@ -130,7 +130,7 @@ public class OverridingContextTest {
 
   Task<Integer> upstreamCharCount(String s) {
     return Task.named("charCount", s).ofType(Integer.class)
-        .context(taskContext)
+        .output(output)
         .process((context) -> {
           countUpstreamRuns++;
           return s.length();

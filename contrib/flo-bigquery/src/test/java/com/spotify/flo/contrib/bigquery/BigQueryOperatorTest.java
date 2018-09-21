@@ -59,7 +59,7 @@ public class BigQueryOperatorTest {
 
     final Task<TableId> task = Task.named("task")
         .ofType(TableId.class)
-        .context(BigQueryContext.create(table))
+        .output(BigQueryOutput.create(table))
         .operator(BigQueryOperator.create())
         .process((stagingTable, bq) -> bq.job(
             JobInfo.of(QueryJobConfiguration.newBuilder("SELECT foo FROM input")

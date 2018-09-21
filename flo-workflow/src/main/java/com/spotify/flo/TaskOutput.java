@@ -23,31 +23,17 @@ package com.spotify.flo;
 import java.util.Optional;
 
 /**
- * This is to be extended when building a {@link TaskContext} that is intended to work only with a
- * task whose returned value is of type {@link S}.
+ * An external output produced by a {@link Task}. If the output already exists,
+ * then the existing value is used and the task is not evaluated.
  */
-public abstract class TaskContextStrict<T, S> implements TaskContext<T> {
-
-  @Override
-  final public void onSuccess(Task<?> task, Object z) {
-   onSuccessStrict(task, (S) z);
-  }
-
-  /**
-   * Will be called just after a task that is using this task context has successfully evaluated.
-   *
-   * @param task The task that evaluated
-   * @param z    The return value of the evaluated task
-   */
-  public void onSuccessStrict(Task<?> task, S z) {
-  }
+public abstract class TaskOutput<T, S> implements TaskContext<T, S> {
 
   /**
    * Perform a lookup of the value this task would have produced if it ran. Override to be able
    * to short-circuit a task with a previously calculated value.
    *
-   * @param task a task with a {@link TaskContextStrict} to lookup a value for
-   * @return the value for this {@link TaskContextStrict} (e.g. from a previous run)
+   * @param task a task with a {@link TaskOutput} to lookup a value for
+   * @return the value for this {@link TaskOutput} (e.g. from a previous run)
    */
   public Optional<S> lookup(Task<S> task) {
     return Optional.empty();

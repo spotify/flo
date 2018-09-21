@@ -58,7 +58,7 @@ public class BigQueryMockingTest {
 
     final Task<TableId> task = Task.named("task")
         .ofType(TableId.class)
-        .context(BigQueryContext.create(expected))
+        .output(BigQueryOutput.create(expected))
         .process(table -> {
           throw new AssertionError();
         });
@@ -83,7 +83,7 @@ public class BigQueryMockingTest {
 
     final Task<TableId> task = Task.named("task")
         .ofType(TableId.class)
-        .context(BigQueryContext.create(expected))
+        .output(BigQueryOutput.create(expected))
         .process(StagingTableId::publish);
 
     try (TestScope scope = FloTesting.scope()) {
@@ -105,7 +105,7 @@ public class BigQueryMockingTest {
 
     final Task<TableId> task = Task.named("task")
         .ofType(TableId.class)
-        .context(BigQueryContext.create(expectedFinal))
+        .output(BigQueryOutput.create(expectedFinal))
         .process(actual -> {
           assertThat(actual.tableId(), is(expectedStaging));
           return actual.publish();

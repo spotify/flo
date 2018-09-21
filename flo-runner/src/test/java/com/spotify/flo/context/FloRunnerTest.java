@@ -36,17 +36,13 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 
 import com.google.common.collect.ImmutableMap;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskBuilder.F1;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.TestScope;
 import com.spotify.flo.Tracing;
@@ -54,7 +50,7 @@ import com.spotify.flo.context.FloRunner.Result;
 import com.spotify.flo.context.InstrumentedContext.Listener.Phase;
 import com.spotify.flo.context.Jobs.JobOperator;
 import com.spotify.flo.context.Mocks.DataProcessing;
-import com.spotify.flo.context.Mocks.PublishingContext;
+import com.spotify.flo.context.Mocks.PublishingOutput;
 import com.spotify.flo.context.Mocks.StorageLookup;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.freezer.PersistingContext;
@@ -88,7 +84,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -441,13 +436,13 @@ public class FloRunnerTest {
       final String jobResult = "42";
       final URI publishResult = URI.create("meta://bar/4711/");
 
-      PublishingContext.mock().publish(jobResult, publishResult);
+      PublishingOutput.mock().publish(jobResult, publishResult);
       StorageLookup.mock().data("bar", barInput);
       DataProcessing.mock().result("quux.baz", barInput, jobResult);
 
       final Task<String> task = Task.named("task").ofType(String.class)
           .input(() -> StorageLookup.of("bar"))
-          .context(PublishingContext.of("foo"))
+          .output(PublishingOutput.of("foo"))
           .process((bar, publisher) -> {
             // Run a data processing job and publish the result
             final String result = DataProcessing.runJob("quux.baz", bar);
@@ -458,14 +453,14 @@ public class FloRunnerTest {
 
       assertThat(DataProcessing.mock().jobRuns("quux.baz", barInput), is(1));
       assertThat(StorageLookup.mock().lookups("bar"), is(1));
-      assertThat(PublishingContext.mock().lookups("foo"), is(1));
-      assertThat(PublishingContext.mock().published("foo"), contains(jobResult));
+      assertThat(PublishingOutput.mock().lookups("foo"), is(1));
+      assertThat(PublishingOutput.mock().published("foo"), contains(jobResult));
     }
 
     // Verify that all mocks are cleared when leaving scope
     try (TestScope ts = FloTesting.scope()) {
-      assertThat(PublishingContext.mock().published("foo"), is(empty()));
-      assertThat(PublishingContext.mock().lookups("foo"), is(0));
+      assertThat(PublishingOutput.mock().published("foo"), is(empty()));
+      assertThat(PublishingOutput.mock().lookups("foo"), is(0));
     }
   }
 
@@ -474,16 +469,16 @@ public class FloRunnerTest {
 
     // Mock a context lookup and verify that the process fn does not run
     try (TestScope ts = FloTesting.scope()) {
-      PublishingContext.mock().value("foo", "17");
+      PublishingOutput.mock().value("foo", "17");
 
       final Task<String> task = Task.named("task").ofType(String.class)
-          .context(PublishingContext.of("foo"))
+          .output(PublishingOutput.of("foo"))
           .process(v -> { throw new AssertionError(); });
 
       assertThat(runTask(task).future().get(30, SECONDS), is("17"));
 
-      assertThat(PublishingContext.mock().lookups("foo"), is(1));
-      assertThat(PublishingContext.mock().published("foo"), is(empty()));
+      assertThat(PublishingOutput.mock().lookups("foo"), is(1));
+      assertThat(PublishingOutput.mock().published("foo"), is(empty()));
     }
   }
 

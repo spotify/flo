@@ -105,7 +105,7 @@ public interface EvalContext {
       });
 
       // Let the task contexts know the result
-      value.consume(t -> task.contexts().forEach(tc -> tc.onSuccess(task, t)));
+      value.consume(v -> task.contexts().forEach(tc -> tc.onSuccess(task, (T) v)));
       value.onFail(t -> task.contexts().forEach(tc -> tc.onFail(task, t)));
 
       return (Value<T>) value;

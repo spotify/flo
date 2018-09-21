@@ -24,7 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContextStrict;
+import com.spotify.flo.TaskOutput;
 import com.spotify.flo.TestContext;
 import com.spotify.flo.status.NotReady;
 import java.net.URI;
@@ -124,18 +124,21 @@ public class Mocks {
     }
   }
 
-  public static class PublishingContext extends TaskContextStrict<PublishingContext.Value, String> {
+  /**
+   * A {@link TaskOutput} that publishes the value to some storage system.
+   */
+  public static class PublishingOutput extends TaskOutput<PublishingOutput.Value, String> {
 
     private static final TestContext.Key<Mocking> MOCK = TestContext.key("publishing-context-mock", Mocking::new);
 
     private final String key;
 
-    private PublishingContext(String key) {
+    private PublishingOutput(String key) {
       this.key = key;
     }
 
-    public static PublishingContext of(String key) {
-      return new PublishingContext(key);
+    public static PublishingOutput of(String key) {
+      return new PublishingOutput(key);
     }
 
     @Override

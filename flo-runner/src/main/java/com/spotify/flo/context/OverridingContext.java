@@ -22,7 +22,7 @@ package com.spotify.flo.context;
 
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
-import com.spotify.flo.TaskContextStrict;
+import com.spotify.flo.TaskOutput;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,14 +46,14 @@ public class OverridingContext extends ForwardingEvalContext {
 
   @Override
   public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
-    final Optional<TaskContextStrict<?, T>> taskContextStrict =
+    final Optional<TaskOutput<?, T>> taskOutput =
         task.contexts().stream()
-            .filter(c -> c instanceof TaskContextStrict)
-            .<TaskContextStrict<?, T>>map(c -> (TaskContextStrict<?, T>) c)
+            .filter(c -> c instanceof TaskOutput)
+            .<TaskOutput<?, T>>map(c -> (TaskOutput<?, T>) c)
             .findFirst();
 
-    if (taskContextStrict.isPresent()) {
-      return context.value(() -> taskContextStrict.get().lookup(task))
+    if (taskOutput.isPresent()) {
+      return context.value(() -> taskOutput.get().lookup(task))
           .flatMap(value -> {
             if (value.isPresent()) {
               final T t = value.get();

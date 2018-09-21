@@ -45,7 +45,7 @@ public abstract class Task<T> implements Serializable {
 
   abstract Fn<List<Task<?>>> lazyInputs();
 
-  public abstract List<TaskContext<?>> contexts();
+  public abstract List<TaskContext<?, ? super T>> contexts();
 
   abstract Invokable processFn();
 
@@ -70,13 +70,13 @@ public abstract class Task<T> implements Serializable {
 
   static <T> Task<T> create(
       Fn<List<Task<?>>> inputs,
-      List<TaskContext<?>> contexts,
+      List<TaskContext<?, ? super T>> contexts,
       Class<T> type,
       TaskId taskId,
       Invokable processFn,
       List<ProcessFnArg> args) {
-    if (contexts.stream().filter(c -> c instanceof TaskContextStrict).count() > 1) {
-      throw new IllegalArgumentException("A task can have at most one TaskContextStrict");
+    if (contexts.stream().filter(c -> c instanceof TaskOutput).count() > 1) {
+      throw new IllegalArgumentException("A task can have at most one TaskOutput");
     }
     if (contexts.stream().filter(c -> c instanceof TaskOperator).count() > 1) {
       throw new IllegalArgumentException("A task can have at most one TaskOperator");
