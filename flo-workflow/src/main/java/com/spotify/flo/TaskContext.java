@@ -30,7 +30,7 @@ package com.spotify.flo;
 public interface TaskContext<T, S> {
 
   /**
-   * Creates a new task context instance of type {@link T}. The given {@link EvalContext} will be
+   * Creates a new instance of type {@link T}. The given {@link EvalContext} will be
    * the evaluation context for the task.
    * The task itself can be accessed through {@link EvalContext#currentTask()}.
    *
