@@ -26,36 +26,36 @@ import com.google.cloud.bigquery.TableId;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F0;
-import com.spotify.flo.TaskContextStrict;
+import com.spotify.flo.TaskOutput;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.threeten.bp.Duration;
 
-public class BigQueryContext extends TaskContextStrict<StagingTableId, TableId> {
+public class BigQueryOutput extends TaskOutput<StagingTableId, TableId> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(BigQueryContext.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BigQueryOutput.class);
 
   private final F0<FloBigQueryClient> bigQuerySupplier;
   private final TableId tableId;
 
   private transient FloBigQueryClient bigQuery;
 
-  BigQueryContext(F0<FloBigQueryClient> bigQuery, TableId tableId) {
+  BigQueryOutput(F0<FloBigQueryClient> bigQuery, TableId tableId) {
     this.bigQuerySupplier = bigQuery;
     this.tableId = tableId;
   }
 
-  public static BigQueryContext create(String project, String dataset, String table) {
+  public static BigQueryOutput create(String project, String dataset, String table) {
     return create(TableId.of(project, dataset, table));
   }
 
-  public static BigQueryContext create(TableId tableId) {
+  public static BigQueryOutput create(TableId tableId) {
     return create(BigQueryClientSingleton::bq, tableId);
   }
 
-  static BigQueryContext create(F0<FloBigQueryClient> bigQuerySupplier, TableId tableId) {
-    return new BigQueryContext(bigQuerySupplier, tableId);
+  static BigQueryOutput create(F0<FloBigQueryClient> bigQuerySupplier, TableId tableId) {
+    return new BigQueryOutput(bigQuerySupplier, tableId);
   }
 
   public TableId tableId() {

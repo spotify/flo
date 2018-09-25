@@ -16,7 +16,7 @@ trait TaskBuilder0[Z] {
   def inputs[A](tasks: => List[Task[A]]): TaskBuilder1[List[A], Z, Z]
 
   def context[A](taskContextGeneric: TaskContextGeneric[A]): TaskBuilder1[A, Z, Z]
-  def context[A](taskContextStrict: TaskContextStrict[A, Z]): TaskBuilder1[A, Z, Z]
+  def output[A](taskOutput: TaskOutput[A, Z]): TaskBuilder1[A, Z, Z]
   def operator[A, Y](taskOperator: TaskOperator[A, Y, Z]): TaskBuilder1[A, Y, Z]
 }
 {{#genBuilder}}
@@ -26,7 +26,7 @@ trait TaskBuilder{{arity}}[{{typeArgs}}, Y, Z] {
   {{^iter.isLast}}
 
   def context[{{nextArg}}](taskContextGeneric: TaskContextGeneric[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Y, Z]
-  def context[{{nextArg}}](taskContextStrict: TaskContextStrict[{{nextArg}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Y, Z]
+  def output[{{nextArg}}](taskOutput: TaskOutput[{{nextArg}}, Z]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Y, Z]
   def operator[{{nextArg}}, YN](taskOperator: TaskOperator[{{nextArg}}, YN, Z]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, YN, Z]
 
   def input[{{nextArg}}](task: => Task[{{nextArg}}]): TaskBuilder{{arityPlus}}[{{typeArgs}}, {{nextArg}}, Y, Z]

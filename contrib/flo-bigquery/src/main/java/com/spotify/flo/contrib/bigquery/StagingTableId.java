@@ -25,16 +25,16 @@ import java.util.Objects;
 
 public class StagingTableId {
 
-  private final BigQueryContext bigQueryContext;
+  private final BigQueryOutput bigQueryOutput;
   private final TableId tableId;
 
-  private StagingTableId(BigQueryContext bigQueryContext, TableId tableId) {
-    this.bigQueryContext = Objects.requireNonNull(bigQueryContext);
+  private StagingTableId(BigQueryOutput bigQueryOutput, TableId tableId) {
+    this.bigQueryOutput = Objects.requireNonNull(bigQueryOutput);
     this.tableId = Objects.requireNonNull(tableId);
   }
 
-  static StagingTableId of(BigQueryContext bigQueryContext, TableId tableId) {
-    return new StagingTableId(bigQueryContext, tableId);
+  static StagingTableId of(BigQueryOutput bigQueryOutput, TableId tableId) {
+    return new StagingTableId(bigQueryOutput, tableId);
   }
 
   public TableId tableId() {
@@ -42,7 +42,7 @@ public class StagingTableId {
   }
 
   public TableId publish() {
-    return bigQueryContext.publish(this);
+    return bigQueryOutput.publish(this);
   }
 
   @Override

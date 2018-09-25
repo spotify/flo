@@ -40,8 +40,8 @@ public class TaskTest {
 
   @Mock TaskOperator<String, String, String> operator1;
   @Mock TaskOperator<String, String, String> operator2;
-  @Mock TaskContextStrict<String, String> tcs1;
-  @Mock TaskContextStrict<String, String> tcs2;
+  @Mock TaskOutput<String, String> tcs1;
+  @Mock TaskOutput<String, String> tcs2;
 
   @Test
   public void shouldHaveListOfInputs() throws Exception {
@@ -79,11 +79,11 @@ public class TaskTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void shouldDisallowMultipleTaskContextStricts() {
+  public void shouldDisallowMultipleTaskOutputs() {
     Task.named("task")
         .ofType(String.class)
-        .context(tcs1)
-        .context(tcs2)
+        .output(tcs1)
+        .output(tcs2)
         .process((a, b) -> { throw new AssertionError(); });
   }
 

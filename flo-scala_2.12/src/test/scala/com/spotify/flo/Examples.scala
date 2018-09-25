@@ -148,6 +148,6 @@ class Publisher(val endpointId: String) extends TaskContextGeneric[Pub] {
     def pub(uri: String): Unit = println(s"Publishing $uri to $endpointId")
   }
 
-  override def onSuccess(task: Task[_], z: Any): Unit =
+  override def onSuccess(task: Task[_], z: AnyRef): Unit =
     println(s"${task.id} completed with $z")
 }

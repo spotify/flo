@@ -24,5 +24,5 @@ package com.spotify.flo;
  * This is to be extended when building a {@link TaskContext} that does not have requirements on the
  * type of the value returned by the task.
  */
-public abstract class TaskContextGeneric<T> implements TaskContext<T> {
+public abstract class TaskContextGeneric<T> implements TaskContext<T, Object> {
 }

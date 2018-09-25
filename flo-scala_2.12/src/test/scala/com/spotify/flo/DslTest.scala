@@ -50,7 +50,7 @@ class DslTest extends FlatSpec with Matchers {
       })
     val bar: Task[Array[String]] = defTaskNamed("bar")
       .input(foo)
-      .context(new TaskContextStrict[String, Array[String]] {
+      .output(new TaskOutput[String, Array[String]] {
         override def provide(evalContext: EvalContext): String = {
           val barContextJvm = ManagementFactory.getRuntimeMXBean.getName
           println(s"bar context jvm: $barContextJvm")

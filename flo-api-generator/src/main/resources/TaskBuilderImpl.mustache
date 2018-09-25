@@ -38,13 +38,13 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <A> TaskBuilder1<A, Z, Z> context(TaskContextGeneric<A> taskContext) {
-      return context_(taskContext);
+    public <A> TaskBuilder1<A, Z, Z> context(TaskContextGeneric<A> context) {
+      return context_(context);
     }
 
     @Override
-    public <A> TaskBuilder1<A, Z, Z> context(TaskContextStrict<A, Z> taskContext) {
-      return context_(taskContext);
+    public <A> TaskBuilder1<A, Z, Z> output(TaskOutput<A, Z> output) {
+      return context_(output);
     }
 
     @Override
@@ -52,7 +52,7 @@ final class {{implClassName}} {
       return context_(operator);
     }
 
-    private <A, Y> TaskBuilder1<A, Y, Z> context_(TaskContext<A> taskContext) {
+    private <A, Y> TaskBuilder1<A, Y, Z> context_(TaskContext<A, ? super Z> taskContext) {
       return new Builder1<>(
           inputs, appendToList(taskContexts, taskContext), taskId, type,
           appendToList(args, contextArg(taskContext)));
@@ -84,7 +84,7 @@ final class {{implClassName}} {
 
     Builder{{arity}}(
         Fn<List<Task<?>>> inputs,
-        List<TaskContext<?>> taskContexts,
+        List<TaskContext<?, ? super Z>> taskContexts,
         TaskId taskId,
         Class<Z> type,
         List<ProcessFnArg> args) {
@@ -99,13 +99,13 @@ final class {{implClassName}} {
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextGeneric<{{nextArg}}> taskContext) {
-      return context_(taskContext);
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextGeneric<{{nextArg}}> context) {
+      return context_(context);
     }
 
     @Override
-    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextStrict<{{nextArg}}, Z> taskContext) {
-      return context_(taskContext);
+    public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> output(TaskOutput<{{nextArg}}, Z> output) {
+      return context_(output);
     }
 
     @Override
@@ -113,7 +113,7 @@ final class {{implClassName}} {
       return context_(operator);
     }
 
-    private <{{nextArg}}, YN> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, YN, Z> context_(TaskContext<{{nextArg}}> taskContext) {
+    private <{{nextArg}}, YN> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, YN, Z> context_(TaskContext<{{nextArg}}, ? super Z> taskContext) {
       return new Builder{{arityPlus}}<>(
           inputs, appendToList(taskContexts, taskContext), taskId, type,
           appendToList(args, contextArg(taskContext)));
@@ -143,7 +143,7 @@ final class {{implClassName}} {
 
     Builder{{lastArity}}(
         Fn<List<Task<?>>> inputs,
-        List<TaskContext<?>> taskContexts,
+        List<TaskContext<?, ? super Z>> taskContexts,
         TaskId taskId,
         Class<Z> type,
         List<ProcessFnArg> args) {

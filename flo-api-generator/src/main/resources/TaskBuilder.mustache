@@ -23,8 +23,8 @@ public interface {{interfaceName}}<Z> {
 
   Task<Z> process(F0<Z> code);
 
-  <A> {{interfaceName}}1<A, Z, Z> context(TaskContextGeneric<A> taskContextGeneric);
-  <A> {{interfaceName}}1<A, Z, Z> context(TaskContextStrict<A, Z> taskContextStrict);
+  <A> {{interfaceName}}1<A, Z, Z> context(TaskContextGeneric<A> context);
+  <A> {{interfaceName}}1<A, Z, Z> output(TaskOutput<A, Z> output);
   <A, Y> {{interfaceName}}1<A, Y, Z> operator(TaskOperator<A, Y, Z> operator);
 
   <A> {{interfaceName}}1<A, Z, Z> input(Fn<Task<A>> task);
@@ -35,8 +35,8 @@ public interface {{interfaceName}}<Z> {
     Task<Z> process(F{{arity}}<{{typeArgs}}, Y> code);
   {{^iter.isLast}}
 
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextGeneric<{{nextArg}}> taskContextGeneric);
-    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextStrict<{{nextArg}}, Z> taskContextStrict);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextGeneric<{{nextArg}}> context);
+    <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> output(TaskOutput<{{nextArg}}, Z> output);
     <{{nextArg}}, YN> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, YN, Z> operator(TaskOperator<{{nextArg}}, YN, Z> operator);
 
     <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> input(Fn<Task<{{nextArg}}>> task);

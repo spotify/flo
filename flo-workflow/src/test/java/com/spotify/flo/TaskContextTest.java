@@ -67,10 +67,10 @@ public class TaskContextTest {
   public void lifecycleMethodsCalledInOrder() throws Exception {
     BasicTaskContext tc1 = spy(new BasicTaskContext("foo"));
     Injected injected = spy(new Injected());
-    strictTaskContext tc2 = spy(new strictTaskContext(injected, "bar"));
+    taskOutput tc2 = spy(new taskOutput(injected, "bar"));
     Task<String> task = Task.named("inject").ofType(String.class)
         .context(tc1)
-        .context(tc2)
+        .output(tc2)
         .process((i1, i2) -> {
           assertThat(i1, is("foo"));
           assertThat(i2, is("bar"));
@@ -199,12 +199,12 @@ public class TaskContextTest {
     }
   }
 
-  private class strictTaskContext extends TaskContextStrict<String, String> {
+  private class taskOutput extends TaskOutput<String, String> {
 
     private final Injected injected;
     private final String value;
 
-    private strictTaskContext(Injected injected, String value) {
+    private taskOutput(Injected injected, String value) {
       this.injected = injected;
       this.value = value;
     }
@@ -215,7 +215,7 @@ public class TaskContextTest {
     }
 
     @Override
-    public void onSuccessStrict(Task<?> task, String result) {
+    public void onSuccess(Task<?> task, String result) {
       injected.doSomething(result);
     }
   }

@@ -73,7 +73,7 @@ class BuilderUtils {
     return newList;
   }
 
-  static <T> ProcessFnArg contextArg(TaskContext<T> taskContext) {
+  static <T, S> ProcessFnArg contextArg(TaskContext<T, S> taskContext) {
     return ec -> ec.value(() -> taskContext.provide(ec));
   }
 
