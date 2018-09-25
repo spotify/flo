@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +70,7 @@ public class OverridingContextTest {
   }
 
   @Test
+  @Ignore
   public void shouldRunEverythingIfLookupsNotFound() {
     final Task<Integer> task = rootTaskWithUpstreams(
         upstreamCharCount("1"),
@@ -82,6 +84,7 @@ public class OverridingContextTest {
   }
 
   @Test
+  @Ignore
   public void shouldSkipOnExistingLookup() throws InterruptedException, ExecutionException {
     final Task<Integer> task = rootTaskWithUpstreams(
         upstreamCharCount("1"),
@@ -100,6 +103,7 @@ public class OverridingContextTest {
   }
 
   @Test
+  @Ignore
   public void shouldSkipUpstreamOnExistingLookup() throws InterruptedException, ExecutionException {
     final Task<Integer> upstream = upstreamCharCount("1");
     final Task<Integer> task = rootTaskWithUpstreams(
