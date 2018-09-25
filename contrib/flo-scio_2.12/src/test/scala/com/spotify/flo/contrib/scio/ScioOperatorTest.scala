@@ -30,6 +30,7 @@ import com.spotify.flo.contrib.scio.ScioOperatorTest.{JobError, lineCountingTask
 import com.spotify.flo.status.NotRetriable
 import com.spotify.scio.ScioMetrics
 import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.metrics.Counter
 import org.scalatest._
 
@@ -150,8 +151,11 @@ object ScioOperatorTest {
               })
               .saveAsTextFile(output)
           })
-          .result((sc, result) => {
-            val lines = result.counter(linesCounter).committed match {
+          .result((options, sr) => {
+            if (options eq null) {
+              throw new Exception("options expected")
+            }
+            val lines = sr.counter(linesCounter).committed match {
               case Some(n) => n
               case _ => 0
             }
