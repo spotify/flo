@@ -151,7 +151,7 @@ object ScioOperatorTest {
               })
               .saveAsTextFile(output)
           })
-          .result((sr, options) => {
+          .result((options, sr) => {
             if (options eq null) {
               throw new Exception("options expected")
             }
