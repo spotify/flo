@@ -34,6 +34,7 @@
       <groupId>com.spotify</groupId>
       <artifactId>scio-test_2.11</artifactId>
       <version>0.5.5</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.beam</groupId>
