@@ -23,6 +23,7 @@ package com.spotify.flo.context;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -32,7 +33,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class MemoizingContext extends ForwardingEvalContext {
 
-  private final ConcurrentMap<TaskId, Value<?>> ongoing = new ConcurrentHashMap<>();
+  private final ConcurrentMap<TaskId, CompletableFuture<Value<?>>> ongoing = new ConcurrentHashMap<>();
 
   private MemoizingContext(EvalContext baseContext) {
     super(baseContext);
@@ -45,6 +46,13 @@ public class MemoizingContext extends ForwardingEvalContext {
   @SuppressWarnings("unchecked")
   @Override
   public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
-    return (Value<T>) ongoing.computeIfAbsent(task.id(), taskId -> super.evaluateInternal(task, context));
+    final CompletableFuture<Value<?>> f = new CompletableFuture<>();
+    final CompletableFuture<Value<?>> existing = ongoing.putIfAbsent(task.id(), f);
+    if (existing != null) {
+      return (Value<T>) existing.join();
+    }
+    final Value<T> value = super.evaluateInternal(task, context);
+    f.complete(value);
+    return value;
   }
 }
