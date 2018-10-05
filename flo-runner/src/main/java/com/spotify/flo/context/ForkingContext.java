@@ -56,9 +56,6 @@ class ForkingContext extends ForwardingEvalContext {
 
   @Override
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
-    if (delegate == null) {
-      throw new UnsupportedOperationException("nested execution not supported");
-    }
     // Wrap the process fn in a lambda that will execute the original process fn closure in a sub-process.
     final Fn<T> forkingProcessFn = fork(taskId, processFn);
     // Pass on the wrapped process fn to let the rest of EvalContexts do their thing. The last EvalContext in the chain
@@ -78,7 +75,7 @@ class ForkingContext extends ForwardingEvalContext {
     }
   }
 
-  private <T> Fn<T> testFork(Fn<T> fn) {
+  private static <T> Fn<T> testFork(Fn<T> fn) {
     // We do not currently have a mechanism for transporting mock inputs and outputs into and out of the task process.
     LOG.debug("Test run, forking disabled - testing serialization");
     return () -> {
@@ -101,7 +98,7 @@ class ForkingContext extends ForwardingEvalContext {
     };
   }
 
-  private <T> Fn<T> realFork(TaskId taskId, Fn<T> fn) {
+  private static <T> Fn<T> realFork(TaskId taskId, Fn<T> fn) {
     return () -> {
       try (final ForkingExecutor executor = new ForkingExecutor()) {
         executor.environment(Collections.singletonMap("FLO_TASK_ID", taskId.toString()));

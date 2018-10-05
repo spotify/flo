@@ -27,6 +27,7 @@ import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -37,9 +38,6 @@ import com.spotify.flo.TaskId;
 import com.spotify.flo.context.FloRunner;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigValueFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ExecutionException;
@@ -49,7 +47,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -57,12 +54,6 @@ public class BigQueryTasksTest {
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
-
-  @Mock
-  FloBigQueryClient bq;
-
-  public static final Config NO_FORKING_CONFIG = ConfigFactory.load("flo")
-      .withValue("flo.forking", ConfigValueFactory.fromAnyRef(false));
 
   @Test
   public void lookupShouldBeSerializable() {
@@ -103,20 +94,26 @@ public class BigQueryTasksTest {
 
   @Test
   public void lookupShouldThrowNotReadyForNonExistentTable() throws Exception {
-    when(bq.tableExists(any())).thenReturn(false);
-    final Task<TableId> lookup = BigQueryTasks.lookup(() -> bq,
+    final Task<TableId> lookup = BigQueryTasks.lookup(() -> {
+          FloBigQueryClient bq = mock(FloBigQueryClient.class);
+          when(bq.tableExists(any())).thenReturn(false);
+          return bq;
+        },
         TableId.of("foo", "bar", "baz"));
     exception.expectCause(instanceOf(NotReady.class));
-    FloRunner.runTask(lookup, NO_FORKING_CONFIG)
+    FloRunner.runTask(lookup)
         .future().get(30, TimeUnit.SECONDS);
   }
 
   @Test
   public void lookupShouldReturnTableIdForExistingTable() throws Exception {
     final TableId expected = TableId.of("foo", "bar", "baz");
-    when(bq.tableExists(expected)).thenReturn(true);
-    final Task<TableId> lookup = BigQueryTasks.lookup(() -> bq, expected);
-    final TableId tableId = FloRunner.runTask(lookup, NO_FORKING_CONFIG)
+    final Task<TableId> lookup = BigQueryTasks.lookup(() -> {
+      FloBigQueryClient bq = mock(FloBigQueryClient.class);
+      when(bq.tableExists(expected)).thenReturn(true);
+      return bq;
+    }, expected);
+    final TableId tableId = FloRunner.runTask(lookup)
         .future().get(30, TimeUnit.SECONDS);
     assertThat(tableId, is(expected));
   }

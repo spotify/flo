@@ -74,7 +74,6 @@ public final class FloRunner<T> {
   private static final String MODE = "mode";
   private static final String FLO_ASYNC = "flo.async";
   private static final String FLO_WORKERS = "flo.workers";
-  private static final String FLO_FORKING = "flo.forking";
   private static final String FLO_STATE_LOCATION = "flo.state.location";
 
   private final Logging logging = Logging.create(LOG);
@@ -224,21 +223,10 @@ public final class FloRunner<T> {
     final boolean inDebugger = ManagementFactory.getRuntimeMXBean()
         .getInputArguments().stream().anyMatch(s -> s.contains("-agentlib:jdwp"));
 
-    if (hasExplicitConfigValue(FLO_FORKING)) {
-      if (config.getBoolean(FLO_FORKING)) {
-        LOG.debug("Forking enabled (config variable flo.forking=true)");
-        return ForkingContext.composeWith(baseContext);
-      } else {
-        LOG.debug("Forking disabled (config variable flo.forking=false)");
-        return baseContext;
-      }
-    } else if (inDebugger) {
-      LOG.debug("Debugger detected, dry-running forking "
-          + "(enable full forking by setting config variable flo.forking=true)");
+    if (inDebugger) {
+      LOG.debug("Debugger detected, dry-running forking");
       return ForkingContext.dryComposeWith(baseContext);
     } else {
-      LOG.debug("Debugger not detected, forking enabled by default "
-          + "(disable by setting config variable flo.forking=false)");
       return ForkingContext.composeWith(baseContext);
     }
   }
