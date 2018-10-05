@@ -19,7 +19,7 @@ jobs:
             JAVA: java -Xmx512m -Xms512m
             # Maven heap size
             MAVEN_OPTS: -Xmx256m -Xms256m
-          command: mvn -B verify scala:doc-jar -Pcoverage
+          command: mvn -B verify -Pcoverage,release -Dgpg.skip=true
       - run: bash <(curl -s https://codecov.io/bash)
 
   test_jdk10:
@@ -35,7 +35,7 @@ jobs:
           key: v1-deps-jdk10-{{ checksum "pom.xml" }}
           paths:
             - ~/.m2
-      - run: mvn -B verify scala:doc-jar
+      - run: mvn -B verify -Prelease -Dgpg.skip=true
 
 workflows:
   version: 2
