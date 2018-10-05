@@ -50,18 +50,18 @@ public class MemoizingContext extends ForwardingEvalContext {
     // and must not attempt to update any other mappings of this map.".
     // However, we could potentially use computeIfAbsent if we rewrite flo task evaluation
     // to be iterative instead of recursive.
-    final Promise<T> f = context.promise();
-    final Promise<?> existing = ongoing.putIfAbsent(task.id(), f);
+    final Promise<T> promise = context.promise();
+    final Promise<?> existing = ongoing.putIfAbsent(task.id(), promise);
     if (existing != null) {
       return (Value<T>) existing.value();
     }
     try {
       final Value<T> value = super.evaluateInternal(task, context);
-      value.onFail(f::fail);
-      value.consume(f::set);
+      value.onFail(promise::fail);
+      value.consume(promise::set);
     } catch (Throwable t) {
-      f.fail(t);
+      promise.fail(t);
     }
-    return f.value();
+    return promise.value();
   }
 }
