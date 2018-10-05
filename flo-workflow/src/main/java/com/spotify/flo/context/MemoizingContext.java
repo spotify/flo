@@ -46,10 +46,8 @@ public class MemoizingContext extends ForwardingEvalContext {
   @Override
   public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
     // Unfortunately we cannot use computeIfAbsent here because modification of the CHM
-    // in computeIfAbsents is not allowed: "... the computation should be short and simple,
+    // in computeIfAbsent is not allowed: "... the computation should be short and simple,
     // and must not attempt to update any other mappings of this map.".
-    // However, we could potentially use computeIfAbsent if we rewrite flo task evaluation
-    // to be iterative instead of recursive.
     final Promise<T> promise = context.promise();
     final Promise<?> existing = ongoing.putIfAbsent(task.id(), promise);
     if (existing != null) {
