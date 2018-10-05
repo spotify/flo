@@ -83,17 +83,13 @@ public class StructuredLoggingTest {
     }
   }
 
-  @Parameters({"true", "false"})
   @Test
-  public void testStructuredLoggingProgrammaticSetup(boolean forking) throws Exception {
-    configureForking(forking);
+  public void testStructuredLoggingProgrammaticSetup() throws Exception {
     verifyStructuredLogging(() -> StructuredLogging.configureStructuredLogging(Level.DEBUG));
   }
 
-  @Parameters({"true", "false"})
   @Test
-  public void testStructuredLoggingFileSetup(boolean forking) throws Exception {
-    configureForking(forking);
+  public void testStructuredLoggingFileSetup() throws Exception {
     verifyStructuredLogging(this::configureLogbackFromFile);
   }
 
@@ -168,18 +164,14 @@ public class StructuredLoggingTest {
     }
   }
 
-  @Parameters({"true", "false"})
   @Test
-  public void testTextLoggingProgrammaticSetup(boolean forking) throws Exception {
-    configureForking(forking);
+  public void testTextLoggingProgrammaticSetup() throws Exception {
     StructuredLogging.configureStructuredLogging();
     verifyTextLogging();
   }
 
-  @Parameters({"true", "false"})
   @Test
-  public void testTextLoggingFileSetup(boolean forking) throws Exception {
-    configureForking(forking);
+  public void testTextLoggingFileSetup() throws Exception {
     configureLogbackFromFile();
     verifyTextLogging();
   }
@@ -270,9 +262,5 @@ public class StructuredLoggingTest {
     exception.addSuppressed(new RuntimeException("suppressed1", new IllegalStateException("inner suppressed1")));
     exception.addSuppressed(new RuntimeException("suppressed2", new IllegalStateException("inner suppressed2")));
     return exception;
-  }
-
-  private void configureForking(boolean forking) {
-    env.set("FLO_FORKING", Boolean.toString(forking));
   }
 }

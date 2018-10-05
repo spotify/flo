@@ -56,15 +56,13 @@ import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
 import com.spotify.flo.status.NotRetriable;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigValueFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -73,8 +71,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -490,13 +490,10 @@ public class FloRunnerTest {
     final Task<Rock> task = Task.named("task").ofType(Rock.class)
         .process(() -> new Rock(value));
 
-    final Config config = ConfigFactory.load("flo")
-        .withValue("flo.forking", ConfigValueFactory.fromAnyRef(true));
-
     final Rock result;
 
     try (TestScope ts = FloTesting.scope()) {
-      result = FloRunner.runTask(task, config).future().get(30, SECONDS);
+      result = FloRunner.runTask(task).future().get(30, SECONDS);
     }
 
     // Check that the identity of the value changed due to serialization (dry fork)
@@ -555,22 +552,27 @@ public class FloRunnerTest {
   }
 
   @Test
-  public void evaluatesTaskOnce() throws ExecutionException, InterruptedException {
-    final AtomicInteger fooRuns = new AtomicInteger();
+  public void evaluatesTaskOnce() throws Exception {
+    final String fooRuns = temporaryFolder.newFolder().toString();
     Task<String> foo = Task.named("foo").ofType(String.class)
-        .process(() -> String.valueOf(fooRuns.incrementAndGet()));
+        .process(() -> {
+          final Path marker = Paths.get(fooRuns, UUID.randomUUID().toString());
+          try {
+            Files.createFile(marker);
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+          return marker.toString();
+        });
 
     Task<String> bar = Task.named("bar").ofType(String.class)
         .input(() -> foo)
         .input(() -> foo)
         .process((foo1, foo2) -> foo1 + foo2);
 
-    final Config config = ConfigFactory.load("flo")
-        .withValue("flo.forking", ConfigValueFactory.fromAnyRef(false));
+    FloRunner.runTask(bar).future().get();
 
-    FloRunner.runTask(bar, config).future().get();
-
-    assertThat(fooRuns.get(), is(1));
+    assertThat(Files.list(Paths.get(fooRuns)).count(), is(1L));
   }
 
   private static String jvmName() {

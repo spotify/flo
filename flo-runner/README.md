@@ -76,7 +76,6 @@ running the jar (`java -Dproperty=value <jar>`).
 
 | property | behaviour |
 |:---:|---|
-| **`-Dflo.forking=true`** | Fork a subprocess for each task. |
 | **`-Dflo.workers=n`** | Use `n` workers for running tasks concurrently. |
 | **`-Dmode=tree`** | Only print the Evaluation plan and exit. |
 
