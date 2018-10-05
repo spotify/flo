@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class MemoizingContext extends ForwardingEvalContext {
 
-  private final ConcurrentMap<TaskId, Value<?>> ongoing = new ConcurrentHashMap<>();
+  private final ConcurrentMap<TaskId, Promise<?>> ongoing = new ConcurrentHashMap<>();
 
   private MemoizingContext(EvalContext baseContext) {
     super(baseContext);
@@ -45,6 +45,21 @@ public class MemoizingContext extends ForwardingEvalContext {
   @SuppressWarnings("unchecked")
   @Override
   public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
-    return (Value<T>) ongoing.computeIfAbsent(task.id(), taskId -> super.evaluateInternal(task, context));
+    // Unfortunately we cannot use computeIfAbsent here because modification of the CHM
+    // in computeIfAbsent is not allowed: "... the computation should be short and simple,
+    // and must not attempt to update any other mappings of this map.".
+    final Promise<T> promise = context.promise();
+    final Promise<?> existing = ongoing.putIfAbsent(task.id(), promise);
+    if (existing != null) {
+      return (Value<T>) existing.value();
+    }
+    try {
+      final Value<T> value = super.evaluateInternal(task, context);
+      value.onFail(promise::fail);
+      value.consume(promise::set);
+    } catch (Throwable t) {
+      promise.fail(t);
+    }
+    return promise.value();
   }
 }
