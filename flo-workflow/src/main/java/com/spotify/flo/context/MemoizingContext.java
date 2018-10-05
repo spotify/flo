@@ -23,7 +23,6 @@ package com.spotify.flo.context;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -33,7 +32,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class MemoizingContext extends ForwardingEvalContext {
 
-  private final ConcurrentMap<TaskId, CompletableFuture<Value<?>>> ongoing = new ConcurrentHashMap<>();
+  private final ConcurrentMap<TaskId, Promise<?>> ongoing = new ConcurrentHashMap<>();
 
   private MemoizingContext(EvalContext baseContext) {
     super(baseContext);
@@ -46,13 +45,23 @@ public class MemoizingContext extends ForwardingEvalContext {
   @SuppressWarnings("unchecked")
   @Override
   public <T> Value<T> evaluateInternal(Task<T> task, EvalContext context) {
-    final CompletableFuture<Value<?>> f = new CompletableFuture<>();
-    final CompletableFuture<Value<?>> existing = ongoing.putIfAbsent(task.id(), f);
+    // Unfortunately we cannot use computeIfAbsent here because modification of the CHM
+    // in computeIfAbsents is not allowed: "... the computation should be short and simple,
+    // and must not attempt to update any other mappings of this map.".
+    // However, we could potentially use computeIfAbsent if we rewrite flo task evaluation
+    // to be iterative instead of recursive.
+    final Promise<T> f = context.promise();
+    final Promise<?> existing = ongoing.putIfAbsent(task.id(), f);
     if (existing != null) {
-      return (Value<T>) existing.join();
+      return (Value<T>) existing.value();
     }
-    final Value<T> value = super.evaluateInternal(task, context);
-    f.complete(value);
-    return value;
+    try {
+      final Value<T> value = super.evaluateInternal(task, context);
+      value.onFail(f::fail);
+      value.consume(f::set);
+    } catch (Throwable t) {
+      f.fail(t);
+    }
+    return f.value();
   }
 }
