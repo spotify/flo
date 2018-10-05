@@ -76,6 +76,10 @@ class JacksonJsonSerializer extends Serializer {
     if (type.getAnnotation(JsonSerialize.class) != null) {
       return true;
     }
+    final Class superclass = type.getSuperclass();
+    if (superclass != null && hasJsonSerializeAnnotation(superclass)) {
+      return true;
+    }
     for (Class iface : type.getInterfaces()) {
       if (hasJsonSerializeAnnotation(iface)) {
         return true;
