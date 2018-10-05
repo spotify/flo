@@ -25,10 +25,15 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
+import org.apache.beam.sdk.options.ApplicationNameOptions;
+import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -73,5 +78,29 @@ public class PersistingContextTest {
 
   private static class FoobarException extends Exception {
 
+  }
+
+  @Test
+  public void shouldBeAbleToSerializePipelineOptions() {
+    final String appName = "foobar-test";
+    final String jobName = "foo";
+    final long optionsId = 17;
+
+    // Original
+    final PipelineOptions opts = PipelineOptionsFactory.create();
+    opts.as(ApplicationNameOptions.class).setAppName(appName);
+    opts.setJobName(jobName);
+    opts.setOptionsId(optionsId);
+
+    // SerDe round trip
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    PersistingContext.serialize(opts, baos);
+    final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+    PipelineOptions deserialized = PersistingContext.deserialize(bais);
+
+    // Verify that the options survived SerDe
+    assertThat(deserialized.getJobName(), is(jobName));
+    assertThat(deserialized.getOptionsId(), is(optionsId));
+    assertThat(deserialized.as(ApplicationNameOptions.class).getAppName(), is(appName));
   }
 }

@@ -24,6 +24,7 @@ import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Registration;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.serializers.ClosureSerializer;
@@ -33,8 +34,9 @@ import com.spotify.flo.Fn;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.ForwardingEvalContext;
-import com.twitter.chill.IKryoRegistrar;
-import com.twitter.chill.KryoInstantiator;
+import com.twitter.chill.AllScalaRegistrar;
+import com.twitter.chill.KryoBase;
+import com.twitter.chill.ScalaKryoInstantiator;
 import com.twitter.chill.java.PackageRegistrar;
 import java.io.IOException;
 import java.io.InputStream;
@@ -127,36 +129,29 @@ public class PersistingContext extends ForwardingEvalContext {
 
   private static Kryo getKryo() {
 
-    // Look up chill-scala using reflection to avoid having a hard dependency on the
-    // chill-scala library and allow this to work with multiple scala versions.
-    Class<?> scalaKryoInstantiatorClass = null;
-    try {
-      scalaKryoInstantiatorClass = Class.forName("com.twitter.chill.ScalaKryoInstantiator");
-    } catch (ClassNotFoundException e) {
-      LOG.debug("Could not find com.twitter.chill.ScalaKryoInstantiator: {}", e.toString());
-    }
-
     final Kryo kryo;
 
     // Instantiate kryo..
-    if (scalaKryoInstantiatorClass!= null) {
+    if (hasChillScala()) {
       LOG.debug("using chill-scala");
       // ...for scala (includes java serializers)
-      final KryoInstantiator instantiator;
-      try {
-        instantiator = KryoInstantiator.class.cast(scalaKryoInstantiatorClass.newInstance());
-      } catch (InstantiationException | IllegalAccessException e) {
-        throw new RuntimeException(e);
-      }
-      kryo = instantiator.newKryo();
+      kryo = ScalaKryoSetup.getKryo();
     } else {
       // ...for java
       LOG.debug("using chill-java");
-      kryo = new Kryo();
+      kryo = new Kryo() {
+        @Override
+        public Registration getRegistration(Class type) {
+          // Intercept jackson serializable types
+          return JacksonJsonSerializer.getRegistration(this, type)
+              .orElseGet(() -> super.getRegistration(type));
+        }
+      };
       PackageRegistrar.all().apply(kryo);
       kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
     }
 
+    kryo.setRegistrationRequired(false);
     kryo.register(java.lang.invoke.SerializedLambda.class);
     try {
       // SimpleConfig is a package private class, hence using Class.forName to reference it
@@ -166,6 +161,7 @@ public class PersistingContext extends ForwardingEvalContext {
     }
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
     kryo.addDefaultSerializer(Throwable.class, new JavaSerializer());
+    JacksonJsonSerializer.register(kryo);
     return kryo;
   }
 
@@ -180,4 +176,32 @@ public class PersistingContext extends ForwardingEvalContext {
   private Path taskFile(TaskId taskId) {
     return basePath.resolve(cleanForFilename(taskId));
   }
+
+  private static boolean hasChillScala() {
+    try {
+      ScalaKryoInstantiator.class.getName();
+      return true;
+    } catch (NoClassDefFoundError e) {
+      LOG.debug("Could not find com.twitter.chill.ScalaKryoInstantiator: {}", e.toString());
+      return false;
+    }
+  }
+
+  private static class ScalaKryoSetup {
+
+    static Kryo getKryo() {
+      final Kryo kryo = new KryoBase() {
+        @Override
+        public Registration getRegistration(Class type) {
+          // Intercept jackson serializable types
+          return JacksonJsonSerializer.getRegistration(this, type)
+              .orElseGet(() -> super.getRegistration(type));
+        }
+      };
+      kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
+      new AllScalaRegistrar().apply(kryo);
+      return kryo;
+    }
+  }
+
 }
