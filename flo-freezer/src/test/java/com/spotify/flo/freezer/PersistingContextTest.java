@@ -23,6 +23,7 @@ package com.spotify.flo.freezer;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 import java.io.ByteArrayInputStream;
@@ -43,17 +44,13 @@ public class PersistingContextTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void exceptionSerialization() throws Exception {
+  public void exceptionSerialization() {
     final RuntimeException bar = new RuntimeException("bar");
     bar.addSuppressed(new IOException("baz", new InterruptedException("quux")));
-    final Exception exception1 = new Exception("foo", bar);
-    exception1.addSuppressed(new FoobarException());
-    final Exception exception = exception1;
+    final Exception exception = new Exception("foo", bar);
+    exception.addSuppressed(new FoobarException());
 
-    final Path exceptionFile = temporaryFolder.getRoot().toPath().resolve("exception");
-    PersistingContext.serialize(exception, exceptionFile);
-
-    final Exception deserialized = PersistingContext.deserialize(exceptionFile);
+    final Exception deserialized = serde(exception);
 
     // Verify that stack trace can be accessed and printed and seems to be correct
 
@@ -93,14 +90,28 @@ public class PersistingContextTest {
     opts.setOptionsId(optionsId);
 
     // SerDe round trip
-    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    PersistingContext.serialize(opts, baos);
-    final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-    PipelineOptions deserialized = PersistingContext.deserialize(bais);
+    PipelineOptions deserialized = serde(opts);
 
     // Verify that the options survived SerDe
     assertThat(deserialized.getJobName(), is(jobName));
     assertThat(deserialized.getOptionsId(), is(optionsId));
     assertThat(deserialized.as(ApplicationNameOptions.class).getAppName(), is(appName));
+  }
+
+  @Test
+  public void shouldBeAbleToSerializeJodaTime() {
+    org.joda.time.DateTime datetime = org.joda.time.DateTime.now();
+    org.joda.time.LocalDate localDate = org.joda.time.LocalDate.now();
+    org.joda.time.LocalDateTime localDateTime = org.joda.time.LocalDateTime.now();
+    assertEquals(datetime, serde(datetime));
+    assertEquals(localDate, serde(localDate));
+    assertEquals(localDateTime, serde(localDateTime));
+  }
+
+  private static <T> T serde(T o) {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    PersistingContext.serialize(o, baos);
+    final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+    return PersistingContext.deserialize(bais);
   }
 }

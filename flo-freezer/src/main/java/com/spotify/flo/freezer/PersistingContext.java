@@ -38,6 +38,9 @@ import com.twitter.chill.AllScalaRegistrar;
 import com.twitter.chill.KryoBase;
 import com.twitter.chill.ScalaKryoInstantiator;
 import com.twitter.chill.java.PackageRegistrar;
+import de.javakaffee.kryoserializers.jodatime.JodaDateTimeSerializer;
+import de.javakaffee.kryoserializers.jodatime.JodaLocalDateSerializer;
+import de.javakaffee.kryoserializers.jodatime.JodaLocalDateTimeSerializer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -162,6 +165,12 @@ public class PersistingContext extends ForwardingEvalContext {
     kryo.register(ClosureSerializer.Closure.class, new ClosureSerializer());
     kryo.addDefaultSerializer(Throwable.class, new JavaSerializer());
     JacksonJsonSerializer.register(kryo);
+
+    // joda time
+    kryo.register(org.joda.time.DateTime.class, new JodaDateTimeSerializer());
+    kryo.register(org.joda.time.LocalDate.class, new JodaLocalDateSerializer());
+    kryo.register(org.joda.time.LocalDateTime.class, new JodaLocalDateTimeSerializer());
+
     return kryo;
   }
 
