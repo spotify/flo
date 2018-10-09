@@ -52,6 +52,10 @@
     <module>contrib/flo-styx</module>
   </modules>
 
+  <properties>
+    <grpc.version>1.7.0</grpc.version>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -119,7 +123,7 @@
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-context</artifactId>
-        <version>1.7.0</version>
+        <version>${grpc.version}</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>
@@ -282,27 +286,27 @@
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-core</artifactId>
-        <version>1.7.0</version>
+        <version>${grpc.version}</version>
       </dependency>
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-stub</artifactId>
-        <version>1.7.0</version>
+        <version>${grpc.version}</version>
       </dependency>
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-netty</artifactId>
-        <version>1.7.0</version>
+        <version>${grpc.version}</version>
       </dependency>
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-protobuf</artifactId>
-        <version>1.7.0</version>
+        <version>${grpc.version}</version>
       </dependency>
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-auth</artifactId>
-        <version>1.7.0</version>
+        <version>${grpc.version}</version>
       </dependency>
       <dependency>
         <groupId>io.opencensus</groupId>
