@@ -51,17 +51,11 @@ class LoggingContext extends ForwardingEvalContext {
 
   @Override
   public <T> Value<T> invokeProcessFn(TaskId taskId, Fn<T> processFn) {
-    return super.invokeProcessFn(taskId, () -> {
-      logging.startEval(taskId);
-      final long t0 = System.nanoTime();
-      try {
-        final T tValue = processFn.get();
-        logging.completedValue(taskId, tValue, Duration.ofNanos(System.nanoTime() - t0));
-        return tValue;
-      } catch (Throwable e) {
-        logging.failedValue(taskId, e, Duration.ofNanos(System.nanoTime() - t0));
-        throw e;
-      }
-    });
+    logging.startEval(taskId);
+    final Value<T> value = super.invokeProcessFn(taskId, processFn);
+    final long t0 = System.nanoTime();
+    value.consume(v -> logging.completedValue(taskId, v, Duration.ofNanos(System.nanoTime() - t0)));
+    value.onFail(e -> logging.failedValue(taskId, e, Duration.ofNanos(System.nanoTime() - t0)));
+    return value;
   }
 }

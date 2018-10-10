@@ -58,6 +58,7 @@ import com.spotify.flo.status.NotReady;
 import com.spotify.flo.status.NotRetriable;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.nio.file.Files;
@@ -74,7 +75,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -485,10 +485,10 @@ public class FloRunnerTest {
   @Test
   public void shouldDryForkInTestMode() throws Exception {
     final String mainJvmName = jvmName();
-    final Object value = new Object();
+    final Rock rock = new Rock();
 
     final Task<Rock> task = Task.named("task").ofType(Rock.class)
-        .process(() -> new Rock(value));
+        .process(() -> rock);
 
     final Rock result;
 
@@ -497,7 +497,7 @@ public class FloRunnerTest {
     }
 
     // Check that the identity of the value changed due to serialization (dry fork)
-    assertThat(result.value, is(not(value)));
+    assertThat(result, is(not(rock)));
 
     // Check that the process fn ran in the main jvm
     assertThat(result.jvmName, is(mainJvmName));
@@ -579,7 +579,7 @@ public class FloRunnerTest {
     return ManagementFactory.getRuntimeMXBean().getName();
   }
 
-  private static class JobResult {
+  private static class JobResult implements Serializable {
     private final String jvmName;
     private final String uri;
 
@@ -589,13 +589,8 @@ public class FloRunnerTest {
     }
   }
 
-  private static class Rock {
+  private static class Rock implements Serializable {
 
     final String jvmName = jvmName();
-    final Object value;
-
-    public Rock(Object value) {
-      this.value = Objects.requireNonNull(value);
-    }
   }
 }

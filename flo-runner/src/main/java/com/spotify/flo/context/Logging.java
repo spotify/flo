@@ -28,17 +28,19 @@ import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskInfo;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.status.TaskStatusException;
+import java.io.Serializable;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 
-class Logging {
+class Logging implements Serializable {
 
   private final Logger LOG;
 
-  private final ConcurrentMap<TaskId, Status> statuses = new ConcurrentHashMap<>();
+  // TODO: Logging being Serializable and recording statuses here is awkward
+  private transient final ConcurrentMap<TaskId, Status> statuses = new ConcurrentHashMap<>();
 
   private Logging(Logger logger) {
     LOG = logger;
