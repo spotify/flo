@@ -21,9 +21,10 @@
 package com.spotify.flo.contrib.bigquery;
 
 import com.google.cloud.bigquery.TableId;
+import java.io.Serializable;
 import java.util.Objects;
 
-public class StagingTableId {
+public class StagingTableId implements Serializable {
 
   private final BigQueryOutput bigQueryOutput;
   private final TableId tableId;

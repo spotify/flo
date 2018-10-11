@@ -67,7 +67,7 @@ class ScioJobSpec[R, S](private[scio] val taskId: TaskId,
 }
 
 object ScioJobSpec {
-  class Provider[Z](taskId: TaskId) {
+  class Provider[Z](taskId: TaskId) extends Serializable {
     def apply(): ScioJobSpec[Any, Z] = new ScioJobSpec(taskId)
   }
 }
