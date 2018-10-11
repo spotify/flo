@@ -33,7 +33,9 @@ import java.io.NotSerializableException;
 import java.io.PrintWriter;
 import java.io.StreamCorruptedException;
 import java.io.StringWriter;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -84,6 +86,14 @@ public class PersistingContextTest {
     exception.expect(RuntimeException.class);
     exception.expectCause(instanceOf(NotSerializableException.class));
     PersistingContext.serialize(o, new ByteArrayOutputStream());
+  }
+
+  @Test
+  public void serializeShouldPropagateIOException() throws Exception {
+    final Object o = new Object();
+    exception.expect(RuntimeException.class);
+    exception.expectCause(instanceOf(NoSuchFileException.class));
+    PersistingContext.serialize(o, Paths.get("non-existent-dir", "file"));
   }
 
   @Test
