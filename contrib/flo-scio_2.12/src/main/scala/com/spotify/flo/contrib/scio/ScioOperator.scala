@@ -37,6 +37,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.{Failure, Try}
 
+@SerialVersionUID(1L)
 class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[_, T], T] {
 
   def provide(evalContext: EvalContext): ScioJobSpec.Provider[T] = {

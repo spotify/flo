@@ -163,6 +163,8 @@ public class Mocks {
 
     public static class Value implements Serializable {
 
+      private static final long serialVersionUID = 1L;
+
       private final String key;
 
       Value(String key) {

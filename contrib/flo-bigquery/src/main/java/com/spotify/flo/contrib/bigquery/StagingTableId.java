@@ -26,6 +26,8 @@ import java.util.Objects;
 
 public class StagingTableId implements Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   private final BigQueryOutput bigQueryOutput;
   private final TableId tableId;
 

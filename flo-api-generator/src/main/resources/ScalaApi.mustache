@@ -10,6 +10,7 @@ object FloTask {
   def named[Z: ClassTag](name: String, args: Any*): TaskBuilder0[Z] = new Builder0(name, args:_*)
 }
 
+@SerialVersionUID(1L)
 trait TaskBuilder0[Z] extends Serializable {
   def process(fn: => Z): Task[Z]
   def input[A](task: => Task[A]): TaskBuilder1[A, Z, Z]
@@ -21,6 +22,7 @@ trait TaskBuilder0[Z] extends Serializable {
 }
 {{#genBuilder}}
 
+@SerialVersionUID(1L)
 trait TaskBuilder{{arity}}[{{typeArgs}}, Y, Z] extends Serializable {
   def process(fn: ({{typeArgs}}) => Y): Task[Z]
   {{^iter.isLast}}

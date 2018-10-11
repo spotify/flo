@@ -29,6 +29,8 @@ import com.spotify.flo.contrib.bigquery.BigQueryOperation.Provider;
 
 public class BigQueryOperator<T> implements TaskOperator<BigQueryOperation.Provider<T>, BigQueryOperation<T, ?>, T> {
 
+  private static final long serialVersionUID = 1L;
+
   private BigQueryOperator() {
   }
 

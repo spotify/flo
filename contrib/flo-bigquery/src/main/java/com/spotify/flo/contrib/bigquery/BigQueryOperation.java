@@ -32,6 +32,8 @@ import java.util.Objects;
  */
 public class BigQueryOperation<T, R> implements Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   Fn<JobInfo> jobRequest;
   Fn<QueryRequest> queryRequest;
   F1<Object, T> success;
@@ -78,6 +80,8 @@ public class BigQueryOperation<T, R> implements Serializable {
   }
 
   public static class Provider<T> implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     Provider() {
     }

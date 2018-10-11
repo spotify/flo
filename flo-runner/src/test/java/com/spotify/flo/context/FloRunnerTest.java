@@ -579,6 +579,9 @@ public class FloRunnerTest {
   }
 
   private static class JobResult implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final String jvmName;
     private final String uri;
 
@@ -589,6 +592,8 @@ public class FloRunnerTest {
   }
 
   private static class Rock implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     final String jvmName = jvmName();
   }

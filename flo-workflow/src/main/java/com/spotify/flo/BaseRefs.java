@@ -30,6 +30,8 @@ import java.util.List;
  */
 abstract class BaseRefs<Z> implements Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   final Fn<List<Task<?>>> inputs;
   final List<TaskContext<?, ? super Z>> taskContexts;
   final List<ProcessFnArg> args;

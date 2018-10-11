@@ -9,6 +9,7 @@ import com.spotify.flo.dsl.Util._
 import _root_.scala.collection.JavaConversions
 import _root_.scala.reflect.ClassTag
 
+@SerialVersionUID(1L)
 private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) extends TaskBuilder0[Z] { self =>
 
   private val cls = implicitly[ClassTag[Z]].runtimeClass.asInstanceOf[Class[Z]]
@@ -51,6 +52,7 @@ private[dsl] class Builder0[Z: ClassTag](val name: String, val args: Any*) exten
 }
 {{#genBuilder}}
 
+@SerialVersionUID(1L)
 private[dsl] trait Builder{{arity}}[{{typeArgsNumA}}, Y, Z] extends TaskBuilder{{arity}}[{{typeArgsNumA}}, Y, Z] {
   self =>
   {{^iter.isFirst}}

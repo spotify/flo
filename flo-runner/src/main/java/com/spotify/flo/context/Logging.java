@@ -37,6 +37,8 @@ import org.slf4j.Logger;
 
 class Logging implements Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   private final Logger LOG;
 
   // TODO: Logging being Serializable and recording statuses here is awkward

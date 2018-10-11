@@ -34,6 +34,8 @@ import java.time.format.DateTimeFormatter;
 @AutoValue
 public abstract class Date implements Comparable<Date>, Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   private static final DateTimeFormatter ISO_FRAGMENT_FMT =
       DateTimeFormatter.ofPattern("uuuu-MM-dd");
 
