@@ -19,7 +19,7 @@ import com.spotify.flo.EvalContext.Value;
  * supposed to be used through fluent calls that eventually lead to a {@link Task} instance.
  */
 @Generated("com.spotify.flo.gen.ApiGeneratorProcessor")
-public interface {{interfaceName}}<Z> {
+public interface {{interfaceName}}<Z> extends Serializable {
 
   Task<Z> process(F0<Z> code);
 
@@ -31,7 +31,7 @@ public interface {{interfaceName}}<Z> {
   <A> {{interfaceName}}1<List<A>, Z, Z> inputs(Fn<List<Task<A>>> tasks);
 {{#genBuilder}}
 
-  interface {{interfaceName}}{{arity}}<{{typeArgs}}, Y, Z> {
+  interface {{interfaceName}}{{arity}}<{{typeArgs}}, Y, Z> extends Serializable {
     Task<Z> process(F{{arity}}<{{typeArgs}}, Y> code);
   {{^iter.isLast}}
 
