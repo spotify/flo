@@ -21,20 +21,25 @@
 package com.spotify.flo.freezer;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 public class PersistingContextTest {
 
+  @Rule public ExpectedException exception = ExpectedException.none();
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
@@ -69,6 +74,14 @@ public class PersistingContextTest {
     assertThat(deserialized.getStackTrace().length, is(not(0)));
     assertThat(deserialized.getStackTrace()[0].getClassName(), is("com.spotify.flo.freezer.PersistingContextTest"));
     assertThat(deserialized.getStackTrace()[0].getMethodName(), is("exceptionSerialization"));
+  }
+
+  @Test
+  public void shouldPropagateSerializationExceptions() {
+    final Object o = new Object();
+    exception.expect(RuntimeException.class);
+    exception.expectCause(instanceOf(NotSerializableException.class));
+    PersistingContext.serialize(o, new ByteArrayOutputStream());
   }
 
   private static class FoobarException extends Exception {
