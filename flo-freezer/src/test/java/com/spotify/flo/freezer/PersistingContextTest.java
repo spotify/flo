@@ -26,10 +26,12 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.PrintWriter;
+import java.io.StreamCorruptedException;
 import java.io.StringWriter;
 import java.nio.file.Path;
 import org.junit.Rule;
@@ -77,11 +79,18 @@ public class PersistingContextTest {
   }
 
   @Test
-  public void shouldPropagateSerializationExceptions() {
+  public void serializeShouldPropagateSerializationExceptions() {
     final Object o = new Object();
     exception.expect(RuntimeException.class);
     exception.expectCause(instanceOf(NotSerializableException.class));
     PersistingContext.serialize(o, new ByteArrayOutputStream());
+  }
+
+  @Test
+  public void deserializeShouldPropagateSerializationExceptions() {
+    exception.expect(RuntimeException.class);
+    exception.expectCause(instanceOf(StreamCorruptedException.class));
+    PersistingContext.deserialize(new ByteArrayInputStream("foobar".getBytes()));
   }
 
   private static class FoobarException extends Exception {
