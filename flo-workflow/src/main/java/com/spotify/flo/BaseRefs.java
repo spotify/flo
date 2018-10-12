@@ -38,17 +38,6 @@ abstract class BaseRefs<Z> implements Serializable {
   final TaskId taskId;
   protected final Class<Z> type;
 
-  /**
-   * No-arg constructor for serialization
-   */
-  BaseRefs() {
-    inputs = null;
-    taskContexts = null;
-    args = null;
-    taskId = null;
-    type = null;
-  }
-
   BaseRefs(TaskId taskId, Class<Z> type) {
     this(Collections::emptyList, Collections.emptyList(), Collections.emptyList(), taskId, type);
   }
