@@ -33,13 +33,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.Logger;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChainedListenerTest {
 
   @Mock Listener first;
   @Mock Listener second;
-  @Mock Logging logging;
+  @Mock Logger logger;
 
   final IOException ioException = new IOException("TestException");
 
@@ -49,7 +50,7 @@ public class ChainedListenerTest {
 
   @Before
   public void setUp() throws Exception {
-    sut = new ChainedListener(first, second, logging);
+    sut = new ChainedListener(first, second, logger);
   }
 
   @Test
@@ -66,7 +67,7 @@ public class ChainedListenerTest {
     doThrow(exception).when(first).task(any());
     sut.task(task);
 
-    verify(logging).exception(exception);
+    verify(logger).warn("Exception", exception);
     verify(second).task(task);
   }
 
@@ -84,7 +85,7 @@ public class ChainedListenerTest {
     doThrow(exception).when(first).status(any(), any());
     sut.status(task.id(), Phase.START);
 
-    verify(logging).exception(exception);
+    verify(logger).warn("Exception", exception);
     verify(second).status(task.id(), Phase.START);
   }
 

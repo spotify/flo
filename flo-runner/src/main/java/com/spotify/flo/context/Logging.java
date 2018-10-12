@@ -35,14 +35,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 
-class Logging implements Serializable {
-
-  private static final long serialVersionUID = 1L;
+class Logging {
 
   private final Logger LOG;
 
-  // TODO: Logging being Serializable and recording statuses here is awkward
-  private transient final ConcurrentMap<TaskId, Status> statuses = new ConcurrentHashMap<>();
+  private final ConcurrentMap<TaskId, Status> statuses = new ConcurrentHashMap<>();
 
   private Logging(Logger logger) {
     LOG = logger;
