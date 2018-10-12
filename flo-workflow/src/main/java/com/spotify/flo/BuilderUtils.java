@@ -23,11 +23,12 @@ package com.spotify.flo;
 import static com.spotify.flo.Values.toValueList;
 import static java.util.stream.Collectors.toList;
 
-import com.spotify.flo.EvalContext.Value;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,6 +93,23 @@ class BuilderUtils {
       call.run();
     } catch (Throwable t) {
       log.warn("Exception", t);
+    }
+  }
+
+  static <T> T requireSerializable(T o, String name) {
+    try (ObjectOutputStream oos = new ObjectOutputStream(new NullOutputStream())) {
+      oos.writeObject(o);
+      return o;
+    } catch (IOException e) {
+      throw new IllegalArgumentException(name + " not serializable: " + o, e);
+    }
+  }
+
+  private static class NullOutputStream extends OutputStream {
+
+    @Override
+    public void write(int b) {
+      // nop
     }
   }
 }
