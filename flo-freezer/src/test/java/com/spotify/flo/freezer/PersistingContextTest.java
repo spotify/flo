@@ -82,18 +82,16 @@ public class PersistingContextTest {
 
   @Test
   public void serializeShouldPropagateSerializationExceptions() {
-    final Object o = new Object();
     exception.expect(RuntimeException.class);
     exception.expectCause(instanceOf(NotSerializableException.class));
-    PersistingContext.serialize(o, new ByteArrayOutputStream());
+    PersistingContext.serialize(new Object(), new ByteArrayOutputStream());
   }
 
   @Test
   public void serializeShouldPropagateIOException() throws Exception {
-    final Object o = new Object();
     exception.expect(RuntimeException.class);
     exception.expectCause(instanceOf(NoSuchFileException.class));
-    PersistingContext.serialize(o, Paths.get("non-existent-dir", "file"));
+    PersistingContext.serialize("foobar", Paths.get("non-existent-dir", "file"));
   }
 
   @Test

@@ -87,7 +87,8 @@ public interface EvalContext {
       final TaskOperator operator = task.contexts().stream()
           .filter(c -> c instanceof TaskOperator)
           .map(c -> (TaskOperator) c)
-          .findAny().orElse(null);
+          .findAny()
+          .orElse(null);
 
       final Listener listener = context.listener();
       final Invokable processFn = task.processFn();
