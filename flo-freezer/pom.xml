@@ -30,5 +30,22 @@
       <groupId>com.typesafe</groupId>
       <artifactId>config</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>chill_2.11</artifactId>
+      <version>0.9.2</version>
+      <optional>true</optional>
+    </dependency>
+
+    <!--test deps-->
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-direct-java</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

@@ -3,6 +3,7 @@ package com.spotify.flo
 import java.lang.management.ManagementFactory
 
 import com.spotify.flo.context.FloRunner
+import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 import org.scalatest._
 
 class DslTest extends FlatSpec with Matchers {
@@ -92,6 +93,28 @@ class DslTest extends FlatSpec with Matchers {
       .future().get()
 
     result shouldBe (List(Some("foo"), None, Some(4711)), captured)
+  }
+
+  it should "be possible to use PipelineOptions" in {
+
+    val opts = PipelineOptionsFactory.create()
+
+    opts.setJobName("foo")
+    opts.as(classOf[ApplicationNameOptions]).setAppName("bar")
+
+    val task: Task[List[Any]] = defTaskNamed("foo")
+      .process({
+        List(opts.getJobName, opts.as(classOf[ApplicationNameOptions]).getAppName, opts)
+      })
+
+    val result = FloRunner.runTask(task)
+      .future().get()
+
+    result.size shouldBe 3
+    result(0) shouldBe "foo"
+    result(1) shouldBe "bar"
+    result(2).asInstanceOf[PipelineOptions].getJobName shouldBe "foo"
+    result(2).asInstanceOf[PipelineOptions].as(classOf[ApplicationNameOptions]).getAppName shouldBe "bar"
   }
 
   def classMethod: Task[String] = defTask().process("hello")
