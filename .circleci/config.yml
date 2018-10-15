@@ -8,7 +8,11 @@ jobs:
       - checkout
       - restore_cache:
           key: v1-deps-{{ checksum "pom.xml" }}
-      - run: mvn -B dependency:go-offline compile test-compile
+      - run:
+          environment:
+            # Maven heap size
+            MAVEN_OPTS: -Xmx256m -Xms256m
+          command: mvn -B dependency:go-offline compile test-compile
       - save_cache:
           key: v1-deps-{{ checksum "pom.xml" }}
           paths:
@@ -30,7 +34,11 @@ jobs:
       - checkout
       - restore_cache:
           key: v1-deps-jdk10-{{ checksum "pom.xml" }}
-      - run: mvn -B dependency:go-offline compile test-compile
+      - run:
+          environment:
+            # Maven heap size
+            MAVEN_OPTS: -Xmx256m -Xms256m
+          command: mvn -B dependency:go-offline compile test-compile
       - save_cache:
           key: v1-deps-jdk10-{{ checksum "pom.xml" }}
           paths:
