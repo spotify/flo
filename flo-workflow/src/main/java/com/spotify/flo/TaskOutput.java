@@ -32,10 +32,10 @@ public abstract class TaskOutput<T, S> implements TaskContext<T, S> {
    * Perform a lookup of the value this task would have produced if it ran. Override to be able
    * to short-circuit a task with a previously calculated value.
    *
-   * @param task a task with a {@link TaskOutput} to lookup a value for
+   * @param taskId a task id with a {@link TaskOutput} to lookup a value for
    * @return the value for this {@link TaskOutput} (e.g. from a previous run)
    */
-  public Optional<S> lookup(Task<S> task) {
+  public Optional<S> lookup(TaskId taskId) {
     return Optional.empty();
   }
 }

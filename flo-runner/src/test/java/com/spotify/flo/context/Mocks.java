@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
+import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskOutput;
 import com.spotify.flo.TestContext;
 import com.spotify.flo.status.NotReady;
@@ -147,7 +148,7 @@ public class Mocks {
     }
 
     @Override
-    public Optional<String> lookup(Task task) {
+    public Optional<String> lookup(TaskId task) {
       if (FloTesting.isTest()) {
         return MOCK.get().doLookup(key);
       } else {

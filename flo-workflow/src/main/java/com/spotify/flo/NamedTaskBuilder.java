@@ -20,10 +20,16 @@
 
 package com.spotify.flo;
 
+import io.vavr.Tuple2;
+import io.vavr.Tuple3;
+
 /**
  * The initial part of the {@link TaskBuilder} api which only holds the task name.
  * See {@link Task#named(String, Object...)}.
  */
 public interface NamedTaskBuilder {
   <Z> TaskBuilder<Z> ofType(Class<Z> type);
+  <Z> TaskBuilder<Z> ofType(TypeReference<Z> type);
+  <Z1, Z2> TaskBuilder<Tuple2<Z1, Z2>> ofType(Class<Z1> t1, Class<Z2> t2);
+  <Z1, Z2, Z3> TaskBuilder<Tuple3<Z1, Z2, Z3>> ofType(Class<Z1> t1, Class<Z2> t2, Class<Z3> t3);
 }

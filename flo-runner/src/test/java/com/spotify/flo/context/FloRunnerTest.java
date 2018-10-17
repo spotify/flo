@@ -41,9 +41,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.google.common.collect.ImmutableMap;
+import com.spotify.flo.EvalContext;
 import com.spotify.flo.FloTesting;
+import com.spotify.flo.MultiTaskOutput;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.TaskOutput;
 import com.spotify.flo.TestScope;
 import com.spotify.flo.Tracing;
 import com.spotify.flo.context.FloRunner.Result;
@@ -56,6 +59,8 @@ import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
 import com.spotify.flo.status.NotRetriable;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -573,6 +578,31 @@ public class FloRunnerTest {
     FloRunner.runTask(bar).future().get();
 
     assertThat(Files.list(Paths.get(fooRuns)).count(), is(1L));
+  }
+
+  @Test
+  public void canRunMultiOutputTask() throws InterruptedException, ExecutionException, TimeoutException {
+    final TaskOutput<String, String> o1 = new TaskOutput<String, String>() {
+      @Override
+      public String provide(EvalContext evalContext) {
+        return "hello";
+      }
+    };
+
+    final TaskOutput<Integer, Integer> o2 = new TaskOutput<Integer, Integer>() {
+      @Override
+      public Integer provide(EvalContext evalContext) {
+        return 17;
+      }
+    };
+
+    final Task<Tuple2<String, Integer>> foo = Task.named("foo")
+        .ofType(String.class, Integer.class)
+        .output(MultiTaskOutput.of(o1, o2))
+        .process(p -> Tuple.of(p._1 + " world", p._2 * 4711));
+
+    final Tuple2<String, Integer> result = FloRunner.runTask(foo).future().get(30, SECONDS);
+    assertThat(result, is(Tuple.of("hello world", 17 * 4711)));
   }
 
   private static String jvmName() {

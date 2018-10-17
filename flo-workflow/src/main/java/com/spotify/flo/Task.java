@@ -21,6 +21,8 @@
 package com.spotify.flo;
 
 import com.google.auto.value.AutoValue;
+import io.vavr.Tuple2;
+import io.vavr.Tuple3;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +43,7 @@ public abstract class Task<T> implements Serializable {
 
   public abstract TaskId id();
 
+  // TODO: change to java.lang.reflect.Type
   public abstract Class<T> type();
 
   abstract Fn<List<Task<?>>> lazyInputs();
@@ -99,6 +102,23 @@ public abstract class Task<T> implements Serializable {
     @Override
     public <Z> TaskBuilder<Z> ofType(Class<Z> type) {
       return TaskBuilderImpl.rootBuilder(taskId, type);
+    }
+
+    @Override
+    public <Z> TaskBuilder<Z> ofType(TypeReference<Z> type) {
+      return TaskBuilderImpl.rootBuilder(taskId, type.klass());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <Z1, Z2> TaskBuilder<Tuple2<Z1, Z2>> ofType(Class<Z1> t1, Class<Z2> t2) {
+      return (TaskBuilder<Tuple2<Z1, Z2>>) (TaskBuilder) ofType(Tuple2.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <Z1, Z2, Z3> TaskBuilder<Tuple3<Z1, Z2, Z3>> ofType(Class<Z1> t1, Class<Z2> t2, Class<Z3> t3) {
+      return (TaskBuilder<Tuple3<Z1, Z2, Z3>>) (TaskBuilder) ofType(Tuple3.class);
     }
   }
 }

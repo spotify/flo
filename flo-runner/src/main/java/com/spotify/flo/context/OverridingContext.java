@@ -53,7 +53,7 @@ public class OverridingContext extends ForwardingEvalContext {
             .findFirst();
 
     if (taskOutput.isPresent()) {
-      return context.value(() -> taskOutput.get().lookup(task))
+      return context.value(() -> taskOutput.get().lookup(task.id()))
           .flatMap(value -> {
             if (value.isPresent()) {
               final T t = value.get();

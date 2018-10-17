@@ -55,8 +55,8 @@ public class OverridingContextTest {
     }
 
     @Override
-    public Optional<Integer> lookup(Task<Integer> task) {
-      return Optional.ofNullable(lookup.get(task.id()));
+    public Optional<Integer> lookup(TaskId taskId) {
+      return Optional.ofNullable(lookup.get(taskId));
     }
   };
 
