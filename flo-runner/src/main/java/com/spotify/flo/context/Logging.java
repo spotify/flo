@@ -28,6 +28,7 @@ import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskInfo;
 import com.spotify.flo.freezer.Persisted;
 import com.spotify.flo.status.TaskStatusException;
+import java.io.Serializable;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;

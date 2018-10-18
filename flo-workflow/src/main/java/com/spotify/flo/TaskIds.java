@@ -32,6 +32,8 @@ import java.util.stream.Stream;
 @AutoValue
 abstract class TaskIds implements TaskId, Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   public abstract String args();
 
   static TaskId create(String name, Object... args) {

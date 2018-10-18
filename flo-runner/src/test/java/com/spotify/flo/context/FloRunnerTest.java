@@ -58,6 +58,7 @@ import com.spotify.flo.status.NotReady;
 import com.spotify.flo.status.NotRetriable;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.nio.file.Files;
@@ -69,12 +70,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -121,17 +120,17 @@ public class FloRunnerTest {
   @Test
   public void nonBlockingRunnerDoesNotBlock() throws Exception {
     final Path directory = temporaryFolder.newFolder().toPath();
-    final Path startedFile = directory.resolve("started");
-    final Path latchFile = directory.resolve("latch");
-    final Path happenedFile = directory.resolve("happened");
+    final File startedFile = directory.resolve("started").toFile();
+    final File latchFile = directory.resolve("latch").toFile();
+    final File happenedFile = directory.resolve("happened").toFile();
 
     final Task<Void> task = Task.named("task").ofType(Void.class)
         .process(() -> {
           try {
-            Files.write(startedFile, new byte[0]);
+            startedFile.createNewFile();
             while (true) {
-              if (Files.exists(latchFile)) {
-                Files.write(happenedFile, new byte[0]);
+              if (latchFile.exists()) {
+                happenedFile.createNewFile();
                 return null;
               }
               Thread.sleep(100);
@@ -146,7 +145,7 @@ public class FloRunnerTest {
     // Verify that the task ran at all
     CompletableFuture.supplyAsync(() -> {
       while (true) {
-        if (Files.exists(startedFile)) {
+        if (startedFile.exists()) {
           return true;
         }
         try {
@@ -165,21 +164,21 @@ public class FloRunnerTest {
     }
 
     // If this file doesn't exist now, it's likely that runTask doesn't block
-    assertThat(Files.exists(happenedFile), is(false));
+    assertThat(happenedFile.exists(), is(false));
 
-    Files.write(latchFile, new byte[0]);
+    latchFile.createNewFile();
   }
 
   @Test
   public void blockingRunnerBlocks() throws IOException {
-    final Path file = temporaryFolder.newFile().toPath();
+    final File file = temporaryFolder.newFile();
 
     final Task<Void> task = Task.named("task").ofType(Void.class)
         .process(() -> {
           try {
             Thread.sleep(10);
             try {
-              Files.write(file, "hello".getBytes(UTF_8));
+              Files.write(file.toPath(), "hello".getBytes(UTF_8));
             } catch (IOException e) {
               throw new RuntimeException(e);
             }
@@ -191,7 +190,7 @@ public class FloRunnerTest {
 
     runTask(task).waitAndExit(status -> { });
 
-    assertThat(new String(Files.readAllBytes(file), UTF_8), is("hello"));
+    assertThat(new String(Files.readAllBytes(file.toPath()), UTF_8), is("hello"));
   }
 
   @Test
@@ -485,10 +484,10 @@ public class FloRunnerTest {
   @Test
   public void shouldDryForkInTestMode() throws Exception {
     final String mainJvmName = jvmName();
-    final Object value = new Object();
+    final Rock rock = new Rock();
 
     final Task<Rock> task = Task.named("task").ofType(Rock.class)
-        .process(() -> new Rock(value));
+        .process(() -> rock);
 
     final Rock result;
 
@@ -497,7 +496,7 @@ public class FloRunnerTest {
     }
 
     // Check that the identity of the value changed due to serialization (dry fork)
-    assertThat(result.value, is(not(value)));
+    assertThat(result, is(not(rock)));
 
     // Check that the process fn ran in the main jvm
     assertThat(result.jvmName, is(mainJvmName));
@@ -579,7 +578,10 @@ public class FloRunnerTest {
     return ManagementFactory.getRuntimeMXBean().getName();
   }
 
-  private static class JobResult {
+  private static class JobResult implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final String jvmName;
     private final String uri;
 
@@ -589,13 +591,10 @@ public class FloRunnerTest {
     }
   }
 
-  private static class Rock {
+  private static class Rock implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     final String jvmName = jvmName();
-    final Object value;
-
-    public Rock(Object value) {
-      this.value = Objects.requireNonNull(value);
-    }
   }
 }

@@ -27,6 +27,7 @@ import com.spotify.flo.Task;
 import com.spotify.flo.TaskOutput;
 import com.spotify.flo.TestContext;
 import com.spotify.flo.status.NotReady;
+import java.io.Serializable;
 import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.List;
@@ -160,7 +161,9 @@ public class Mocks {
       return MOCK.get();
     }
 
-    public static class Value {
+    public static class Value implements Serializable {
+
+      private static final long serialVersionUID = 1L;
 
       private final String key;
 

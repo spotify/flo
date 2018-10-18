@@ -2,18 +2,10 @@ package com.spotify.flo
 
 import java.nio.file.Files
 
-import com.esotericsoftware.kryo.Kryo
 import com.spotify.flo.freezer.PersistingContext
 import org.scalatest._
 
 class PersistingContextTest extends FlatSpec with Matchers {
-
-  "com.twitter.chill.AllScalaRegistrar" should "be available" in {
-    val cls = Class.forName("com.twitter.chill.AllScalaRegistrar")
-    val kryo = new Kryo
-    val registrar = cls.newInstance().asInstanceOf[com.twitter.chill.AllScalaRegistrar]
-    registrar.apply(kryo)
-  }
 
   "PersistingContext" should "be able to serialize and deserialize scala collections" in {
     val f = Files.createTempFile(null, null)

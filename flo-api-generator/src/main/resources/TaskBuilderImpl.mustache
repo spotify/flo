@@ -21,11 +21,15 @@ import static com.spotify.flo.Values.toValueList;
 @Generated("com.spotify.flo.gen.ApiGeneratorProcessor")
 final class {{implClassName}} {
 
+  private static final long serialVersionUID = 1L;
+
   static <Z> {{interfaceName}}<Z> rootBuilder(TaskId taskId, Class<Z> type) {
     return new Builder0<>(taskId, type);
   }
 
   private static class Builder0<Z> extends BaseRefs<Z> implements {{interfaceName}}<Z> {
+
+    private static final long serialVersionUID = 1L;
 
     Builder0(TaskId taskId, Class<Z> type) {
       super(taskId, type);
@@ -81,6 +85,8 @@ final class {{implClassName}} {
   // {{arity}}<{{typeArgs}}, Z>
 
   private static class Builder{{arity}}<{{typeArgs}}, Y, Z> extends BaseRefs<Z> implements {{interfaceName}}{{arity}}<{{typeArgs}}, Y, Z> {
+
+    private static final long serialVersionUID = 1L;
 
     Builder{{arity}}(
         Fn<List<Task<?>>> inputs,
@@ -140,6 +146,8 @@ final class {{implClassName}} {
 {{/genBuilder}}
 
   private static class Builder{{lastArity}}<{{lastTypeArgs}}, Y, Z> extends BaseRefs<Z> implements {{interfaceName}}{{lastArity}}<{{lastTypeArgs}}, Y, Z> {
+
+    private static final long serialVersionUID = 1L;
 
     Builder{{lastArity}}(
         Fn<List<Task<?>>> inputs,

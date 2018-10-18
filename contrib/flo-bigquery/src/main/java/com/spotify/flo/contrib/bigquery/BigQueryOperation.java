@@ -24,12 +24,15 @@ import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.QueryRequest;
 import com.spotify.flo.Fn;
 import com.spotify.flo.TaskBuilder.F1;
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * A BigQuery operation to be executed by the {@link BigQueryOperator}.
  */
-public class BigQueryOperation<T, R> {
+public class BigQueryOperation<T, R> implements Serializable {
+
+  private static final long serialVersionUID = 1L;
 
   Fn<JobInfo> jobRequest;
   Fn<QueryRequest> queryRequest;
@@ -76,7 +79,9 @@ public class BigQueryOperation<T, R> {
     return new BigQueryOperation<T, JobInfo>().job(job);
   }
 
-  public static class Provider<T> {
+  public static class Provider<T> implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     Provider() {
     }

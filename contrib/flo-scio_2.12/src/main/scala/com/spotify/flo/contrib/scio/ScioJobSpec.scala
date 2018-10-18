@@ -24,6 +24,7 @@ import com.spotify.flo.TaskId
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 
+@SerialVersionUID(1L)
 class ScioJobSpec[R, S](private[scio] val taskId: TaskId,
                         private[scio] val options: () => PipelineOptions = () => PipelineOptionsFactory.create(),
                         private[scio] val pipeline: ScioContext => Unit = null,
@@ -67,7 +68,8 @@ class ScioJobSpec[R, S](private[scio] val taskId: TaskId,
 }
 
 object ScioJobSpec {
-  class Provider[Z](taskId: TaskId) {
+  @SerialVersionUID(1L)
+  class Provider[Z](taskId: TaskId) extends Serializable {
     def apply(): ScioJobSpec[Any, Z] = new ScioJobSpec(taskId)
   }
 }

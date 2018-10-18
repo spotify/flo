@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
 
 /**
  * A {@link InstrumentedContext.Listener} that chains calls between two other listener instances.
@@ -38,14 +39,14 @@ class ChainedListener implements InstrumentedContext.Listener {
 
   private final InstrumentedContext.Listener first;
   private final InstrumentedContext.Listener second;
-  private final Logging logging;
+  private final Logger logger;
 
   ChainedListener(InstrumentedContext.Listener first,
                   InstrumentedContext.Listener second,
-                  Logging logging) {
+                  Logger logger) {
     this.first = requireNonNull(first);
     this.second = requireNonNull(second);
-    this.logging = requireNonNull(logging);
+    this.logger = requireNonNull(logger);
   }
 
   @Override
@@ -70,7 +71,7 @@ class ChainedListener implements InstrumentedContext.Listener {
     try {
       call.run();
     } catch (Throwable t) {
-      logging.exception(t);
+      logger.warn("Exception", t);
     }
   }
 
@@ -92,7 +93,7 @@ class ChainedListener implements InstrumentedContext.Listener {
     try {
       listener.close();
     } catch (IOException e) {
-      logging.exception(e);
+      logger.warn("Exception", e);
       return Optional.of(e);
     }
     return Optional.empty();

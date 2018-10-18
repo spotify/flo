@@ -20,6 +20,8 @@
 
 package com.spotify.flo;
 
+import java.io.Serializable;
+
 /**
  * TaskContext interface for operation objects that will be injected into tasks.
  *
@@ -27,7 +29,7 @@ package com.spotify.flo;
  * operations before and after the task evaluates. A common use case for task contexts is to be able
  * to integrate 3rd party libraries into Flo in a way that makes them easily accessible to tasks.
  */
-public interface TaskContext<T, S> {
+public interface TaskContext<T, S> extends Serializable {
 
   /**
    * Creates a new instance of type {@link T}. The given {@link EvalContext} will be

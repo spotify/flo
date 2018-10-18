@@ -84,10 +84,11 @@ public interface EvalContext {
       // Call preRun on task contexts after all args are evaluated
       task.contexts().forEach(tc -> tc.preRun(task));
 
-      final Optional<TaskOperator> operator = task.contexts().stream()
+      final TaskOperator operator = task.contexts().stream()
           .filter(c -> c instanceof TaskOperator)
           .map(c -> (TaskOperator) c)
-          .findAny();
+          .findAny()
+          .orElse(null);
 
       final Listener listener = context.listener();
       final Invokable processFn = task.processFn();
@@ -99,9 +100,11 @@ public interface EvalContext {
         final Object result = processFn.invoke(as.toArray());
 
         // Run operator
-        return operator
-            .map(o -> o.perform(result, listener))
-            .orElse(result);
+        if (operator != null) {
+          return operator.perform(result, listener);
+        } else {
+          return result;
+        }
       });
 
       // Let the task contexts know the result

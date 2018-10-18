@@ -20,10 +20,12 @@
 
 package com.spotify.flo;
 
+import java.io.Serializable;
+
 /**
  * An identifier that uniquely identifies a Task Instance
  */
-public interface TaskId {
+public interface TaskId extends Serializable {
 
   /**
    * @return The name of the task

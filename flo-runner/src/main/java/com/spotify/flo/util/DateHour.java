@@ -38,6 +38,8 @@ import java.time.temporal.ChronoUnit;
 @AutoValue
 public abstract class DateHour implements Comparable<DateHour>, Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   private static final DateTimeFormatter ISO_FRAGMENT_FMT =
       DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH")
           .withZone(UTC);

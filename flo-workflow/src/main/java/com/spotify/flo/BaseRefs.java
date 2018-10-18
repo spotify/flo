@@ -20,6 +20,7 @@
 
 package com.spotify.flo;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,7 +28,9 @@ import java.util.List;
  * A convenience class for holding some reference. This is only so that we don't have to repeat
  * these declaration in every class above.
  */
-class BaseRefs<Z> {
+abstract class BaseRefs<Z> implements Serializable {
+
+  private static final long serialVersionUID = 1L;
 
   final Fn<List<Task<?>>> inputs;
   final List<TaskContext<?, ? super Z>> taskContexts;

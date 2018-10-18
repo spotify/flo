@@ -214,7 +214,7 @@ public final class FloRunner<T> {
     for (FloListenerFactory factory : factories) {
       final Listener newListener =
           requireNonNull(factory.createListener(config));
-      listener = new ChainedListener(newListener, listener, logging);
+      listener = new ChainedListener(newListener, listener, LOG);
     }
     return listener;
   }

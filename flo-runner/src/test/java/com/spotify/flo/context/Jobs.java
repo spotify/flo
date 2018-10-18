@@ -33,6 +33,8 @@ class Jobs {
 
   static class JobSpec<T> implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private final TaskId taskId;
 
     private F0<Map<String, ?>> options = Collections::emptyMap;

@@ -21,20 +21,29 @@
 package com.spotify.flo.freezer;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.PrintWriter;
+import java.io.StreamCorruptedException;
 import java.io.StringWriter;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 public class PersistingContextTest {
 
+  @Rule public ExpectedException exception = ExpectedException.none();
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
@@ -69,6 +78,27 @@ public class PersistingContextTest {
     assertThat(deserialized.getStackTrace().length, is(not(0)));
     assertThat(deserialized.getStackTrace()[0].getClassName(), is("com.spotify.flo.freezer.PersistingContextTest"));
     assertThat(deserialized.getStackTrace()[0].getMethodName(), is("exceptionSerialization"));
+  }
+
+  @Test
+  public void serializeShouldPropagateSerializationExceptions() {
+    exception.expect(RuntimeException.class);
+    exception.expectCause(instanceOf(NotSerializableException.class));
+    PersistingContext.serialize(new Object(), new ByteArrayOutputStream());
+  }
+
+  @Test
+  public void serializeShouldPropagateIOException() throws Exception {
+    exception.expect(RuntimeException.class);
+    exception.expectCause(instanceOf(NoSuchFileException.class));
+    PersistingContext.serialize("foobar", Paths.get("non-existent-dir", "file"));
+  }
+
+  @Test
+  public void deserializeShouldPropagateSerializationExceptions() {
+    exception.expect(RuntimeException.class);
+    exception.expectCause(instanceOf(StreamCorruptedException.class));
+    PersistingContext.deserialize(new ByteArrayInputStream("foobar".getBytes()));
   }
 
   private static class FoobarException extends Exception {

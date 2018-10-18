@@ -39,6 +39,8 @@ import java.util.List;
 @AutoValue
 public abstract class Task<T> implements Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   public abstract TaskId id();
 
   public abstract Class<T> type();
