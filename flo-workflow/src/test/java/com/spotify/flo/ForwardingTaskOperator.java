@@ -20,41 +20,26 @@
 
 package com.spotify.flo;
 
-import java.util.Optional;
+public class ForwardingTaskOperator<ContextT, SpecT, ResultT> implements TaskOperator<ContextT, SpecT, ResultT> {
 
-public class ForwardingTaskOutput<T, S> extends TaskOutput<T, S> {
-  private final Fn<TaskOutput<T, S>> delegate;
+  private final Fn<TaskOperator<ContextT, SpecT, ResultT>> delegate;
 
-  private ForwardingTaskOutput(Fn<TaskOutput<T, S>> delegate) {
+  private ForwardingTaskOperator(Fn<TaskOperator<ContextT, SpecT, ResultT>> delegate) {
     this.delegate = delegate;
   }
 
   @Override
-  public Optional<S> lookup(Task<S> task) {
-    return delegate.get().lookup(task);
+  public ResultT perform(SpecT spec, Listener listener) {
+    return delegate.get().perform(spec, listener);
   }
 
   @Override
-  public T provide(EvalContext evalContext) {
+  public ContextT provide(EvalContext evalContext) {
     return delegate.get().provide(evalContext);
   }
 
-  @Override
-  public void preRun(Task<?> task) {
-    delegate.get().preRun(task);
-  }
-
-  @Override
-  public void onSuccess(Task<?> task, S z) {
-    delegate.get().onSuccess(task, z);
-  }
-
-  @Override
-  public void onFail(Task<?> task, Throwable throwable) {
-    delegate.get().onFail(task, throwable);
-  }
-
-  public static <T, S> TaskOutput<T, S> forwardingOutput(Fn<TaskOutput<T, S>> delegate) {
-    return new ForwardingTaskOutput<>(delegate);
+  public static <ContextT, SpecT, ResultT> TaskOperator<ContextT, SpecT, ResultT> forwardingOperator(
+      Fn<TaskOperator<ContextT, SpecT, ResultT>> delegate) {
+    return new ForwardingTaskOperator<>(delegate);
   }
 }

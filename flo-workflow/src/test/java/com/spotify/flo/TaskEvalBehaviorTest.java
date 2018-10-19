@@ -42,12 +42,21 @@ import java.util.stream.Stream;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * Tests that verify the interaction between {@link Task} instances and the {@link EvalContext}.
  */
 public class TaskEvalBehaviorTest {
+
+  private static final AtomicInteger counter = new AtomicInteger(0);
+  private static final AtomicBoolean processed = new AtomicBoolean(false);
+
+  @Before
+  public void setUp() throws Exception {
+    counter.set(0);
+  }
 
   @Test
   public void shouldRunAsExpected() throws Exception {
@@ -243,7 +252,6 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldEvaluateInputsInParallelForChainedTask() throws Exception {
-    AtomicBoolean processed = new AtomicBoolean(false);
     Task<String> task = Task.named("WithInputs").ofType(String.class)
         .input(() -> leaf("A"))
         .input(() -> leaf("B"))
@@ -253,10 +261,10 @@ public class TaskEvalBehaviorTest {
           return "done: " + a + b + c;
         });
 
-    validateParallelEvaluation(task, processed);
+    validateParallelEvaluation(task);
   }
 
-  private void validateParallelEvaluation(Task<String> task, AtomicBoolean processed)
+  private void validateParallelEvaluation(Task<String> task)
       throws InterruptedException {
 
     ControlledBlockingContext context = new ControlledBlockingContext();
@@ -379,7 +387,6 @@ public class TaskEvalBehaviorTest {
   }
 
   private static Fn<Task<Integer>> countConstructor() {
-    AtomicInteger counter = new AtomicInteger(0);
     return () -> {
       int n = counter.incrementAndGet();
       return Task.named("Count", n).ofType(Integer.class)

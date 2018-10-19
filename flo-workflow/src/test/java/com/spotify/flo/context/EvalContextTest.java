@@ -20,6 +20,7 @@
 
 package com.spotify.flo.context;
 
+import static com.spotify.flo.ForwardingTaskOperator.forwardingOperator;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,6 +31,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -39,8 +41,8 @@ public class EvalContextTest {
   private static final String SPEC = "spec";
   private static final String RESULT = "result";
 
-  @Mock private TaskOperator.Listener listener;
-  @Mock private TaskOperator<String, String, String> operator;
+  @Mock private static TaskOperator.Listener listener;
+  @Mock private static TaskOperator<String, String, String> operator;
 
   private Task<String> task;
 
@@ -48,7 +50,7 @@ public class EvalContextTest {
   public void setup() {
     task = Task.named("test")
         .ofType(String.class)
-        .operator(operator)
+        .operator(forwardingOperator(() -> operator))
         .process(provided -> SPEC);
   }
 

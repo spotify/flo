@@ -29,17 +29,24 @@ import com.spotify.flo.AwaitValue;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Task;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Before;
 import org.junit.Test;
 
 public class MemoizingContextTest {
 
-  EvalContext context = MemoizingContext.composeWith(sync());
+  private EvalContext context = MemoizingContext.composeWith(sync());
+
+  private static final AtomicInteger counter = new AtomicInteger(0);
+
+  @Before
+  public void setUp() throws Exception {
+    counter.set(0);
+  }
 
   @Test
   public void deDuplicatesSameTasks() throws Exception {
-    AtomicInteger counter = new AtomicInteger(0);
     Task<Integer> count = Task.named("Count").ofType(Integer.class)
-        .process(counter::incrementAndGet);
+        .process(() -> counter.incrementAndGet());
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
         .input(() -> count)
