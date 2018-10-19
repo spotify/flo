@@ -8,7 +8,11 @@ jobs:
       - checkout
       - restore_cache:
           key: v1-deps-{{ checksum "pom.xml" }}
-      - run: mvn -B dependency:go-offline compile test-compile
+      - run:
+          environment:
+            # Maven heap size
+            MAVEN_OPTS: -Xmx1024m -Xms1024m
+          command: mvn -B dependency:go-offline compile test-compile
       - save_cache:
           key: v1-deps-{{ checksum "pom.xml" }}
           paths:
@@ -18,7 +22,7 @@ jobs:
             # Configure datastore emulator heap size
             JAVA: java -Xmx512m -Xms512m
             # Maven heap size
-            MAVEN_OPTS: -Xmx256m -Xms256m
+            MAVEN_OPTS: -Xmx1024m -Xms1024m
           command: mvn -B verify scala:doc-jar -Pcoverage
       - run: bash <(curl -s https://codecov.io/bash)
 
@@ -30,7 +34,11 @@ jobs:
       - checkout
       - restore_cache:
           key: v1-deps-jdk10-{{ checksum "pom.xml" }}
-      - run: mvn -B dependency:go-offline compile test-compile
+      - run:
+          environment:
+            # Maven heap size
+            MAVEN_OPTS: -Xmx1024m -Xms1024m
+          command: mvn -B dependency:go-offline compile test-compile
       - save_cache:
           key: v1-deps-jdk10-{{ checksum "pom.xml" }}
           paths:
