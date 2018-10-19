@@ -26,13 +26,17 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
+import com.spotify.flo.Fn;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.io.StringWriter;
+import java.lang.invoke.SerializedLambda;
+import java.lang.reflect.Method;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -99,6 +103,46 @@ public class PersistingContextTest {
     exception.expect(RuntimeException.class);
     exception.expectCause(instanceOf(StreamCorruptedException.class));
     PersistingContext.deserialize(new ByteArrayInputStream("foobar".getBytes()));
+  }
+
+  @Test
+  public void shouldProvideDetailedDebugInformationOnSerializationExceptions() throws ReflectiveOperationException {
+    class Quux {}
+    class Baz implements Serializable {
+      final Quux quux = new Quux();
+    }
+    class Bar implements Serializable {
+      final Baz baz = new Baz();
+    }
+    class Foo implements Serializable {
+      final Bar bar = new Bar();
+    }
+    final Foo foo = new Foo();
+
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final Fn<Foo> fn = () -> foo;
+    try {
+      PersistingContext.serialize(fn, baos);
+    } catch (Exception e) {
+      assertThat(e.getMessage(), is(
+          "java.io.NotSerializableException: com.spotify.flo.freezer.PersistingContextTest$1Quux\n"
+              + "\t- field (class \"com.spotify.flo.freezer.PersistingContextTest$1Baz\", name: \"quux\", type: \"class com.spotify.flo.freezer.PersistingContextTest$1Quux\")\n"
+              + "\t- object (class \"com.spotify.flo.freezer.PersistingContextTest$1Baz\", com.spotify.flo.freezer.PersistingContextTest$1Baz@" + Integer.toHexString(System.identityHashCode(foo.bar.baz)) + ")\n"
+              + "\t- field (class \"com.spotify.flo.freezer.PersistingContextTest$1Bar\", name: \"baz\", type: \"class com.spotify.flo.freezer.PersistingContextTest$1Baz\")\n"
+              + "\t- object (class \"com.spotify.flo.freezer.PersistingContextTest$1Bar\", com.spotify.flo.freezer.PersistingContextTest$1Bar@" + Integer.toHexString(System.identityHashCode(foo.bar)) + ")\n"
+              + "\t- field (class \"com.spotify.flo.freezer.PersistingContextTest$1Foo\", name: \"bar\", type: \"class com.spotify.flo.freezer.PersistingContextTest$1Bar\")\n"
+              + "\t- object (class \"com.spotify.flo.freezer.PersistingContextTest$1Foo\", com.spotify.flo.freezer.PersistingContextTest$1Foo@" + Integer.toHexString(System.identityHashCode(foo)) + ")\n"
+              + "\t- element of array (index: 0)\n"
+              + "\t- array (class \"[Ljava.lang.Object;\", size: 1)\n"
+              + "\t- field (class \"java.lang.invoke.SerializedLambda\", name: \"capturedArgs\", type: \"class [Ljava.lang.Object;\")\n"
+              + "\t- root object (class \"java.lang.invoke.SerializedLambda\", " + serializedLambda(fn) + ")"));
+    }
+  }
+
+  private static SerializedLambda serializedLambda(Object o) throws ReflectiveOperationException {
+    final Method m = o.getClass().getDeclaredMethod("writeReplace");
+    m.setAccessible(true);
+    return (SerializedLambda) m.invoke(o);
   }
 
   private static class FoobarException extends Exception {
