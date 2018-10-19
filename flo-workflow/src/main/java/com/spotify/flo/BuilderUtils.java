@@ -23,7 +23,10 @@ package com.spotify.flo;
 import static com.spotify.flo.Values.toValueList;
 import static java.util.stream.Collectors.toList;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -97,19 +100,19 @@ class BuilderUtils {
   }
 
   static <T> T requireSerializable(T o, String name) {
-    try (ObjectOutputStream oos = new ObjectOutputStream(new NullOutputStream())) {
+    try {
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      final ObjectOutputStream oos = new ObjectOutputStream(baos);
       oos.writeObject(o);
+      oos.flush();
+      final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+      final ObjectInputStream ois = new ObjectInputStream(bais);
+      @SuppressWarnings("unchecked") final T deserialized = (T) ois.readObject();
+      // TODO: some tests rely on the identity of objects
+      // return deserialized;
       return o;
-    } catch (IOException e) {
+    } catch (IOException | ClassNotFoundException e) {
       throw new IllegalArgumentException(name + " not serializable: " + o, e);
-    }
-  }
-
-  private static class NullOutputStream extends OutputStream {
-
-    @Override
-    public void write(int b) {
-      // nop
     }
   }
 }

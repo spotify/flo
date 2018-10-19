@@ -314,7 +314,7 @@ public class TaskTest {
     assertThat(val.awaitAndGet(), is(expectedOutput));
   }
 
-  private Task<String> leaf(String s) {
+  private static Task<String> leaf(String s) {
     return Task.named("Leaf", s).ofType(String.class).process(() -> s);
   }
 }

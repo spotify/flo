@@ -38,27 +38,24 @@ final class {{implClassName}} {
 
     @Override
     public Task<Z> process(F0<Z> f) {
-      requireSerializable(f, "process fn");
-      final Invokable code = a -> f.get();
+      final F0<Z> sf = requireSerializable(f, "process fn");
+      final Invokable code = a -> sf.get();
       return Task.create(inputs, taskContexts, type, taskId, code, args);
     }
 
     @Override
     public <A> TaskBuilder1<A, Z, Z> context(TaskContextGeneric<A> context) {
-      requireSerializable(context, "context");
-      return context_(context);
+      return context_(requireSerializable(context, "context"));
     }
 
     @Override
     public <A> TaskBuilder1<A, Z, Z> output(TaskOutput<A, Z> output) {
-      requireSerializable(output, "output");
-      return context_(output);
+      return context_(requireSerializable(output, "output"));
     }
 
     @Override
     public <A, Y> TaskBuilder1<A, Y, Z> operator(TaskOperator<A, Y, Z> operator) {
-      requireSerializable(operator, "operator");
-      return context_(operator);
+      return context_(requireSerializable(operator, "operator"));
     }
 
     private <A, Y> TaskBuilder1<A, Y, Z> context_(TaskContext<A, ? super Z> taskContext) {
@@ -69,8 +66,7 @@ final class {{implClassName}} {
 
     @Override
     public <A> {{interfaceName}}1<A, Z, Z> input(Fn<Task<A>> aTask) {
-      requireSerializable(aTask, "input");
-      final Fn<Task<A>> aTaskSingleton = Singleton.create(aTask);
+      final Fn<Task<A>> aTaskSingleton = Singleton.create(requireSerializable(aTask, "input"));
       return new Builder1<>(
           lazyFlatten(inputs, lazyList(aTaskSingleton)),
           taskContexts, taskId, type, appendToList(args, inputArg(aTaskSingleton)));
@@ -78,8 +74,7 @@ final class {{implClassName}} {
 
     @Override
     public <A> {{interfaceName}}1<List<A>, Z, Z> inputs(Fn<List<Task<A>>> aTasks) {
-      requireSerializable(aTasks, "inputs");
-      Fn<List<Task<A>>> aTasksSingleton = Singleton.create(aTasks);
+      Fn<List<Task<A>>> aTasksSingleton = Singleton.create(requireSerializable(aTasks, "inputs"));
       return new Builder1<>(
           lazyFlatten(inputs, lazyFlatten(aTasksSingleton)),
           taskContexts, taskId, type,
@@ -106,28 +101,25 @@ final class {{implClassName}} {
 
     @Override
     public Task<Z> process(F{{arity}}<{{typeArgs}}, Y> f) {
-      requireSerializable(f, "process fn");
+      final F{{arity}}<{{typeArgs}}, Y> sf = requireSerializable(f, "process fn");
       @SuppressWarnings("unchecked")
-      final Invokable code = a -> f.apply({{processArgs}});
+      final Invokable code = a -> sf.apply({{processArgs}});
       return Task.create(inputs, taskContexts, type, taskId, code, args);
     }
 
     @Override
     public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> context(TaskContextGeneric<{{nextArg}}> context) {
-      requireSerializable(context, "context");
-      return context_(context);
+      return context_(requireSerializable(context, "context"));
     }
 
     @Override
     public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> output(TaskOutput<{{nextArg}}, Z> output) {
-      requireSerializable(output, "output");
-      return context_(output);
+      return context_(requireSerializable(output, "output"));
     }
 
     @Override
     public <{{nextArg}}, YN> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, YN, Z> operator(TaskOperator<{{nextArg}}, YN, Z> operator) {
-      requireSerializable(operator, "operator");
-      return context_(operator);
+      return context_(requireSerializable(operator, "operator"));
     }
 
     private <{{nextArg}}, YN> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, YN, Z> context_(TaskContext<{{nextArg}}, ? super Z> taskContext) {
@@ -138,8 +130,7 @@ final class {{implClassName}} {
 
     @Override
     public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, {{nextArg}}, Y, Z> input(Fn<Task<{{nextArg}}>> nextTask) {
-      requireSerializable(nextTask, "input");
-      Fn<Task<{{nextArg}}>> nextTaskSingleton = Singleton.create(nextTask);
+      Fn<Task<{{nextArg}}>> nextTaskSingleton = Singleton.create(requireSerializable(nextTask, "input"));
       return new Builder{{arityPlus}}<>(
           lazyFlatten(inputs, lazyList(nextTaskSingleton)),
           taskContexts, taskId, type,
@@ -148,8 +139,7 @@ final class {{implClassName}} {
 
     @Override
     public <{{nextArg}}> {{interfaceName}}{{arityPlus}}<{{typeArgs}}, List<{{nextArg}}>, Y, Z> inputs(Fn<List<Task<{{nextArg}}>>> nextTasks) {
-      requireSerializable(nextTasks, "inputs");
-      Fn<List<Task<{{nextArg}}>>> nextTasksSingleton = Singleton.create(nextTasks);
+      Fn<List<Task<{{nextArg}}>>> nextTasksSingleton = Singleton.create(requireSerializable(nextTasks, "inputs"));
       return new Builder{{arityPlus}}<>(
           lazyFlatten(inputs, lazyFlatten(nextTasksSingleton)),
           taskContexts, taskId, type,

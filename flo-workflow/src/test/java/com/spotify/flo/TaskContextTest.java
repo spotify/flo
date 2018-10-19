@@ -24,19 +24,39 @@ import static com.spotify.flo.TestUtils.evalAndGet;
 import static com.spotify.flo.TestUtils.evalAndGetException;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.spotify.flo.TaskBuilder.F0;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class TaskContextTest {
 
-  private String setFromInjected;
+  private static final BasicTaskContext context1 = spy(new BasicTaskContext("foo"));
+  private static final BasicTaskContext context2 = spy(new BasicTaskContext("bar"));
+
+  private static final Injected injected = spy(new Injected());
+  private static final TestTaskOutput output = spy(new TestTaskOutput(injected, "bar"));
+
+  private static String setFromInjected;
+
+  @Mock private static TaskBuilder.F0<String> fn1;
+  @Mock private static TaskBuilder.F0<String> fn2;
+
+  @Before
+  public void setUp() throws Exception {
+    MockitoAnnotations.initMocks(this);
+    setFromInjected = null;
+    reset(context1, context2, output, injected, fn1, fn2);
+  }
 
   @Test
   public void injectsTaskContexts() throws Exception {
@@ -65,115 +85,104 @@ public class TaskContextTest {
 
   @Test
   public void lifecycleMethodsCalledInOrder() throws Exception {
-    BasicTaskContext tc1 = spy(new BasicTaskContext("foo"));
-    Injected injected = spy(new Injected());
-    taskOutput tc2 = spy(new taskOutput(injected, "bar"));
     Task<String> task = Task.named("inject").ofType(String.class)
-        .context(tc1)
-        .output(tc2)
+        .context(ForwardingTaskContextGeneric.forwardingContext(() -> context1))
+        .output(ForwardingTaskOutput.forwardingOutput(() -> output))
         .process((i1, i2) -> {
           assertThat(i1, is("foo"));
           assertThat(i2, is("bar"));
-          tc1.mark();
+          context1.mark();
           return i1 + i2;
         });
 
     evalAndGet(task);
-    InOrder inOrder = inOrder(tc1, tc2, injected);
-    inOrder.verify(tc1).preRun(task);
-    inOrder.verify(tc2).preRun(task);
-    inOrder.verify(tc1).mark();
-    inOrder.verify(tc1).onSuccess(task, "foobar");
-    inOrder.verify(tc2).onSuccess(task, "foobar");
+    InOrder inOrder = inOrder(context1, output, injected);
+    inOrder.verify(context1).preRun(task);
+    inOrder.verify(output).preRun(task);
+    inOrder.verify(context1).mark();
+    inOrder.verify(context1).onSuccess(task, "foobar");
+    inOrder.verify(output).onSuccess(task, "foobar");
     inOrder.verify(injected).doSomething("foobar");
   }
 
   @Test
   public void lifecycleMethodsCalledInOrderOnFail() throws Exception {
-    BasicTaskContext tc1 = spy(new BasicTaskContext("foo"));
-    BasicTaskContext tc2 = spy(new BasicTaskContext("bar"));
     Task<String> task = Task.named("inject").ofType(String.class)
-        .context(tc1)
-        .context(tc2)
+        .context(ForwardingTaskContextGeneric.forwardingContext(() -> context1))
+        .context(ForwardingTaskContextGeneric.forwardingContext(() -> context2))
         .process((i1, i2) -> {
           assertThat(i1, is("foo"));
           assertThat(i2, is("bar"));
-          tc1.mark();
+          context1.mark();
           throw new RuntimeException("force fail");
         });
 
     Throwable throwable = evalAndGetException(task);
-    InOrder inOrder = inOrder(tc1, tc2);
-    inOrder.verify(tc1).preRun(task);
-    inOrder.verify(tc2).preRun(task);
-    inOrder.verify(tc1).mark();
-    inOrder.verify(tc1).onFail(task, throwable);
-    inOrder.verify(tc2).onFail(task, throwable);
+    InOrder inOrder = inOrder(context1, context2);
+    inOrder.verify(context1).preRun(task);
+    inOrder.verify(context2).preRun(task);
+    inOrder.verify(context1).mark();
+    inOrder.verify(context1).onFail(task, throwable);
+    inOrder.verify(context2).onFail(task, throwable);
     assertThat(throwable.getMessage(), is("force fail"));
   }
 
   @Test
   public void lifecycleMethodsCalledAfterInputsHaveEvaluated() throws Exception {
-    //noinspection unchecked
-    TaskBuilder.F0<String> t1Fn = mock(TaskBuilder.F0.class);
-    //noinspection unchecked
-    TaskBuilder.F0<String> t2Fn = mock(TaskBuilder.F0.class);
-    when(t1Fn.get()).thenReturn("hej");
-    when(t2Fn.get()).thenReturn("hej");
-    BasicTaskContext tc1 = spy(new BasicTaskContext("foo"));
+    when(fn1.get()).thenReturn("hej");
+    when(fn2.get()).thenReturn("hej");
 
     Task<String> task = Task.named("inject").ofType(String.class)
-        .input(() -> Task.named("foo").ofType(String.class).process(t1Fn))
-        .context(tc1)
-        .input(() -> Task.named("bar").ofType(String.class).process(t2Fn))
+        .input(() -> Task.named("foo").ofType(String.class).process(() -> fn1.get()))
+        .context(ForwardingTaskContextGeneric.forwardingContext(() -> context1))
+        .input(() -> Task.named("bar").ofType(String.class).process(() -> fn2.get()))
         .process((t1, i1, t2) -> {
-          tc1.mark();
+          context1.mark();
           return t1 + i1 + t2;
         });
 
     evalAndGet(task);
 
-    InOrder inOrder = inOrder(t1Fn, t2Fn, tc1);
-    inOrder.verify(t1Fn).get();
-    inOrder.verify(tc1).provide(any());
-    inOrder.verify(t2Fn).get();
-    inOrder.verify(tc1).preRun(task);
-    inOrder.verify(tc1).mark();
-    inOrder.verify(tc1).onSuccess(task, "hejfoohej");
+    InOrder inOrder = inOrder(fn1, fn2, context1);
+    inOrder.verify(fn1).get();
+    inOrder.verify(context1).provide(any());
+    inOrder.verify(fn2).get();
+    inOrder.verify(context1).preRun(task);
+    inOrder.verify(context1).mark();
+    inOrder.verify(context1).onSuccess(task, "hejfoohej");
   }
 
   @Test
   public void lifecycleMethodsNotCalledIfInputsFail() throws Exception {
-    //noinspection unchecked
-    TaskBuilder.F0<String> t1Fn = mock(F0.class);
-    when(t1Fn.get()).thenThrow(new RuntimeException("Fail"));
-    BasicTaskContext tc1 = spy(new BasicTaskContext("foo"));
+    final Task<String> failingInput = Task.named("foo")
+        .ofType(String.class)
+        .process(() -> {
+          throw new RuntimeException("Fail");
+        });
 
-    Task<String> task = Task.named("inject").ofType(String.class)
-        .context(tc1)
-        .input(() -> Task.named("foo").ofType(String.class).process(t1Fn))
+    final Task<String> task = Task.named("inject").ofType(String.class)
+        .context(ForwardingTaskContextGeneric.forwardingContext(() -> context1))
+        .input(() -> failingInput)
         .process((i1, t1) -> {
-          tc1.mark();
+          context1.mark();
           return t1 + i1;
         });
 
-    Throwable throwable = evalAndGetException(task);
+    final Throwable throwable = evalAndGetException(task);
     assertThat(throwable.getMessage(), is("Fail"));
 
-    InOrder inOrder = inOrder(t1Fn, tc1);
-    inOrder.verify(tc1).provide(any());
-    inOrder.verify(t1Fn).get();
-    inOrder.verifyNoMoreInteractions();
+    verify(context1).provide(any());
+    verifyNoMoreInteractions(context1);
   }
 
-  private class Injected {
+  private static class Injected {
     String doSomething(String some) {
       setFromInjected = "something " + some;
       return "ok";
     }
   }
 
-  private class TestTaskContext extends TaskContextGeneric<Injected> {
+  private static class TestTaskContext extends TaskContextGeneric<Injected> {
 
     @Override
     public Injected provide(EvalContext evalContext) {
@@ -181,7 +190,7 @@ public class TaskContextTest {
     }
   }
 
-  private class BasicTaskContext extends TaskContextGeneric<String> {
+  private static class BasicTaskContext extends TaskContextGeneric<String> {
 
     private final String inject;
 
@@ -199,12 +208,12 @@ public class TaskContextTest {
     }
   }
 
-  private class taskOutput extends TaskOutput<String, String> {
+  private static class TestTaskOutput extends TaskOutput<String, String> {
 
     private final Injected injected;
     private final String value;
 
-    private taskOutput(Injected injected, String value) {
+    private TestTaskOutput(Injected injected, String value) {
       this.injected = injected;
       this.value = value;
     }

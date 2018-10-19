@@ -186,6 +186,12 @@
         <version>1.1.1</version>
         <scope>test</scope>
       </dependency>
+      <dependency>
+        <groupId>org.awaitility</groupId>
+        <artifactId>awaitility</artifactId>
+        <version>3.1.2</version>
+        <scope>test</scope>
+      </dependency>
 
       <!-- dependencies of contrib modules -->
       <dependency>
@@ -370,6 +376,10 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
     </dependency>
   </dependencies>
 
