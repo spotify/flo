@@ -25,6 +25,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
+import com.spotify.flo.Serialization;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.ForwardingEvalContext;
@@ -79,9 +80,9 @@ public class PersistingContext extends ForwardingEvalContext {
     Path file = taskFile(task.id());
     files.put(task.id(), file);
     try {
-      serialize(task, file);
-    } catch (Exception e) {
-      e.printStackTrace();
+      Serialization.serialize(task, file);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
 
     return super.evaluateInternal(task, context);
@@ -95,36 +96,7 @@ public class PersistingContext extends ForwardingEvalContext {
     return promise.value();
   }
 
-  public static void serialize(Object object, Path file) throws Exception {
-    try {
-      serialize(object, Files.newOutputStream(file, WRITE, CREATE_NEW));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static void serialize(Object object, OutputStream outputStream) {
-    try (ObjectOutputStream oos = new ObjectOutputStream(outputStream)) {
-      oos.writeObject(object);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static <T> T deserialize(Path filePath) throws IOException {
-    return deserialize(Files.newInputStream(filePath));
-  }
-
-  @SuppressWarnings("unchecked")
-  public static <T> T deserialize(InputStream inputStream) {
-    try (ObjectInputStream ois = new ObjectInputStream(inputStream)) {
-      return (T) ois.readObject();
-    } catch (IOException | ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static String cleanForFilename(TaskId taskId) {
+  static String cleanForFilename(TaskId taskId) {
     return taskId.toString()
         .toLowerCase()
         .replaceAll("[,#()]+", "_")

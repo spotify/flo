@@ -20,23 +20,40 @@
 
 package com.spotify.flo;
 
+import static com.spotify.flo.Serialization.deserialize;
+import static com.spotify.flo.Serialization.serialize;
 import static java.util.Collections.singletonList;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 import com.spotify.flo.TaskBuilder.F0;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.NotSerializableException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.io.StreamCorruptedException;
+import java.io.StringWriter;
+import java.lang.invoke.SerializedLambda;
+import java.lang.reflect.Method;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 
 public class SerializationTest {
 
   @Rule public ExpectedException exception = ExpectedException.none();
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   final String instanceField = "from instance";
   final EvalContext context = EvalContext.sync();
@@ -113,18 +130,102 @@ public class SerializationTest {
     builder.process(fn);
   }
 
-  private byte[] serialize(Task<?> task) throws Exception{
-    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-      oos.writeObject(task);
+  @Test
+  public void shouldProvideDetailedDebugInformationOnNotSerializableException() throws ReflectiveOperationException {
+    class Quux {}
+    class Baz implements Serializable {
+      final Quux quux = new Quux();
     }
-    return baos.toByteArray();
+    class Bar implements Serializable {
+      final Baz baz = new Baz();
+    }
+    class Foo implements Serializable {
+      final Bar bar = new Bar();
+    }
+    final Foo foo = new Foo();
+
+    final Fn<Foo> fn = () -> foo;
+    try {
+      Serialization.serialize(fn);
+    } catch (ObjectStreamException e) {
+      assertThat(e, instanceOf(NotSerializableException.class));
+      assertThat(e.toString(), is(
+          "java.io.NotSerializableException: com.spotify.flo.SerializationTest$1Quux\n"
+              + "\t- field (class \"com.spotify.flo.SerializationTest$1Baz\", name: \"quux\", type: \"class com.spotify.flo.SerializationTest$1Quux\")\n"
+              + "\t- object (class \"com.spotify.flo.SerializationTest$1Baz\", com.spotify.flo.SerializationTest$1Baz@" + Integer.toHexString(System.identityHashCode(foo.bar.baz)) + ")\n"
+              + "\t- field (class \"com.spotify.flo.SerializationTest$1Bar\", name: \"baz\", type: \"class com.spotify.flo.SerializationTest$1Baz\")\n"
+              + "\t- object (class \"com.spotify.flo.SerializationTest$1Bar\", com.spotify.flo.SerializationTest$1Bar@" + Integer.toHexString(System.identityHashCode(foo.bar)) + ")\n"
+              + "\t- field (class \"com.spotify.flo.SerializationTest$1Foo\", name: \"bar\", type: \"class com.spotify.flo.SerializationTest$1Bar\")\n"
+              + "\t- object (class \"com.spotify.flo.SerializationTest$1Foo\", com.spotify.flo.SerializationTest$1Foo@" + Integer.toHexString(System.identityHashCode(foo)) + ")\n"
+              + "\t- element of array (index: 0)\n"
+              + "\t- array (class \"[Ljava.lang.Object;\", size: 1)\n"
+              + "\t- field (class \"java.lang.invoke.SerializedLambda\", name: \"capturedArgs\", type: \"class [Ljava.lang.Object;\")\n"
+              + "\t- root object (class \"java.lang.invoke.SerializedLambda\", " + serializedLambda(fn) + ")"));
+    }
   }
 
-  private <T> Task<T> deserialize(byte[] bytes) throws Exception {
-    try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
-      //noinspection unchecked
-      return (Task<T>) ois.readObject();
-    }
+  @Test
+  public void exceptionSerialization() throws Exception {
+    final RuntimeException bar = new RuntimeException("bar");
+    bar.addSuppressed(new IOException("baz", new InterruptedException("quux")));
+    final Exception exception1 = new Exception("foo", bar);
+    exception1.addSuppressed(new FoobarException());
+    final Exception exception = exception1;
+
+    final Path exceptionFile = temporaryFolder.getRoot().toPath().resolve("exception");
+    Serialization.serialize(exception, exceptionFile);
+
+    final Exception deserialized = Serialization.deserialize(exceptionFile);
+
+    // Verify that stack trace can be accessed and printed and seems to be correct
+
+    deserialized.printStackTrace();
+
+    final StringWriter sw = new StringWriter();
+    final PrintWriter pw = new PrintWriter(sw);
+    deserialized.printStackTrace(pw);
+    pw.flush();
+    final String stacktrace = sw.toString();
+    assertThat(stacktrace, containsString("java.lang.Exception: foo"));
+    assertThat(stacktrace, containsString("at com.spotify.flo.freezer.PersistingContextTest.exceptionSerialization"));
+    assertThat(stacktrace, containsString("Suppressed: com.spotify.flo.freezer.PersistingContextTest$FoobarException"));
+    assertThat(stacktrace, containsString("Caused by: java.lang.RuntimeException: bar"));
+    assertThat(stacktrace, containsString("Suppressed: java.io.IOException: baz"));
+    assertThat(stacktrace, containsString("Caused by: java.lang.InterruptedException: quux"));
+
+    assertThat(deserialized.getStackTrace().length, is(not(0)));
+    assertThat(deserialized.getStackTrace()[0].getClassName(), is("com.spotify.flo.freezer.PersistingContextTest"));
+    assertThat(deserialized.getStackTrace()[0].getMethodName(), is("exceptionSerialization"));
+  }
+
+  @Test
+  public void serializeShouldPropagateSerializationExceptions() throws IOException {
+    exception.expect(RuntimeException.class);
+    exception.expectCause(instanceOf(NotSerializableException.class));
+    Serialization.serialize(new Object(), new ByteArrayOutputStream());
+  }
+
+  @Test
+  public void serializeShouldPropagateIOException() throws Exception {
+    exception.expect(RuntimeException.class);
+    exception.expectCause(instanceOf(NoSuchFileException.class));
+    Serialization.serialize("foobar", Paths.get("non-existent-dir", "file"));
+  }
+
+  @Test
+  public void deserializeShouldPropagateSerializationExceptions() throws IOException, ClassNotFoundException {
+    exception.expect(RuntimeException.class);
+    exception.expectCause(instanceOf(StreamCorruptedException.class));
+    Serialization.deserialize(new ByteArrayInputStream("foobar".getBytes()));
+  }
+
+  private static class FoobarException extends Exception {
+
+  }
+
+  private static SerializedLambda serializedLambda(Object o) throws ReflectiveOperationException {
+    final Method m = o.getClass().getDeclaredMethod("writeReplace");
+    m.setAccessible(true);
+    return (SerializedLambda) m.invoke(o);
   }
 }

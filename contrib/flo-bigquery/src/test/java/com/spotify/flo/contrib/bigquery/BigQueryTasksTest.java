@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.cloud.bigquery.TableId;
 import com.google.common.base.Throwables;
+import com.spotify.flo.Serialization;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.FloRunner;
@@ -40,6 +41,7 @@ import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -56,12 +58,12 @@ public class BigQueryTasksTest {
   public ExpectedException exception = ExpectedException.none();
 
   @Test
-  public void lookupShouldBeSerializable() {
+  public void lookupShouldBeSerializable() throws IOException, ClassNotFoundException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final Task<TableId> task = BigQueryTasks.lookup("foo", "bar", "baz");
-    PersistingContext.serialize(task, baos);
+    Serialization.serialize(task, baos);
     final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-    final Task<TableId> deserializedTask = PersistingContext.deserialize(bais);
+    final Task<TableId> deserializedTask = Serialization.deserialize(bais);
     assertThat(deserializedTask, is(notNullValue()));
   }
 

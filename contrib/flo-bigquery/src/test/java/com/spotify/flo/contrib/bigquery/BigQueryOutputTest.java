@@ -45,6 +45,7 @@ import com.google.cloud.bigquery.JobStatus;
 import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
 import com.google.common.base.Throwables;
+import com.spotify.flo.Serialization;
 import com.spotify.flo.Task;
 import com.spotify.flo.context.FloRunner;
 import com.spotify.flo.freezer.PersistingContext;
@@ -185,12 +186,12 @@ public class BigQueryOutputTest {
   }
 
   @Test
-  public void shouldBeSerializable() {
+  public void shouldBeSerializable() throws IOException, ClassNotFoundException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final BigQueryOutput context = BigQueryOutput.create("foo", "bar", "baz");
-    PersistingContext.serialize(context, baos);
+    Serialization.serialize(context, baos);
     final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-    final BigQueryOutput deserializedContext = PersistingContext.deserialize(bais);
+    final BigQueryOutput deserializedContext = Serialization.deserialize(bais);
     assertThat(deserializedContext, is(notNullValue()));
   }
 

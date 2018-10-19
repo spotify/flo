@@ -41,11 +41,6 @@ import org.slf4j.LoggerFactory;
  */
 class BuilderUtils {
 
-  static {
-    // Best effort. Hope that ObjectOutputStream has not been loaded yet :pray:
-    System.setProperty("sun.io.serialization.extendedDebugInfo", "true");
-  }
-
   private static final Logger log = LoggerFactory.getLogger(BuilderUtils.class);
 
   private BuilderUtils() {
@@ -101,21 +96,6 @@ class BuilderUtils {
       call.run();
     } catch (Throwable t) {
       log.warn("Exception", t);
-    }
-  }
-
-  static <T extends Serializable> T requireSerializable(T o, String name) {
-    try {
-      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      final ObjectOutputStream oos = new ObjectOutputStream(baos);
-      oos.writeObject(o);
-      oos.flush();
-      final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-      final ObjectInputStream ois = new ObjectInputStream(bais);
-      @SuppressWarnings("unchecked") final T deserialized = (T) ois.readObject();
-      return deserialized;
-    } catch (IOException | ClassNotFoundException e) {
-      throw new IllegalArgumentException(name + " not serializable: " + o, e);
     }
   }
 }

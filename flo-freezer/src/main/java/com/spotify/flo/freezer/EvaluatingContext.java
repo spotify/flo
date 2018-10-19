@@ -24,9 +24,11 @@ import static com.spotify.flo.freezer.PersistingContext.cleanForFilename;
 
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
+import com.spotify.flo.Serialization;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.ForwardingEvalContext;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -64,11 +66,11 @@ public class EvaluatingContext {
    * @return The task output value
    */
   public <T> EvalContext.Value<T> evaluateTaskFrom(Path persistedTask) {
-    Task<T> task = null;
+    final Task<T> task;
     try {
-      task = PersistingContext.deserialize(persistedTask);
-    } catch (Exception e) {
-      e.printStackTrace();
+      task = Serialization.deserialize(persistedTask);
+    } catch (IOException | ClassNotFoundException e) {
+      throw new RuntimeException(e);
     }
 
     return new SpecificEval(task, delegate).evaluate(task);
@@ -81,10 +83,9 @@ public class EvaluatingContext {
 
   private <T> void persist(TaskId taskId, T output) {
     final Path outputPath = basePath.resolve(cleanForFilename(taskId) + OUTPUT_SUFFIX);
-
     try {
-      PersistingContext.serialize(output, outputPath);
-    } catch (Exception e) {
+      Serialization.serialize(output, outputPath);
+    } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
@@ -111,9 +112,9 @@ public class EvaluatingContext {
         if (Files.exists(inputValuePath)) {
           final T value;
           try {
-            value = PersistingContext.deserialize(inputValuePath);
+            value = Serialization.deserialize(inputValuePath);
             promise.set(value);
-          } catch (Exception e) {
+          } catch (IOException | ClassNotFoundException e) {
             promise.fail(e);
           }
         } else {

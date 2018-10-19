@@ -84,7 +84,7 @@ public abstract class Task<T> implements Serializable {
       throw new IllegalArgumentException("A task can have at most one TaskOperator");
     }
     final AutoValue_Task<T> task = new AutoValue_Task<>(taskId, type, inputs, contexts, processFn, args);
-    return BuilderUtils.requireSerializable(task, "task");
+    return Serialization.requireSerializable(task, "task");
   }
 
   /**

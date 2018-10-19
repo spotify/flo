@@ -23,11 +23,13 @@ package com.spotify.flo.context;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Fn;
+import com.spotify.flo.Serialization;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.freezer.PersistingContext;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.util.Collections;
 
 /**
@@ -80,19 +82,25 @@ class ForkingContext extends ForwardingEvalContext {
     LOG.debug("Test run, forking disabled - testing serialization");
     return () -> {
       // Serialize & deserialize fn
-      final ByteArrayOutputStream fnBaos = new ByteArrayOutputStream();
-      PersistingContext.serialize(fn, fnBaos);
-      final ByteArrayInputStream fnBais = new ByteArrayInputStream(fnBaos.toByteArray());
-      final Fn<T> deserializedFn = PersistingContext.deserialize(fnBais);
+      final Fn<T> deserializedFn;
+      try {
+        final byte[] serializedFn = Serialization.serialize(fn);
+        deserializedFn = Serialization.deserialize(serializedFn);
+      } catch (ObjectStreamException | ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
 
       // Run the fn
       final T result = deserializedFn.get();
 
       // Serialize & deserialize the result
-      final ByteArrayOutputStream resultBaos = new ByteArrayOutputStream();
-      PersistingContext.serialize(result, resultBaos);
-      final ByteArrayInputStream resultBais = new ByteArrayInputStream(resultBaos.toByteArray());
-      final T deserializedResult = PersistingContext.deserialize(resultBais);
+      final T deserializedResult;
+      try {
+        final byte[] serializedResult = Serialization.serialize(result);
+        deserializedResult = Serialization.deserialize(serializedResult);
+      } catch (ObjectStreamException | ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
 
       return deserializedResult;
     };
