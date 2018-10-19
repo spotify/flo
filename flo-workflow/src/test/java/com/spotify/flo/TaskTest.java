@@ -31,6 +31,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import com.google.auto.value.AutoValue;
 import com.spotify.flo.TaskBuilder.F0;
 import java.io.NotSerializableException;
 import java.util.Collections;
@@ -68,8 +69,8 @@ public class TaskTest {
 
   @Test
   public void shouldHaveListOfTaskContexts() throws Exception {
-    final TaskContextGeneric<Object> tc1 = mock(TaskContextGeneric.class);
-    final TaskContextGeneric<Object> tc2 = mock(TaskContextGeneric.class);
+    final TaskContextGeneric<Object> tc1 = FakeTaskContext.of("foo");
+    final TaskContextGeneric<Object> tc2 = FakeTaskContext.of("bar");
     Task<String> task = Task.named("Inputs").ofType(String.class)
         .context(tc1)
         .context(tc2)
@@ -316,5 +317,19 @@ public class TaskTest {
 
   private static Task<String> leaf(String s) {
     return Task.named("Leaf", s).ofType(String.class).process(() -> s);
+  }
+
+  @AutoValue
+  static abstract class FakeTaskContext<T> extends TaskContextGeneric<T> {
+    abstract String id();
+
+    @Override
+    public T provide(EvalContext evalContext) {
+      return null;
+    }
+
+    static <T> FakeTaskContext<T> of(String id) {
+      return new AutoValue_TaskTest_FakeTaskContext<>(id);
+    }
   }
 }
