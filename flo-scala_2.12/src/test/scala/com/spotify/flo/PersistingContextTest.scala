@@ -2,7 +2,6 @@ package com.spotify.flo
 
 import java.nio.file.Files
 
-import com.spotify.flo.freezer.PersistingContext
 import org.scalatest._
 
 class PersistingContextTest extends FlatSpec with Matchers {
@@ -12,8 +11,8 @@ class PersistingContextTest extends FlatSpec with Matchers {
     Files.deleteIfExists(f)
     try {
       val v = (List(Some("foo"), None, Some(4711)), None, Some("baz"))
-      PersistingContext.serialize(v, f)
-      val deserialized = PersistingContext.deserialize(f).asInstanceOf[Any]
+      Serialization.serialize(v, f)
+      val deserialized = Serialization.deserialize(f).asInstanceOf[Any]
       deserialized shouldBe v
     } finally {
       Files.deleteIfExists(f)
