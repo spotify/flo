@@ -187,35 +187,32 @@ public class SerializationTest {
     pw.flush();
     final String stacktrace = sw.toString();
     assertThat(stacktrace, containsString("java.lang.Exception: foo"));
-    assertThat(stacktrace, containsString("at com.spotify.flo.freezer.PersistingContextTest.exceptionSerialization"));
-    assertThat(stacktrace, containsString("Suppressed: com.spotify.flo.freezer.PersistingContextTest$FoobarException"));
+    assertThat(stacktrace, containsString("at com.spotify.flo.SerializationTest.exceptionSerialization"));
+    assertThat(stacktrace, containsString("Suppressed: com.spotify.flo.SerializationTest$FoobarException"));
     assertThat(stacktrace, containsString("Caused by: java.lang.RuntimeException: bar"));
     assertThat(stacktrace, containsString("Suppressed: java.io.IOException: baz"));
     assertThat(stacktrace, containsString("Caused by: java.lang.InterruptedException: quux"));
 
     assertThat(deserialized.getStackTrace().length, is(not(0)));
-    assertThat(deserialized.getStackTrace()[0].getClassName(), is("com.spotify.flo.freezer.PersistingContextTest"));
+    assertThat(deserialized.getStackTrace()[0].getClassName(), is("com.spotify.flo.SerializationTest"));
     assertThat(deserialized.getStackTrace()[0].getMethodName(), is("exceptionSerialization"));
   }
 
   @Test
   public void serializeShouldPropagateSerializationExceptions() throws IOException {
-    exception.expect(RuntimeException.class);
-    exception.expectCause(instanceOf(NotSerializableException.class));
-    Serialization.serialize(new Object(), new ByteArrayOutputStream());
+    exception.expect(NotSerializableException.class);
+    Serialization.serialize(new Object());
   }
 
   @Test
   public void serializeShouldPropagateIOException() throws Exception {
-    exception.expect(RuntimeException.class);
-    exception.expectCause(instanceOf(NoSuchFileException.class));
+    exception.expect(NoSuchFileException.class);
     Serialization.serialize("foobar", Paths.get("non-existent-dir", "file"));
   }
 
   @Test
   public void deserializeShouldPropagateSerializationExceptions() throws IOException, ClassNotFoundException {
-    exception.expect(RuntimeException.class);
-    exception.expectCause(instanceOf(StreamCorruptedException.class));
+    exception.expect(StreamCorruptedException.class);
     Serialization.deserialize(new ByteArrayInputStream("foobar".getBytes()));
   }
 
