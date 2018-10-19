@@ -41,6 +41,11 @@ import org.slf4j.LoggerFactory;
  */
 class BuilderUtils {
 
+  static {
+    // Best effort. Hope that ObjectOutputStream has not been loaded yet :pray:
+    System.setProperty("sun.io.serialization.extendedDebugInfo", "true");
+  }
+
   private static final Logger log = LoggerFactory.getLogger(BuilderUtils.class);
 
   private BuilderUtils() {
