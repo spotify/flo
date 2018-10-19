@@ -99,7 +99,7 @@ class BuilderUtils {
     }
   }
 
-  static <T> T requireSerializable(T o, String name) {
+  static <T extends Serializable> T requireSerializable(T o, String name) {
     try {
       final ByteArrayOutputStream baos = new ByteArrayOutputStream();
       final ObjectOutputStream oos = new ObjectOutputStream(baos);
