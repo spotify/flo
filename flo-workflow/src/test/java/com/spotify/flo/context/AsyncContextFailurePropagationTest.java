@@ -30,9 +30,17 @@ import com.spotify.flo.Task;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Before;
 import org.junit.Test;
 
 public class AsyncContextFailurePropagationTest {
+
+  private static final AtomicInteger count = new AtomicInteger(0);
+
+  @Before
+  public void setUp() throws Exception {
+    count.set(0);
+  }
 
   @Test
   public void shouldFailTaskIfUpstreamsFail() throws Exception {
@@ -41,7 +49,6 @@ public class AsyncContextFailurePropagationTest {
           throw new RuntimeException("failed");
         });
 
-    AtomicInteger count = new AtomicInteger(0);
     Task<String> successfulUpstream = Task.named("Succeeding").ofType(String.class)
         .process(() -> {
           count.incrementAndGet();

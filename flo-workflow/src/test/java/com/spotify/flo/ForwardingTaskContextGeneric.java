@@ -20,10 +20,10 @@
 
 package com.spotify.flo;
 
-class ForwardingTaskContextGeneric<T> extends TaskContextGeneric<T> {
+public class ForwardingTaskContextGeneric<T> extends TaskContextGeneric<T> {
   private final Fn<TaskContextGeneric<T>> delegate;
 
-  ForwardingTaskContextGeneric(Fn<TaskContextGeneric<T>> delegate) {
+  private ForwardingTaskContextGeneric(Fn<TaskContextGeneric<T>> delegate) {
     this.delegate = delegate;
   }
 
@@ -47,7 +47,7 @@ class ForwardingTaskContextGeneric<T> extends TaskContextGeneric<T> {
     delegate.get().onFail(task, throwable);
   }
 
-  static <T> TaskContextGeneric<T> forwardingContext(Fn<TaskContextGeneric<T>> delegate) {
+  public static <T> TaskContextGeneric<T> forwardingContext(Fn<TaskContextGeneric<T>> delegate) {
     return new ForwardingTaskContextGeneric<>(delegate);
   }
 }

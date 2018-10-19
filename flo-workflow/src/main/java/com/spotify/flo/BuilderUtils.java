@@ -108,9 +108,7 @@ class BuilderUtils {
       final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
       final ObjectInputStream ois = new ObjectInputStream(bais);
       @SuppressWarnings("unchecked") final T deserialized = (T) ois.readObject();
-      // TODO: some tests rely on the identity of objects
-      // return deserialized;
-      return o;
+      return deserialized;
     } catch (IOException | ClassNotFoundException e) {
       throw new IllegalArgumentException(name + " not serializable: " + o, e);
     }
