@@ -52,6 +52,11 @@ import org.slf4j.LoggerFactory;
  */
 public class PersistingContext extends ForwardingEvalContext {
 
+  static {
+    // Best effort. Hope that ObjectOutputStream has not been loaded yet :pray:
+    System.setProperty("sun.io.serialization.extendedDebugInfo", "true");
+  }
+
   private static final Logger LOG = LoggerFactory.getLogger(PersistingContext.class);
 
   private final Path basePath;
