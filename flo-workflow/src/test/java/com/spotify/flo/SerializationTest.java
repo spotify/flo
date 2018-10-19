@@ -21,21 +21,22 @@
 package com.spotify.flo;
 
 import static java.util.Collections.singletonList;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import com.spotify.flo.TaskBuilder.F0;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class SerializationTest {
 
-  transient File tempFile = tempFile();
+  @Rule public ExpectedException exception = ExpectedException.none();
 
   final String instanceField = "from instance";
   final EvalContext context = EvalContext.sync();
@@ -50,20 +51,22 @@ public class SerializationTest {
         .inputs(() -> singletonList(task1))
         .process((t1, t1l) -> t1l + " hello " + (t1 + 5));
 
-    serialize(task2);
-    Task<String> des = deserialize();
+    final byte[] serialized = serialize(task2);
+    Task<String> des = deserialize(serialized);
     context.evaluate(des).consume(val);
 
     assertEquals(des.id().name(), "Baz");
     assertEquals(val.awaitAndGet(), "[9999] hello 10004");
   }
 
-  @Test(expected = NotSerializableException.class)
+  @Test
   public void shouldNotSerializeWithInstanceFieldReference() throws Exception {
-    Task<String> task = Task.named("WithRef").ofType(String.class)
-        .process(() -> instanceField + " causes an outer reference");
+    final TaskBuilder<String> builder = Task.named("WithRef").ofType(String.class);
+    final F0<String> fn = () -> instanceField + " causes an outer reference";
 
-    serialize(task);
+    exception.expect(IllegalArgumentException.class);
+    exception.expectCause(instanceOf(NotSerializableException.class));
+    builder.process(fn);
   }
 
   @Test
@@ -73,8 +76,8 @@ public class SerializationTest {
     Task<String> task = Task.named("WithLocalRef").ofType(String.class)
         .process(() -> local + " won't cause an outer reference");
 
-    serialize(task);
-    Task<String> des = deserialize();
+    final byte[] serialized = serialize(task);
+    Task<String> des = deserialize(serialized);
     context.evaluate(des).consume(val);
 
     assertEquals(val.awaitAndGet(), "from instance won't cause an outer reference");
@@ -84,53 +87,44 @@ public class SerializationTest {
   public void shouldSerializeWithMethodArgument() throws Exception {
     Task<String> task = closure(instanceField);
 
-    serialize(task);
-    Task<String> des = deserialize();
+    final byte[] serialized = serialize(task);
+    Task<String> des = deserialize(serialized);
     context.evaluate(des).consume(val);
 
     assertEquals(val.awaitAndGet(), "from instance is enclosed");
   }
 
-  private Task<String> closure(String arg) {
+  private static Task<String> closure(String arg) {
     return Task.named("Closed").ofType(String.class).process(() -> arg + " is enclosed");
   }
 
-  @Test(expected = NotSerializableException.class)
+  @Test
   public void shouldNotSerializeAnonymousClass() throws Exception {
-    Task<String> task = Task.named("WithAnonClass").ofType(String.class)
-        .process(
-            new TaskBuilder.F0<String>() {
-              @Override
-              public String get() {
-                return "yes? no!";
-              }
-            });
+    final TaskBuilder<String> builder = Task.named("WithAnonClass").ofType(String.class);
+    final F0<String> fn = new F0<String>() {
+      @Override
+      public String get() {
+        return "yes? no!";
+      }
+    };
 
-    serialize(task);
+    exception.expect(IllegalArgumentException.class);
+    exception.expectCause(instanceOf(NotSerializableException.class));
+    builder.process(fn);
   }
 
-  private void serialize(Task<?> task) throws Exception{
-    try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(tempFile))) {
+  private byte[] serialize(Task<?> task) throws Exception{
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
       oos.writeObject(task);
     }
+    return baos.toByteArray();
   }
 
-  private <T> Task<T> deserialize() throws Exception {
-    try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(tempFile))) {
+  private <T> Task<T> deserialize(byte[] bytes) throws Exception {
+    try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
       //noinspection unchecked
       return (Task<T>) ois.readObject();
     }
-  }
-
-  private File tempFile() {
-    try {
-      File tempFile = File.createTempFile("tempdata", ".bin");
-      tempFile.deleteOnExit();
-      return tempFile;
-    } catch (IOException e) {
-      fail("Could not create temp file");
-    }
-
-    throw new IllegalStateException("should not reach");
   }
 }
