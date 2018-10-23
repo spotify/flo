@@ -22,7 +22,7 @@ package com.spotify.flo.contrib.bigquery;
 
 import static com.spotify.flo.contrib.bigquery.FloBigQueryClient.randomStagingTableId;
 
-import com.google.cloud.WaitForOption;
+import com.google.cloud.RetryOption;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQuery.JobOption;
 import com.google.cloud.bigquery.BigQueryError;
@@ -30,19 +30,18 @@ import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.CopyJobConfiguration;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
-import com.google.cloud.bigquery.FieldValue;
+import com.google.cloud.bigquery.FieldValueList;
 import com.google.cloud.bigquery.Job;
 import com.google.cloud.bigquery.JobInfo;
-import com.google.cloud.bigquery.QueryRequest;
-import com.google.cloud.bigquery.QueryResponse;
+import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.Schema;
 import com.google.cloud.bigquery.TableId;
-import java.util.concurrent.ThreadLocalRandom;
+import com.google.cloud.bigquery.TableResult;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,21 +75,25 @@ class DefaultBigQueryClient implements FloBigQueryClient {
   }
 
   @Override
-  public BigQueryResult query(QueryRequest queryRequest) {
-    QueryResponse response = client.query(queryRequest);
-    while (!response.jobCompleted()) {
+  public BigQueryResult query(QueryJobConfiguration queryRequest) {
+    Job job = client.create(JobInfo.of(queryRequest));
+    while (!job.isDone()) {
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new RuntimeException(e);
       }
-      response = client.getQueryResults(response.getJobId());
+      job = job.reload();
     }
-    if (response.hasErrors()) {
-      throw new RuntimeException("BigQuery query failed: " + response.getExecutionErrors());
+    final TableResult result;
+    try {
+      result = job.getQueryResults();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
     }
-    return DefaultQueryResult.of(response);
+    return DefaultQueryResult.of(result);
 
   }
 
@@ -119,12 +122,12 @@ class DefaultBigQueryClient implements FloBigQueryClient {
     LOG.debug("copying staging table {} to {}", staging, tableId);
     try {
       final Job job = client.create(JobInfo.of(CopyJobConfiguration.of(tableId, staging)))
-          .waitFor(WaitForOption.timeout(1, TimeUnit.MINUTES));
+          .waitFor(RetryOption.totalTimeout(org.threeten.bp.Duration.ofMinutes(1)));
       throwIfUnsuccessfulJobStatus(job, tableId);
     } catch (BigQueryException e) {
       LOG.error("Could not copy BigQuery table {} from staging to target", tableId, e);
       throw e;
-    } catch (InterruptedException | TimeoutException e) {
+    } catch (InterruptedException e) {
       LOG.error("Could not copy BigQuery table {} from staging to target", tableId, e);
       throw new RuntimeException(e);
     }
@@ -151,38 +154,29 @@ class DefaultBigQueryClient implements FloBigQueryClient {
 
   private static class DefaultQueryResult implements BigQueryResult {
 
-    private final QueryResponse response;
+    TableResult response;
 
-    private DefaultQueryResult(QueryResponse response) {
+    private DefaultQueryResult(TableResult response) {
       this.response = Objects.requireNonNull(response, "response");
     }
 
-    @Override
-    public boolean cacheHit() {
-      return response.getResult().cacheHit();
-    }
 
     @Override
     public Schema schema() {
-      return response.getResult().getSchema();
-    }
-
-    @Override
-    public long totalBytesProcessed() {
-      return response.getResult().getTotalBytesProcessed();
+      return response.getSchema();
     }
 
     @Override
     public long totalRows() {
-      return response.getResult().getTotalRows();
+      return response.getTotalRows();
     }
 
     @Override
-    public Iterator<List<FieldValue>> iterator() {
-      return response.getResult().iterateAll().iterator();
+    public Iterator<FieldValueList> iterator() {
+      return response.iterateAll().iterator();
     }
 
-    public static DefaultQueryResult of(QueryResponse response) {
+    public static DefaultQueryResult of(TableResult response) {
       return new DefaultQueryResult(response);
     }
   }

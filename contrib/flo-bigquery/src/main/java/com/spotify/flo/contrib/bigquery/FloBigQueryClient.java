@@ -25,7 +25,7 @@ import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
 import com.google.cloud.bigquery.JobInfo;
-import com.google.cloud.bigquery.QueryRequest;
+import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.TableId;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -64,7 +64,7 @@ interface FloBigQueryClient {
    *
    * @throws BigQueryException if the query fails.
    */
-  BigQueryResult query(QueryRequest queryRequest);
+  BigQueryResult query(QueryJobConfiguration queryRequest);
 
   /**
    * Run a BiqQuery job. Blocks until the job completes.

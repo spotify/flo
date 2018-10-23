@@ -23,6 +23,7 @@ package com.spotify.flo.context;
 import static com.spotify.flo.freezer.PersistingContext.deserialize;
 import static com.spotify.flo.freezer.PersistingContext.serialize;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -43,16 +44,21 @@ import com.spotify.flo.TaskOperator;
 import com.spotify.flo.TaskOperator.Listener;
 import com.spotify.flo.TaskOperator.Operation.Result;
 import com.spotify.flo.TaskOutput;
+import com.spotify.flo.context.StagingUtil.StagedPackage;
 import com.spotify.flo.freezer.EvaluatingContext;
 import com.spotify.flo.freezer.PersistingContext;
+import com.spotify.flo.util.Date;
 import io.norberg.automatter.jackson.AutoMatterModule;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashSet;
@@ -61,6 +67,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import org.junit.Rule;
 import org.junit.Test;
@@ -89,7 +98,10 @@ import org.slf4j.LoggerFactory;
  */
 public class EphemeralExecutionTest {
 
-  private static final boolean DEBUG = false;
+  private static URI stagingLocation = URI.create("gs://dano-test/staging/");
+  private static final ExecutorService executor = Executors.newWorkStealingPool(32);
+
+  private static final boolean DEBUG = true;
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
       .setDefaultPrettyPrinter(new DefaultPrettyPrinter())
@@ -110,7 +122,14 @@ public class EphemeralExecutionTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void test() throws Exception {
+  public void testStage() {
+    stageWorkflow("com.spotify.flo.context.EphemeralExecutionTest", "workflow", Date.class);
+
+
+  }
+
+  @Test
+  public void testRun() throws Exception {
     final String dbPath = temporaryFolder.newFolder().getAbsolutePath();
     final String persistedTasksDir = temporaryFolder.newFolder().getAbsolutePath();
 
@@ -149,6 +168,40 @@ public class EphemeralExecutionTest {
   }
 
   public static void persistWorkflow(String dbPath, String dir) {
+    final Task<String> root = workflow(Date.of(LocalDate.now()));
+
+    final PersistingContext persistingContext = new PersistingContext(
+        Paths.get(dir), EvalContext.sync());
+
+    final Workflow workflow = workflow(root);
+    final File workflowJsonFile = Paths.get(dir, "workflow.json").toFile();
+    try {
+      OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(workflowJsonFile, workflow);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      MemoizingContext.composeWith(persistingContext)
+          .evaluate(root).toFuture().exceptionally(t -> "").get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+
+    final Map<TaskId, Path> files = persistingContext.getFiles();
+
+    withRocksDB(dbPath, db -> {
+      for (Task<?> task : tasks(root)) {
+        write(db, TASK_PATH, task.id().toString(), files.get(task.id()).toAbsolutePath().toString());
+        write(db, TASK, task.id().toString(), "");
+      }
+      write(db, ROOT_TASK_ID, root.id());
+      return null;
+    });
+  }
+
+  static Task<String> workflow(Date date) {
+
     final Task<String> foo = Task.named("foo")
         .ofType(String.class)
         .process(() -> {
@@ -199,7 +252,7 @@ public class EphemeralExecutionTest {
               .success(r -> a + " " + b);
         });
 
-    final Task<String> root = Task.named("root")
+    return Task.named("root")
         .ofType(String.class)
         .operator(Jobs.JobOperator.create())
         .input(() -> foo)
@@ -208,7 +261,7 @@ public class EphemeralExecutionTest {
         .input(() -> quux)
         .input(() -> deadbeef)
         .process((spec, a, b, c, d, e) -> {
-          log.info("process fn: main");
+          log.info("process fn: main: + " + date);
           return spec
               .options(() -> ImmutableMap.of("foo", "bar"))
               .pipeline(ctx -> ctx
@@ -222,36 +275,48 @@ public class EphemeralExecutionTest {
               })
               .success(r -> String.join(" ", a, b, c, d, e));
         });
+  }
 
 
-    final PersistingContext persistingContext = new PersistingContext(
-        Paths.get(dir), EvalContext.sync());
 
-    final Workflow workflow = workflow(root);
-    final File workflowJsonFile = Paths.get(dir, "workflow.json").toFile();
+  private static void stageWorkflow(String klass, String method, Class<?> parameterType) {
+    final ClasspathInspector classpathInspector = ClasspathInspector.forLoader(
+        EphemeralExecutionTest.class.getClassLoader());
+    final List<Path> workflowFiles = classpathInspector.classpathJars();
+
+    final List<String> fileString = workflowFiles.stream()
+        .map(Path::toAbsolutePath)
+        .map(Path::toString)
+        .collect(toList());
+
+    final List<StagedPackage> stagedPackages = StagingUtil.stageClasspathElements(
+        fileString, stagingLocation.toString());
+
+    final WorkflowManifestBuilder manifestBuilder = new WorkflowManifestBuilder();
+    manifestBuilder.entryPoint(new EntryPointBuilder()
+        .klass(klass)
+        .method(method)
+        .parameterType(parameterType.toString())
+        .build());
+    manifestBuilder.stagingLocation(stagingLocation);
+    stagedPackages.stream().map(StagedPackage::name).forEach(manifestBuilder::addFile);
+    final WorkflowManifest manifest = manifestBuilder.build();
+
+    final String manifestName = "workflow-manifest-" + Long.toHexString(ThreadLocalRandom.current().nextLong()) +".json";
+
     try {
-      OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(workflowJsonFile, workflow);
+      Files.write(Paths.get(stagingLocation).resolve(manifestName),
+          OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsBytes(manifest));
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
 
-    try {
-      MemoizingContext.composeWith(persistingContext)
-          .evaluate(root).toFuture().exceptionally(t -> "").get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-
-    final Map<TaskId, Path> files = persistingContext.getFiles();
-
-    withRocksDB(dbPath, db -> {
-      for (Task<?> task : tasks(root)) {
-        write(db, TASK_PATH, task.id().toString(), files.get(task.id()).toAbsolutePath().toString());
-        write(db, TASK, task.id().toString(), "");
-      }
-      write(db, ROOT_TASK_ID, root.id());
-      return null;
-    });
+  private static List<String> toStrings(List<Path> paths) {
+    return paths.stream()
+        .map(Path::toAbsolutePath)
+        .map(Path::toString)
+        .collect(toList());
   }
 
   private static Workflow workflow(Task<?> root) {

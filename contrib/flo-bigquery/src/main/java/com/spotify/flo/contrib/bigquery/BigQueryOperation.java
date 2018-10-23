@@ -21,7 +21,7 @@
 package com.spotify.flo.contrib.bigquery;
 
 import com.google.cloud.bigquery.JobInfo;
-import com.google.cloud.bigquery.QueryRequest;
+import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.spotify.flo.Fn;
 import com.spotify.flo.TaskBuilder.F1;
 import java.io.Serializable;
@@ -35,14 +35,14 @@ public class BigQueryOperation<T, R> implements Serializable {
   private static final long serialVersionUID = 1L;
 
   Fn<JobInfo> jobRequest;
-  Fn<QueryRequest> queryRequest;
+  Fn<QueryJobConfiguration> queryRequest;
   F1<Object, T> success;
 
   /**
    * Run a query. Result are returned directly and not written to a table.
    */
   @SuppressWarnings("unchecked")
-  BigQueryOperation<T, BigQueryResult> query(Fn<QueryRequest> queryRequest) {
+  BigQueryOperation<T, BigQueryResult> query(Fn<QueryJobConfiguration> queryRequest) {
     if (jobRequest != null) {
       throw new IllegalStateException("can only run either a query or a job");
     }
@@ -71,7 +71,7 @@ public class BigQueryOperation<T, R> implements Serializable {
     return this;
   }
 
-  static <T> BigQueryOperation<T, BigQueryResult> ofQuery(Fn<QueryRequest> queryRequest) {
+  static <T> BigQueryOperation<T, BigQueryResult> ofQuery(Fn<QueryJobConfiguration> queryRequest) {
     return new BigQueryOperation<T, BigQueryResult>().query(queryRequest);
   }
 
@@ -90,16 +90,16 @@ public class BigQueryOperation<T, R> implements Serializable {
       return new BigQueryOperation<>();
     }
 
-    public BigQueryOperation<T, BigQueryResult> query(Fn<QueryRequest> queryRequest) {
+    public BigQueryOperation<T, BigQueryResult> query(Fn<QueryJobConfiguration> queryRequest) {
       return BigQueryOperation.ofQuery(queryRequest);
     }
 
-    public BigQueryOperation<T, BigQueryResult> query(QueryRequest queryRequest) {
+    public BigQueryOperation<T, BigQueryResult> query(QueryJobConfiguration queryRequest) {
       return BigQueryOperation.ofQuery(() -> queryRequest);
     }
 
     public BigQueryOperation<T, BigQueryResult> query(String query) {
-      return BigQueryOperation.ofQuery(() -> QueryRequest.of(query));
+      return BigQueryOperation.ofQuery(() -> QueryJobConfiguration.of(query));
     }
 
     public BigQueryOperation<T, JobInfo> job(Fn<JobInfo> jobInfo) {

@@ -1,8 +1,8 @@
 /*-
  * -\-\-
- * Flo BigQuery
+ * hype-submitter
  * --
- * Copyright (C) 2016 - 2018 Spotify AB
+ * Copyright (C) 2016 - 2017 Spotify AB
  * --
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,19 @@
  * -/-/-
  */
 
-package com.spotify.flo.contrib.bigquery;
+package com.spotify.flo.context;
 
-import com.google.cloud.bigquery.FieldValueList;
-import com.google.cloud.bigquery.Schema;
+import java.nio.file.Path;
+import java.util.List;
 
-public interface BigQueryResult extends Iterable<FieldValueList> {
+public interface ClasspathInspector {
+  List<Path> classpathJars();
 
-  Schema schema();
+  static ClasspathInspector forClass(Class<?> cls) {
+    return new LocalClasspathInspector(cls);
+  }
 
-  long totalRows();
+  static ClasspathInspector forLoader(ClassLoader classLoader) {
+    return new LocalClasspathInspector(classLoader);
+  }
 }
