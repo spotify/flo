@@ -18,7 +18,7 @@
  * -/-/-
  */
 
-package com.spotify.flo.context;
+package com.spotify.flo.extract;
 
 import java.net.URI;
 import java.nio.file.Path;

@@ -1,8 +1,8 @@
 /*-
  * -\-\-
- * hype-submitter
+ * Flo Runner
  * --
- * Copyright (C) 2016 - 2017 Spotify AB
+ * Copyright (C) 2016 - 2018 Spotify AB
  * --
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,20 @@
  * -/-/-
  */
 
-package com.spotify.flo.context;
+package com.spotify.flo.extract;
 
-import java.nio.file.Path;
-import java.util.List;
+import io.norberg.automatter.AutoMatter;
+import java.net.URI;
+import java.util.Map;
 
-public interface ClasspathInspector {
-  List<Path> classpathJars();
+@AutoMatter
+public interface ExecutionManifest {
 
-  static ClasspathInspector forClass(Class<?> cls) {
-    return new LocalClasspathInspector(cls);
-  }
+  URI workflowManifest();
 
-  static ClasspathInspector forLoader(ClassLoader classLoader) {
-    return new LocalClasspathInspector(classLoader);
-  }
+  URI stagingLocation();
+
+  String workflowFile();
+
+  Map<String, String> taskFiles();
 }

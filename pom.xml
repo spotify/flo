@@ -41,14 +41,14 @@
   <modules>
     <module>flo-api-generator</module>
     <module>flo-workflow</module>
-    <module>flo-scala_2.11</module>
-    <module>flo-scala_2.12</module>
+    <!--<module>flo-scala_2.11</module>-->
+    <!--<module>flo-scala_2.12</module>-->
     <module>flo-runner</module>
     <module>flo-freezer</module>
     <!-- contrib modules -->
     <module>contrib/flo-bigquery</module>
-    <module>contrib/flo-scio_2.11</module>
-    <module>contrib/flo-scio_2.12</module>
+    <!--<module>contrib/flo-scio_2.11</module>-->
+    <!--<module>contrib/flo-scio_2.12</module>-->
     <module>contrib/flo-styx</module>
     <module>contrib/flo-extract</module>
   </modules>
@@ -77,6 +77,11 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>flo-api-generator</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>flo-extract</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -200,7 +205,7 @@
       <dependency>
         <groupId>io.norberg</groupId>
         <artifactId>auto-matter-jackson</artifactId>
-        <version>0.15.0</version>
+        <version>0.15.1</version>
         <scope>test</scope>
       </dependency>
       <dependency>

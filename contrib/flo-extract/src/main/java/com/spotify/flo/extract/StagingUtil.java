@@ -16,7 +16,7 @@
  * -/-/-
  */
 
-package com.spotify.flo.context;
+package com.spotify.flo.extract;
 
 import static com.google.cloud.storage.contrib.nio.CloudStorageOptions.withMimeType;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;

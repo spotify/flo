@@ -23,12 +23,9 @@ package com.spotify.flo.context;
 import static com.spotify.flo.freezer.PersistingContext.deserialize;
 import static com.spotify.flo.freezer.PersistingContext.serialize;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -44,32 +41,23 @@ import com.spotify.flo.TaskOperator;
 import com.spotify.flo.TaskOperator.Listener;
 import com.spotify.flo.TaskOperator.Operation.Result;
 import com.spotify.flo.TaskOutput;
-import com.spotify.flo.context.StagingUtil.StagedPackage;
 import com.spotify.flo.freezer.EvaluatingContext;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.util.Date;
-import io.norberg.automatter.jackson.AutoMatterModule;
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import org.junit.Rule;
 import org.junit.Test;
@@ -98,14 +86,7 @@ import org.slf4j.LoggerFactory;
  */
 public class EphemeralExecutionTest {
 
-  private static URI stagingLocation = URI.create("gs://dano-test/staging/");
-  private static final ExecutorService executor = Executors.newWorkStealingPool(32);
-
   private static final boolean DEBUG = true;
-
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-      .setDefaultPrettyPrinter(new DefaultPrettyPrinter())
-      .registerModule(new AutoMatterModule());
 
   private static final String ROOT_TASK_ID = "root_task_id";
   private static final String TASK_PATH = "task_path";
@@ -122,14 +103,7 @@ public class EphemeralExecutionTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testStage() {
-    stageWorkflow("com.spotify.flo.context.EphemeralExecutionTest", "workflow", Date.class);
-
-
-  }
-
-  @Test
-  public void testRun() throws Exception {
+  public void test() throws Exception {
     final String dbPath = temporaryFolder.newFolder().getAbsolutePath();
     final String persistedTasksDir = temporaryFolder.newFolder().getAbsolutePath();
 
@@ -172,14 +146,6 @@ public class EphemeralExecutionTest {
 
     final PersistingContext persistingContext = new PersistingContext(
         Paths.get(dir), EvalContext.sync());
-
-    final Workflow workflow = workflow(root);
-    final File workflowJsonFile = Paths.get(dir, "workflow.json").toFile();
-    try {
-      OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValue(workflowJsonFile, workflow);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
 
     try {
       MemoizingContext.composeWith(persistingContext)
@@ -275,79 +241,6 @@ public class EphemeralExecutionTest {
               })
               .success(r -> String.join(" ", a, b, c, d, e));
         });
-  }
-
-
-
-  private static void stageWorkflow(String klass, String method, Class<?> parameterType) {
-    final ClasspathInspector classpathInspector = ClasspathInspector.forLoader(
-        EphemeralExecutionTest.class.getClassLoader());
-    final List<Path> workflowFiles = classpathInspector.classpathJars();
-
-    final List<String> fileString = workflowFiles.stream()
-        .map(Path::toAbsolutePath)
-        .map(Path::toString)
-        .collect(toList());
-
-    final List<StagedPackage> stagedPackages = StagingUtil.stageClasspathElements(
-        fileString, stagingLocation.toString());
-
-    final WorkflowManifestBuilder manifestBuilder = new WorkflowManifestBuilder();
-    manifestBuilder.entryPoint(new EntryPointBuilder()
-        .klass(klass)
-        .method(method)
-        .parameterType(parameterType.toString())
-        .build());
-    manifestBuilder.stagingLocation(stagingLocation);
-    stagedPackages.stream().map(StagedPackage::name).forEach(manifestBuilder::addFile);
-    final WorkflowManifest manifest = manifestBuilder.build();
-
-    final String manifestName = "workflow-manifest-" + Long.toHexString(ThreadLocalRandom.current().nextLong()) +".json";
-
-    try {
-      Files.write(Paths.get(stagingLocation).resolve(manifestName),
-          OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsBytes(manifest));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private static List<String> toStrings(List<Path> paths) {
-    return paths.stream()
-        .map(Path::toAbsolutePath)
-        .map(Path::toString)
-        .collect(toList());
-  }
-
-  private static Workflow workflow(Task<?> root) {
-    final List<Task<?>> tasks = new ArrayList<>();
-    final Set<TaskId> visited = new HashSet<>();
-    enumerateTasks(root, tasks, visited);
-
-    final WorkflowBuilder builder = new WorkflowBuilder();
-    for (Task<?> task : tasks) {
-      final Optional<? extends TaskOperator<?, ?, ?>> operator = OperationExtractingContext.operator(task);
-      final TaskBuilder taskBuilder = new TaskBuilder()
-          .operator(operator.map(o -> o.getClass().getName()).orElse("<generic>"))
-          .id(task.id().toString())
-          .payloadBase64(Base64.getEncoder().encodeToString(PersistingContext.serialize(task)));
-      for (Task<?> upstream : task.inputs()) {
-        taskBuilder.addUpstream(upstream.id().toString());
-      }
-      builder.addTask(taskBuilder.build());
-    }
-
-    return builder.build();
-  }
-
-  private static void enumerateTasks(Task<?> task, List<Task<?>> tasks, Set<TaskId> visited) {
-    if (!visited.add(task.id())) {
-      return;
-    }
-    for (Task<?> input : task.inputs()) {
-      enumerateTasks(input, tasks, visited);
-    }
-    tasks.add(task);
   }
 
   private static Tick runWorkflowTick(String dbPath, String persistedTasksDir) {
