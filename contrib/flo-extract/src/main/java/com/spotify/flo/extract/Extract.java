@@ -106,6 +106,10 @@ public class Extract {
         .collect(Collectors.toList());
     final URL[] classpath = files.stream().map(Extract::toURL).toArray(URL[]::new);
 
+    for (URL url : classpath) {
+      log.debug("CLASSPATH: {}", url);
+    }
+
     final String parameterTypeName = workflowManifest.entryPoint().parameterType();
     final Class<?> parameterType;
     final Object arg;
