@@ -26,10 +26,13 @@ import static java.util.stream.Collectors.toList;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -111,11 +114,63 @@ class BuilderUtils {
       oos.writeObject(o);
       oos.flush();
       final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-      final ObjectInputStream ois = new ObjectInputStream(bais);
+      final ObjectInputStream ois = new ContextualObjectInputStream(bais);
       @SuppressWarnings("unchecked") final T deserialized = (T) ois.readObject();
       return deserialized;
     } catch (IOException | ClassNotFoundException e) {
       throw new IllegalArgumentException(name + " not serializable: " + o, e);
+    }
+  }
+
+  // https://github.com/apache/beam/blob/master/sdks/java/core/src/main/java/org/apache/beam/sdk/util/SerializableUtils.java#L162
+  private static final class ContextualObjectInputStream extends ObjectInputStream {
+    private ContextualObjectInputStream(final InputStream in) throws IOException {
+      super(in);
+    }
+
+    @Override
+    protected Class<?> resolveClass(final ObjectStreamClass classDesc)
+        throws IOException, ClassNotFoundException {
+      // note: staying aligned on JVM default but can need class filtering here to avoid 0day issue
+      final String n = classDesc.getName();
+      final ClassLoader classloader = findClassLoader();
+      try {
+        return Class.forName(n, false, classloader);
+      } catch (final ClassNotFoundException e) {
+        return super.resolveClass(classDesc);
+      }
+    }
+
+    @Override
+    protected Class resolveProxyClass(final String[] interfaces)
+        throws IOException, ClassNotFoundException {
+      final ClassLoader classloader = findClassLoader();
+
+      final Class[] cinterfaces = new Class[interfaces.length];
+      for (int i = 0; i < interfaces.length; i++) {
+        cinterfaces[i] = classloader.loadClass(interfaces[i]);
+      }
+
+      try {
+        return Proxy.getProxyClass(classloader, cinterfaces);
+      } catch (final IllegalArgumentException e) {
+        throw new ClassNotFoundException(null, e);
+      }
+    }
+
+    public static ClassLoader findClassLoader() {
+      return findClassLoader(Thread.currentThread().getContextClassLoader());
+    }
+
+    public static ClassLoader findClassLoader(final ClassLoader proposed) {
+      ClassLoader classLoader = proposed;
+      if (classLoader == null) {
+        classLoader = BuilderUtils.class.getClassLoader();
+      }
+      if (classLoader == null) {
+        classLoader = ClassLoader.getSystemClassLoader();
+      }
+      return classLoader;
     }
   }
 }

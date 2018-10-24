@@ -86,7 +86,7 @@ public class StagedExecutionTest {
 
   @Test
   public void testExtract() throws IOException, ReflectiveOperationException {
-    final URI manifestUri = URI.create("gs://dano-test/staging/workflow-manifest-910c209b2eafc2bb.json");
+    final URI manifestUri = URI.create("gs://dano-test/staging/workflow-manifest-19ed68f0f1ae60e3.json");
     Extract.extract(manifestUri, "2018-10-23");
   }
 

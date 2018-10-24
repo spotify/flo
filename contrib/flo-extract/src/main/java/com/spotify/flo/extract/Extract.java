@@ -40,6 +40,7 @@ import com.spotify.flo.util.DateHour;
 import io.norberg.automatter.jackson.AutoMatterModule;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -48,7 +49,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -98,11 +98,13 @@ public class Extract {
     log.debug("tempdir: {}", tempdir);
     log.debug("executionDir: {}", executionDir);
 
-    workflowManifest.files().stream()
+    final List<Path> files = workflowManifest.files().stream()
         .map(f -> CompletableFuture.supplyAsync(() ->
             download(workflowStagingLocation.resolve(f), tempdir), EXECUTOR))
-        .collect(toList())
-        .forEach(CompletableFuture::join);
+        .collect(toList()).stream()
+        .map(CompletableFuture::join)
+        .collect(Collectors.toList());
+    final URL[] classpath = files.stream().map(Extract::toURL).toArray(URL[]::new);
 
     final String parameterTypeName = workflowManifest.entryPoint().parameterType();
     final Class<?> parameterType;
@@ -122,19 +124,31 @@ public class Extract {
 
     log.info("Loading workflow entrypoint: {}#{}",
         workflowManifest.entryPoint().klass(), workflowManifest.entryPoint().method());
-    final URLClassLoader workflowClassLoader = new URLClassLoader(new URL[]{tempdir.toUri().toURL()},
-        ClassLoader.getSystemClassLoader());
+
+    // TODO: Full isolation?
+    final URLClassLoader workflowClassLoader = new URLClassLoader(classpath, ClassLoader.getSystemClassLoader());
     final Class<?> klass = workflowClassLoader.loadClass(workflowManifest.entryPoint().klass());
     final Method entrypoint = klass.getDeclaredMethod(workflowManifest.entryPoint().method(), parameterType);
     entrypoint.setAccessible(true);
 
     log.info("Invoking workflow entrypoint: {}#{}",
         workflowManifest.entryPoint().klass(), workflowManifest.entryPoint().method());
+
+    // TODO: Is setting the CCL the way to go here?
+    Thread.currentThread().setContextClassLoader(workflowClassLoader);
     final Task<?> root = (Task<?>) entrypoint.invoke(null, arg);
 
     logWorkflow(root);
 
     stageExecution(executionDir, root, executionStagingLocation, workflowManifestUri);
+  }
+
+  private static URL toURL(Path path) {
+    try {
+      return path.toUri().toURL();
+    } catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static void logWorkflow(Task<?> root) {
