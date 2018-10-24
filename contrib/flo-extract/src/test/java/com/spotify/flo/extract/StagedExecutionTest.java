@@ -170,8 +170,7 @@ public class StagedExecutionTest {
       final Optional<? extends TaskOperator<?, ?, ?>> operator = OperationExtractingContext.operator(task);
       final TaskBuilder taskBuilder = new TaskBuilder()
           .operator(operator.map(o -> o.getClass().getName()).orElse("<generic>"))
-          .id(task.id().toString())
-          .payloadBase64(Base64.getEncoder().encodeToString(PersistingContext.serialize(task)));
+          .id(task.id().toString());
       for (Task<?> upstream : task.inputs()) {
         taskBuilder.addUpstream(upstream.id().toString());
       }
