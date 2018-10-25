@@ -79,11 +79,11 @@
         <version>0.9.11</version>
         <configuration>
           <to>
-            <image>gcr.io/spotify-datainfra/flo-task-execute-generic</image>
+            <image>gcr.io/spotify-datainfra/flo-task-execute-scio</image>
             <credHelper>gcr</credHelper>
           </to>
           <container>
-            <mainClass>com.spotify.flo.execute.generic.ExecuteGeneric</mainClass>
+            <mainClass>com.spotify.flo.execute.scio.ExecuteScio</mainClass>
           </container>
         </configuration>
       </plugin>

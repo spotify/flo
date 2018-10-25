@@ -24,14 +24,20 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKN
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.stream.Collectors.toList;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.contrib.scio.ScioJobSpec;
+import com.spotify.flo.deploy.models.DataflowJob;
+import com.spotify.flo.deploy.models.DataflowJobBuilder;
 import com.spotify.flo.deploy.models.ExecutionManifest;
 import com.spotify.flo.deploy.models.Workflow;
 import com.spotify.flo.deploy.models.WorkflowManifest;
 import com.spotify.flo.freezer.EvaluatingContext;
 import com.spotify.flo.freezer.PersistingContext;
+import com.spotify.scio.ScioContext;
+import com.spotify.scio.ScioResult;
 import io.norberg.automatter.jackson.AutoMatterModule;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -42,6 +48,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -49,6 +56,8 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import org.apache.beam.runners.dataflow.DataflowPipelineJob;
+import org.apache.beam.sdk.options.PipelineOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +76,7 @@ public class ExecuteScio {
         args[0], args[1], args[2], args[3]);
 
     final Path executionManifestLocation = Paths.get(URI.create(args[0]));
-    final String taskId = args[1];
+    final TaskId taskId = TaskId.parse(args[1]);
     final String command = args[2];
     final Path dataflowJobReferenceLocation = Paths.get(URI.create(args[3]));
 
@@ -87,7 +96,10 @@ public class ExecuteScio {
 
     final Workflow workflow = OBJECT_MAPPER.readValue(Files.readAllBytes(workflowFileLocation), Workflow.class);
 
-    final Workflow.Task task = workflow.tasks().stream().filter(t -> taskId.equals(t.id())).findFirst().get();
+    final Workflow.Task task = workflow.tasks().stream()
+        .filter(t -> taskId.toString().equals(t.id()))
+        .findFirst()
+        .get();
 
     // Download upstream results
     log.info("Downloading upstream results: {}", task.upstreams());
@@ -125,14 +137,43 @@ public class ExecuteScio {
 
     // Extract scio job spec
     log.info("Executing task: {}", taskId);
-    evaluationContext(tempdir).evaluateTaskFrom(localTaskFile).toFuture().get(30, TimeUnit.SECONDS);
+    final CompletableFuture<ScioJobSpec> specFuture = new CompletableFuture<>();
+    evaluationContext(tempdir, taskId, specFuture)
+        .evaluateTaskFrom(localTaskFile)
+        .toFuture().get(30, TimeUnit.SECONDS);
 
-    // Upload result
-    final String resultFileName = PersistingContext.cleanForFilename(floTask.id()) + "_out";
-    final Path resultFile = tempdir.resolve(resultFileName);
-    final Path remoteResultFileLocation = executionStagingLocation.resolve(resultFileName);
-    log.info("Uploading task result to: {}", remoteResultFileLocation.toUri());
-    Files.copy(resultFile, remoteResultFileLocation);
+    switch (command) {
+      case "start":
+        final ScioJobSpec jobSpec = specFuture.get(30, TimeUnit.SECONDS);
+        final PipelineOptions options = (PipelineOptions) jobSpec.options().apply();
+
+        final ScioContext scioContext = ScioContext.apply(options);
+
+        //noinspection unchecked
+        jobSpec.pipeline().apply(scioContext);
+
+        final ScioResult scioResult = scioContext.close();
+        final DataflowPipelineJob dataflowJob = (DataflowPipelineJob) scioResult.internal();
+
+        final DataflowJob job = new DataflowJobBuilder()
+            .jobId(dataflowJob.getJobId())
+            .region(dataflowJob.getRegion())
+            .projectId(dataflowJob.getProjectId())
+            .options(OBJECT_MAPPER.convertValue(options, new TypeReference<Map<String, Object>>() { }))
+            .build();
+
+        // Upload dataflow job file
+        final String dataflowJobFileName = PersistingContext.cleanForFilename(floTask.id()) + "_df_job";
+        final Path remotedataflowJobFileLocation = executionStagingLocation.resolve(dataflowJobFileName);
+        log.info("Writing data flow job file: {}", remotedataflowJobFileLocation.toUri());
+        Files.write(remotedataflowJobFileLocation, OBJECT_MAPPER.writeValueAsBytes(job));
+
+      case "finish":
+        throw new UnsupportedOperationException("TODO");
+
+      default:
+        throw new AssertionError();
+    }
   }
 
   private static CompletableFuture<Path> downloadAsync(Path src, Path dst) {
@@ -158,8 +199,9 @@ public class ExecuteScio {
     }
   }
 
-  private static EvaluatingContext evaluationContext(Path persistedTasksDir, TaskId taskId) {
-    return new EvaluatingContext(persistedTasksDir, new ScioJobSpecExtractingContext(taskId));
+  private static EvaluatingContext evaluationContext(Path persistedTasksDir, TaskId taskId,
+      CompletableFuture<ScioJobSpec> specFuture) {
+    return new EvaluatingContext(persistedTasksDir, new ScioJobSpecExtractingContext(taskId, specFuture));
   }
 
 }

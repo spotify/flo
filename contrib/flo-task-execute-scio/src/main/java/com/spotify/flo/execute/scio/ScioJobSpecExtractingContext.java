@@ -26,14 +26,18 @@ import com.spotify.flo.Invokable;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBridge;
 import com.spotify.flo.TaskId;
+import com.spotify.flo.contrib.scio.ScioJobSpec;
 import com.spotify.flo.freezer.Persisted;
+import java.util.concurrent.CompletableFuture;
 
 class ScioJobSpecExtractingContext implements EvalContext {
 
   private final TaskId taskId;
+  private final CompletableFuture<ScioJobSpec> specFuture;
 
   public ScioJobSpecExtractingContext(TaskId taskId, CompletableFuture<ScioJobSpec> specFuture) {
     this.taskId = taskId;
+    this.specFuture = specFuture;
   }
 
   @Override
@@ -64,6 +68,10 @@ class ScioJobSpecExtractingContext implements EvalContext {
     final Promise<T> promise = promise();
     promise.fail(new Persisted());
 
-    final ScioJobSpec spec = processFn.invoke(args);
+    final ScioJobSpec spec = (ScioJobSpec) processFn.invoke(args);
+
+    specFuture.complete(spec);
+
+    return promise.value();
   }
 }
