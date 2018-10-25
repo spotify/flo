@@ -8,7 +8,7 @@
     <relativePath>../..</relativePath>
   </parent>
 
-  <name>Flo Extract</name>
+  <name>Flo Deploy Models</name>
   <artifactId>flo-deploy-models</artifactId>
   <description>
     Flo Deploy Models
