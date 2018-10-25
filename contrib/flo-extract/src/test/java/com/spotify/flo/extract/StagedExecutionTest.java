@@ -33,24 +33,27 @@ import com.spotify.flo.TaskOperator;
 import com.spotify.flo.TaskOutput;
 import com.spotify.flo.extract.StagingUtil.StagedPackage;
 import com.spotify.flo.freezer.EvaluatingContext;
-import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.util.Date;
 import io.norberg.automatter.jackson.AutoMatterModule;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -62,38 +65,51 @@ import org.slf4j.LoggerFactory;
  */
 public class StagedExecutionTest {
 
-  private static URI stagingLocation = URI.create("gs://dano-test/staging/");
-  private static final ExecutorService executor = Executors.newWorkStealingPool(32);
+  private static final Logger log = LoggerFactory.getLogger(StagedExecutionTest.class);
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
       .setDefaultPrettyPrinter(new DefaultPrettyPrinter())
       .registerModule(new AutoMatterModule());
 
-  private static final Logger log = LoggerFactory.getLogger(StagedExecutionTest.class);
+  private final ExecutorService executor = Executors.newWorkStealingPool(32);
+
+  private final URI stagingLocation = URI.create("gs://dano-test/staging/");
+  private final URI workflowsStagingLocation = stagingLocation.resolve("workflows");
+  private final URI executionsStagingLocation = stagingLocation.resolve("executions");
+
+  private final String parameter = "2018-10-23";
+  private final String executionId = "execution-" + urlencode(parameter) + "-" + UUID.randomUUID();
+
+  private final URI workflowStagingLocation = workflowsStagingLocation.resolve("test");
+  private final URI executionStagingLocation = executionsStagingLocation.resolve(executionId);
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  @After
+  public void tearDown() {
+    executor.shutdownNow();
+  }
+
   @Test
   public void testStageAndExtract() throws IOException, ReflectiveOperationException {
-    final URI manifestUri = stageWorkflow("com.spotify.flo.extract.StagedExecutionTest", "workflow", Date.class);
-    Extract.extract(manifestUri, "2018-10-23");
+    final URI manifestUri = stageWorkflow(
+        "com.spotify.flo.extract.StagedExecutionTest", "workflow",
+        Date.class, workflowStagingLocation);
+    Extract.extract(manifestUri, parameter, executionStagingLocation);
   }
 
   @Test
   public void testStage() {
-    stageWorkflow("com.spotify.flo.extract.StagedExecutionTest", "workflow", Date.class);
+    stageWorkflow("com.spotify.flo.extract.StagedExecutionTest", "workflow", Date.class, workflowStagingLocation);
   }
 
   @Test
   public void testExtract() throws IOException, ReflectiveOperationException {
     final URI manifestUri = URI.create("gs://dano-test/staging/workflow-manifest-19ed68f0f1ae60e3.json");
-    Extract.extract(manifestUri, "2018-10-23");
+    Extract.extract(manifestUri, parameter, executionStagingLocation);
   }
 
-  public static EvaluatingContext evaluationContext(String persistedTasksDir) {
-    return new EvaluatingContext(Paths.get(persistedTasksDir), EvalContext.sync());
-  }
-
+  @SuppressWarnings("unused")
   static Task<?> workflow(Date date) {
 
     final Fn<Task<String>> fooTask = () -> Task.named("foo")
@@ -114,7 +130,8 @@ public class StagedExecutionTest {
     return barTask;
   }
 
-  private static URI stageWorkflow(String klass, String method, Class<?> parameterType) {
+  private static URI stageWorkflow(String klass, String method, Class<?> parameterType,
+      URI workflowStagingLocation) {
     final ClasspathInspector classpathInspector = ClasspathInspector.forLoader(
         StagedExecutionTest.class.getClassLoader());
     final List<Path> workflowFiles = classpathInspector.classpathJars();
@@ -125,7 +142,7 @@ public class StagedExecutionTest {
         .collect(toList());
 
     final List<StagedPackage> stagedPackages = StagingUtil.stageClasspathElements(
-        fileString, stagingLocation.toString());
+        fileString, workflowStagingLocation.toString());
 
     final WorkflowManifestBuilder manifestBuilder = new WorkflowManifestBuilder();
     manifestBuilder.entryPoint(new EntryPointBuilder()
@@ -133,13 +150,13 @@ public class StagedExecutionTest {
         .method(method)
         .parameterType(parameterType.getName())
         .build());
-    manifestBuilder.stagingLocation(stagingLocation);
+    manifestBuilder.stagingLocation(workflowStagingLocation);
     stagedPackages.stream().map(StagedPackage::name).forEach(manifestBuilder::addFile);
     final WorkflowManifest manifest = manifestBuilder.build();
 
     final String manifestName = "workflow-manifest-" + Long.toHexString(ThreadLocalRandom.current().nextLong()) +".json";
 
-    final Path manifestLocation = Paths.get(stagingLocation).resolve(manifestName);
+    final Path manifestLocation = Paths.get(workflowStagingLocation).resolve(manifestName);
 
     try {
       Files.write(manifestLocation,
@@ -148,7 +165,7 @@ public class StagedExecutionTest {
       throw new RuntimeException(e);
     }
 
-    System.err.println("Staged workflow to: " + manifestLocation.toUri());
+    log.info("Staged workflow to: {}", manifestLocation.toUri());
 
     return manifestLocation.toUri();
   }
@@ -199,6 +216,14 @@ public class StagedExecutionTest {
     final Set<Task<?>> tasks = new HashSet<>();
     tasks(task, tasks::add);
     return tasks;
+  }
+
+  private static String urlencode(String s) {
+    try {
+      return URLEncoder.encode(s, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static class DoneOutput<T> extends TaskOutput<String, T> {
