@@ -272,10 +272,8 @@ public class Extract {
           final Map<String, Object> configuration = OBJECT_MAPPER.convertValue(hadesConfiguration,
               new TypeReference<Map<String, Object>>(){});
           taskBuilder.configuration(configuration);
-          operatorName = "hades";
-        } else {
-          throw new UnsupportedOperationException("Unsupported operator: " + operator.get().getClass().getName());
         }
+        operatorName = operator.get().getClass().getName();
       } else {
         operatorName = "<generic>";
       }
