@@ -18,28 +18,20 @@
  * -/-/-
  */
 
-package com.spotify.flo.extract;
+package com.spotify.flo.deploy.models;
 
 import io.norberg.automatter.AutoMatter;
 import java.net.URI;
-import java.util.List;
+import java.util.Map;
 
 @AutoMatter
-public interface WorkflowManifest {
+public interface ExecutionManifest {
 
-  List<String> files();
-
-  EntryPoint entryPoint();
+  URI workflowManifest();
 
   URI stagingLocation();
 
-  @AutoMatter
-  interface EntryPoint {
+  String workflowFile();
 
-    String klass();
-
-    String method();
-
-    String parameterType();
-  }
+  Map<String, String> taskFiles();
 }

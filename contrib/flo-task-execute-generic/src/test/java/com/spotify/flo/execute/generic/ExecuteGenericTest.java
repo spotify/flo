@@ -1,6 +1,6 @@
 /*-
  * -\-\-
- * Flo Runner
+ * Flo Extract
  * --
  * Copyright (C) 2016 - 2018 Spotify AB
  * --
@@ -18,24 +18,19 @@
  * -/-/-
  */
 
-package com.spotify.flo.extract;
+package com.spotify.flo.execute.generic;
 
-import io.norberg.automatter.AutoMatter;
-import java.util.Base64;
-import java.util.List;
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import org.junit.Test;
 
-@AutoMatter
-public interface Workflow {
+public class ExecuteGenericTest {
 
-  List<Task> tasks();
-
-  @AutoMatter
-  interface Task {
-
-    String operator();
-
-    String id();
-
-    List<String> upstreams();
+  @Test
+  public void testExecute() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    ExecuteGeneric.main(
+        "gs://dano-test/staging/executions/execution-2018-10-23-0b42acb8-90f4-410d-8112-e7af2414446d/manifest.json",
+        "foo()#a64ce3d3");
   }
 }

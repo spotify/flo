@@ -34,7 +34,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
 import java.io.OutputStream;
+import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -129,7 +131,7 @@ public class PersistingContext extends ForwardingEvalContext {
 
   @SuppressWarnings("unchecked")
   public static <T> T deserialize(InputStream inputStream) {
-    try (ObjectInputStream ois = new ObjectInputStream(inputStream)) {
+    try (ObjectInputStream ois = new ContextualObjectInputStream(inputStream)) {
       return (T) ois.readObject();
     } catch (IOException | ClassNotFoundException e) {
       throw new RuntimeException(e);
@@ -146,5 +148,57 @@ public class PersistingContext extends ForwardingEvalContext {
 
   private Path taskFile(TaskId taskId) {
     return basePath.resolve(cleanForFilename(taskId));
+  }
+
+  // https://github.com/apache/beam/blob/master/sdks/java/core/src/main/java/org/apache/beam/sdk/util/SerializableUtils.java#L162
+  private static final class ContextualObjectInputStream extends ObjectInputStream {
+    private ContextualObjectInputStream(final InputStream in) throws IOException {
+      super(in);
+    }
+
+    @Override
+    protected Class<?> resolveClass(final ObjectStreamClass classDesc)
+        throws IOException, ClassNotFoundException {
+      // note: staying aligned on JVM default but can need class filtering here to avoid 0day issue
+      final String n = classDesc.getName();
+      final ClassLoader classloader = findClassLoader();
+      try {
+        return Class.forName(n, false, classloader);
+      } catch (final ClassNotFoundException e) {
+        return super.resolveClass(classDesc);
+      }
+    }
+
+    @Override
+    protected Class resolveProxyClass(final String[] interfaces)
+        throws IOException, ClassNotFoundException {
+      final ClassLoader classloader = findClassLoader();
+
+      final Class[] cinterfaces = new Class[interfaces.length];
+      for (int i = 0; i < interfaces.length; i++) {
+        cinterfaces[i] = classloader.loadClass(interfaces[i]);
+      }
+
+      try {
+        return Proxy.getProxyClass(classloader, cinterfaces);
+      } catch (final IllegalArgumentException e) {
+        throw new ClassNotFoundException(null, e);
+      }
+    }
+
+    public static ClassLoader findClassLoader() {
+      return findClassLoader(Thread.currentThread().getContextClassLoader());
+    }
+
+    public static ClassLoader findClassLoader(final ClassLoader proposed) {
+      ClassLoader classLoader = proposed;
+      if (classLoader == null) {
+        classLoader = PersistingContext.class.getClassLoader();
+      }
+      if (classLoader == null) {
+        classLoader = ClassLoader.getSystemClassLoader();
+      }
+      return classLoader;
+    }
   }
 }

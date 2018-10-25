@@ -9,23 +9,15 @@
   </parent>
 
   <name>Flo Extract</name>
-  <artifactId>flo-extract</artifactId>
+  <artifactId>e</artifactId>
   <description>
-    Flo Workflow Extraction Tool
+    Flo Generic Task Executor
   </description>
 
   <dependencies>
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>flo-runner</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.spotify</groupId>
-      <artifactId>flo-freezer</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.spotify</groupId>
-      <artifactId>flo-workflow</artifactId>
     </dependency>
     <dependency>
       <groupId>com.spotify</groupId>
@@ -82,11 +74,11 @@
         <version>0.9.11</version>
         <configuration>
           <to>
-            <image>gcr.io/spotify-datainfra/flo-extract</image>
+            <image>gcr.io/spotify-datainfra/flo-task-execute-generic</image>
             <credHelper>gcr</credHelper>
           </to>
           <container>
-            <mainClass>com.spotify.flo.extract.Extract</mainClass>
+            <mainClass>com.spotify.flo.execute.generic.ExecuteGeneric</mainClass>
           </container>
         </configuration>
       </plugin>

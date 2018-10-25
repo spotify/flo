@@ -34,6 +34,12 @@ import com.spotify.flo.TaskInfo;
 import com.spotify.flo.TaskOperator;
 import com.spotify.flo.context.MemoizingContext;
 import com.spotify.flo.context.PrintUtilsBridge;
+import com.spotify.flo.deploy.models.ExecutionManifest;
+import com.spotify.flo.deploy.models.ExecutionManifestBuilder;
+import com.spotify.flo.deploy.models.TaskBuilder;
+import com.spotify.flo.deploy.models.Workflow;
+import com.spotify.flo.deploy.models.WorkflowBuilder;
+import com.spotify.flo.deploy.models.WorkflowManifest;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.util.Date;
 import com.spotify.flo.util.DateHour;
@@ -71,24 +77,24 @@ public class Extract {
       .registerModule(new AutoMatterModule());
   private static final ExecutorService EXECUTOR = new ForkJoinPool(32);
 
-  public static void main(String[] args) throws IOException, ReflectiveOperationException {
+  public static void main(String... args) throws IOException, ReflectiveOperationException {
     final URI workflowManifestUri = URI.create(args[0]);
     final String parameter = args[1];
-    final URI executionStagingLocation;
+    final Path executionStagingLocation;
     if (args.length < 3) {
       final byte[] manifestBytes = Files.readAllBytes(Paths.get(workflowManifestUri));
       final WorkflowManifest workflowManifest = OBJECT_MAPPER.readValue(manifestBytes, WorkflowManifest.class);
       final String executionId = "execution-" + URLEncoder.encode(parameter, "UTF-8") + "-" + UUID.randomUUID();
-      final URI workflowStagingLocation = workflowManifest.stagingLocation();
+      final Path workflowStagingLocation = Paths.get(workflowManifest.stagingLocation());
       executionStagingLocation = workflowStagingLocation.resolve("executions").resolve(executionId);
     } else {
-      executionStagingLocation = URI.create(args[2]);
+      executionStagingLocation = Paths.get(URI.create(args[2]));
     }
 
     extract(workflowManifestUri, parameter, executionStagingLocation);
   }
 
-  static void extract(URI workflowManifestUri, String param, URI executionStagingLocation) throws IOException, ReflectiveOperationException {
+  static void extract(URI workflowManifestUri, String param, Path executionStagingLocation) throws IOException, ReflectiveOperationException {
     log.info("extract: manifestUri={}, param={}", workflowManifestUri, param);
 
     final byte[] manifestBytes = Files.readAllBytes(Paths.get(workflowManifestUri));
@@ -180,7 +186,7 @@ public class Extract {
     return destinationFile;
   }
 
-  private static void stageExecution(Path dir, Task<?> root, URI executionStagingLocation,
+  private static void stageExecution(Path dir, Task<?> root, Path executionStagingLocation,
       URI workflowManifestUri) throws IOException {
     log.info("Staging execution: {}", executionStagingLocation);
 
@@ -189,7 +195,7 @@ public class Extract {
     final Workflow workflow = workflow(root);
     final String workflowJson = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(workflow);
     // TODO: retries
-    Files.write(Paths.get(executionStagingLocation.resolve("workflow.json")), workflowJson.getBytes(UTF_8));
+    Files.write(executionStagingLocation.resolve("workflow.json"), workflowJson.getBytes(UTF_8));
 
     try {
       MemoizingContext.composeWith(persistingContext)
@@ -206,11 +212,11 @@ public class Extract {
           final TaskId id = e.getKey();
           final Path source = e.getValue();
           final String name = PersistingContext.cleanForFilename(id);
-          final URI target = executionStagingLocation.resolve(name);
-          log.debug("Uploading {} to {}", source, target);
+          final Path target = executionStagingLocation.resolve(name);
+          log.debug("Uploading {} to {}", source, target.toUri());
           try {
             // TODO: retries
-            Files.copy(source, Paths.get(target), REPLACE_EXISTING);
+            Files.copy(source, target, REPLACE_EXISTING);
           } catch (IOException ex) {
             throw new RuntimeException(ex);
           }
@@ -225,14 +231,14 @@ public class Extract {
     });
 
     manifestBuilder.workflowManifest(workflowManifestUri);
-    manifestBuilder.stagingLocation(executionStagingLocation);
+    manifestBuilder.stagingLocation(executionStagingLocation.toUri());
 
     final ExecutionManifest manifest = manifestBuilder.build();
 
     // TODO: retries
-    final URI manifestLocation = executionStagingLocation.resolve("manifest.json");
-    log.debug("Writing manifest to {}", manifestLocation);
-    Files.write(Paths.get(manifestLocation), OBJECT_MAPPER.writeValueAsBytes(manifest));
+    final Path manifestLocation = executionStagingLocation.resolve("manifest.json");
+    log.debug("Writing manifest to {}", manifestLocation.toUri());
+    Files.write(manifestLocation, OBJECT_MAPPER.writeValueAsBytes(manifest));
   }
 
   private static Workflow workflow(Task<?> root) {

@@ -31,8 +31,13 @@ import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskOperator;
 import com.spotify.flo.TaskOutput;
+import com.spotify.flo.deploy.models.EntryPointBuilder;
+import com.spotify.flo.deploy.models.TaskBuilder;
+import com.spotify.flo.deploy.models.Workflow;
+import com.spotify.flo.deploy.models.WorkflowBuilder;
+import com.spotify.flo.deploy.models.WorkflowManifest;
+import com.spotify.flo.deploy.models.WorkflowManifestBuilder;
 import com.spotify.flo.extract.StagingUtil.StagedPackage;
-import com.spotify.flo.freezer.EvaluatingContext;
 import com.spotify.flo.util.Date;
 import io.norberg.automatter.jackson.AutoMatterModule;
 import java.io.IOException;
@@ -53,7 +58,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -73,15 +77,15 @@ public class StagedExecutionTest {
 
   private final ExecutorService executor = Executors.newWorkStealingPool(32);
 
-  private final URI stagingLocation = URI.create("gs://dano-test/staging/");
-  private final URI workflowsStagingLocation = stagingLocation.resolve("workflows");
-  private final URI executionsStagingLocation = stagingLocation.resolve("executions");
+  private final Path stagingLocation = Paths.get(URI.create("gs://dano-test/staging/"));
+  private final Path workflowsStagingLocation = stagingLocation.resolve("workflows");
+  private final Path executionsStagingLocation = stagingLocation.resolve("executions");
 
   private final String parameter = "2018-10-23";
   private final String executionId = "execution-" + urlencode(parameter) + "-" + UUID.randomUUID();
 
-  private final URI workflowStagingLocation = workflowsStagingLocation.resolve("test");
-  private final URI executionStagingLocation = executionsStagingLocation.resolve(executionId);
+  private final Path workflowStagingLocation = workflowsStagingLocation.resolve("test/");
+  private final Path executionStagingLocation = executionsStagingLocation.resolve(executionId + "/");
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -111,27 +115,40 @@ public class StagedExecutionTest {
 
   @SuppressWarnings("unused")
   static Task<?> workflow(Date date) {
+    return barTask(date);
+  }
 
-    final Fn<Task<String>> fooTask = () -> Task.named("foo")
+  private static Task<String> barTask(Date date) {
+    return Task.named("bar")
+        .ofType(String.class)
+        .input(() -> fooTask(date))
+        .input(() -> bazTask(date))
+        .process((foo, baz) -> {
+          log.info("process fn: bar");
+          return foo + " bar(" + date + ") " + baz;
+        });
+  }
+
+  private static Task<String> fooTask(Date date) {
+    return Task.named("foo")
         .ofType(String.class)
         .process(() -> {
           log.info("process fn: foo: " + date);
           return "foo(" + date + ")";
         });
+  }
 
-    final Task<String> barTask = Task.named("bar")
+  private static Task<String> bazTask(Date date) {
+    return Task.named("baz")
         .ofType(String.class)
-        .input(fooTask)
-        .process(foo -> {
-          log.info("process fn: bar");
-          return foo + " bar(" + date + ")";
+        .process(() -> {
+          log.info("process fn: baz: " + date);
+          return "baz(" + date + ")";
         });
-
-    return barTask;
   }
 
   private static URI stageWorkflow(String klass, String method, Class<?> parameterType,
-      URI workflowStagingLocation) {
+      Path workflowStagingLocation) {
     final ClasspathInspector classpathInspector = ClasspathInspector.forLoader(
         StagedExecutionTest.class.getClassLoader());
     final List<Path> workflowFiles = classpathInspector.classpathJars();
@@ -142,7 +159,7 @@ public class StagedExecutionTest {
         .collect(toList());
 
     final List<StagedPackage> stagedPackages = StagingUtil.stageClasspathElements(
-        fileString, workflowStagingLocation.toString());
+        fileString, workflowStagingLocation.toUri().toString());
 
     final WorkflowManifestBuilder manifestBuilder = new WorkflowManifestBuilder();
     manifestBuilder.entryPoint(new EntryPointBuilder()
@@ -150,13 +167,13 @@ public class StagedExecutionTest {
         .method(method)
         .parameterType(parameterType.getName())
         .build());
-    manifestBuilder.stagingLocation(workflowStagingLocation);
+    manifestBuilder.stagingLocation(workflowStagingLocation.toUri());
     stagedPackages.stream().map(StagedPackage::name).forEach(manifestBuilder::addFile);
     final WorkflowManifest manifest = manifestBuilder.build();
 
     final String manifestName = "workflow-manifest-" + Long.toHexString(ThreadLocalRandom.current().nextLong()) +".json";
 
-    final Path manifestLocation = Paths.get(workflowStagingLocation).resolve(manifestName);
+    final Path manifestLocation = workflowStagingLocation.resolve(manifestName);
 
     try {
       Files.write(manifestLocation,

@@ -51,6 +51,8 @@
     <!--<module>contrib/flo-scio_2.12</module>-->
     <module>contrib/flo-styx</module>
     <module>contrib/flo-extract</module>
+    <module>contrib/flo-deploy-models</module>
+    <module>contrib/flo-task-execute-generic</module>
   </modules>
 
   <properties>
@@ -82,6 +84,11 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>flo-extract</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>flo-deploy-models</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
