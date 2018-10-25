@@ -20,6 +20,7 @@
 
 package com.spotify.flo.execute.generic;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.stream.Collectors.toList;
 
@@ -57,7 +58,8 @@ public class ExecuteGeneric {
   private static final Logger log = LoggerFactory.getLogger(ExecuteGeneric.class);
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-      .registerModule(new AutoMatterModule());
+      .registerModule(new AutoMatterModule())
+      .disable(FAIL_ON_UNKNOWN_PROPERTIES);
 
   private static final ExecutorService EXECUTOR = new ForkJoinPool(32);
 

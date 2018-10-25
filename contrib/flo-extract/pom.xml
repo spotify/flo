@@ -72,6 +72,12 @@
       <version>1.2.3</version>
       <scope>compile</scope>
     </dependency>
+
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>flo-hades</artifactId>
+      <version>0.5.0-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
   <build>

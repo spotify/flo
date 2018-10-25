@@ -20,6 +20,7 @@
 
 package com.spotify.flo.extract;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static java.util.stream.Collectors.toList;
 
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -38,6 +39,7 @@ import com.spotify.flo.deploy.models.WorkflowBuilder;
 import com.spotify.flo.deploy.models.WorkflowManifest;
 import com.spotify.flo.deploy.models.WorkflowManifestBuilder;
 import com.spotify.flo.extract.StagingUtil.StagedPackage;
+import com.spotify.flo.hades.HadesTasks;
 import com.spotify.flo.util.Date;
 import io.norberg.automatter.jackson.AutoMatterModule;
 import java.io.IOException;
@@ -73,7 +75,8 @@ public class StagedExecutionTest {
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
       .setDefaultPrettyPrinter(new DefaultPrettyPrinter())
-      .registerModule(new AutoMatterModule());
+      .registerModule(new AutoMatterModule())
+      .disable(FAIL_ON_UNKNOWN_PROPERTIES);
 
   private final ExecutorService executor = Executors.newWorkStealingPool(32);
 
@@ -109,7 +112,7 @@ public class StagedExecutionTest {
 
   @Test
   public void testExtract() throws IOException, ReflectiveOperationException {
-    final URI manifestUri = URI.create("gs://dano-test/staging/workflow-manifest-19ed68f0f1ae60e3.json");
+    final URI manifestUri = URI.create("gs://dano-test/staging/workflows/test/workflow-manifest-92e16212d7d06909.json");
     Extract.extract(manifestUri, parameter, executionStagingLocation);
   }
 
@@ -123,9 +126,11 @@ public class StagedExecutionTest {
         .ofType(String.class)
         .input(() -> fooTask(date))
         .input(() -> bazTask(date))
-        .process((foo, baz) -> {
-          log.info("process fn: bar");
-          return foo + " bar(" + date + ") " + baz;
+        .input(() -> HadesTasks.lookup("ScioStreamCountFlo", date))
+        .process((foo, baz, streamCount) -> {
+          final String result = foo + " bar(" + date + ") " + baz + " " + streamCount;
+          log.info("process fn: bar: {}", result);
+          return result;
         });
   }
 

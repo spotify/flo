@@ -1,6 +1,6 @@
 /*-
  * -\-\-
- * Flo Runner
+ * Flo Extract
  * --
  * Copyright (C) 2016 - 2018 Spotify AB
  * --
@@ -18,35 +18,11 @@
  * -/-/-
  */
 
-package com.spotify.flo.deploy.models;
+package com.spotify.flo;
 
-import io.norberg.automatter.AutoMatter;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+public class TaskBridge {
 
-@AutoMatter
-public interface Workflow {
-
-  // TODO: key on task id
-  List<Task> tasks();
-
-  @AutoMatter
-  interface Task {
-
-    String operator();
-
-    String id();
-
-    Map<String, Object> configuration();
-
-    List<String> upstreams();
-
-    @AutoMatter
-    interface HadesConfiguration {
-      // TODO: support latest etc
-      String endpoint();
-      String partition();
-    }
+  public static Invokable processFn(Task<?> task) {
+    return task.processFn();
   }
 }

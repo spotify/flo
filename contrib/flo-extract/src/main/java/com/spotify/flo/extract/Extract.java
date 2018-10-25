@@ -20,10 +20,12 @@
 
 package com.spotify.flo.extract;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.stream.Collectors.toList;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.Tuple;
 import com.spotify.flo.EvalContext;
@@ -36,13 +38,18 @@ import com.spotify.flo.context.MemoizingContext;
 import com.spotify.flo.context.PrintUtilsBridge;
 import com.spotify.flo.deploy.models.ExecutionManifest;
 import com.spotify.flo.deploy.models.ExecutionManifestBuilder;
+import com.spotify.flo.deploy.models.HadesConfigurationBuilder;
 import com.spotify.flo.deploy.models.TaskBuilder;
 import com.spotify.flo.deploy.models.Workflow;
+import com.spotify.flo.deploy.models.Workflow.Task.HadesConfiguration;
 import com.spotify.flo.deploy.models.WorkflowBuilder;
 import com.spotify.flo.deploy.models.WorkflowManifest;
 import com.spotify.flo.freezer.PersistingContext;
+import com.spotify.flo.hades.HadesBridge;
+import com.spotify.flo.hades.HadesBridge.HadesEndpointPartition;
 import com.spotify.flo.util.Date;
 import com.spotify.flo.util.DateHour;
+import com.spotify.gabo.event.identity.Hades;
 import io.norberg.automatter.jackson.AutoMatterModule;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -74,7 +81,9 @@ public class Extract {
   private static final Logger log = LoggerFactory.getLogger(Extract.class);
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-      .registerModule(new AutoMatterModule());
+      .registerModule(new AutoMatterModule())
+      .disable(FAIL_ON_UNKNOWN_PROPERTIES);
+
   private static final ExecutorService EXECUTOR = new ForkJoinPool(32);
 
   public static void main(String... args) throws IOException, ReflectiveOperationException {
@@ -250,8 +259,27 @@ public class Extract {
     for (Task<?> task : tasks) {
       final Optional<? extends TaskOperator<?, ?, ?>> operator = OperationExtractingContext.operator(task);
       final TaskBuilder taskBuilder = new TaskBuilder()
-          .operator(operator.map(o -> o.getClass().getName()).orElse("<generic>"))
           .id(task.id().toString());
+      final String operatorName;
+      if (operator.isPresent()) {
+        // Hades?
+        if (HadesBridge.isHadesLookup(operator.get())) {
+          final HadesEndpointPartition endpointPartition = HadesBridge.endpointPartition(task);
+          HadesConfiguration hadesConfiguration = new HadesConfigurationBuilder()
+              .endpoint(endpointPartition.endpoint())
+              .partition(endpointPartition.partition())
+              .build();
+          final Map<String, Object> configuration = OBJECT_MAPPER.convertValue(hadesConfiguration,
+              new TypeReference<Map<String, Object>>(){});
+          taskBuilder.configuration(configuration);
+          operatorName = "hades";
+        } else {
+          throw new UnsupportedOperationException("Unsupported operator: " + operator.get().getClass().getName());
+        }
+      } else {
+        operatorName = "<generic>";
+      }
+      taskBuilder.operator(operatorName);
       for (Task<?> upstream : task.inputs()) {
         taskBuilder.addUpstream(upstream.id().toString());
       }
