@@ -8,10 +8,10 @@
     <relativePath>../..</relativePath>
   </parent>
 
-  <name>Flo Task Execute Generic</name>
-  <artifactId>flo-task-execute-generic</artifactId>
+  <name>Flo Task Execute Scio</name>
+  <artifactId>flo-task-execute-scio</artifactId>
   <description>
-    Flo Generic Task Executor
+    Flo Scio Task Executor
   </description>
 
   <dependencies>
@@ -22,6 +22,11 @@
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>flo-deploy-models</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>flo-scio_2.11</artifactId>
+      <version>0.5.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
