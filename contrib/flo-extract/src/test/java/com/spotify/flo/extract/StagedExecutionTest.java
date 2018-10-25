@@ -192,78 +192,11 @@ public class StagedExecutionTest {
     return manifestLocation.toUri();
   }
 
-  private static List<String> toStrings(List<Path> paths) {
-    return paths.stream()
-        .map(Path::toAbsolutePath)
-        .map(Path::toString)
-        .collect(toList());
-  }
-
-  private static Workflow workflow(Task<?> root) {
-    final List<Task<?>> tasks = new ArrayList<>();
-    final Set<TaskId> visited = new HashSet<>();
-    enumerateTasks(root, tasks, visited);
-
-    final WorkflowBuilder builder = new WorkflowBuilder();
-    for (Task<?> task : tasks) {
-      final Optional<? extends TaskOperator<?, ?, ?>> operator = OperationExtractingContext.operator(task);
-      final TaskBuilder taskBuilder = new TaskBuilder()
-          .operator(operator.map(o -> o.getClass().getName()).orElse("<generic>"))
-          .id(task.id().toString());
-      for (Task<?> upstream : task.inputs()) {
-        taskBuilder.addUpstream(upstream.id().toString());
-      }
-      builder.addTask(taskBuilder.build());
-    }
-
-    return builder.build();
-  }
-
-  private static void enumerateTasks(Task<?> task, List<Task<?>> tasks, Set<TaskId> visited) {
-    if (!visited.add(task.id())) {
-      return;
-    }
-    for (Task<?> input : task.inputs()) {
-      enumerateTasks(input, tasks, visited);
-    }
-    tasks.add(task);
-  }
-
-  private static void tasks(Task<?> task, Consumer<Task<?>> f) {
-    f.accept(task);
-    task.inputs().forEach(upstream -> tasks(upstream, f));
-  }
-
-  private static Set<Task<?>> tasks(Task<?> task) {
-    final Set<Task<?>> tasks = new HashSet<>();
-    tasks(task, tasks::add);
-    return tasks;
-  }
-
   private static String urlencode(String s) {
     try {
       return URLEncoder.encode(s, "UTF-8");
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private static class DoneOutput<T> extends TaskOutput<String, T> {
-
-    private final T value;
-
-    DoneOutput(T value) {
-      this.value = value;
-    }
-
-    @Override
-    public String provide(EvalContext evalContext) {
-      return "";
-    }
-
-    @Override
-    public Optional<T> lookup(Task<T> task) {
-      return Optional.of(value);
     }
   }
 }
