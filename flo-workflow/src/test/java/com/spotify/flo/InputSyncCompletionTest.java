@@ -20,32 +20,45 @@
 
 package com.spotify.flo;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class InputSyncCompletionTest {
 
-  EvalContext context = EvalContext.async(Executors.newFixedThreadPool(2));
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  CountDownLatch blocked = new CountDownLatch(1);
-  Task<Integer> blocking = Task.named("blocking").ofType(Integer.class)
-      .process(() -> {
-        try {
-          blocked.await(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-        return 42;
-      });
+  private final EvalContext context = EvalContext.async(Executors.newFixedThreadPool(2));
 
-  private Task<Integer> failing(String msg) {
+  private Path semaphore;
+  private Task<Integer> blocking;
+
+  @Before
+  public void setUp() throws Exception {
+    semaphore = Paths.get(temporaryFolder.newFolder().getAbsolutePath(), "semaphore");
+    final String semaphoreFile = semaphore.toString();
+    blocking = Task.named("blocking").ofType(Integer.class)
+        .process(() -> {
+          await().atMost(5, SECONDS).until(() -> Files.exists(Paths.get(semaphoreFile)));
+          return 42;
+        });
+  }
+
+  private static Task<Integer> failing(String msg) {
     return Task.named("failing").ofType(Integer.class)
       .process(() -> {
         throw new RuntimeException(msg);
@@ -54,6 +67,7 @@ public class InputSyncCompletionTest {
 
   @Test
   public void shouldNotCompleteTaskBeforeAllInputsAreDone_FailingBefore() throws Exception {
+    final Task<Integer> blocking = this.blocking;
     Task<String> task = Task.named("sync").ofType(String.class)
         .input(() -> failing("failed"))
         .input(() -> blocking)
@@ -64,6 +78,7 @@ public class InputSyncCompletionTest {
 
   @Test
   public void shouldNotCompleteTaskBeforeAllInputsAreDone_FailingAfter() throws Exception {
+    final Task<Integer> blocking = this.blocking;
     Task<String> task = Task.named("sync").ofType(String.class)
         .input(() -> blocking)
         .input(() -> failing("failed"))
@@ -74,6 +89,7 @@ public class InputSyncCompletionTest {
 
   @Test
   public void shouldNotCompleteTaskBeforeAllInputsAreDone_AsInputListBefore() throws Exception {
+    final Task<Integer> blocking = this.blocking;
     Task<String> task = Task.named("sync").ofType(String.class)
         .inputs(() -> Arrays.asList(failing("failed"), blocking))
         .process(a -> "should not happen");
@@ -83,6 +99,7 @@ public class InputSyncCompletionTest {
 
   @Test
   public void shouldNotCompleteTaskBeforeAllInputsAreDone_AsInputListAfter() throws Exception {
+    final Task<Integer> blocking = this.blocking;
     Task<String> task = Task.named("sync").ofType(String.class)
         .inputs(() -> Arrays.asList(blocking, failing("failed")))
         .process(a -> "should not happen");
@@ -134,14 +151,14 @@ public class InputSyncCompletionTest {
     assertThat(throwable.getSuppressed()[1].getMessage(), is("failed 3"));
   }
 
-  private void awaitBlocked(Task<String> task) throws InterruptedException {
+  private void awaitBlocked(Task<String> task) throws InterruptedException, IOException {
     AwaitValue<Throwable> eval = new AwaitValue<>();
     context.evaluate(task).onFail(eval);
 
     // should not complete before we unblock the blocked promise
-    assertThat(eval.await(1, TimeUnit.SECONDS), is(false));
+    assertThat(eval.await(1, SECONDS), is(false));
 
-    blocked.countDown();
+    Files.write(semaphore, new byte[]{});
     Throwable throwable = eval.awaitAndGet();
 
     assertThat(throwable, instanceOf(RuntimeException.class));

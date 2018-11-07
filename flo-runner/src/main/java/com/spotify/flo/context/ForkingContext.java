@@ -101,6 +101,7 @@ class ForkingContext extends ForwardingEvalContext {
   private static <T> Fn<T> realFork(TaskId taskId, Fn<T> fn) {
     return () -> {
       try (final ForkingExecutor executor = new ForkingExecutor()) {
+        executor.javaArgs("-Dsun.io.serialization.extendedDebugInfo=true");
         executor.environment(Collections.singletonMap("FLO_TASK_ID", taskId.toString()));
         return executor.execute(fn);
       } catch (IOException e) {

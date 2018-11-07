@@ -86,19 +86,19 @@ public class InstrumentedContextTest {
     ));
   }
 
-  Task<String> upstream(int i) {
+  private static Task<String> upstream(int i) {
     return Task.named("upstream", i).ofType(String.class)
         .process(() -> "upstream" + i);
   }
 
-  Task<Integer> example(int i) {
+  private static Task<Integer> example(int i) {
     return Task.named("example", i).ofType(Integer.class)
         .input(() -> upstream(i))
         .input(() -> upstream(i+1))
         .process((u1, u2) -> u1.length() + u2.length());
   }
 
-  Task<String> failing() {
+  private static Task<String> failing() {
     return Task.named("failing").ofType(String.class)
         .process(() -> {
           throw new RuntimeException("fail");

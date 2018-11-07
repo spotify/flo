@@ -42,12 +42,21 @@ import java.util.stream.Stream;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * Tests that verify the interaction between {@link Task} instances and the {@link EvalContext}.
  */
 public class TaskEvalBehaviorTest {
+
+  private static final AtomicInteger counter = new AtomicInteger(0);
+  private static final AtomicBoolean processed = new AtomicBoolean(false);
+
+  @Before
+  public void setUp() throws Exception {
+    counter.set(0);
+  }
 
   @Test
   public void shouldRunAsExpected() throws Exception {
@@ -72,7 +81,7 @@ public class TaskEvalBehaviorTest {
 
     Task<Integer> sum = Task.named("Sum").ofType(Integer.class)
         .inputs(() -> fiveInts)
-        .process(this::sumInts);
+        .process(TaskEvalBehaviorTest::sumInts);
 
     // 1+2+3+4+5 = 15
     assertThat(evalAndGet(sum), is(15));
@@ -243,7 +252,6 @@ public class TaskEvalBehaviorTest {
 
   @Test
   public void shouldEvaluateInputsInParallelForChainedTask() throws Exception {
-    AtomicBoolean processed = new AtomicBoolean(false);
     Task<String> task = Task.named("WithInputs").ofType(String.class)
         .input(() -> leaf("A"))
         .input(() -> leaf("B"))
@@ -253,10 +261,10 @@ public class TaskEvalBehaviorTest {
           return "done: " + a + b + c;
         });
 
-    validateParallelEvaluation(task, processed);
+    validateParallelEvaluation(task);
   }
 
-  private void validateParallelEvaluation(Task<String> task, AtomicBoolean processed)
+  private void validateParallelEvaluation(Task<String> task)
       throws InterruptedException {
 
     ControlledBlockingContext context = new ControlledBlockingContext();
@@ -374,12 +382,11 @@ public class TaskEvalBehaviorTest {
     assertTrue(intercepted.get());
   }
 
-  private Task<String> leaf(String s) {
+  private static Task<String> leaf(String s) {
     return Task.named("Leaf", s).ofType(String.class).process(() -> s);
   }
 
-  private Fn<Task<Integer>> countConstructor() {
-    AtomicInteger counter = new AtomicInteger(0);
+  private static Fn<Task<Integer>> countConstructor() {
     return () -> {
       int n = counter.incrementAndGet();
       return Task.named("Count", n).ofType(Integer.class)
@@ -387,11 +394,11 @@ public class TaskEvalBehaviorTest {
     };
   }
 
-  private int sumInts(List<Integer> intsList) {
+  private static int sumInts(List<Integer> intsList) {
     return intsList.stream().reduce(0, (a, b) -> a + b);
   }
 
-  private Task<EvenResult> isEven(int n) {
+  private static Task<EvenResult> isEven(int n) {
     TaskBuilder<EvenResult> isEven = Task.named("IsEven", n).ofType(EvenResult.class);
 
     if (n % 2 == 0) {
@@ -403,13 +410,13 @@ public class TaskEvalBehaviorTest {
         .process(MadeEven::new);
   }
 
-  private Task<Integer> evenify(int n) {
+  private static Task<Integer> evenify(int n) {
     return Task.named("Evenify", n).ofType(Integer.class)
         .process(() -> n * 2);
   }
 
   // Result ADT
-  abstract class EvenResult {
+  static abstract class EvenResult {
 
     private final int result;
 
@@ -422,14 +429,14 @@ public class TaskEvalBehaviorTest {
     }
   }
 
-  class WasEven extends EvenResult {
+  static class WasEven extends EvenResult {
 
     WasEven(int result) {
       super(result);
     }
   }
 
-  class MadeEven extends EvenResult {
+  static class MadeEven extends EvenResult {
 
     MadeEven(int result) {
       super(result);

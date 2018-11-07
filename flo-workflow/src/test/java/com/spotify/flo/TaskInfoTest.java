@@ -47,13 +47,13 @@ public class TaskInfoTest {
     assertThat(input2.inputs().size(), is(0));
   }
 
-  private Task<String> first() {
+  private static Task<String> first() {
     return Task.named("First").ofType(String.class)
         .input(() -> second(1))
         .process((s) -> "foo");
   }
 
-  private Task<String> second(int i) {
+  private static Task<String> second(int i) {
     return Task.named("Second", i).ofType(String.class)
         .input(() -> second(i))
         .process((self) -> "bar");

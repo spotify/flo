@@ -42,7 +42,9 @@ import org.junit.Test;
 
 public class AsyncContextTest {
 
-  EvalContext context = AsyncContext.create(Executors.newSingleThreadExecutor());
+  private static final Context.Key<String> KEY = Context.key("foo");
+
+  private final EvalContext context = AsyncContext.create(Executors.newSingleThreadExecutor());
 
   @Test
   public void valueContextIsCreatingContext() throws Exception {
@@ -261,21 +263,20 @@ public class AsyncContextTest {
 
   @Test
   public void grpcContextIsPropagated() throws Exception {
-    final Context.Key<String> key = Context.key("foo");
     final String value = "bar";
-    final Context grpcContext = Context.current().withValue(key, value);
+    final Context grpcContext = Context.current().withValue(KEY, value);
 
     // #value()
     {
       final CompletableFuture<String> future = new CompletableFuture<>();
-      grpcContext.call(() -> context.value(key::get)).consume(future::complete);
+      grpcContext.call(() -> context.value(KEY::get)).consume(future::complete);
       assertThat(future.get(30, TimeUnit.SECONDS), is(value));
     }
 
     // #evaluate()
     {
       final Task<String> task = Task.named("test").ofType(String.class)
-          .process(key::get);
+          .process(() -> KEY.get());
       final CompletableFuture<String> future = new CompletableFuture<>();
       grpcContext.call(() -> context.evaluate(task)).consume(future::complete);
       assertThat(future.get(30, TimeUnit.SECONDS), is(value));
@@ -284,7 +285,7 @@ public class AsyncContextTest {
     // #invokeProcessFn()
     {
       final CompletableFuture<String> future = new CompletableFuture<>();
-      final Fn<String> processFn = key::get;
+      final Fn<String> processFn = KEY::get;
       grpcContext.call(() -> context.invokeProcessFn(TaskId.create("test"), processFn)).consume(future::complete);
       assertThat(future.get(30, TimeUnit.SECONDS), is(value));
     }

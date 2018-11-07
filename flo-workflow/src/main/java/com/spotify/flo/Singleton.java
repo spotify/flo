@@ -29,6 +29,8 @@ import java.util.Objects;
  */
 class Singleton<T> implements Fn<T> {
 
+  private static final long serialVersionUID = 1L;
+
   private final Fn<T> supplier;
   private volatile T value;
 

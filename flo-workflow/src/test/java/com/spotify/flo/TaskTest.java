@@ -24,19 +24,29 @@ import static com.spotify.flo.TestUtils.taskId;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import com.google.auto.value.AutoValue;
+import com.spotify.flo.TaskBuilder.F0;
+import java.io.NotSerializableException;
+import java.util.Collections;
+import java.util.List;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TaskTest {
+
+  @Rule public final ExpectedException exception = ExpectedException.none();
 
   @Mock TaskOperator<String, String, String> operator1;
   @Mock TaskOperator<String, String, String> operator2;
@@ -59,8 +69,8 @@ public class TaskTest {
 
   @Test
   public void shouldHaveListOfTaskContexts() throws Exception {
-    final TaskContextGeneric<Object> tc1 = mock(TaskContextGeneric.class);
-    final TaskContextGeneric<Object> tc2 = mock(TaskContextGeneric.class);
+    final TaskContextGeneric<Object> tc1 = FakeTaskContext.of("foo");
+    final TaskContextGeneric<Object> tc2 = FakeTaskContext.of("bar");
     Task<String> task = Task.named("Inputs").ofType(String.class)
         .context(tc1)
         .context(tc2)
@@ -202,6 +212,82 @@ public class TaskTest {
     assertThat(task3.type(), equalTo(String.class));
   }
 
+  @Test
+  public void shouldRequireSerializableProcessFn() {
+    final TaskBuilder<String> b = Task.named("foo").ofType(String.class);
+    final Object o = new Object();
+    final F0<String> fn = () -> o.toString();
+    exception.expect(IllegalArgumentException.class);
+    exception.expectMessage("process fn not serializable: " + fn);
+    exception.expectCause(is(instanceOf(NotSerializableException.class)));
+    b.process(fn);
+  }
+
+  @Test
+  public void shouldRequireSerializableInput() {
+    final TaskBuilder<String> b = Task.named("foo").ofType(String.class);
+    final Object o = new Object();
+    final Fn<Task<String>> input = () ->
+        Task.named(o.toString()).ofType(String.class).process(() -> "foo");
+    exception.expect(IllegalArgumentException.class);
+    exception.expectMessage("input not serializable: " + input);
+    exception.expectCause(is(instanceOf(NotSerializableException.class)));
+    b.input(input);
+  }
+
+  @Test
+  public void shouldRequireSerializableInputs() {
+    final TaskBuilder<String> b = Task.named("foo").ofType(String.class);
+    final Object o = new Object();
+    final Fn<List<Task<String>>> inputs = () ->
+        Collections.singletonList(Task.named(o.toString()).ofType(String.class).process(() -> "foo"));
+    exception.expect(IllegalArgumentException.class);
+    exception.expectMessage("inputs not serializable: " + inputs);
+    exception.expectCause(is(instanceOf(NotSerializableException.class)));
+    b.inputs(inputs);
+  }
+
+  @Test
+  public void shouldRequireSerializableOperator() {
+    final TaskBuilder<String> b = Task.named("foo").ofType(String.class);
+    final TaskOperator<String, String, String> operator = new TaskOperator<String, String, String>() {
+
+      private final Object o = new Object(); // not serializable
+
+      @Override
+      public String perform(String spec, Listener listener) {
+        return "";
+      }
+
+      @Override
+      public String provide(EvalContext evalContext) {
+        return "";
+      }
+    };
+    exception.expect(IllegalArgumentException.class);
+    exception.expectMessage("operator not serializable: " + operator);
+    exception.expectCause(is(instanceOf(NotSerializableException.class)));
+    b.operator(operator);
+  }
+
+  @Test
+  public void shouldRequireSerializableContext() {
+    final TaskBuilder<String> b = Task.named("foo").ofType(String.class);
+    final TaskContextGeneric<String> context = new TaskContextGeneric<String>() {
+
+      private final Object o = new Object(); // not serializable
+
+      @Override
+      public String provide(EvalContext evalContext) {
+        return "";
+      }
+    };
+    exception.expect(IllegalArgumentException.class);
+    exception.expectMessage("context not serializable: " + context);
+    exception.expectCause(is(instanceOf(NotSerializableException.class)));
+    b.context(context);
+  }
+
   // Validators ===================================================================================
 
   private void validateEvaluation(
@@ -229,7 +315,21 @@ public class TaskTest {
     assertThat(val.awaitAndGet(), is(expectedOutput));
   }
 
-  private Task<String> leaf(String s) {
+  private static Task<String> leaf(String s) {
     return Task.named("Leaf", s).ofType(String.class).process(() -> s);
+  }
+
+  @AutoValue
+  static abstract class FakeTaskContext<T> extends TaskContextGeneric<T> {
+    abstract String id();
+
+    @Override
+    public T provide(EvalContext evalContext) {
+      return null;
+    }
+
+    static <T> FakeTaskContext<T> of(String id) {
+      return new AutoValue_TaskTest_FakeTaskContext<>(id);
+    }
   }
 }

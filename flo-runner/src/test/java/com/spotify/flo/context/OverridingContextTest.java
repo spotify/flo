@@ -43,11 +43,11 @@ public class OverridingContextTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(OverridingContext.class);
 
-  EvalContext context = OverridingContext.composeWith(sync(), Logging.create(LOG));
+  private static final EvalContext context = OverridingContext.composeWith(sync(), Logging.create(LOG));
 
-  Map<TaskId, Integer> lookup = new HashMap<>();
+  private static final Map<TaskId, Integer> lookup = new HashMap<>();
 
-  TaskOutput<String, Integer> output = new TaskOutput<String, Integer>() {
+  private static final TaskOutput<String, Integer> output = new TaskOutput<String, Integer>() {
 
     @Override
     public String provide(EvalContext evalContext) {
@@ -60,11 +60,13 @@ public class OverridingContextTest {
     }
   };
 
-  int countUpstreamRuns = 0;
-  int countRootRuns = 0;
+  private static int countUpstreamRuns = 0;
+  private static int countRootRuns = 0;
 
   @Before
   public void setUp() {
+    countUpstreamRuns = 0;
+    countRootRuns = 0;
     lookup.clear();
   }
 
@@ -118,7 +120,7 @@ public class OverridingContextTest {
     assertThat(countRootRuns, is(1));
   }
 
-  Task<Integer> rootTaskWithUpstreams(Task<Integer>... upstreams) {
+  static Task<Integer> rootTaskWithUpstreams(Task<Integer>... upstreams) {
     return Task.named("rootTask", "foo").ofType(Integer.class)
         .output(output)
         .inputs(() -> Arrays.asList(upstreams))
