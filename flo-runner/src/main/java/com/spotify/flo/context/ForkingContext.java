@@ -79,7 +79,6 @@ class ForkingContext extends ForwardingEvalContext {
 
   private static <T> Fn<T> testFork(Fn<T> fn) {
     // We do not currently have a mechanism for transporting mock inputs and outputs into and out of the task process.
-    LOG.debug("Test run, forking disabled - testing serialization");
     return () -> {
       // Serialize & deserialize fn
       final Fn<T> deserializedFn;
