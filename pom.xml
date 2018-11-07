@@ -508,10 +508,10 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>
-      <plugin>
-        <groupId>com.spotify</groupId>
-        <artifactId>missinglink-maven-plugin</artifactId>
-      </plugin>
+      <!--<plugin>-->
+        <!--<groupId>com.spotify</groupId>-->
+        <!--<artifactId>missinglink-maven-plugin</artifactId>-->
+      <!--</plugin>-->
     </plugins>
   </build>
 
