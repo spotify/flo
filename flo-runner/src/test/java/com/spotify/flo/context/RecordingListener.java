@@ -85,7 +85,7 @@ public class RecordingListener implements FloListenerFactory {
       final Path path = Paths.get(dir, eventFilename());
       try {
         Serialization.serialize(event, path);
-      } catch (Exception e) {
+      } catch (SerializationException e) {
         throw new RuntimeException(e);
       }
     }
