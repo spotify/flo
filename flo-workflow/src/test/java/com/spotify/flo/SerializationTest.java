@@ -147,8 +147,8 @@ public class SerializationTest {
     final Fn<Foo> fn = () -> foo;
     try {
       Serialization.serialize(fn);
-    } catch (ObjectStreamException e) {
-      assertThat(e, instanceOf(NotSerializableException.class));
+    } catch (SerializationException e) {
+      assertThat(e.getCause(), instanceOf(NotSerializableException.class));
       assertThat(e.toString(), is(
           "java.io.NotSerializableException: com.spotify.flo.SerializationTest$1Quux\n"
               + "\t- field (class \"com.spotify.flo.SerializationTest$1Baz\", name: \"quux\", type: \"class com.spotify.flo.SerializationTest$1Quux\")\n"
@@ -199,7 +199,7 @@ public class SerializationTest {
   }
 
   @Test
-  public void serializeShouldPropagateSerializationExceptions() throws IOException {
+  public void serializeShouldPropagateSerializationExceptions() throws SerializationException {
     exception.expect(NotSerializableException.class);
     Serialization.serialize(new Object());
   }
@@ -211,7 +211,7 @@ public class SerializationTest {
   }
 
   @Test
-  public void deserializeShouldPropagateSerializationExceptions() throws IOException, ClassNotFoundException {
+  public void deserializeShouldPropagateSerializationExceptions() throws SerializationException {
     exception.expect(StreamCorruptedException.class);
     Serialization.deserialize(new ByteArrayInputStream("foobar".getBytes()));
   }

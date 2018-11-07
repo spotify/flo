@@ -25,6 +25,7 @@ import static com.spotify.flo.freezer.PersistingContext.cleanForFilename;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Serialization;
+import com.spotify.flo.SerializationException;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.ForwardingEvalContext;
@@ -69,7 +70,7 @@ public class EvaluatingContext {
     final Task<T> task;
     try {
       task = Serialization.deserialize(persistedTask);
-    } catch (IOException | ClassNotFoundException e) {
+    } catch (SerializationException e) {
       throw new RuntimeException(e);
     }
 
@@ -85,7 +86,7 @@ public class EvaluatingContext {
     final Path outputPath = basePath.resolve(cleanForFilename(taskId) + OUTPUT_SUFFIX);
     try {
       Serialization.serialize(output, outputPath);
-    } catch (IOException e) {
+    } catch (SerializationException e) {
       throw new RuntimeException(e);
     }
   }
@@ -114,7 +115,7 @@ public class EvaluatingContext {
           try {
             value = Serialization.deserialize(inputValuePath);
             promise.set(value);
-          } catch (IOException | ClassNotFoundException e) {
+          } catch (SerializationException e) {
             promise.fail(e);
           }
         } else {

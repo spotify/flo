@@ -26,6 +26,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.Fn;
 import com.spotify.flo.Serialization;
+import com.spotify.flo.SerializationException;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.ForwardingEvalContext;
@@ -81,7 +82,7 @@ public class PersistingContext extends ForwardingEvalContext {
     files.put(task.id(), file);
     try {
       Serialization.serialize(task, file);
-    } catch (IOException e) {
+    } catch (SerializationException e) {
       throw new RuntimeException(e);
     }
 

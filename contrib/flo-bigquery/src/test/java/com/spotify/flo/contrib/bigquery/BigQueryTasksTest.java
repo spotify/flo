@@ -34,6 +34,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.cloud.bigquery.TableId;
 import com.google.common.base.Throwables;
 import com.spotify.flo.Serialization;
+import com.spotify.flo.SerializationException;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.FloRunner;
@@ -58,7 +59,7 @@ public class BigQueryTasksTest {
   public ExpectedException exception = ExpectedException.none();
 
   @Test
-  public void lookupShouldBeSerializable() throws IOException, ClassNotFoundException {
+  public void lookupShouldBeSerializable() throws SerializationException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final Task<TableId> task = BigQueryTasks.lookup("foo", "bar", "baz");
     Serialization.serialize(task, baos);

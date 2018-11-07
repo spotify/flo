@@ -22,6 +22,7 @@ package com.spotify.flo.context;
 
 import com.google.auto.service.AutoService;
 import com.spotify.flo.Serialization;
+import com.spotify.flo.SerializationException;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.InstrumentedContext.Listener;
@@ -102,7 +103,7 @@ public class RecordingListener implements FloListenerFactory {
   /**
    * Replay all the recorded listener invocations onto the provided {@link InstrumentedContext.Listener}.
    */
-  static void replay(Listener listener) throws IOException, ClassNotFoundException {
+  static void replay(Listener listener) throws IOException, SerializationException {
     final List<Path> files = Files.list(Paths.get(FloRunnerTest.listenerOutputDir)).sorted()
         .collect(Collectors.toList());
     for (Path file : files) {
