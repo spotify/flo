@@ -41,7 +41,7 @@ public class EvalContextTest {
   private static final String SPEC = "spec";
   private static final String RESULT = "result";
 
-  @Mock private static TaskOperator.Listener listener;
+  @Mock private TaskOperator.Listener listener;
   @Mock private static TaskOperator<String, String, String> operator;
 
   private Task<String> task;
