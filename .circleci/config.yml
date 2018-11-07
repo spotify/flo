@@ -3,6 +3,7 @@ jobs:
   test_jdk8_with_coverage:
     working_directory: ~/flo
     docker:
+      # TODO: Remove pinning after debian has fixed https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=911925
       - image: maven:3.5.4-jdk-8@sha256:1be6e59e3cec4587637101f4e834c41e5576d8bc48e065f095f88289451bac51
     steps:
       - checkout
