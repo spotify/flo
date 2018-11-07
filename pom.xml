@@ -380,8 +380,9 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.21.0</version>
           <configuration>
-            <!-- TODO: remove after debian fixes the bug https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=911925 -->
-            <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true ${argLine}</argLine>
+            <!-- TODO: remove -Djdk.net.URLClassPath.disableClassPathURLCheck=true after debian fixes
+                       https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=911925 -->
+            <argLine>-Xmx256m -Djdk.net.URLClassPath.disableClassPathURLCheck=true @{argLine}</argLine>
           </configuration>
         </plugin>
         <plugin>
@@ -441,6 +442,7 @@
             <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
             <junitxml>.</junitxml>
             <filereports>WDF TestSuite.txt</filereports>
+            <argLine>-Xmx256m</argLine>
           </configuration>
           <executions>
             <execution>
