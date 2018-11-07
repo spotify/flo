@@ -60,8 +60,8 @@ public class Serialization {
   public static void serialize(Object object, OutputStream outputStream) throws SerializationException {
     try (ObjectOutputStream oos = new ObjectOutputStream(outputStream)) {
       oos.writeObject(object);
-    } catch (IOException e) {
-      throw new SerializationException("Serialization failed", e);
+    } catch (Throwable t) {
+      throw new SerializationException("Serialization failed", t);
     }
   }
 
@@ -83,8 +83,8 @@ public class Serialization {
   public static <T> T deserialize(InputStream inputStream) throws SerializationException {
     try (ObjectInputStream ois = new ObjectInputStream(inputStream)) {
       return (T) ois.readObject();
-    } catch (Exception e) {
-      throw new SerializationException("Deserialization failed", e);
+    } catch (Throwable t) {
+      throw new SerializationException("Deserialization failed", t);
     }
   }
 
