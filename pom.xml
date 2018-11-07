@@ -391,7 +391,7 @@
           <configuration>
             <!-- TODO: remove -Djdk.net.URLClassPath.disableClassPathURLCheck=true after debian fixes
                        https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=911925 -->
-            <argLine>-Xmx256m -Djdk.net.URLClassPath.disableClassPathURLCheck=true @{argLine}</argLine>
+            <argLine>-Xmx256m -Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
           </configuration>
         </plugin>
         <plugin>
