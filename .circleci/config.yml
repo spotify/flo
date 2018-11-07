@@ -20,8 +20,6 @@ jobs:
             - ~/.m2
       - run:
           environment:
-            # Java heap size
-            JAVA: java -Xmx256m -Xms256m
             # Maven heap size
             MAVEN_OPTS: -Xmx1024m -Xms1024m
           command: mvn -B verify scala:doc-jar -Pcoverage
