@@ -463,14 +463,6 @@
           </executions>
         </plugin>
 
-        <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.8.0</version>
-          <configuration>
-            <release>8</release>
-          </configuration>
-        </plugin>
-
         <!--https://github.com/spotify/missinglink/issues/51-->
         <!--<plugin>-->
           <!--<groupId>com.spotify</groupId>-->
@@ -523,6 +515,25 @@
   </build>
 
   <profiles>
+    <profile>
+      <id>java-9+</id>
+      <activation>
+        <jdk>[9,)</jdk>
+      </activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>3.8.0</version>
+              <configuration>
+                <release>8</release>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
     <profile>
       <id>coverage</id>
       <build>
