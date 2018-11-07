@@ -82,7 +82,7 @@ public class SerializationTest {
     final F0<String> fn = () -> instanceField + " causes an outer reference";
 
     exception.expect(IllegalArgumentException.class);
-    exception.expectCause(instanceOf(NotSerializableException.class));
+    exception.expectCause(instanceOf(SerializationException.class));
     builder.process(fn);
   }
 
@@ -126,7 +126,7 @@ public class SerializationTest {
     };
 
     exception.expect(IllegalArgumentException.class);
-    exception.expectCause(instanceOf(NotSerializableException.class));
+    exception.expectCause(instanceOf(SerializationException.class));
     builder.process(fn);
   }
 
@@ -149,7 +149,7 @@ public class SerializationTest {
       Serialization.serialize(fn);
     } catch (SerializationException e) {
       assertThat(e.getCause(), instanceOf(NotSerializableException.class));
-      assertThat(e.toString(), is(
+      assertThat(e.getCause().toString(), is(
           "java.io.NotSerializableException: com.spotify.flo.SerializationTest$1Quux\n"
               + "\t- field (class \"com.spotify.flo.SerializationTest$1Baz\", name: \"quux\", type: \"class com.spotify.flo.SerializationTest$1Quux\")\n"
               + "\t- object (class \"com.spotify.flo.SerializationTest$1Baz\", com.spotify.flo.SerializationTest$1Baz@" + Integer.toHexString(System.identityHashCode(foo.bar.baz)) + ")\n"
@@ -200,19 +200,19 @@ public class SerializationTest {
 
   @Test
   public void serializeShouldPropagateSerializationExceptions() throws SerializationException {
-    exception.expect(NotSerializableException.class);
+    exception.expect(SerializationException.class);
     Serialization.serialize(new Object());
   }
 
   @Test
   public void serializeShouldPropagateIOException() throws Exception {
-    exception.expect(NoSuchFileException.class);
+    exception.expect(SerializationException.class);
     Serialization.serialize("foobar", Paths.get("non-existent-dir", "file"));
   }
 
   @Test
   public void deserializeShouldPropagateSerializationExceptions() throws SerializationException {
-    exception.expect(StreamCorruptedException.class);
+    exception.expect(SerializationException.class);
     Serialization.deserialize(new ByteArrayInputStream("foobar".getBytes()));
   }
 
