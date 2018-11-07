@@ -464,36 +464,37 @@
           </executions>
         </plugin>
 
-        <plugin>
-          <groupId>com.spotify</groupId>
-          <artifactId>missinglink-maven-plugin</artifactId>
-          <version>0.1.1</version>
-          <configuration>
-            <failOnConflicts>true</failOnConflicts>
-            <ignoreSourcePackages>
-              <ignoreSourcePackage>
-                <package>org.slf4j</package>
-              </ignoreSourcePackage>
-              <ignoreSourcePackage>
-                <package>com.google.api.client.extensions.appengine.http</package>
-              </ignoreSourcePackage>
-              <ignoreSourcePackage>
-                <package>scala.reflect.internal</package>
-              </ignoreSourcePackage>
-              <ignoreSourcePackage>
-                <package>ch.qos.logback</package>
-              </ignoreSourcePackage>
-            </ignoreSourcePackages>
-          </configuration>
-          <executions>
-            <execution>
-              <goals>
-                <goal>check</goal>
-              </goals>
-              <phase>process-classes</phase>
-            </execution>
-          </executions>
-        </plugin>
+        <!--https://github.com/spotify/missinglink/issues/51-->
+        <!--<plugin>-->
+          <!--<groupId>com.spotify</groupId>-->
+          <!--<artifactId>missinglink-maven-plugin</artifactId>-->
+          <!--<version>0.1.1</version>-->
+          <!--<configuration>-->
+            <!--<failOnConflicts>true</failOnConflicts>-->
+            <!--<ignoreSourcePackages>-->
+              <!--<ignoreSourcePackage>-->
+                <!--<package>org.slf4j</package>-->
+              <!--</ignoreSourcePackage>-->
+              <!--<ignoreSourcePackage>-->
+                <!--<package>com.google.api.client.extensions.appengine.http</package>-->
+              <!--</ignoreSourcePackage>-->
+              <!--<ignoreSourcePackage>-->
+                <!--<package>scala.reflect.internal</package>-->
+              <!--</ignoreSourcePackage>-->
+              <!--<ignoreSourcePackage>-->
+                <!--<package>ch.qos.logback</package>-->
+              <!--</ignoreSourcePackage>-->
+            <!--</ignoreSourcePackages>-->
+          <!--</configuration>-->
+          <!--<executions>-->
+            <!--<execution>-->
+              <!--<goals>-->
+                <!--<goal>check</goal>-->
+              <!--</goals>-->
+              <!--<phase>process-classes</phase>-->
+            <!--</execution>-->
+          <!--</executions>-->
+        <!--</plugin>-->
       </plugins>
     </pluginManagement>
 
