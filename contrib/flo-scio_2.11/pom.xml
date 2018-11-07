@@ -88,6 +88,7 @@
           <args>
             <arg>-Xexperimental</arg>
             <arg>-target:jvm-1.8</arg>
+            <arg>-nobootcp</arg>
           </args>
         </configuration>
       </plugin>
