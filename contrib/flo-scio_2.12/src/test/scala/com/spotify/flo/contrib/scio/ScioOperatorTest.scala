@@ -122,6 +122,11 @@ class ScioOperatorTest extends PipelineSpec with Matchers {
   }
 
   it should "be able to run a scio job and handle job failure" in {
+    val heapSize = java.lang.Runtime.getRuntime.totalMemory
+    val heapMaxSize = java.lang.Runtime.getRuntime.maxMemory
+    val heapFreeSize = java.lang.Runtime.getRuntime.freeMemory
+    println("heapSize: " + heapSize + ", heapMaxSize: " + heapMaxSize + ", heapFreeSize: " + heapFreeSize)
+
     val input = Files.createTempFile("flo-scio-test-in", ".txt").toAbsolutePath.toString
     val output = Files.createTempDirectory("flo-scio-test-out").toAbsolutePath.toString
     val task = lineCountingTask(input, output, 10, fail = true)
