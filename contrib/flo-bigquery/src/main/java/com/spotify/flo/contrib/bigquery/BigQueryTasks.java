@@ -38,13 +38,8 @@ public final class BigQueryTasks {
   static Task<TableId> lookup(F0<FloBigQueryClient> bigQuerySupplier, TableId tableId) {
     return Task.named("bigquery.lookup", tableId.getProject(), tableId.getDataset(), tableId.getTable())
         .ofType(TableId.class)
-        .process(() -> {
-          if (bigQuerySupplier.get().tableExists(tableId)) {
-            return tableId;
-          } else {
-            throw new NotReady();
-          }
-        });
+        .operator(BigQueryLookupOperator.of(bigQuerySupplier))
+        .process(bq -> bq.lookup(tableId));
   }
 
   public static Task<TableId> lookup(TableId tableId) {
