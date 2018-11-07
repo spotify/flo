@@ -3,7 +3,7 @@ jobs:
   test_jdk8_with_coverage:
     working_directory: ~/flo
     docker:
-      - image: maven:3.5.4-jdk-8
+      - image: maven:3.6.0-jdk-8
     steps:
       - checkout
       - restore_cache:
@@ -24,21 +24,21 @@ jobs:
           command: mvn -B verify scala:doc-jar -Pcoverage
       - run: bash <(curl -s https://codecov.io/bash)
 
-  test_jdk10:
+  test_jdk11:
     working_directory: ~/styx
     docker:
-      - image: maven:3.5.4-jdk-10-slim
+      - image: maven:3.6.0-jdk-11-slim
     steps:
       - checkout
       - restore_cache:
-          key: v1-deps-jdk10-{{ checksum "pom.xml" }}
+          key: v1-deps-jdk11-{{ checksum "pom.xml" }}
       - run:
           environment:
             # Maven heap size
             MAVEN_OPTS: -Xmx1024m -Xms1024m
           command: mvn -B dependency:go-offline compile test-compile
       - save_cache:
-          key: v1-deps-jdk10-{{ checksum "pom.xml" }}
+          key: v1-deps-jdk11-{{ checksum "pom.xml" }}
           paths:
             - ~/.m2
       - run: mvn -B verify scala:doc-jar
@@ -51,8 +51,7 @@ workflows:
           filters:
             branches:
               ignore: gh-pages
-# FIXME
-#      - test_jdk10:
-#          filters:
-#            branches:
-#              ignore: gh-pages
+      - test_jdk11:
+          filters:
+            branches:
+              ignore: gh-pages
