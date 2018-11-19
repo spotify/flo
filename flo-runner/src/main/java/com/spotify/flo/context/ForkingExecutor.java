@@ -21,6 +21,8 @@
 package com.spotify.flo.context;
 
 import com.spotify.flo.Fn;
+import com.spotify.flo.Serialization;
+import com.spotify.flo.SerializationException;
 import com.spotify.flo.freezer.PersistingContext;
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -129,8 +131,8 @@ class ForkingExecutor implements Closeable {
       }
       log.debug("serializing closure");
       try {
-        PersistingContext.serialize(f, closureFile);
-      } catch (Exception e) {
+        Serialization.serialize(f, closureFile);
+      } catch (SerializationException e) {
         throw new RuntimeException("Failed to serialize closure", e);
       }
 
@@ -195,8 +197,8 @@ class ForkingExecutor implements Closeable {
         log.debug("Subprocess exited with error file");
         final Throwable error;
         try {
-          error = PersistingContext.deserialize(errorFile);
-        } catch (Exception e) {
+          error = Serialization.deserialize(errorFile);
+        } catch (SerializationException e) {
           throw new RuntimeException("Failed to deserialize error", e);
         }
         if (error instanceof Error) {
@@ -211,8 +213,8 @@ class ForkingExecutor implements Closeable {
         log.debug("Subprocess exited with result file");
         final T result;
         try {
-          result = PersistingContext.deserialize(resultFile);
-        } catch (Exception e) {
+          result = Serialization.deserialize(resultFile);
+        } catch (SerializationException e) {
           throw new RuntimeException("Failed to deserialize result", e);
         }
         return result;
@@ -332,8 +334,8 @@ class ForkingExecutor implements Closeable {
       log.debug("deserializing closure: {}", closureFile);
       final Fn<?> fn;
       try {
-        fn = PersistingContext.deserialize(closureFile);
-      } catch (Exception e) {
+        fn = Serialization.deserialize(closureFile);
+      } catch (SerializationException e) {
         log.error("Failed to deserialize closure: {}", closureFile, e);
         System.exit(5);
         return;
@@ -351,8 +353,8 @@ class ForkingExecutor implements Closeable {
       if (error != null) {
         log.debug("serializing error", error);
         try {
-          PersistingContext.serialize(error, errorFile);
-        } catch (Exception e) {
+          Serialization.serialize(error, errorFile);
+        } catch (SerializationException e) {
           log.error("failed to serialize error", e);
           System.exit(6);
           return;
@@ -360,8 +362,8 @@ class ForkingExecutor implements Closeable {
       } else {
         log.debug("serializing result: {}", result);
         try {
-          PersistingContext.serialize(result, resultFile);
-        } catch (Exception e) {
+          Serialization.serialize(result, resultFile);
+        } catch (SerializationException e) {
           log.error("failed to serialize result", e);
           System.exit(7);
           return;

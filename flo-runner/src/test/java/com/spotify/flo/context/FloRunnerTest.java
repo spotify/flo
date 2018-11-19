@@ -42,6 +42,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.google.common.collect.ImmutableMap;
 import com.spotify.flo.FloTesting;
+import com.spotify.flo.Serialization;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.TestScope;
@@ -53,7 +54,6 @@ import com.spotify.flo.context.Mocks.DataProcessing;
 import com.spotify.flo.context.Mocks.PublishingOutput;
 import com.spotify.flo.context.Mocks.StorageLookup;
 import com.spotify.flo.freezer.Persisted;
-import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
 import com.spotify.flo.status.NotRetriable;
 import java.io.File;
@@ -204,7 +204,7 @@ public class FloRunnerTest {
   public void testSerializeException() throws Exception {
     final File file = temporaryFolder.newFile();
     file.delete();
-    PersistingContext.serialize(new RuntimeException("foo"), file.toPath());
+    Serialization.serialize(new RuntimeException("foo"), file.toPath());
   }
 
   @Test
@@ -526,8 +526,7 @@ public class FloRunnerTest {
   }
 
   @Test
-  public void tasksAreObservedByInstrumentedContext()
-      throws InterruptedException, ExecutionException, TimeoutException, IOException {
+  public void tasksAreObservedByInstrumentedContext() throws Exception {
     final Task<String> fooTask = Task.named("foo").ofType(String.class)
         .process(() -> "foo");
 

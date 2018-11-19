@@ -23,11 +23,14 @@ package com.spotify.flo.context;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Fn;
+import com.spotify.flo.Serialization;
+import com.spotify.flo.SerializationException;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.freezer.PersistingContext;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.util.Collections;
 
 /**
@@ -77,24 +80,15 @@ class ForkingContext extends ForwardingEvalContext {
 
   private static <T> Fn<T> testFork(Fn<T> fn) {
     // We do not currently have a mechanism for transporting mock inputs and outputs into and out of the task process.
-    LOG.debug("Test run, forking disabled - testing serialization");
     return () -> {
       // Serialize & deserialize fn
-      final ByteArrayOutputStream fnBaos = new ByteArrayOutputStream();
-      PersistingContext.serialize(fn, fnBaos);
-      final ByteArrayInputStream fnBais = new ByteArrayInputStream(fnBaos.toByteArray());
-      final Fn<T> deserializedFn = PersistingContext.deserialize(fnBais);
+      final Fn<T> deserializedFn = Serialization.requireSerializable(fn, "process fn");
 
       // Run the fn
       final T result = deserializedFn.get();
 
       // Serialize & deserialize the result
-      final ByteArrayOutputStream resultBaos = new ByteArrayOutputStream();
-      PersistingContext.serialize(result, resultBaos);
-      final ByteArrayInputStream resultBais = new ByteArrayInputStream(resultBaos.toByteArray());
-      final T deserializedResult = PersistingContext.deserialize(resultBais);
-
-      return deserializedResult;
+      return Serialization.requireSerializable(result, "result");
     };
   }
 

@@ -29,11 +29,9 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 
 import com.google.auto.value.AutoValue;
 import com.spotify.flo.TaskBuilder.F0;
-import java.io.NotSerializableException;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Rule;
@@ -219,7 +217,7 @@ public class TaskTest {
     final F0<String> fn = () -> o.toString();
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage("process fn not serializable: " + fn);
-    exception.expectCause(is(instanceOf(NotSerializableException.class)));
+    exception.expectCause(is(instanceOf(SerializationException.class)));
     b.process(fn);
   }
 
@@ -231,7 +229,7 @@ public class TaskTest {
         Task.named(o.toString()).ofType(String.class).process(() -> "foo");
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage("input not serializable: " + input);
-    exception.expectCause(is(instanceOf(NotSerializableException.class)));
+    exception.expectCause(is(instanceOf(SerializationException.class)));
     b.input(input);
   }
 
@@ -243,7 +241,7 @@ public class TaskTest {
         Collections.singletonList(Task.named(o.toString()).ofType(String.class).process(() -> "foo"));
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage("inputs not serializable: " + inputs);
-    exception.expectCause(is(instanceOf(NotSerializableException.class)));
+    exception.expectCause(is(instanceOf(SerializationException.class)));
     b.inputs(inputs);
   }
 
@@ -266,7 +264,7 @@ public class TaskTest {
     };
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage("operator not serializable: " + operator);
-    exception.expectCause(is(instanceOf(NotSerializableException.class)));
+    exception.expectCause(is(instanceOf(SerializationException.class)));
     b.operator(operator);
   }
 
@@ -284,7 +282,7 @@ public class TaskTest {
     };
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage("context not serializable: " + context);
-    exception.expectCause(is(instanceOf(NotSerializableException.class)));
+    exception.expectCause(is(instanceOf(SerializationException.class)));
     b.context(context);
   }
 
