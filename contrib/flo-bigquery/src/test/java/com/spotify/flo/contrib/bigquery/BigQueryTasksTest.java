@@ -26,33 +26,27 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.cloud.bigquery.TableId;
-import com.google.common.base.Throwables;
 import com.spotify.flo.Serialization;
 import com.spotify.flo.SerializationException;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.context.FloRunner;
-import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class BigQueryTasksTest {
 
   @Rule
@@ -79,7 +73,7 @@ public class BigQueryTasksTest {
     } catch (ExecutionException e) {
       // Verify that we are getting some well known error here so we know with some
       // certainty that we didn't get a serialization error. Yes, this is quite awful.
-      final Throwable rootCause = Throwables.getRootCause(e);
+      final Throwable rootCause = e.getCause();
       if (rootCause instanceof NotReady) {
         // Seems we had working credentials and the lookup worked. We're done here.
       } else if (rootCause instanceof GoogleJsonResponseException) {
