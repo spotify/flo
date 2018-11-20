@@ -22,11 +22,11 @@ package com.spotify.flo.context;
 
 import static org.mockito.Mockito.verify;
 
+import com.google.common.collect.ImmutableList;
 import com.spotify.flo.TaskId;
 import com.spotify.flo.TaskInfo;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class LoggingTest {
   private static final TaskId FOO = TaskId.create("foo");
   private static final TaskId BAR = TaskId.create("bar");
   private static final TaskId BAZ = TaskId.create("baz");
-  private static final TaskInfo TASK_INFO = TaskInfo.create(FOO, Arrays.asList(
+  private static final TaskInfo TASK_INFO = TaskInfo.create(FOO, ImmutableList.of(
       TaskInfo.create(BAR, Collections.emptyList()),
       TaskInfo.create(BAZ, Collections.emptyList())));
 

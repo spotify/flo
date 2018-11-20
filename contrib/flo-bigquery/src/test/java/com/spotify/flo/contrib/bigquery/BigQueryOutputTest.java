@@ -44,10 +44,12 @@ import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.JobStatus;
 import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
+import com.google.common.base.Throwables;
 import com.spotify.flo.Serialization;
 import com.spotify.flo.SerializationException;
 import com.spotify.flo.Task;
 import com.spotify.flo.context.FloRunner;
+import com.spotify.flo.freezer.PersistingContext;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -205,7 +207,7 @@ public class BigQueryOutputTest {
     try {
       future.get(30, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
-      final Throwable rootCause = e.getCause();
+      final Throwable rootCause = Throwables.getRootCause(e);
       if (rootCause instanceof GoogleJsonResponseException) {
         // Seems we managed to make a request, so the lookup context was successfully invoked. We're done here.
       } else if (rootCause instanceof IllegalArgumentException

@@ -40,6 +40,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import com.google.common.collect.ImmutableMap;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Serialization;
 import com.spotify.flo.Task;
@@ -67,10 +68,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -507,12 +506,10 @@ public class FloRunnerTest {
   public void testOperator() throws Exception {
     final String mainJvm = jvmName();
     final Instant today = Instant.now().truncatedTo(ChronoUnit.DAYS);
-    final Map<String, Integer> options = new HashMap<>();
-    options.put("quux", 17);
     final Task<JobResult> task = Task.named("task", today).ofType(JobResult.class)
         .operator(JobOperator.create())
         .process(job -> job
-            .options(() -> options)
+            .options(() -> ImmutableMap.of("quux", 17))
             .pipeline(ctx -> ctx.readFrom("foo").map("x + y").writeTo("baz"))
             .validation(result -> {
               if (result.records < 5) {

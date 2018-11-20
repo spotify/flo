@@ -20,6 +20,7 @@
 
 package com.spotify.flo.context;
 
+import com.google.common.collect.ImmutableList;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
@@ -29,7 +30,6 @@ import com.spotify.flo.status.NotReady;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -204,8 +204,8 @@ public class Mocks {
 
       public List<String> published(String key) {
         return Optional.ofNullable(publishOperations.get(key))
-            .map(ArrayList::new)
-            .orElse(new ArrayList<>());
+            .map(ImmutableList::copyOf)
+            .orElse(ImmutableList.of());
       }
 
       public int lookups(String key) {
