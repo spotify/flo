@@ -24,7 +24,6 @@ import com.google.cloud.bigquery.TableId;
 import com.google.common.annotations.VisibleForTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F0;
-import com.spotify.flo.status.NotReady;
 import com.spotify.flo.util.Date;
 import com.spotify.flo.util.DateHour;
 
