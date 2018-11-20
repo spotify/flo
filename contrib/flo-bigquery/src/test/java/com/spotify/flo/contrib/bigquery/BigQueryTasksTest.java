@@ -73,7 +73,7 @@ public class BigQueryTasksTest {
     } catch (ExecutionException e) {
       // Verify that we are getting some well known error here so we know with some
       // certainty that we didn't get a serialization error. Yes, this is quite awful.
-      final Throwable rootCause = e.getCause();
+      final Throwable rootCause = BigQueryOutputTest.getRootCause(e);
       if (rootCause instanceof NotReady) {
         // Seems we had working credentials and the lookup worked. We're done here.
       } else if (rootCause instanceof GoogleJsonResponseException) {

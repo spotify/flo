@@ -224,7 +224,7 @@ public class BigQueryOutputTest {
     }
   }
 
-  private Throwable getRootCause(Throwable throwable) {
+  static Throwable getRootCause(Throwable throwable) {
     int iterations = 0;
     Throwable cause = throwable;
     while (iterations++ < 100 && cause.getCause() != null) {
