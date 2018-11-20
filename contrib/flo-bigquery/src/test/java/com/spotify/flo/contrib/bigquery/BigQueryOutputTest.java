@@ -205,7 +205,7 @@ public class BigQueryOutputTest {
     try {
       future.get(30, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
-      final Throwable rootCause = e.getCause();
+      final Throwable rootCause = getRootCause(e);
       if (rootCause instanceof GoogleJsonResponseException) {
         // Seems we managed to make a request, so the lookup context was successfully invoked. We're done here.
       } else if (rootCause instanceof IllegalArgumentException
@@ -222,5 +222,14 @@ public class BigQueryOutputTest {
         throw new AssertionError("Unknown error, might be serialization problem that needs fixing?", e);
       }
     }
+  }
+
+  private Throwable getRootCause(Throwable throwable) {
+    int iterations = 0;
+    Throwable cause = throwable;
+    while (iterations++ < 100 && cause.getCause() != null) {
+      cause = cause.getCause();
+    }
+    return cause;
   }
 }
