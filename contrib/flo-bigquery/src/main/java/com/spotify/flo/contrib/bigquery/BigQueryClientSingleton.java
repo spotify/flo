@@ -20,29 +20,29 @@
 
 package com.spotify.flo.contrib.bigquery;
 
-import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryOptions;
 import com.spotify.flo.FloTesting;
 
 class BigQueryClientSingleton {
 
   private static class Holder {
+    private static FloBigQueryClient floBigQueryClient = null;
 
-    private static final BigQuery BIGQUERY_INTERNAL;
-    private static final FloBigQueryClient BIGQUERY_CLIENT;
+    static synchronized FloBigQueryClient getFloBigQueryClient() {
+      if (floBigQueryClient == null) {
+        final BigQueryOptions.Builder bigquery = BigQueryOptions.newBuilder();
+        // Work around a bug in ServiceOptions.getDefaultProjectId() where it will use the project
+        // returned by the GCE metadata server instead of the service account project
+        // https://github.com/GoogleCloudPlatform/google-cloud-java/pull/2304/files#diff-966eb51fcb59c92eb46ebd5f532d8e52R404
+        // https://github.com/GoogleCloudPlatform/google-cloud-java/issues/3533
+        final String projectId = GcpOptions.getDefaultProjectId();
+        if (projectId != null) {
+          bigquery.setProjectId(projectId);
+        }
 
-    static {
-      final BigQueryOptions.Builder bigquery = BigQueryOptions.newBuilder();
-      // Work around a bug in ServiceOptions.getDefaultProjectId() where it will use the project
-      // returned by the GCE metadata server instead of the service account project
-      // https://github.com/GoogleCloudPlatform/google-cloud-java/pull/2304/files#diff-966eb51fcb59c92eb46ebd5f532d8e52R404
-      // https://github.com/GoogleCloudPlatform/google-cloud-java/issues/3533
-      final String projectId = GcpOptions.getDefaultProjectId();
-      if (projectId != null) {
-        bigquery.setProjectId(projectId);
+        floBigQueryClient = new DefaultBigQueryClient(bigquery.build().getService());
       }
-      BIGQUERY_INTERNAL = bigquery.build().getService();
-      BIGQUERY_CLIENT = new DefaultBigQueryClient(BIGQUERY_INTERNAL);
+      return floBigQueryClient;
     }
   }
 
@@ -50,7 +50,7 @@ class BigQueryClientSingleton {
     if (FloTesting.isTest()) {
       return BigQueryMocking.mock().client();
     } else {
-      return Holder.BIGQUERY_CLIENT;
+      return Holder.getFloBigQueryClient();
     }
   }
 }

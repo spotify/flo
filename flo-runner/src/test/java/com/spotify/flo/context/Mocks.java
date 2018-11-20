@@ -148,7 +148,7 @@ public class Mocks {
     }
 
     @Override
-    public Optional<String> lookup(Task task) {
+    public Optional<String> lookup(Task<String> task) {
       if (FloTesting.isTest()) {
         return MOCK.get().doLookup(key);
       } else {
