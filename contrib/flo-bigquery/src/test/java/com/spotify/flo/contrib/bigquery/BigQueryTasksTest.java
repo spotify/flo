@@ -40,6 +40,7 @@ import com.spotify.flo.TaskId;
 import com.spotify.flo.context.FloRunner;
 import com.spotify.flo.freezer.PersistingContext;
 import com.spotify.flo.status.NotReady;
+import com.spotify.flo.util.Date;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -134,4 +135,105 @@ public class BigQueryTasksTest {
     assertThat(id.name(), is("bigquery.lookup"));
     assertThat(id.toString(), startsWith("bigquery.lookup(foo,bar,baz)#"));
   }
+
+  @Test
+  public void lookupLatestDailyShouldBeSerializable() throws SerializationException {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final Task<TableId> task = BigQueryTasks.lookupLatestDaily("foo", "bar", "baz", Date.parse("2018-01-01"), 7);
+    Serialization.serialize(task, baos);
+    final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+    final Task<TableId> deserializedTask = Serialization.deserialize(bais);
+    assertThat(deserializedTask, is(notNullValue()));
+  }
+
+  @Test
+  public void lookupLatestDailyShouldBeRunnable() throws Exception {
+    final Future<TableId> future = FloRunner.runTask(BigQueryTasks.lookupLatestDaily(
+        "foo", "bar", "baz", Date.parse("2018-01-01"), 7)).future();
+
+    try {
+      future.get();
+      fail("Did not expect to find a non-existent table");
+    } catch (ExecutionException e) {
+      // Verify that we are getting some well known error here so we know with some
+      // certainty that we didn't get a serialization error. Yes, this is quite awful.
+      final Throwable rootCause = Throwables.getRootCause(e);
+      if (rootCause instanceof NotReady) {
+        // Seems we had working credentials and the lookup worked. We're done here.
+      } else if (rootCause instanceof GoogleJsonResponseException) {
+        // Seems we managed to make a request, so the lookup executed. We're done here.
+      } else if (rootCause instanceof IllegalArgumentException &&
+          rootCause.getMessage().startsWith("A project ID is required")) {
+        // Seems we managed to get as far as trying to instantiate the BigQuery client (in the task process).
+        // We're done here.
+      } else {
+        // Not sure what went wrong here, might be serialization error, so be conservative and fail here.
+        throw e;
+      }
+    }
+  }
+
+  @Test
+  public void lookupLatestDailyShouldThrowNotReadyForNonExistentOrTooOldTable() throws Exception {
+    final Task<TableId> lookup = BigQueryTasks.lookupLatestDaily(() -> {
+          FloBigQueryClient bq = mock(FloBigQueryClient.class);
+          when(bq.tableExists(any())).thenReturn(false);
+          return bq;
+        },
+        "foo",
+        "bar",
+        "baz",
+        Date.parse("2018-01-01"),
+        7);
+    exception.expectCause(instanceOf(NotReady.class));
+    FloRunner.runTask(lookup)
+        .future().get(30, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void lookupLatestDailyShouldReturnTableIdForExistingTableFromStartDate() throws Exception {
+    final TableId expected = TableId.of("foo", "bar", "baz_20180101");
+    final Task<TableId> lookup = BigQueryTasks.lookupLatestDaily(() -> {
+      FloBigQueryClient bq = mock(FloBigQueryClient.class);
+      when(bq.tableExists(expected)).thenReturn(true);
+      return bq;
+    }, "foo", "bar", "baz", Date.parse("2018-01-01"), 7);
+    final TableId tableId = FloRunner.runTask(lookup)
+        .future().get(30, TimeUnit.SECONDS);
+    assertThat(tableId, is(expected));
+  }
+
+  @Test
+  public void lookupLatestDailyShouldReturnTableIdForExistingTableInLookBackRange() throws Exception {
+    final TableId expected = TableId.of("foo", "bar", "baz_20180105");
+    final Task<TableId> lookup = BigQueryTasks.lookupLatestDaily(() -> {
+      FloBigQueryClient bq = mock(FloBigQueryClient.class);
+      when(bq.tableExists(expected)).thenReturn(true);
+      return bq;
+    }, "foo", "bar", "baz", Date.parse("2018-01-10"), 7);
+    final TableId tableId = FloRunner.runTask(lookup)
+        .future().get(30, TimeUnit.SECONDS);
+    assertThat(tableId, is(expected));
+  }
+
+  @Test
+  public void lookupLatestDailyShouldReturnTableIdForExistingTableFromLastLookBackDate() throws Exception {
+    final TableId expected = TableId.of("foo", "bar", "baz_20180103");
+    final Task<TableId> lookup = BigQueryTasks.lookupLatestDaily(() -> {
+      FloBigQueryClient bq = mock(FloBigQueryClient.class);
+      when(bq.tableExists(expected)).thenReturn(true);
+      return bq;
+    }, "foo", "bar", "baz", Date.parse("2018-01-10"), 7);
+    final TableId tableId = FloRunner.runTask(lookup)
+        .future().get(30, TimeUnit.SECONDS);
+    assertThat(tableId, is(expected));
+  }
+
+  @Test
+  public void lookupLatestDailyShouldHaveNameAndId() {
+    final TaskId id = BigQueryTasks.lookupLatestDaily("foo", "bar", "baz", Date.parse("2018-01-01"), 7).id();
+    assertThat(id.name(), is("bigquery.lookupLatestDaily"));
+    assertThat(id.toString(), startsWith("bigquery.lookupLatestDaily(foo,bar,baz,2018-01-01,7)#"));
+  }
+
 }
