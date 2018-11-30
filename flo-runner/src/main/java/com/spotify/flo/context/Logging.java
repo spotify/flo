@@ -50,7 +50,7 @@ class Logging {
   }
 
   void header() {
-    LOG.info("Runner v{}", getClass().getPackage().getImplementationVersion());
+    LOG.info("FloRunner v{}", getClass().getPackage().getImplementationVersion());
     LOG.info("");
   }
 
