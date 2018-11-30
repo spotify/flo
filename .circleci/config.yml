@@ -22,6 +22,7 @@ jobs:
             # Maven heap size
             MAVEN_OPTS: -Xmx1024m -Xms1024m
           command: mvn -B verify scala:doc-jar -Pcoverage -Pmissinglink
+      - run: flo-tests/run_shading_tests.sh
       - run: bash <(curl -s https://codecov.io/bash)
 
   test_jdk10:
