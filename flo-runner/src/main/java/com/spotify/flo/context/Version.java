@@ -26,6 +26,8 @@ import java.io.InputStreamReader;
 
 class Version {
 
+  private static final String VERSION_RESOURCE = "/com/spotify/flo/flo-runner.version";
+
   private static class Lazy {
 
     private static String RUNNER_VERSION = readFloRunnerVersion();
@@ -36,12 +38,11 @@ class Version {
   }
 
   private static String readFloRunnerVersion() {
-    final String resource = "/com/spotify/flo/flo-runner.version";
     try (final BufferedReader reader = new BufferedReader(new InputStreamReader(
-        Version.class.getResourceAsStream(resource)))) {
+        Version.class.getResourceAsStream(VERSION_RESOURCE)))) {
       return reader.readLine().trim();
     } catch (IOException e) {
-      throw new RuntimeException("Failed to read flo runner version from " + resource, e);
+      throw new RuntimeException(String.format("Failed to read flo runner version from %s", VERSION_RESOURCE), e);
     }
   }
 }
