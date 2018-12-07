@@ -21,7 +21,9 @@
 package com.spotify.flo.contrib.bigquery;
 
 import com.google.cloud.bigquery.TableId;
+import com.spotify.flo.util.Date;
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.Optional;
 
 class BigQueryLookup implements Serializable {
@@ -33,6 +35,10 @@ class BigQueryLookup implements Serializable {
 
   Spec lookup(TableId tableId) {
     return new LookupSpec(tableId);
+  }
+
+  Spec lookupLatestDaily(String project, String dataset, String tableName, Date start, int lookBackDays) {
+    return new LookupLatestDailySpec(project, dataset, tableName, start, lookBackDays);
   }
 
   interface Spec extends Serializable {
@@ -55,4 +61,40 @@ class BigQueryLookup implements Serializable {
       return bq.tableExists(tableId) ? Optional.of(tableId) : Optional.empty();
     }
   }
+
+  static class LookupLatestDailySpec implements Spec {
+
+    private static final long serialVersionUID = 1L;
+
+    final String project;
+    final String dataset;
+    final String tableName;
+    final Date start;
+    final int lookBackDays;
+
+    LookupLatestDailySpec(String project, String dataset, String tableName, Date start, final int lookBackDays) {
+      this.project = Objects.requireNonNull(project, "project");
+      this.dataset = Objects.requireNonNull(dataset, "dataset");
+      this.tableName = Objects.requireNonNull(tableName, "tableName");
+      this.start = Objects.requireNonNull(start, "start");
+      this.lookBackDays = lookBackDays;
+    }
+
+    @Override
+    public Optional<TableId> lookup(FloBigQueryClient bq) {
+      for (int i = 0; i <= lookBackDays; i++) {
+        Date date = Date.of(start.localDate().minusDays(i));
+        String table = tableName + "_" + BigQueryTasks.formatTableDate(date);
+        TableId tableId = TableId.of(project, dataset, table);
+
+        if (bq.tableExists(tableId)) {
+          return Optional.of(tableId);
+        }
+      }
+
+      return Optional.empty();
+    }
+
+  }
+
 }

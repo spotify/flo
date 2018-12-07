@@ -24,9 +24,9 @@ import com.google.cloud.bigquery.TableId;
 import com.google.common.annotations.VisibleForTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TaskBuilder.F0;
-import com.spotify.flo.status.NotReady;
 import com.spotify.flo.util.Date;
 import com.spotify.flo.util.DateHour;
+import java.util.Objects;
 
 public final class BigQueryTasks {
 
@@ -48,6 +48,23 @@ public final class BigQueryTasks {
 
   public static Task<TableId> lookup(String project, String dataset, String table) {
     return lookup(TableId.of(project, dataset, table));
+  }
+
+  @VisibleForTesting
+  static Task<TableId> lookupLatestDaily(F0<FloBigQueryClient> bigQuerySupplier, String project, String dataset, String tableName, Date start, final int lookBackDays) {
+    Objects.requireNonNull(project, "project");
+    Objects.requireNonNull(dataset, "dataset");
+    Objects.requireNonNull(tableName, "tableName");
+    Objects.requireNonNull(start, "start");
+
+    return Task.named("bigquery.lookupLatestDaily", project, dataset, tableName, start, lookBackDays)
+        .ofType(TableId.class)
+        .operator(BigQueryLookupOperator.of(bigQuerySupplier))
+        .process(bq -> bq.lookupLatestDaily(project, dataset, tableName, start, lookBackDays));
+  }
+
+  public static Task<TableId> lookupLatestDaily(String project, String dataset, String tableName, Date start, final int lookBackDays) {
+    return lookupLatestDaily(BigQueryClientSingleton::bq, project, dataset, tableName, start, lookBackDays);
   }
 
   public static String formatTableDate(Date date) {

@@ -12,7 +12,7 @@
   <url>https://github.com/spotify/flo</url>
 
   <artifactId>flo</artifactId>
-  <version>0.5.2-SNAPSHOT</version>
+  <version>0.5.4-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <licenses>
@@ -507,10 +507,6 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>
-      <plugin>
-        <groupId>com.spotify</groupId>
-        <artifactId>missinglink-maven-plugin</artifactId>
-      </plugin>
     </plugins>
   </build>
 
@@ -544,6 +540,17 @@
                 <exclude>**/com/spotify/flo/dsl/Util.scala</exclude>
               </excludes>
             </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>missinglink</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.spotify</groupId>
+            <artifactId>missinglink-maven-plugin</artifactId>
           </plugin>
         </plugins>
       </build>
