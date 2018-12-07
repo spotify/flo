@@ -24,6 +24,7 @@ import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.QueryRequest;
 import com.spotify.flo.Fn;
 import com.spotify.flo.TaskBuilder.F1;
+import com.spotify.flo.TaskId;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -32,11 +33,17 @@ import java.util.Objects;
  */
 public class BigQueryOperation<T, R> implements Serializable {
 
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 2L;
+
+  final TaskId taskId;
 
   Fn<JobInfo> jobRequest;
   Fn<QueryRequest> queryRequest;
   F1<Object, T> success;
+
+  private BigQueryOperation(TaskId taskId) {
+    this.taskId = Objects.requireNonNull(taskId, "taskId");
+  }
 
   /**
    * Run a query. Result are returned directly and not written to a table.
@@ -71,43 +78,38 @@ public class BigQueryOperation<T, R> implements Serializable {
     return this;
   }
 
-  static <T> BigQueryOperation<T, BigQueryResult> ofQuery(Fn<QueryRequest> queryRequest) {
-    return new BigQueryOperation<T, BigQueryResult>().query(queryRequest);
-  }
-
-  static <T> BigQueryOperation<T, JobInfo> ofJob(Fn<JobInfo> job) {
-    return new BigQueryOperation<T, JobInfo>().job(job);
-  }
-
   public static class Provider<T> implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
-    Provider() {
+    final TaskId taskId;
+
+    Provider(TaskId taskId) {
+      this.taskId = taskId;
     }
 
     public BigQueryOperation<T, Object> bq() {
-      return new BigQueryOperation<>();
+      return new BigQueryOperation<>(taskId);
     }
 
     public BigQueryOperation<T, BigQueryResult> query(Fn<QueryRequest> queryRequest) {
-      return BigQueryOperation.ofQuery(queryRequest);
+      return new BigQueryOperation<T, BigQueryResult>(taskId).query(queryRequest);
     }
 
     public BigQueryOperation<T, BigQueryResult> query(QueryRequest queryRequest) {
-      return BigQueryOperation.ofQuery(() -> queryRequest);
+      return new BigQueryOperation<T, BigQueryResult>(taskId).query(() -> queryRequest);
     }
 
     public BigQueryOperation<T, BigQueryResult> query(String query) {
-      return BigQueryOperation.ofQuery(() -> QueryRequest.of(query));
+      return new BigQueryOperation<T, BigQueryResult>(taskId).query(() -> QueryRequest.of(query));
     }
 
     public BigQueryOperation<T, JobInfo> job(Fn<JobInfo> jobInfo) {
-      return BigQueryOperation.ofJob(jobInfo);
+      return new BigQueryOperation<T, JobInfo>(taskId).job(jobInfo);
     }
 
     public BigQueryOperation<T, JobInfo> job(JobInfo jobInfo) {
-      return BigQueryOperation.ofJob(() -> jobInfo);
+      return new BigQueryOperation<T, JobInfo>(taskId).job(() -> jobInfo);
     }
   }
 }

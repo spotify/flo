@@ -23,6 +23,9 @@ package com.spotify.flo.contrib.bigquery;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 
 import com.google.cloud.bigquery.CopyJobConfiguration;
 import com.google.cloud.bigquery.ExtractJobConfiguration;
@@ -34,12 +37,32 @@ import com.spotify.flo.FloTesting;
 import com.spotify.flo.Task;
 import com.spotify.flo.TestScope;
 import com.spotify.flo.context.FloRunner;
+import com.spotify.flo.context.InstrumentedContext;
+import java.io.IOException;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class BigQueryOperatorTest {
 
+  static volatile String listenerOutputDir;
+
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Mock private InstrumentedContext.Listener listener;
+
+  @Before
+  public void setUp() throws IOException {
+    listenerOutputDir = temporaryFolder.newFolder().getAbsolutePath();
+  }
+
   @Test
-  public void shouldRunQueryTestMode() throws Exception {
+  public void shouldRunQueryInTestMode() throws Exception {
     final Task<String> task = Task.named("task")
         .ofType(String.class)
         .operator(BigQueryOperator.create())
@@ -51,6 +74,13 @@ public class BigQueryOperatorTest {
           .get(30, SECONDS);
       assertThat(result, is("success!"));
     }
+
+    RecordingListener.replay(listener);
+    verify(listener).meta(eq(task.id()), argThat(meta ->
+        meta.get("job-type").equals("bigquery")
+            && !meta.get("job-id").isEmpty()
+            && meta.get("bq-job-type").equals("query")
+            && meta.get("project-id").equals("mock-project")));
   }
 
   @Test
@@ -76,6 +106,13 @@ public class BigQueryOperatorTest {
       assertThat(BigQueryMocking.mock().tablePublished(table), is(true));
       assertThat(BigQueryMocking.mock().tableExists(table), is(true));
     }
+
+    RecordingListener.replay(listener);
+    verify(listener).meta(eq(task.id()), argThat(meta ->
+        meta.get("job-type").equals("bigquery")
+            && !meta.get("job-id").isEmpty()
+            && meta.get("bq-job-type").equals("query")
+            && meta.get("project-id").equals("mock-project")));
   }
 
   @Test
@@ -97,6 +134,13 @@ public class BigQueryOperatorTest {
 
       assertThat(result, is(dstTable));
     }
+
+    RecordingListener.replay(listener);
+    verify(listener).meta(eq(task.id()), argThat(meta ->
+        meta.get("job-type").equals("bigquery")
+            && !meta.get("job-id").isEmpty()
+            && meta.get("bq-job-type").equals("copy")
+            && meta.get("project-id").equals("mock-project")));
   }
 
   @Test
@@ -118,6 +162,14 @@ public class BigQueryOperatorTest {
 
       assertThat(result, is(dstTable));
     }
+
+    RecordingListener.replay(listener);
+    verify(listener).meta(eq(task.id()), argThat(meta ->
+        meta.get("job-type").equals("bigquery")
+            && !meta.get("job-id").isEmpty()
+            && meta.get("bq-job-type").equals("load")
+            && meta.get("project-id").equals("mock-project")));
+
   }
 
   @Test
@@ -140,5 +192,13 @@ public class BigQueryOperatorTest {
 
       assertThat(result, is(destinationUri));
     }
+
+    RecordingListener.replay(listener);
+    verify(listener).meta(eq(task.id()), argThat(meta ->
+        meta.get("job-type").equals("bigquery")
+            && !meta.get("job-id").isEmpty()
+            && meta.get("bq-job-type").equals("extract")
+            && meta.get("project-id").equals("mock-project")));
+
   }
 }

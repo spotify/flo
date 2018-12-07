@@ -22,10 +22,19 @@ package com.spotify.flo.contrib.bigquery;
 
 import static com.spotify.flo.contrib.bigquery.BigQueryClientSingleton.bq;
 
+import com.google.cloud.bigquery.CopyJobConfiguration;
+import com.google.cloud.bigquery.ExtractJobConfiguration;
+import com.google.cloud.bigquery.JobConfiguration;
+import com.google.cloud.bigquery.JobId;
 import com.google.cloud.bigquery.JobInfo;
+import com.google.cloud.bigquery.LoadJobConfiguration;
+import com.google.cloud.bigquery.QueryJobConfiguration;
+import com.google.cloud.bigquery.QueryRequest;
+import com.google.common.collect.ImmutableMap;
 import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskOperator;
 import com.spotify.flo.contrib.bigquery.BigQueryOperation.Provider;
+import java.util.function.Supplier;
 
 public class BigQueryOperator<T> implements TaskOperator<BigQueryOperation.Provider<T>, BigQueryOperation<T, ?>, T> {
 
@@ -36,23 +45,50 @@ public class BigQueryOperator<T> implements TaskOperator<BigQueryOperation.Provi
 
   @Override
   public T perform(BigQueryOperation<T, ?> spec, Listener listener) {
-    final Object result;
+    final Supplier<Object> result;
+    final JobId jobId;
+    final String jobType;
+
+    // Start job
     if (spec.queryRequest != null) {
-      result = runQuery(spec);
+      final QueryRequest request = spec.queryRequest.get();
+      jobId = bq().startQuery(request);
+      jobType = "query";
+      result = () -> bq().awaitQueryCompletion(jobId);
     } else if (spec.jobRequest != null) {
-      result = runJob(spec);
+      final JobInfo request = spec.jobRequest.get();
+      final JobInfo job = bq().startJob(request);
+      jobId = job.getJobId();
+      jobType = bqJobType(request);
+      result = () -> bq().awaitJobCompletion(job);
     } else {
       throw new AssertionError();
     }
-    return spec.success.apply(result);
+
+    // Emit metadata
+    listener.meta(spec.taskId, ImmutableMap.of(
+        "job-type", "bigquery",
+        "job-id", jobId.getJob(),
+        "bq-job-type", jobType,
+        "project-id", bq().projectId()));
+
+    // Await result
+    return spec.success.apply(result.get());
   }
 
-  private JobInfo runJob(BigQueryOperation<T, ?> spec) {
-    return bq().job(spec.jobRequest.get());
-  }
-
-  private BigQueryResult runQuery(BigQueryOperation<T, ?> spec) {
-    return bq().query(spec.queryRequest.get());
+  private static String bqJobType(JobInfo jobInfo) {
+    final JobConfiguration configuration = jobInfo.getConfiguration();
+    if (configuration instanceof CopyJobConfiguration) {
+      return "copy";
+    } else if (configuration instanceof ExtractJobConfiguration) {
+      return "extract";
+    } else if (configuration instanceof LoadJobConfiguration) {
+      return "load";
+    } else if (configuration instanceof QueryJobConfiguration) {
+      return "query";
+    } else {
+      return "unknown";
+    }
   }
 
   public static <T> BigQueryOperator<T> create() {
@@ -61,6 +97,6 @@ public class BigQueryOperator<T> implements TaskOperator<BigQueryOperation.Provi
 
   @Override
   public Provider<T> provide(EvalContext evalContext) {
-    return new BigQueryOperation.Provider<>();
+    return new BigQueryOperation.Provider<>(evalContext.currentTask().get().id());
   }
 }

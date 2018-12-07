@@ -25,6 +25,7 @@ import com.google.cloud.bigquery.Dataset;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
 import com.google.cloud.bigquery.FieldValue;
+import com.google.cloud.bigquery.JobId;
 import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.QueryRequest;
 import com.google.cloud.bigquery.Schema;
@@ -32,8 +33,8 @@ import com.google.cloud.bigquery.TableId;
 import com.spotify.flo.TestContext;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -152,13 +153,25 @@ public class BigQueryMocking {
     }
 
     @Override
-    public JobInfo job(JobInfo jobInfo, JobOption... options) {
+    public JobInfo startJob(JobInfo jobInfo, JobOption... options) {
+      return jobInfo.toBuilder()
+          .setJobId(JobId.of(projectId(), UUID.randomUUID().toString()))
+          .build();
+    }
+
+    @Override
+    public JobInfo awaitJobCompletion(JobInfo jobInfo, JobOption... options) {
       return jobInfo;
     }
 
     @Override
-    public BigQueryResult query(QueryRequest request) {
-      return new MockQueryResult(request);
+    public JobId startQuery(QueryRequest queryRequest) {
+      return JobId.of(projectId(), UUID.randomUUID().toString());
+    }
+
+    @Override
+    public BigQueryResult awaitQueryCompletion(JobId jobId) {
+      return new MockQueryResult();
     }
 
     @Override
@@ -170,13 +183,12 @@ public class BigQueryMocking {
           .add(tableId.getTable());
     }
 
+    @Override
+    public String projectId() {
+      return "mock-project";
+    }
+
     private class MockQueryResult implements BigQueryResult {
-
-      private final QueryRequest request;
-
-      public MockQueryResult(QueryRequest request) {
-        this.request = Objects.requireNonNull(request, "request");
-      }
 
       @Override
       public boolean cacheHit() {

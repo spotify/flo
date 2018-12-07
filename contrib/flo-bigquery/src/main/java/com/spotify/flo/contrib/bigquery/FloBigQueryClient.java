@@ -24,6 +24,7 @@ import com.google.cloud.bigquery.BigQuery.JobOption;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
+import com.google.cloud.bigquery.JobId;
 import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.QueryRequest;
 import com.google.cloud.bigquery.TableId;
@@ -60,23 +61,42 @@ interface FloBigQueryClient {
   boolean tableExists(TableId tableId);
 
   /**
-   * Run a BigQuery query. Blocks until the query completes.
+   * Start a BigQuery query.
    *
    * @throws BigQueryException if the query fails.
    */
-  BigQueryResult query(QueryRequest queryRequest);
+  JobId startQuery(QueryRequest queryRequest);
 
   /**
-   * Run a BiqQuery job. Blocks until the job completes.
+   * Wait for a BigQuery query to complete.
+   *
+   * @throws BigQueryException if the query fails.
+   */
+  BigQueryResult awaitQueryCompletion(JobId jobId);
+
+  /**
+   * Start a BiqQuery job.
    *
    * @throws BigQueryException if the job fails.
    */
-  JobInfo job(JobInfo jobInfo, JobOption... options);
+  JobInfo startJob(JobInfo jobInfo, JobOption... options);
+
+  /**
+   * Wait for a BiqQuery job to complete.
+   *
+   * @throws BigQueryException if the job fails.
+   */
+  JobInfo awaitJobCompletion(JobInfo jobInfo, JobOption... options);
 
   /**
    * Create a staging {@link TableId} for {@param tableId}
    */
   TableId createStagingTableId(TableId tableId, String location);
+
+  /**
+   * The ID of the project in which jobs will run.
+   */
+  String projectId();
 
   /**
    * Create a random staging table id.

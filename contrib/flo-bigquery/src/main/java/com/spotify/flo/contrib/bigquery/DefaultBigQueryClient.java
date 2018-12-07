@@ -32,12 +32,12 @@ import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
 import com.google.cloud.bigquery.FieldValue;
 import com.google.cloud.bigquery.Job;
+import com.google.cloud.bigquery.JobId;
 import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.QueryRequest;
 import com.google.cloud.bigquery.QueryResponse;
 import com.google.cloud.bigquery.Schema;
 import com.google.cloud.bigquery.TableId;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -76,27 +76,37 @@ class DefaultBigQueryClient implements FloBigQueryClient {
   }
 
   @Override
-  public BigQueryResult query(QueryRequest queryRequest) {
-    QueryResponse response = client.query(queryRequest);
-    while (!response.jobCompleted()) {
+  public JobId startQuery(QueryRequest queryRequest) {
+    return client.query(queryRequest).getJobId();
+  }
+
+  @Override
+  public BigQueryResult awaitQueryCompletion(JobId jobId) {
+    while (true) {
+      final QueryResponse result = client.getQueryResults(jobId);
+      if (result.jobCompleted()) {
+        if (result.hasErrors()) {
+          throw new RuntimeException("BigQuery query failed: " + result.getExecutionErrors());
+        }
+        return DefaultQueryResult.of(result);
+      }
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new RuntimeException(e);
       }
-      response = client.getQueryResults(response.getJobId());
     }
-    if (response.hasErrors()) {
-      throw new RuntimeException("BigQuery query failed: " + response.getExecutionErrors());
-    }
-    return DefaultQueryResult.of(response);
-
   }
 
   @Override
-  public JobInfo job(JobInfo jobInfo, JobOption... options) {
-    Job job = client.create(jobInfo, options);
+  public JobInfo startJob(JobInfo jobInfo, JobOption... options) {
+    return client.create(jobInfo, options);
+  }
+
+  @Override
+  public JobInfo awaitJobCompletion(JobInfo jobInfo, JobOption... options) {
+    Job job = client.getJob(jobInfo.getJobId(), options);
     while (!job.isDone()) {
       try {
         Thread.sleep(1000);
@@ -131,6 +141,11 @@ class DefaultBigQueryClient implements FloBigQueryClient {
 
     LOG.debug("deleting staging table {}", staging);
     client.delete(staging);
+  }
+
+  @Override
+  public String projectId() {
+    return client.getOptions().getProjectId();
   }
 
   private static void throwIfUnsuccessfulJobStatus(Job job, TableId tableId) {
