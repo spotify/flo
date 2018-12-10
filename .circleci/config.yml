@@ -3,7 +3,7 @@ jobs:
   test_jdk8_with_coverage:
     working_directory: ~/flo
     docker:
-      - image: maven:3.5.4-jdk-8
+      - image: maven:3.5.4-jdk-8-alpine
     steps:
       - checkout
       - restore_cache:
