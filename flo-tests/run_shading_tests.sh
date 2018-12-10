@@ -6,9 +6,11 @@ mvn -B install -DskipTests
 cd flo-tests
 
 pushd shading
-mvn -B clean -Dflo.version=$FLO_VERSION install -DskipTests
+mvn versions:set -DnewVersion=$FLO_VERSION
+mvn -B clean install -DskipTests
 popd
 
 pushd shading-user
-mvn -B clean -Dflo.version=$FLO_VERSION test
+mvn versions:set -DnewVersion=$FLO_VERSION
+mvn -B clean test
 popd

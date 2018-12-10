@@ -10,7 +10,7 @@
 
   <name>Flo Tests - Shading</name>
   <artifactId>flo-tests-shading</artifactId>
-  <version>${flo.version}</version>
+  <version>placeholder-version</version>
   <description>
     Shaded Flo for testing
   </description>
@@ -19,7 +19,7 @@
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>flo-runner</artifactId>
-      <version>${flo.version}</version>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
 
