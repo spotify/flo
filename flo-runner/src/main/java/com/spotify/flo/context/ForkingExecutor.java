@@ -135,9 +135,14 @@ class ForkingExecutor implements Closeable {
       } catch (SerializationException e) {
         throw new RuntimeException("Failed to serialize closure", e);
       }
+      
+      final String absoluteClassPath =
+          Arrays.stream(classPath.split(File.pathSeparator))
+              .map(cp -> Paths.get(cp).toAbsolutePath().toString())
+              .collect(Collectors.joining(File.pathSeparator));
 
-      final ProcessBuilder processBuilder = new ProcessBuilder(java.toString(), "-cp", classPath)
-          .directory(workdir.toFile());
+      final ProcessBuilder processBuilder =
+          new ProcessBuilder(java.toString(), "-cp", absoluteClassPath).directory(workdir.toFile());
 
       // Propagate -Xmx and -D.
       // Note: This is suboptimal because if the user has configured a max heap size we will effectively use that
