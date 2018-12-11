@@ -10,7 +10,7 @@
 
   <name>Flo Tests - Shading User</name>
   <artifactId>flo-tests-shading-user</artifactId>
-  <version>${flo.version}</version>
+  <version>0.0.1-SNAPSHOT</version>
   <description>
     Tests using shaded flo
   </description>
