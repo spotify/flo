@@ -21,7 +21,8 @@
 package com.spotify.flo.context;
 
 import com.spotify.flo.Fn;
-import com.spotify.flo.freezer.PersistingContext;
+import com.spotify.flo.Serialization;
+import com.spotify.flo.SerializationException;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
