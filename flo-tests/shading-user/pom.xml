@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.spotify</groupId>
+    <artifactId>foss-root</artifactId>
+    <version>8</version>
+  </parent>
+
+  <name>Flo Tests - Shading User</name>
+  <artifactId>flo-tests-shading-user</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <description>
+    Tests using shaded flo
+  </description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>flo-tests-shading</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.21.0</version>
+        <configuration>
+          <!-- TODO: remove -Djdk.net.URLClassPath.disableClassPathURLCheck=true after debian fixes
+                     https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=911925 -->
+          <argLine>-Xmx256m -Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
