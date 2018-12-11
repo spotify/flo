@@ -19,7 +19,7 @@
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>flo-tests-shading</artifactId>
-      <version>${flo.version}</version>
+      <version>0.0.1-SNAPSHOT</version>
     </dependency>
 
     <dependency>

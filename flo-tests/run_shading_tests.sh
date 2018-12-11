@@ -10,5 +10,5 @@ mvn -B clean install -DskipTests -Dflo.version=$FLO_VERSION
 popd
 
 pushd shading-user
-mvn -B clean test -Dflo.version=$FLO_VERSION
+mvn -B clean test
 popd
