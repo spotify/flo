@@ -54,7 +54,7 @@ public class RecordingListener implements FloListenerFactory {
   private static class Recorder implements InstrumentedContext.Listener {
 
     private Recorder(String dir) {
-      this.dir = Objects.requireNonNull(dir);
+      this.dir = dir;
     }
 
     private final String dir;
