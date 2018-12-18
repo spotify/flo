@@ -252,14 +252,6 @@ public final class FloRunner<T> {
     return mode.equalsIgnoreCase(config.getString(MODE));
   }
 
-  private boolean hasExplicitConfigValue(String path) {
-    final URL configUrl = config.getValue(path).origin().url();
-
-    // If set through env var or system property, there will be no url
-    return configUrl == null || !configUrl.getFile().endsWith("reference.conf");
-
-  }
-
   private static Closeable executorCloser(ExecutorService executorService) {
     return () -> {
       executorService.shutdown();
