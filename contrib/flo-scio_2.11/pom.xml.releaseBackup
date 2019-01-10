@@ -1,0 +1,130 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.spotify</groupId>
+    <artifactId>flo</artifactId>
+    <version>0.5.5-SNAPSHOT</version>
+    <relativePath>../..</relativePath>
+  </parent>
+
+  <name>Flo Scio</name>
+  <artifactId>flo-scio_2.11</artifactId>
+  <description>
+    Flo Scio support
+  </description>
+
+  <properties>
+    <scala.baseVersion>2.11</scala.baseVersion>
+    <scala.version>2.11.12</scala.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>flo-scala_2.11</artifactId>
+      <version>0.5.5-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>scio-core_2.11</artifactId>
+      <version>0.5.5</version>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>scio-test_2.11</artifactId>
+      <version>0.5.5</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-direct-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala.version}</version>
+    </dependency>
+
+    <!--test deps-->
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>flo-runner</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_${scala.baseVersion}</artifactId>
+      <version>3.0.5</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <sourceDirectory>../flo-scio_2.12/src/main/java</sourceDirectory>
+    <testSourceDirectory>../flo-scio_2.12/src/test/scala</testSourceDirectory>
+    <resources>
+      <resource>
+        <directory>../flo-scio_2.12/src/main/resources</directory>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>../flo-scio_2.12/src/test/resources</directory>
+      </testResource>
+    </testResources>
+    <plugins>
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <configuration>
+          <sourceDir>../flo-scio_2.12/src/main/scala</sourceDir>
+          <scalaVersion>${scala.version}</scalaVersion>
+          <sendJavaToScalac>false</sendJavaToScalac>
+          <args>
+            <arg>-Xexperimental</arg>
+            <arg>-target:jvm-1.8</arg>
+          </args>
+        </configuration>
+      </plugin>
+
+      <!-- enable scalatest -->
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <skipTests>true</skipTests>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>net.alchim31.maven</groupId>
+            <artifactId>scala-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>add-source</goal>
+                  <goal>doc-jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>
