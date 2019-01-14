@@ -488,6 +488,9 @@
               <ignoreSourcePackage>
                 <package>ch.qos.logback</package>
               </ignoreSourcePackage>
+              <ignoreSourcePackage>
+                <package>com.google.guava</package>
+              </ignoreSourcePackage>
             </ignoreSourcePackages>
           </configuration>
           <executions>
