@@ -27,7 +27,7 @@ import com.spotify.flo.EvalContext;
 import com.spotify.flo.TaskOperator;
 import com.spotify.flo.contrib.bigquery.BigQueryOperation.Provider;
 
-public class BigQueryOperator<T> implements TaskOperator<BigQueryOperation.Provider<T>, BigQueryOperation<T, ?>, T> {
+public class BigQueryOperator<T> implements TaskOperator<BigQueryOperation.Provider<T>, BigQueryOperation<T>, T> {
 
   private static final long serialVersionUID = 1L;
 
@@ -35,11 +35,9 @@ public class BigQueryOperator<T> implements TaskOperator<BigQueryOperation.Provi
   }
 
   @Override
-  public T perform(BigQueryOperation<T, ?> spec, Listener listener) {
-    final Object result;
-    if (spec.queryRequest != null) {
-      result = runQuery(spec);
-    } else if (spec.jobRequest != null) {
+  public T perform(BigQueryOperation<T> spec, Listener listener) {
+    final JobInfo result;
+    if (spec.jobRequest != null) {
       result = runJob(spec);
     } else {
       throw new AssertionError();
@@ -47,12 +45,8 @@ public class BigQueryOperator<T> implements TaskOperator<BigQueryOperation.Provi
     return spec.success.apply(result);
   }
 
-  private JobInfo runJob(BigQueryOperation<T, ?> spec) {
+  private JobInfo runJob(BigQueryOperation<T> spec) {
     return bq().job(spec.jobRequest.get());
-  }
-
-  private BigQueryResult runQuery(BigQueryOperation<T, ?> spec) {
-    return bq().query(spec.queryRequest.get());
   }
 
   public static <T> BigQueryOperator<T> create() {

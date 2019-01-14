@@ -32,7 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.cloud.WaitForOption;
+import com.google.cloud.RetryOption;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryError;
 import com.google.cloud.bigquery.BigQueryException;
@@ -49,7 +49,6 @@ import com.spotify.flo.Serialization;
 import com.spotify.flo.SerializationException;
 import com.spotify.flo.Task;
 import com.spotify.flo.context.FloRunner;
-import com.spotify.flo.freezer.PersistingContext;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -58,7 +57,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -125,10 +123,10 @@ public class BigQueryOutputTest {
   }
 
   @Test
-  public void shouldReturnTableIdOnJobSuccess() throws InterruptedException, TimeoutException {
+  public void shouldReturnTableIdOnJobSuccess() throws InterruptedException {
     when(bigQuery.getDataset(any(DatasetId.class))).thenReturn(dataset);
     when(bigQuery.create(any(JobInfo.class))).thenReturn(job);
-    when(job.waitFor(any(WaitForOption.class))).thenReturn(job);
+    when(job.waitFor(any(RetryOption.class))).thenReturn(job);
     when(job.getStatus()).thenReturn(mock(JobStatus.class));
 
     final BigQueryOutput bigQueryOutput = BigQueryOutput.create(() -> floBigQueryClient, TABLE_ID);
@@ -153,11 +151,11 @@ public class BigQueryOutputTest {
   }
 
   @Test(expected = RuntimeException.class)
-  public void shouldFailWhenJobTerminatesWithError() throws InterruptedException, TimeoutException {
+  public void shouldFailWhenJobTerminatesWithError() throws InterruptedException {
     when(bigQuery.getDataset(DATASET_ID)).thenReturn(mock(Dataset.class));
 
     when(bigQuery.create(any(JobInfo.class))).thenReturn(job);
-    when(job.waitFor(any(WaitForOption.class))).thenReturn(job);
+    when(job.waitFor(any(RetryOption.class))).thenReturn(job);
     when(job.getStatus()).thenReturn(mock(JobStatus.class));
     when(job.getStatus().getError()).thenReturn(new BigQueryError("", "", "job error"));
 
@@ -165,23 +163,22 @@ public class BigQueryOutputTest {
   }
 
   @Test(expected = RuntimeException.class)
-  public void shouldFailWhenJobDisappears() throws InterruptedException, TimeoutException {
+  public void shouldFailWhenJobDisappears() throws InterruptedException {
     when(bigQuery.getDataset(DATASET_ID)).thenReturn(mock(Dataset.class));
 
     when(bigQuery.create(any(JobInfo.class))).thenReturn(job);
-    when(job.waitFor(any(WaitForOption.class))).thenReturn(null);
+    when(job.waitFor(any(RetryOption.class))).thenReturn(null);
 
     BigQueryOutput.create(() -> floBigQueryClient, TABLE_ID).provide(null).publish();
   }
 
   @Test(expected = BigQueryException.class)
-  public void shouldFailWhenJobTerminatesExceptionally()
-      throws InterruptedException, TimeoutException {
+  public void shouldFailWhenJobTerminatesExceptionally() throws InterruptedException {
     when(bigQuery.getDataset(DATASET_ID)).thenReturn(mock(Dataset.class));
 
     when(bigQuery.create(any(JobInfo.class))).thenReturn(job);
     doThrow(new BigQueryException(mock(IOException.class))).when(job)
-        .waitFor(any(WaitForOption.class));
+        .waitFor(any(RetryOption.class));
 
     BigQueryOutput.create(() -> floBigQueryClient, TABLE_ID).provide(null).publish();
   }

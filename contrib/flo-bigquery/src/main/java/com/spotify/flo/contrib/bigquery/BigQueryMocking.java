@@ -24,14 +24,13 @@ import com.google.cloud.bigquery.BigQuery.JobOption;
 import com.google.cloud.bigquery.Dataset;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
-import com.google.cloud.bigquery.FieldValue;
+import com.google.cloud.bigquery.FieldValueList;
 import com.google.cloud.bigquery.JobInfo;
-import com.google.cloud.bigquery.QueryRequest;
 import com.google.cloud.bigquery.Schema;
 import com.google.cloud.bigquery.TableId;
+import com.google.cloud.bigquery.TableResult;
 import com.spotify.flo.TestContext;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -157,11 +156,6 @@ public class BigQueryMocking {
     }
 
     @Override
-    public BigQueryResult query(QueryRequest request) {
-      return new MockQueryResult(request);
-    }
-
-    @Override
     public void publish(StagingTableId stagingTableId, TableId tableId) {
       stagingTableIds.remove(formatTableIdKey(tableId));
 
@@ -172,24 +166,14 @@ public class BigQueryMocking {
 
     private class MockQueryResult implements BigQueryResult {
 
-      private final QueryRequest request;
+      private final TableResult result;
 
-      public MockQueryResult(QueryRequest request) {
-        this.request = Objects.requireNonNull(request, "request");
-      }
-
-      @Override
-      public boolean cacheHit() {
-        return false;
+      public MockQueryResult(TableResult result) {
+        this.result = Objects.requireNonNull(result, "result");
       }
 
       @Override
       public Schema schema() {
-        throw new UnsupportedOperationException("TODO");
-      }
-
-      @Override
-      public long totalBytesProcessed() {
         throw new UnsupportedOperationException("TODO");
       }
 
@@ -199,7 +183,7 @@ public class BigQueryMocking {
       }
 
       @Override
-      public Iterator<List<FieldValue>> iterator() {
+      public Iterator<FieldValueList> iterator() {
         throw new UnsupportedOperationException("TODO");
       }
     }

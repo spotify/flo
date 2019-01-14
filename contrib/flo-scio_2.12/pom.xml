@@ -16,7 +16,8 @@
 
   <properties>
     <scala.baseVersion>2.12</scala.baseVersion>
-    <scala.version>2.12.6</scala.version>
+    <scala.version>2.12.8</scala.version>
+    <scio.version>0.7.0-beta3</scio.version>
   </properties>
 
   <dependencies>
@@ -28,12 +29,12 @@
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>scio-core_2.12</artifactId>
-      <version>0.5.5</version>
+      <version>${scio.version}</version>
     </dependency>
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>scio-test_2.12</artifactId>
-      <version>0.5.5</version>
+      <version>${scio.version}</version>
       <optional>true</optional>
     </dependency>
     <dependency>
