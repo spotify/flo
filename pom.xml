@@ -480,16 +480,22 @@
                 <package>org.slf4j</package>
               </ignoreSourcePackage>
               <ignoreSourcePackage>
+                <package>com.google.api.core</package>
+              </ignoreSourcePackage>
+              <ignoreSourcePackage>
                 <package>com.google.api.client.extensions.appengine.http</package>
               </ignoreSourcePackage>
               <ignoreSourcePackage>
-                <package>scala.reflect.internal</package>
+                <package>scala.reflect</package>
+              </ignoreSourcePackage>
+              <ignoreSourcePackage>
+                <package>scala.tools</package>
               </ignoreSourcePackage>
               <ignoreSourcePackage>
                 <package>ch.qos.logback</package>
               </ignoreSourcePackage>
               <ignoreSourcePackage>
-                <package>com.google.api.core</package>
+                <package>org.apache.beam.repackaged.beam_sdks_java_core.net.bytebuddy.jar.asm.commons</package>
               </ignoreSourcePackage>
             </ignoreSourcePackages>
           </configuration>
