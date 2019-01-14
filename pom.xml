@@ -489,7 +489,7 @@
                 <package>ch.qos.logback</package>
               </ignoreSourcePackage>
               <ignoreSourcePackage>
-                <package>com.google.common</package>
+                <package>com.google.api.core</package>
               </ignoreSourcePackage>
             </ignoreSourcePackages>
           </configuration>
