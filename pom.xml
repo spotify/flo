@@ -489,7 +489,7 @@
                 <package>ch.qos.logback</package>
               </ignoreSourcePackage>
               <ignoreSourcePackage>
-                <package>com.google.guava</package>
+                <package>com.google.common</package>
               </ignoreSourcePackage>
             </ignoreSourcePackages>
           </configuration>
