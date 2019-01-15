@@ -30,14 +30,9 @@ import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.CopyJobConfiguration;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
-import com.google.cloud.bigquery.FieldValueList;
 import com.google.cloud.bigquery.Job;
 import com.google.cloud.bigquery.JobInfo;
-import com.google.cloud.bigquery.Schema;
 import com.google.cloud.bigquery.TableId;
-import com.google.cloud.bigquery.TableResult;
-import java.util.Iterator;
-import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.threeten.bp.Duration;
@@ -125,34 +120,6 @@ class DefaultBigQueryClient implements FloBigQueryClient {
       LOG.error("Could not copy BigQuery table {} from staging to target with error: {}",
           tableId, error);
       throw new RuntimeException(error);
-    }
-  }
-
-  private static class DefaultQueryResult implements BigQueryResult {
-
-    private final TableResult result;
-
-    private DefaultQueryResult(TableResult result) {
-      this.result = Objects.requireNonNull(result, "result");
-    }
-
-    @Override
-    public Schema schema() {
-      return result.getSchema();
-    }
-
-    @Override
-    public long totalRows() {
-      return result.getTotalRows();
-    }
-
-    @Override
-    public Iterator<FieldValueList> iterator() {
-      return result.getValues().iterator();
-    }
-
-    public static DefaultQueryResult of(TableResult result) {
-      return new DefaultQueryResult(result);
     }
   }
 }
