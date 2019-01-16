@@ -72,10 +72,16 @@ public class BigQueryOperation<T> implements Serializable {
       return new BigQueryOperation<>();
     }
 
+    /**
+     * Use standard SQL syntax for queries.
+     * See: https://cloud.google.com/bigquery/sql-reference/
+     *
+     * @param query the standard (non legacy) SQL statement
+     *
+     * @return a {@link BigQueryOperation} instance to be executed by the {@link BigQueryOperator}
+     */
     public BigQueryOperation<T> query(String query) {
       final QueryJobConfiguration queryConfig = newBuilder(query)
-          // Use standard SQL syntax for queries.
-          // See: https://cloud.google.com/bigquery/sql-reference/
           .setUseLegacySql(false)
           .build();
       final JobId jobId = JobId.of(UUID.randomUUID().toString());
