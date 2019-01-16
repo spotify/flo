@@ -498,46 +498,6 @@
             </execution>
           </executions>
         </plugin>
-
-        <plugin>
-          <groupId>com.spotify</groupId>
-          <artifactId>missinglink-maven-plugin</artifactId>
-          <version>0.1.1</version>
-          <configuration>
-            <failOnConflicts>true</failOnConflicts>
-            <ignoreSourcePackages>
-              <ignoreSourcePackage>
-                <package>org.slf4j</package>
-              </ignoreSourcePackage>
-              <ignoreSourcePackage>
-                <package>com.google.api.core</package>
-              </ignoreSourcePackage>
-              <ignoreSourcePackage>
-                <package>com.google.api.client.extensions.appengine.http</package>
-              </ignoreSourcePackage>
-              <ignoreSourcePackage>
-                <package>scala.reflect</package>
-              </ignoreSourcePackage>
-              <ignoreSourcePackage>
-                <package>scala.tools</package>
-              </ignoreSourcePackage>
-              <ignoreSourcePackage>
-                <package>ch.qos.logback</package>
-              </ignoreSourcePackage>
-              <ignoreSourcePackage>
-                <package>org.apache.beam.repackaged.beam_sdks_java_core.net.bytebuddy.jar.asm.commons</package>
-              </ignoreSourcePackage>
-            </ignoreSourcePackages>
-          </configuration>
-          <executions>
-            <execution>
-              <goals>
-                <goal>check</goal>
-              </goals>
-              <phase>process-classes</phase>
-            </execution>
-          </executions>
-        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -584,17 +544,6 @@
                 <exclude>**/com/spotify/flo/dsl/Util.scala</exclude>
               </excludes>
             </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>missinglink</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.spotify</groupId>
-            <artifactId>missinglink-maven-plugin</artifactId>
           </plugin>
         </plugins>
       </build>
