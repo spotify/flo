@@ -20,63 +20,45 @@
 
 package com.spotify.flo.contrib.bigquery;
 
+import static com.google.cloud.bigquery.QueryJobConfiguration.newBuilder;
+
+import com.google.cloud.bigquery.JobId;
 import com.google.cloud.bigquery.JobInfo;
-import com.google.cloud.bigquery.QueryRequest;
+import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.spotify.flo.Fn;
 import com.spotify.flo.TaskBuilder.F1;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * A BigQuery operation to be executed by the {@link BigQueryOperator}.
  */
-public class BigQueryOperation<T, R> implements Serializable {
+public class BigQueryOperation<T> implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
   Fn<JobInfo> jobRequest;
-  Fn<QueryRequest> queryRequest;
-  F1<Object, T> success;
-
-  /**
-   * Run a query. Result are returned directly and not written to a table.
-   */
-  @SuppressWarnings("unchecked")
-  BigQueryOperation<T, BigQueryResult> query(Fn<QueryRequest> queryRequest) {
-    if (jobRequest != null) {
-      throw new IllegalStateException("can only run either a query or a job");
-    }
-    this.queryRequest = Objects.requireNonNull(queryRequest);
-    return (BigQueryOperation<T, BigQueryResult>) this;
-  }
+  F1<JobInfo, T> success;
 
   /**
    * Run a job. This can be a query, copy, load or extract with results written to a table, etc.
    */
-  @SuppressWarnings("unchecked")
-  BigQueryOperation<T, JobInfo> job(Fn<JobInfo> jobRequest) {
-    if (queryRequest != null) {
-      throw new IllegalStateException("can only run either a query or a job");
-    }
+  BigQueryOperation<T> job(Fn<JobInfo> jobRequest) {
     this.jobRequest = Objects.requireNonNull(jobRequest);
-    return (BigQueryOperation<T, JobInfo>) this;
+    return this;
   }
 
   /**
    * Specify some action to take on success. E.g. publishing a staging table.
    */
-  @SuppressWarnings("unchecked")
-  BigQueryOperation<T, R> success(F1<R, T> success) {
-    this.success = (F1<Object, T>) Objects.requireNonNull(success);
+  BigQueryOperation<T> success(F1<JobInfo, T> success) {
+    this.success = Objects.requireNonNull(success);
     return this;
   }
 
-  static <T> BigQueryOperation<T, BigQueryResult> ofQuery(Fn<QueryRequest> queryRequest) {
-    return new BigQueryOperation<T, BigQueryResult>().query(queryRequest);
-  }
-
-  static <T> BigQueryOperation<T, JobInfo> ofJob(Fn<JobInfo> job) {
-    return new BigQueryOperation<T, JobInfo>().job(job);
+  static <T> BigQueryOperation<T> ofJob(Fn<JobInfo> job) {
+    return new BigQueryOperation<T>().job(job);
   }
 
   public static class Provider<T> implements Serializable {
@@ -86,27 +68,31 @@ public class BigQueryOperation<T, R> implements Serializable {
     Provider() {
     }
 
-    public BigQueryOperation<T, Object> bq() {
+    public BigQueryOperation<T> bq() {
       return new BigQueryOperation<>();
     }
 
-    public BigQueryOperation<T, BigQueryResult> query(Fn<QueryRequest> queryRequest) {
-      return BigQueryOperation.ofQuery(queryRequest);
+    /**
+     * Use standard SQL syntax for queries.
+     * See: https://cloud.google.com/bigquery/sql-reference/
+     *
+     * @param query the standard (non legacy) SQL statement
+     *
+     * @return a {@link BigQueryOperation} instance to be executed by the {@link BigQueryOperator}
+     */
+    public BigQueryOperation<T> query(String query) {
+      final QueryJobConfiguration queryConfig = newBuilder(query)
+          .setUseLegacySql(false)
+          .build();
+      final JobId jobId = JobId.of(UUID.randomUUID().toString());
+      return job(JobInfo.newBuilder(queryConfig).setJobId(jobId).build());
     }
 
-    public BigQueryOperation<T, BigQueryResult> query(QueryRequest queryRequest) {
-      return BigQueryOperation.ofQuery(() -> queryRequest);
-    }
-
-    public BigQueryOperation<T, BigQueryResult> query(String query) {
-      return BigQueryOperation.ofQuery(() -> QueryRequest.of(query));
-    }
-
-    public BigQueryOperation<T, JobInfo> job(Fn<JobInfo> jobInfo) {
+    public BigQueryOperation<T> job(Fn<JobInfo> jobInfo) {
       return BigQueryOperation.ofJob(jobInfo);
     }
 
-    public BigQueryOperation<T, JobInfo> job(JobInfo jobInfo) {
+    public BigQueryOperation<T> job(JobInfo jobInfo) {
       return BigQueryOperation.ofJob(() -> jobInfo);
     }
   }

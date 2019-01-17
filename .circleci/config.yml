@@ -21,7 +21,7 @@ jobs:
           environment:
             # Maven heap size
             MAVEN_OPTS: -Xmx1024m -Xms1024m
-          command: mvn -B verify scala:doc-jar -Pcoverage -Pmissinglink
+          command: mvn -B verify scala:doc-jar -Pcoverage
       - run: flo-tests/run_shading_tests.sh
       - run: bash <(curl -s https://codecov.io/bash)
 
@@ -42,7 +42,7 @@ jobs:
           key: v1-deps-jdk10-{{ checksum "pom.xml" }}
           paths:
             - ~/.m2
-      - run: mvn -B verify scala:doc-jar -Pmissinglink
+      - run: mvn -B verify scala:doc-jar
 
 workflows:
   version: 2

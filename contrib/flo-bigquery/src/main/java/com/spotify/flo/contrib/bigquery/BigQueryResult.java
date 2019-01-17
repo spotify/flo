@@ -20,20 +20,15 @@
 
 package com.spotify.flo.contrib.bigquery;
 
-import com.google.cloud.bigquery.FieldValue;
+import com.google.cloud.bigquery.FieldValueList;
 import com.google.cloud.bigquery.Schema;
-import java.util.List;
 
 /**
- * A mockable {@link com.google.cloud.bigquery.QueryResult}
+ * A mockable {@link com.google.cloud.bigquery.TableResult}
  */
-public interface BigQueryResult extends Iterable<List<FieldValue>> {
-
-  boolean cacheHit();
+public interface BigQueryResult extends Iterable<FieldValueList> {
 
   Schema schema();
-
-  long totalBytesProcessed();
 
   long totalRows();
 }

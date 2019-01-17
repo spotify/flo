@@ -24,15 +24,9 @@ import com.google.cloud.bigquery.BigQuery.JobOption;
 import com.google.cloud.bigquery.Dataset;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
-import com.google.cloud.bigquery.FieldValue;
 import com.google.cloud.bigquery.JobInfo;
-import com.google.cloud.bigquery.QueryRequest;
-import com.google.cloud.bigquery.Schema;
 import com.google.cloud.bigquery.TableId;
 import com.spotify.flo.TestContext;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -157,51 +151,12 @@ public class BigQueryMocking {
     }
 
     @Override
-    public BigQueryResult query(QueryRequest request) {
-      return new MockQueryResult(request);
-    }
-
-    @Override
     public void publish(StagingTableId stagingTableId, TableId tableId) {
       stagingTableIds.remove(formatTableIdKey(tableId));
 
       final DatasetId datasetId = datasetIdOf(tableId);
       publishedTables.computeIfAbsent(datasetId, k -> new ConcurrentSkipListSet<>())
           .add(tableId.getTable());
-    }
-
-    private class MockQueryResult implements BigQueryResult {
-
-      private final QueryRequest request;
-
-      public MockQueryResult(QueryRequest request) {
-        this.request = Objects.requireNonNull(request, "request");
-      }
-
-      @Override
-      public boolean cacheHit() {
-        return false;
-      }
-
-      @Override
-      public Schema schema() {
-        throw new UnsupportedOperationException("TODO");
-      }
-
-      @Override
-      public long totalBytesProcessed() {
-        throw new UnsupportedOperationException("TODO");
-      }
-
-      @Override
-      public long totalRows() {
-        throw new UnsupportedOperationException("TODO");
-      }
-
-      @Override
-      public Iterator<List<FieldValue>> iterator() {
-        throw new UnsupportedOperationException("TODO");
-      }
     }
   }
 }

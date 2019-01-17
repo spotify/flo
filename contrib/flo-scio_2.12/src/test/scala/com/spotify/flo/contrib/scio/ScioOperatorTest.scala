@@ -30,7 +30,6 @@ import com.spotify.flo.contrib.scio.ScioOperatorTest.{JobError, lineCountingTask
 import com.spotify.flo.status.NotRetriable
 import com.spotify.scio.ScioMetrics
 import com.spotify.scio.testing.{PipelineSpec, TextIO}
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.metrics.Counter
 import org.scalatest._
 
