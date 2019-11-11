@@ -57,7 +57,8 @@
     <jackson.version>2.9.10</jackson.version>
     <jackson.databind.version>${jackson.version}.1</jackson.databind.version>
     <google.client.version>1.27.0</google.client.version>
-    <google.auth.version>0.9.1</google.auth.version>
+    <google.auth.version>0.12.0</google.auth.version>
+    <protobuf-java.version>3.7.0</protobuf-java.version>
   </properties>
 
   <dependencyManagement>
@@ -248,12 +249,12 @@
       <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
-        <version>3.6.0</version>
+        <version>${protobuf-java.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java-util</artifactId>
-        <version>3.6.0</version>
+        <version>${protobuf-java.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.api-client</groupId>
@@ -293,7 +294,7 @@
       <dependency>
         <groupId>com.google.api</groupId>
         <artifactId>api-common</artifactId>
-        <version>1.6.0</version>
+        <version>1.7.0</version>
       </dependency>
       <dependency>
         <groupId>io.grpc</groupId>
@@ -323,7 +324,7 @@
       <dependency>
         <groupId>io.opencensus</groupId>
         <artifactId>opencensus-api</artifactId>
-        <version>0.12.3</version>
+        <version>0.17.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.api.grpc</groupId>
@@ -348,17 +349,17 @@
       <dependency>
         <groupId>com.google.api.grpc</groupId>
         <artifactId>proto-google-cloud-spanner-admin-database-v1</artifactId>
-        <version>0.1.11</version>
+        <version>1.6.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.api</groupId>
         <artifactId>gax</artifactId>
-        <version>1.29.0</version>
+        <version>1.38.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-core</artifactId>
-        <version>1.36.0</version>
+        <version>1.61.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.api.grpc</groupId>
