@@ -214,6 +214,11 @@
         <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
         <version>2.11.0</version>
       </dependency>
+      <dependency><!-- to please enforcer-->
+        <groupId>com.google.apis</groupId>
+        <artifactId>google-api-services-storage</artifactId>
+        <version>v1-rev20181109-1.27.0</version>
+      </dependency>
 
       <!-- version resolution -->
       <dependency>
