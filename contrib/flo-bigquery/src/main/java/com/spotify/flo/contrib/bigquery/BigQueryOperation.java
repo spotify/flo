@@ -52,7 +52,7 @@ public class BigQueryOperation<T> implements Serializable {
   /**
    * Specify some action to take on success. E.g. publishing a staging table.
    */
-  BigQueryOperation<T> success(F1<JobInfo, T> success) {
+  public BigQueryOperation<T> success(F1<JobInfo, T> success) {
     this.success = Objects.requireNonNull(success);
     return this;
   }
