@@ -61,6 +61,10 @@ public class BigQueryOperation<T> implements Serializable {
     return new BigQueryOperation<T>().job(job);
   }
 
+  static <T> BigQueryOperation<T> ofJob(Fn<JobInfo> job, F1<JobInfo, T> success) {
+    return new BigQueryOperation<T>().job(job).success(success);
+  }
+
   public static class Provider<T> implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -94,6 +98,10 @@ public class BigQueryOperation<T> implements Serializable {
 
     public BigQueryOperation<T> job(JobInfo jobInfo) {
       return BigQueryOperation.ofJob(() -> jobInfo);
+    }
+
+    public BigQueryOperation<T> job(JobInfo jobInfo, F1<JobInfo, T> success) {
+      return BigQueryOperation.ofJob(() -> jobInfo, success);
     }
   }
 }

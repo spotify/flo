@@ -121,6 +121,26 @@ public class BigQueryOperatorTest {
   }
 
   @Test
+  public void shouldRunLoadJobInTestModeWithSuccess() throws Exception {
+    final TableId dstTable = TableId.of("foo", "bar", "baz");
+    final String srcUri = "gs://foo/bar";
+
+    final Task<TableId> task = Task.named("task")
+        .ofType(TableId.class)
+        .operator(BigQueryOperator.create())
+        .process(bq -> bq.job(
+            JobInfo.of(LoadJobConfiguration.of(dstTable, srcUri)), response -> dstTable));
+
+    try (TestScope scope = FloTesting.scope()) {
+
+      final TableId result = FloRunner.runTask(task).future()
+          .get(30, SECONDS);
+
+      assertThat(result, is(dstTable));
+    }
+  }
+
+  @Test
   public void shouldRunExtractJobInTestMode() throws Exception {
     final TableId srcTable = TableId.of("foo", "bar", "baz");
 
