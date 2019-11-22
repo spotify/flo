@@ -1,6 +1,6 @@
 # ![flo](http://spotify.github.io/flo/doc/flo-logo.svg) &nbsp;&nbsp; [![CircleCI](https://circleci.com/gh/spotify/flo/tree/master.svg?style=svg)](https://circleci.com/gh/spotify/flo/tree/master) [![Codecov](https://img.shields.io/codecov/c/github/spotify/flo/master.svg?maxAge=2592000)](https://codecov.io/github/spotify/flo) [![Maven Central](https://img.shields.io/maven-central/v/com.spotify/flo.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.spotify%22%20flo*) [![License](https://img.shields.io/github/license/spotify/flo.svg)](LICENSE.txt)
 
-**Please note that we at Spotify has ceased further development of flo, so no new features will come;
+**Please note that we, at Spotify, have ceased further development of flo, so no new features will come;
 on the other hand, we will fix critical issues.**
 
 ![flo](http://spotify.github.io/flo/doc/flo-logo-small.svg) is a lightweight workflow definition library
