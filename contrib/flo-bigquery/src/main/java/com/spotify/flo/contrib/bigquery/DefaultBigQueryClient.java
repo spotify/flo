@@ -78,6 +78,7 @@ class DefaultBigQueryClient implements FloBigQueryClient {
       }
       job = job.reload();
     }
+    job = job.reload();
 
     final BigQueryError error = job.getStatus().getError();
     if (error != null) {
