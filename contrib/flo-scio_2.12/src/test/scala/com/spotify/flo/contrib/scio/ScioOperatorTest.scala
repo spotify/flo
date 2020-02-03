@@ -29,11 +29,12 @@ import com.spotify.flo.context.FloRunner
 import com.spotify.flo.contrib.scio.ScioOperatorTest.{JobError, lineCountingTask}
 import com.spotify.flo.status.NotRetriable
 import com.spotify.scio.ScioMetrics
-import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.metrics.Counter
 import org.scalatest._
-
 import scala.collection.JavaConverters._
+
+import com.spotify.scio.io.TextIO
 
 class ScioOperatorTest extends PipelineSpec with Matchers {
 
