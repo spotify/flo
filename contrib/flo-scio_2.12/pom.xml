@@ -16,8 +16,8 @@
 
   <properties>
     <scala.baseVersion>2.12</scala.baseVersion>
-    <scala.version>2.12.6</scala.version>
-    <scio.version>0.6.1</scio.version>
+    <scala.version>2.12.10</scala.version>
+    <scio.version>0.8.0</scio.version>
   </properties>
 
   <dependencies>
@@ -61,7 +61,7 @@
     <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${scala.baseVersion}</artifactId>
-      <version>3.0.5</version>
+      <version>3.1.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
