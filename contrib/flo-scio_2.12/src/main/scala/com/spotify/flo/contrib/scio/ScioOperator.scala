@@ -67,7 +67,7 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
       spec.pipeline(sc)
 
       // Start job
-      val scioResult = Try(sc.run())
+      val scioResult = Try(sc.close())
       scioResult match {
         case Failure(t) => return spec.failure(t)
         case _ =>
@@ -117,7 +117,7 @@ class ScioOperator[T] extends TaskOperator[ScioJobSpec.Provider[T], ScioJobSpec[
     spec.pipeline(sc)
 
     // Start job
-    val scioResult = Try(sc.run())
+    val scioResult = Try(sc.close())
     scioResult match {
       case Failure(t) => return spec.failure(t)
       case _ =>
