@@ -1,1 +1,1 @@
-/usr/lib/jvm/java-1.8.0-amazon-corretto/jre/../bin/javadoc @options @packages
+/opt/jdk1.8.0_192/jre/../bin/javadoc @options @packages
