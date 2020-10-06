@@ -4,6 +4,9 @@ jobs:
     working_directory: ~/flo
     docker:
       - image: maven:3.5.4-jdk-8
+        auth:
+          username: spotifyci
+          password: $DOCKERHUB_TOKEN
     steps:
       - checkout
       - restore_cache:
